@@ -1,77 +1,189 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reader — Pankomik</title>
-  <link rel="stylesheet" href="reader.css">
-  <style>
-    /* Dropdown override untuk reader (reader.css tidak include style.css) */
-    .dropdown {
-      display: none;
-      position: fixed;
-      right: 10px;
-      top: 58px;
-      z-index: 2000;
-      background: rgba(20,20,28,0.96);
-      backdrop-filter: blur(14px);
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 12px;
-      overflow: hidden;
-      min-width: 160px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+/* ============================================================
+   PANKOMIK — reader.js  (Fase 2)
+   Fitur baru:
+   ✅ Auto-save riwayat baca ke Supabase saat chapter dimuat
+   ✅ Update reading progress
+   ============================================================ */
+
+import { getCurrentUser, saveHistory, updateProgress } from "./supabase.js";
+
+const API  = "https://www.sankavollerei.com/comic/bacakomik/chapter/";
+const slug = new URLSearchParams(window.location.search).get("slug");
+
+if (!slug) window.location.href = "index.html";
+
+let autoScrollInterval = null;
+let nextSlug           = null;
+let prevSlug           = null;
+let currentUser        = null;
+let historyWasSaved    = false;
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.addEventListener("DOMContentLoaded", async () => {
+  currentUser = await getCurrentUser();
+  await loadChapter();
+});
+
+/* ============================================================
+   FETCH & RENDER CHAPTER
+   ============================================================ */
+async function loadChapter() {
+  try {
+    const res  = await fetch(API + slug);
+    const data = await res.json();
+
+    document.title = `${data.title} — Pankomik`;
+    document.getElementById("title").innerText = data.title;
+
+    nextSlug = data.navigation?.next || null;
+    prevSlug = data.navigation?.prev || null;
+
+    document.getElementById("nextBtn").style.display = nextSlug ? "inline-block" : "none";
+    document.getElementById("prevBtn").style.display = prevSlug ? "inline-block" : "none";
+
+    renderImages(data.images);
+
+    /* Auto-save riwayat kalau sudah login, tidak blocking render */
+    if (currentUser && !historyWasSaved) {
+      historyWasSaved = true;
+      autoSaveHistory(data); /* sengaja tidak await agar tidak delay tampilan */
     }
-    .dropdown p {
-      padding: 11px 14px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      color: #eaeaf0;
-      margin: 0;
-      transition: background 0.15s;
+
+  } catch (err) {
+    console.error("Gagal load chapter:", err);
+    document.getElementById("reader").innerHTML = `
+      <div style="padding:60px 20px;text-align:center;color:#888">
+        <p style="font-size:32px">😕</p><p>Gagal memuat chapter.</p>
+        <button onclick="location.reload()" style="margin-top:12px;padding:8px 18px;
+          background:#e8522a;color:#fff;border:none;border-radius:8px;cursor:pointer;">
+          Coba Lagi
+        </button>
+      </div>`;
+  }
+}
+
+function renderImages(images) {
+  const container = document.getElementById("reader");
+  container.innerHTML = "";
+  const savedWidth = localStorage.getItem("imgWidth") || 100;
+  document.getElementById("width").value = savedWidth;
+
+  images.forEach((src, i) => {
+    const img   = document.createElement("img");
+    img.src     = src;
+    img.loading = i < 3 ? "eager" : "lazy";
+    img.style.width = savedWidth + "%";
+    container.appendChild(img);
+  });
+}
+
+/* ============================================================
+   AUTO-SAVE RIWAYAT BACA
+   Dipanggil sekali setelah chapter berhasil dimuat.
+
+   Cara ekstrak info komik dari slug chapter:
+   Slug:  "one-piece-chapter-1050"
+   Komik: "one-piece"            (hapus "-chapter-XX")
+   Nomor: "1050"                 (regex dari slug)
+   ============================================================ */
+async function autoSaveHistory(data) {
+  const match         = slug.match(/chapter-(\d+)/i);
+  const chapterNumber = match ? match[1] : "?";
+  const komikSlug     = slug.replace(/-chapter-\d+.*/i, "");
+  const komikTitle    = data.title.replace(/\s*chapter\s*\d+.*/i, "").trim();
+
+  /* Simpan ke reading_history */
+  await saveHistory(
+    currentUser.id,
+    { slug: komikSlug, title: komikTitle, cover: "" },
+    { slug: slug, number: chapterNumber }
+  );
+
+  /* Update reading_progress */
+  await updateProgress(
+    currentUser.id,
+    { slug: komikSlug, title: komikTitle, lastChapterSlug: slug },
+    0 /* total chapters — diupdate saat user buka halaman detail */
+  );
+}
+
+/* ============================================================
+   NAVIGASI
+   ============================================================ */
+window.nextChapter = () => { if (nextSlug) window.location.href = `reader.html?slug=${nextSlug}`; };
+window.prevChapter = () => { if (prevSlug) window.location.href = `reader.html?slug=${prevSlug}`; };
+window.goHome      = () => { window.location.href = "index.html"; };
+
+window.toggleMenu = function () {
+  const m = document.getElementById("menuDropdown");
+  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
+};
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+window.toggleSettings = function () {
+  document.getElementById("settings").classList.toggle("active");
+};
+
+document.addEventListener("click", e => {
+  const panel = document.getElementById("settings");
+  const btn   = document.querySelector('button[onclick="toggleSettings()"]');
+  if (panel?.classList.contains("active")
+      && !panel.contains(e.target) && !btn?.contains(e.target)) {
+    panel.classList.remove("active");
+  }
+});
+
+/* ============================================================
+   LEBAR GAMBAR
+   ============================================================ */
+document.getElementById("width")?.addEventListener("input", e => {
+  const val = e.target.value;
+  document.querySelectorAll("#reader img").forEach(img => img.style.width = val + "%");
+  localStorage.setItem("imgWidth", val);
+});
+
+/* ============================================================
+   AUTO SCROLL
+   ============================================================ */
+window.toggleAutoScroll = function () {
+  const btn = document.getElementById("autoBtn");
+  if (autoScrollInterval) {
+    clearInterval(autoScrollInterval);
+    autoScrollInterval = null;
+    btn.textContent = "▶️ Mulai Auto Scroll";
+    btn.classList.remove("running");
+    return;
+  }
+  const speed = parseInt(document.getElementById("speed").value);
+  autoScrollInterval = setInterval(() => {
+    window.scrollBy(0, speed);
+    if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 10) {
+      clearInterval(autoScrollInterval);
+      autoScrollInterval = null;
+      btn.textContent = "▶️ Mulai Auto Scroll";
+      btn.classList.remove("running");
     }
-    .dropdown p:hover { background: rgba(255,255,255,0.08); }
-  </style>
-</head>
-<body>
+  }, 30);
+  btn.textContent = "⏹️ Stop";
+  btn.classList.add("running");
+};
 
-<div class="reader-header">
-  <button onclick="goHome()">🏠</button>
-  <h3 id="title">Memuat...</h3>
-  <div class="btn-group">
-    <button id="prevBtn" onclick="prevChapter()">⬅️</button>
-    <button id="nextBtn" onclick="nextChapter()">➡️</button>
-    <button onclick="toggleSettings()">⚙️</button>
-    <button onclick="toggleMenu()">👤</button>
-  </div>
-</div>
+/* ============================================================
+   HEADER AUTO-HIDE
+   ============================================================ */
+const readerHeader = document.querySelector(".reader-header");
+let   scrollTimer  = null;
 
-<!-- Dropdown menu (diisi auth-header.js) -->
-<div id="menuDropdown" class="dropdown"></div>
+window.addEventListener("scroll", () => {
+  readerHeader?.classList.add("hide");
+  clearTimeout(scrollTimer);
+  scrollTimer = setTimeout(() => readerHeader?.classList.remove("hide"), 1500);
+});
 
-<div class="settings" id="settings">
-  <h3>⚙️ Pengaturan</h3>
-  <label>Mode Baca</label>
-  <select id="mode">
-    <option value="scroll">Scroll (Webtoon)</option>
-    <option value="single">Per Gambar (Manga)</option>
-  </select>
-  <label>Lebar Gambar</label>
-  <input type="range" id="width" min="50" max="100" value="100">
-  <label>Kecepatan Auto Scroll</label>
-  <input type="range" id="speed" min="1" max="10" value="3">
-  <button class="btn-auto" id="autoBtn" onclick="toggleAutoScroll()">▶️ Mulai Auto Scroll</button>
-</div>
-
-<div id="reader"></div>
-
-<!--
-  Kedua script pakai type="module" karena pakai import dari supabase.js
--->
-<script type="module">
-  import { initAuthHeader } from "./auth-header.js";
-  initAuthHeader();
-</script>
-<script type="module" src="reader.js"></script>
-</body>
-</html>
+document.getElementById("reader")?.addEventListener("click", () => {
+  readerHeader?.classList.toggle("hide");
+});
