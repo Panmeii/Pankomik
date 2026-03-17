@@ -12,7 +12,12 @@ import {
   checkBookmark,
   addBookmark,
   removeBookmark,
-  getLastRead
+  getLastRead,
+  getComments,
+  addComment,
+  deleteComment,
+  toggleLike,
+  getLikedComments
 } from "./supabase.js";
 
 /* ---- BACA SLUG DARI URL ---------------------------------- */
@@ -50,6 +55,7 @@ async function getDetail() {
     komikData  = data.detail;
     document.title = `${komikData.title} — Pankomik`;
     await tampilkanDetail(komikData);
+    await loadComments(); /* muat komentar setelah detail tampil */
   } catch (err) {
     console.error("Error detail:", err);
     document.getElementById("detailKomik").innerHTML = `
@@ -94,7 +100,7 @@ async function tampilkanDetail(d) {
         <p>Tipe: <span>${d.type}</span></p>
         <p>Author: <span>${d.author}</span></p>
         <div class="genres">
-          ${d.genres.map(g => `<span class="genre">${g.title}</span>`).join("")}
+          ${d.genres.map(g => `<span class="genre" onclick="window.location.href='genre.html?genre=${encodeURIComponent(g.slug || g.title.toLowerCase().replace(/\s+/g,'-'))}';" style="cursor:pointer;">${g.title}</span>`).join("")}
         </div>
 
         <!-- Tombol aksi (hanya kalau sudah login) -->
@@ -152,7 +158,7 @@ async function tampilkanDetail(d) {
                 Chapter ${nomor}
                 ${isLastRead ? `<span class="last-read-badge">Terakhir Dibaca</span>` : ""}
               </span>
-              <span>${ch.date}</span>
+              <span class="chapter-date">${ch.date}</span>
             </a>`;
         }).join("")}
       </div>
@@ -176,6 +182,7 @@ window.toggleBookmark = async function () {
     btn.className   = "btn-bookmark";
     btn.textContent = "🔖 Simpan";
     document.getElementById("kategoriPicker").style.display = "none";
+    showToast("Bookmark dihapus", "info");
   } else {
     await addBookmark(currentUser.id, {
       slug,
@@ -187,6 +194,7 @@ window.toggleBookmark = async function () {
     btn.className   = "btn-bookmark active";
     btn.textContent = "🔖 Tersimpan";
     document.getElementById("kategoriPicker").style.display = "flex";
+    showToast("Disimpan ke bookmark! 🔖", "success");
   }
   btn.disabled = false;
 };
@@ -227,10 +235,23 @@ window.toggleDarkMode = function () {
   localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
 };
 window.goHome = () => { window.location.href = "index.html"; };
-window.toggleMenu = function () {
-  const m = document.getElementById("menuDropdown");
-  m.style.display = m.style.display === "block" ? "none" : "block";
-};
+/* toggleMenu ditangani auth-header.js */
+
+/* ---- TOAST UTILITY --------------------------------------- */
+function showToast(msg, type = "info") {
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
 
 /* ---- LIVE SEARCH ----------------------------------------- */
 let searchTimeout = null;
@@ -262,3 +283,144 @@ document.addEventListener("click", e => {
   const r = document.getElementById("searchResult");
   if (r && !s?.contains(e.target) && !r.contains(e.target)) r.style.display = "none";
 });
+
+/* ============================================================
+   KOMENTAR
+   ============================================================ */
+let likedSet = new Set();
+
+async function loadComments() {
+  const section = document.getElementById("commentSection");
+  if (!section) return;
+
+  const { comments } = await getComments(slug);
+  if (currentUser) {
+    likedSet = await getLikedComments(currentUser.id);
+  }
+
+  section.innerHTML = `
+    <div class="comment-section">
+      <h3 class="comment-title">💬 Komentar <span style="font-size:12px;font-weight:400;color:var(--text-muted)">(${comments.length})</span></h3>
+
+      ${currentUser ? `
+        <div class="comment-form">
+          <textarea id="commentInput" placeholder="Tulis komentar..." rows="3"></textarea>
+          <button onclick="submitKomentar()">Kirim</button>
+        </div>
+      ` : `
+        <div class="comment-login-prompt">
+          <a href="auth.html">🔑 Login untuk berkomentar</a>
+        </div>
+      `}
+
+      <div id="commentList">
+        ${comments.length === 0
+          ? `<div class="comment-empty">Belum ada komentar. Jadilah yang pertama! 🎉</div>`
+          : comments.map(c => renderComment(c)).join("")
+        }
+      </div>
+    </div>
+  `;
+}
+
+function renderComment(c, isReply = false) {
+  const name   = c.profiles?.username || "User";
+  const avatar = c.profiles?.avatar_url;
+  const level  = c.profiles?.level || 1;
+  const isLiked = likedSet.has(c.id);
+  const isOwner = currentUser?.id === c.user_id;
+  const time   = new Date(c.created_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
+
+  const replies = (c.replies || []).map(r => renderComment(r, true)).join("");
+
+  return `
+    <div class="comment-item ${isReply ? "is-reply" : ""}" id="comment-${c.id}">
+      <div class="comment-avatar">
+        ${avatar
+          ? `<img src="${avatar}" alt="${name}">`
+          : `<div class="comment-avatar-fallback">${name[0].toUpperCase()}</div>`
+        }
+      </div>
+      <div class="comment-body">
+        <div class="comment-meta">
+          <span class="comment-username">${name}</span>
+          <span class="comment-level">Lv.${level}</span>
+          <span class="comment-time">${time}</span>
+        </div>
+        <p class="comment-text">${escapeHtml(c.content)}</p>
+        <div class="comment-actions">
+          ${currentUser ? `
+            <button class="comment-btn ${isLiked ? "liked" : ""}" onclick="likeKomentar('${c.id}', this)">
+              ❤️ ${c.like_count || 0}
+            </button>
+            ${!isReply ? `<button class="comment-btn" onclick="toggleReplyForm('${c.id}')">💬 Balas</button>` : ""}
+          ` : `<span class="comment-btn-muted">❤️ ${c.like_count || 0}</span>`}
+          ${isOwner ? `<button class="comment-btn danger" onclick="hapusKomentar('${c.id}')">🗑️</button>` : ""}
+        </div>
+        ${!isReply ? `
+          <div class="reply-form" id="reply-form-${c.id}" style="display:none">
+            <textarea placeholder="Balas komentar..." rows="2" id="reply-input-${c.id}"></textarea>
+            <button onclick="submitReply('${c.id}')">Kirim Balasan</button>
+          </div>
+          ${replies ? `<div class="replies-list">${replies}</div>` : ""}
+        ` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+window.submitKomentar = async function () {
+  const input = document.getElementById("commentInput");
+  const text  = input?.value.trim();
+  if (!text || !currentUser) return;
+
+  const btn = document.querySelector(".comment-form button");
+  input.disabled = true;
+  if (btn) { btn.disabled = true; btn.textContent = "Mengirim..."; }
+
+  const { comment, error } = await addComment(currentUser.id, slug, text);
+  if (!error && comment) {
+    input.value = "";
+    await loadComments();
+  } else {
+    if (input) input.disabled = false;
+    if (btn) { btn.disabled = false; btn.textContent = "Kirim"; }
+  }
+};
+
+window.submitReply = async function (parentId) {
+  const input = document.getElementById(`reply-input-${parentId}`);
+  const text  = input?.value.trim();
+  if (!text || !currentUser) return;
+
+  input.disabled = true;
+  const { error } = await addComment(currentUser.id, slug, text, parentId);
+  if (!error) await loadComments();
+  else if (input) input.disabled = false;
+};
+
+window.toggleReplyForm = function (commentId) {
+  const form = document.getElementById(`reply-form-${commentId}`);
+  if (form) form.style.display = form.style.display === "none" ? "block" : "none";
+};
+
+window.likeKomentar = async function (commentId, btn) {
+  if (!currentUser) { window.location.href = "auth.html"; return; }
+  const { liked } = await toggleLike(currentUser.id, commentId);
+  const countMatch = btn.textContent.match(/\d+/);
+  let count = countMatch ? parseInt(countMatch[0]) : 0;
+  count = liked ? count + 1 : Math.max(0, count - 1);
+  btn.textContent = `❤️ ${count}`;
+  btn.classList.toggle("liked", liked);
+  if (liked) likedSet.add(commentId); else likedSet.delete(commentId);
+};
+
+window.hapusKomentar = async function (commentId) {
+  if (!confirm("Hapus komentar ini?")) return;
+  await deleteComment(commentId);
+  await loadComments();
+};
