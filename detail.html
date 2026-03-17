@@ -3,38 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title></title>
+  <title>Detail Komik — Pankomik</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="header">
+
+<header class="header">
   <div class="logo" onclick="goHome()">Pankomik</div>
-
-  <input 
-    type="text" 
-    id="searchInput" 
-    placeholder="Cari komik..."
-    oninput="liveSearch()"
-  >
-
+  <input type="text" id="searchInput" placeholder="Cari komik..." oninput="liveSearch()" autocomplete="off">
   <div class="header-right">
     <button onclick="toggleDarkMode()">🌙</button>
     <button onclick="toggleMenu()">👤</button>
   </div>
 </header>
 
-<!-- hasil search -->
 <div id="searchResult" class="search-result"></div>
-  
-  <!--Dropdown Menu -->
-  <div id="menuDropdown" class="dropdown">
-    <p onclick="alert('Nanti kita buat')">Login</p>
-    <p onclick="alert('Nanti kita buat')">Register</p>
-    <p onclick="Alert('Nanti Kita Buat')">Search</p>
-  </div>
 
+<!-- Dropdown diisi auth-header.js -->
+<div id="menuDropdown" class="dropdown"></div>
+
+<!-- Konten detail diisi detail.js -->
 <div id="detailKomik"></div>
 
-<script src="detail.js"></script>
+<!--
+  Kedua script pakai type="module" karena keduanya
+  menggunakan import/export dari supabase.js
+-->
+<script type="module" src="auth-header.js"></script>
+<script type="module" src="detail.js"></script>
 </body>
 </html>
