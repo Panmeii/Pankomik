@@ -61,8 +61,8 @@ export async function loginWithGoogle() {
  * Logout
  */
 export async function logout() {
-  const { error } = await supabase.auth.signOut();
-  if (!error) window.location.href = "index.html";
+  await supabase.auth.signOut();
+  window.location.href = "index.html";
 }
 
 /**
@@ -266,6 +266,20 @@ export async function getLastRead(userId, komikSlug) {
 /* ============================================================
    READING PROGRESS
    ============================================================ */
+
+/**
+ * Ambil semua reading progress user (untuk halaman profil)
+ * Diurutkan berdasarkan waktu update terbaru
+ */
+export async function getProgress(userId) {
+  const { data, error } = await supabase
+    .from("reading_progress")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(50);
+  return { progress: data || [], error };
+}
 
 /**
  * Update progress baca.
