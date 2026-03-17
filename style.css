@@ -586,11 +586,199 @@ body {
   color: var(--accent);
 }
 
-.chapter-item span:last-child {
+.chapter-item span:last-child,
+.chapter-item .chapter-date {
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 400;
+  flex-shrink: 0;
 }
+
+/* ============================================================
+   TOAST NOTIFICATION
+   ============================================================ */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 18px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: #222230;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  white-space: nowrap;
+  animation: toastIn 0.25s ease, toastOut 0.3s ease 2.5s forwards;
+  pointer-events: auto;
+}
+
+.toast.success { background: #1a5c38; border-color: #27ae60; }
+.toast.error   { background: #5c1a1a; border-color: #e74c3c; }
+.toast.info    { background: #1a3a5c; border-color: #2980b9; }
+
+@keyframes toastIn  { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:translateY(0); } }
+@keyframes toastOut { from { opacity:1; } to { opacity:0; pointer-events:none; } }
+
+/* ============================================================
+   LOADING SKELETON
+   ============================================================ */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-surface) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius);
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Skeleton card */
+.skeleton-card {
+  min-width: 130px;
+  max-width: 130px;
+  height: 210px;
+  flex-shrink: 0;
+}
+
+.skeleton-grid {
+  height: 220px;
+}
+
+/* ============================================================
+   GENRE SECTION DI INDEX
+   ============================================================ */
+.genre-section-wrap {
+  padding: 10px 14px 4px;
+}
+
+.genre-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.genre-see-all {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: opacity 0.2s;
+}
+
+.genre-see-all:hover { opacity: 0.75; }
+
+.genre-chips-index {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.genre-chips-index::-webkit-scrollbar { display: none; }
+
+.genre-chip-index {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.1s;
+}
+
+.genre-chip-index:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: scale(1.04);
+}
+
+/* ============================================================
+   GENRE BROWSE CARDS (halaman genre.html mode semua genre)
+   ============================================================ */
+.genre-browse-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  min-height: 80px;
+}
+
+.genre-browse-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 6px 18px rgba(232,82,42,0.2);
+}
+
+.genre-browse-emoji {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.genre-browse-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+/* ---- BACK TO TOP ----------------------------------------- */
+#backToTop {
+  position: fixed;
+  bottom: 20px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(232,82,42,0.5);
+  transition: transform 0.15s, opacity 0.2s;
+}
+
+#backToTop.visible { display: flex; }
+#backToTop:hover   { transform: translateY(-3px); }
+#backToTop:active  { transform: scale(0.9); }
 
 /* ============================================================
    DETAIL PAGE — TOMBOL AKSI (Fase 2)
@@ -807,4 +995,236 @@ body.light .chapter-item.last-read {
   border-radius: 99px;
   vertical-align: middle;
   letter-spacing: 0.3px;
+}
+/* ============================================================
+   COMMENT SECTION
+   ============================================================ */
+.comment-section {
+  padding: 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+
+.comment-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.comment-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.comment-form textarea:focus { border-color: var(--accent); }
+
+.comment-form button {
+  align-self: flex-end;
+  padding: 8px 18px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.comment-form button:hover { background: #c73f1c; }
+
+.comment-login-prompt {
+  text-align: center;
+  padding: 14px;
+  margin-bottom: 16px;
+  background: var(--bg-surface);
+  border-radius: 9px;
+  border: 1px solid var(--border);
+}
+
+.comment-login-prompt a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.comment-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+/* Satu item komentar */
+.comment-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.comment-item:last-child { border-bottom: none; }
+
+/* Komentar balasan (indented) */
+.comment-item.is-reply {
+  padding: 8px 0 4px;
+  border-bottom: none;
+}
+
+/* Avatar komentar */
+.comment-avatar img,
+.comment-avatar-fallback {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.comment-avatar-fallback {
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.comment-body { flex: 1; }
+
+.comment-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.comment-username {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.comment-level {
+  font-size: 10px;
+  padding: 1px 6px;
+  background: rgba(232,82,42,0.12);
+  color: var(--accent);
+  border-radius: 99px;
+  font-weight: 700;
+}
+
+.comment-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.comment-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  margin-bottom: 6px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Tombol aksi komentar (like, balas, hapus) */
+.comment-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.comment-btn {
+  padding: 3px 9px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.comment-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.comment-btn.liked {
+  background: rgba(232,82,42,0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.comment-btn.danger:hover {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.comment-btn-muted {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Form reply */
+.reply-form {
+  margin-top: 8px;
+}
+
+.reply-form textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  resize: vertical;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.reply-form textarea:focus { border-color: var(--accent); }
+
+.reply-form button {
+  margin-top: 6px;
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Daftar reply di bawah komentar utama */
+.replies-list {
+  margin-top: 8px;
+  padding-left: 10px;
+  border-left: 2px solid var(--border);
 }
