@@ -280,6 +280,111 @@
       font-weight: 700;
       cursor: pointer;
     }
+
+    /* ---- LEVEL CARD -------------------------------------- */
+    .level-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(232,82,42,0.06) 100%);
+    }
+
+    .level-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .level-number {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .level-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .level-total {
+      text-align: right;
+    }
+
+    .level-total span {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text);
+      display: block;
+      line-height: 1;
+    }
+
+    .level-total small {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* ---- BADGE GRID -------------------------------------- */
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .badge-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .badge-card.owned {
+      border-color: var(--accent);
+      background: rgba(232,82,42,0.06);
+    }
+
+    .badge-card.locked {
+      opacity: 0.6;
+    }
+
+    .badge-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+
+    .badge-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+    }
+
+    .badge-name {
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .badge-desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .badge-status-owned {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #27ae60;
+      font-weight: 700;
+    }
+
+    .badge-status-locked {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -305,7 +410,7 @@
 </div>
 
 <script type="module">
-  import { getCurrentUser, getProfile, updateProfile, uploadAvatar, getBookmarks, removeBookmark, addBookmark, getHistory } from "./supabase.js";
+  import { getCurrentUser, getProfile, updateProfile, uploadAvatar, getBookmarks, removeBookmark, addBookmark, getHistory, getProgress } from "./supabase.js";
   import { initAuthHeader } from "./auth-header.js";
 
   let currentUser = null;
@@ -319,7 +424,7 @@
     if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
 
     /* Init header */
-    initAuthHeader();
+    await initAuthHeader();
 
     currentUser = await getCurrentUser();
 
@@ -383,6 +488,8 @@
       <div class="profile-tabs">
         <button class="profile-tab active" id="tab-bookmark" onclick="switchTab('bookmark')">🔖 Bookmark</button>
         <button class="profile-tab" id="tab-history" onclick="switchTab('history')">📖 Riwayat</button>
+        <button class="profile-tab" id="tab-progress" onclick="switchTab('progress')">📊 Progress</button>
+        <button class="profile-tab" id="tab-badge" onclick="switchTab('badge')">🏅 Badge</button>
         <button class="profile-tab" id="tab-settings" onclick="switchTab('settings')">⚙️ Edit Profil</button>
       </div>
 
@@ -401,6 +508,20 @@
       <!-- Tab: Riwayat -->
       <div class="tab-content" id="content-history">
         <div id="historyList">
+          <div class="empty-state"><p>⏳</p><p>Memuat...</p></div>
+        </div>
+      </div>
+
+      <!-- Tab: Progress -->
+      <div class="tab-content" id="content-progress">
+        <div id="progressList">
+          <div class="empty-state"><p>⏳</p><p>Memuat...</p></div>
+        </div>
+      </div>
+
+      <!-- Tab: Badge & Level -->
+      <div class="tab-content" id="content-badge">
+        <div id="badgeContent">
           <div class="empty-state"><p>⏳</p><p>Memuat...</p></div>
         </div>
       </div>
@@ -428,7 +549,9 @@
     document.getElementById(`tab-${tab}`)?.classList.add("active");
     document.getElementById(`content-${tab}`)?.classList.add("active");
 
-    if (tab === "history") loadHistory();
+    if (tab === "history")  loadHistory();
+    if (tab === "progress") loadProgressTab();
+    if (tab === "badge")    loadBadgeTab();
   };
 
   /* ---- BOOKMARK ---------------------------------------- */
@@ -521,7 +644,155 @@
     document.getElementById("avatarImg").src = url;
   };
 
-  /* ---- SIMPAN PROFIL ----------------------------------- */
+  /* ---- PROGRESS TRACKING --------------------------------- */
+  async function loadProgressTab() {
+    const el = document.getElementById("progressList");
+    el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
+
+    const { progress } = await getProgress(currentUser.id);
+
+    if (!progress.length) {
+      el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`;
+      return;
+    }
+
+    el.innerHTML = progress.map(p => {
+      const pct = p.total_chapters > 0
+        ? Math.min(100, Math.round((p.read_chapters / p.total_chapters) * 100))
+        : 0;
+      const pctLabel = p.total_chapters > 0 ? `${pct}%` : "—";
+      const chapLabel = p.total_chapters > 0
+        ? `${p.read_chapters} / ${p.total_chapters} chapter`
+        : `${p.read_chapters} chapter dibaca`;
+      const updated = new Date(p.updated_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
+
+      return `
+        <div class="komik-list-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+          <div style="display:flex;gap:12px;align-items:center;width:100%;">
+            <div style="flex:1;min-width:0;">
+              <div class="title" style="cursor:pointer;font-size:13px;font-weight:700;margin-bottom:3px;
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
+                onclick="gotoDetail('${p.komik_slug}')">
+                ${p.komik_title}
+              </div>
+              <p style="font-size:11px;color:var(--text-muted);margin:0;">
+                📖 ${chapLabel} &nbsp;·&nbsp; 🕒 ${updated}
+              </p>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <span style="font-size:16px;font-weight:800;color:var(--accent);">${pctLabel}</span>
+            </div>
+          </div>
+          ${p.total_chapters > 0 ? `
+            <div class="progress-bar-wrap" style="width:100%;">
+              <div class="progress-bar-fill" style="width:${pct}%"></div>
+            </div>
+          ` : ""}
+          <div style="display:flex;gap:6px;width:100%;">
+            ${p.last_chapter_slug ? `
+              <button class="btn-sm primary"
+                onclick="window.location.href='reader.html?slug=${p.last_chapter_slug}'">
+                ▶️ Lanjut Baca
+              </button>
+            ` : ""}
+            <button class="btn-sm" onclick="gotoDetail('${p.komik_slug}')">Detail</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  /* ---- BADGE & LEVEL TAB --------------------------------- */
+  async function loadBadgeTab() {
+    const el = document.getElementById("badgeContent");
+    const totalChapters = currentProfile?.total_chapters_read || 0;
+    const level         = currentProfile?.level || 1;
+    const title         = getLevelTitle(level);
+
+    /* XP dalam level saat ini (setiap 50 chapter = 1 level) */
+    const xpInLevel     = totalChapters % 50;
+    const xpPct         = Math.round((xpInLevel / 50) * 100);
+    const chapToNextLvl = 50 - xpInLevel;
+
+    /* Ambil semua badge dari profile (sudah di-fetch sebelumnya) */
+    const ownedBadges   = currentProfile?.user_badges || [];
+    const ownedIds      = new Set(ownedBadges.map(b => b.badge_id));
+
+    /* Definisi semua badge (sama seperti di SQL) */
+    const allBadges = [
+      { name:"Pemula",        icon:"📖", desc:"Baca 1 chapter pertama",     min_chapters:1,    min_comments:0  },
+      { name:"Pembaca Aktif", icon:"🔥", desc:"Sudah baca 50 chapter",      min_chapters:50,   min_comments:0  },
+      { name:"Otaku",         icon:"⭐", desc:"Sudah baca 200 chapter",     min_chapters:200,  min_comments:0  },
+      { name:"Legenda",       icon:"👑", desc:"Sudah baca 500 chapter",     min_chapters:500,  min_comments:0  },
+      { name:"Top Reader",    icon:"🏆", desc:"Sudah baca 1000 chapter",    min_chapters:1000, min_comments:0  },
+      { name:"Komentator",    icon:"💬", desc:"Sudah buat 10 komentar",     min_chapters:0,    min_comments:10 },
+    ];
+
+    el.innerHTML = `
+      <!-- Level card -->
+      <div class="level-card">
+        <div class="level-top">
+          <div>
+            <div class="level-number">Level ${level}</div>
+            <div class="level-title">${title}</div>
+          </div>
+          <div class="level-total">
+            <span>${totalChapters}</span>
+            <small>Chapter Dibaca</small>
+          </div>
+        </div>
+        <div style="margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;font-size:11px;
+            color:var(--text-muted);margin-bottom:5px;">
+            <span>XP Level ${level}</span>
+            <span>${xpInLevel}/50 — ${chapToNextLvl} lagi ke Level ${level+1}</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width:${xpPct}%;background:linear-gradient(90deg,var(--accent),#f5a623);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Badge grid -->
+      <div style="margin-top:16px;">
+        <p style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text);">
+          🏅 Koleksi Badge
+          <span style="font-weight:400;font-size:12px;color:var(--text-muted)">
+            (${ownedBadges.length}/${allBadges.length} didapat)
+          </span>
+        </p>
+        <div class="badge-grid">
+          ${allBadges.map(b => {
+            const owned   = ownedBadges.some(ob => ob.badges?.name === b.name);
+            const progress = b.min_chapters > 0
+              ? Math.min(100, Math.round((totalChapters / b.min_chapters) * 100))
+              : 0;
+            return `
+              <div class="badge-card ${owned ? "owned" : "locked"}">
+                <div class="badge-icon">${b.icon}</div>
+                <div class="badge-name">${b.name}</div>
+                <div class="badge-desc">${b.desc}</div>
+                ${owned ? `
+                  <div class="badge-status-owned">✅ Didapat</div>
+                ` : b.min_chapters > 0 ? `
+                  <div style="margin-top:6px;">
+                    <div class="progress-bar-wrap">
+                      <div class="progress-bar-fill" style="width:${progress}%"></div>
+                    </div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:3px;text-align:center;">
+                      ${totalChapters}/${b.min_chapters} chapter
+                    </div>
+                  </div>
+                ` : `<div class="badge-status-locked">🔒 Terkunci</div>`}
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  /* ---- SIMPAN PROFIL ------------------------------------- */
   window.saveProfile = async function() {
     const username = document.getElementById("usernameInput").value.trim();
     if (!username) { alert("Username tidak boleh kosong."); return; }
