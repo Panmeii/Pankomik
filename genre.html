@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genre — Pankomik</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ============================================================
+       GENRE PAGE — Layout & komponen khusus
+       ============================================================ */
+
+    /* ---- GENRE HERO ----------------------------------------- */
+    .genre-hero {
+      padding: 18px 14px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .genre-hero-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .genre-back-btn {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: background 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .genre-back-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    .genre-active-name {
+      font-family: 'Bangers', cursive;
+      font-size: 24px;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .genre-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ---- GENRE CHIPS SCROLL --------------------------------- */
+    .genre-chips-wrap {
+      position: relative;
+    }
+
+    .genre-chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scroll-behavior: smooth;
+      /* sembunyikan scrollbar tapi tetap bisa scroll */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .genre-chips::-webkit-scrollbar { display: none; }
+
+    .genre-chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.1s;
+    }
+
+    .genre-chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .genre-chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(232,82,42,0.35);
+    }
+
+    .genre-chip:active { transform: scale(0.94); }
+
+    /* Fade edge kanan biar keliatan ada lagi */
+    .genre-chips-wrap::after {
+      content: "";
+      position: absolute;
+      right: 0; top: 0; bottom: 6px;
+      width: 40px;
+      background: linear-gradient(to right, transparent, var(--bg));
+      pointer-events: none;
+    }
+
+    /* ---- SORT & FILTER BAR ---------------------------------- */
+    .genre-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sort-select {
+      flex: 1;
+      padding: 7px 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .sort-select:focus { border-color: var(--accent); }
+
+    .type-filter-btns {
+      display: flex;
+      gap: 5px;
+    }
+
+    .type-btn {
+      padding: 6px 11px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .type-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .type-btn:hover:not(.active) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ---- KOMIK GRID ----------------------------------------- */
+    .genre-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 12px 14px;
+    }
+
+    .genre-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .genre-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(232,82,42,0.2);
+    }
+
+    .genre-card img {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+    }
+
+    .genre-card-info {
+      padding: 6px 7px 8px;
+    }
+
+    .genre-card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.35;
+      margin-bottom: 3px;
+    }
+
+    .genre-card-rating {
+      font-size: 10px;
+      color: var(--accent2);
+      font-weight: 700;
+    }
+
+    .genre-card-type {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      font-size: 8px;
+      font-weight: 800;
+      padding: 2px 5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* ---- PAGINATION ----------------------------------------- */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 16px 14px 24px;
+    }
+
+    .page-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    /* ---- LOADING STATE ------------------------------------- */
+    .genre-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 12px;
+      color: var(--text-muted);
+    }
+
+    .genre-loading .spin {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---- EMPTY STATE --------------------------------------- */
+    .genre-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .genre-empty p:first-child { font-size: 40px; margin-bottom: 10px; }
+    .genre-empty p:last-child  { font-size: 13px; }
+
+    /* ---- SKELETON ------------------------------------------ */
+    .genre-card.skeleton img {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-surface) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      aspect-ratio: 2/3;
+      width: 100%;
+    }
+
+    .genre-card.skeleton .genre-card-title,
+    .genre-card.skeleton .genre-card-rating {
+      background: linear-gradient(90deg, var(--bg-surface) 25%, var(--border) 50%, var(--bg-surface) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      border-radius: 4px;
+      color: transparent;
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo" onclick="goHome()">Pankomik</div>
+  <input type="text" id="searchInput" placeholder="Cari komik..." oninput="liveSearch()" autocomplete="off">
+  <div class="header-right">
+    <button onclick="toggleDarkMode()" title="Ganti Tema">🌙</button>
+    <button onclick="toggleMenu()" title="Menu">👤</button>
+  </div>
+</header>
+
+<div id="searchResult" class="search-result"></div>
+<div id="menuDropdown" class="dropdown"></div>
+<div class="toast-container" id="toastContainer"></div>
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
+
+<!-- Hero + Genre Chip Selector -->
+<div class="genre-hero">
+  <div class="genre-hero-top">
+    <button class="genre-back-btn" onclick="goHome()">← Beranda</button>
+    <span class="genre-active-name" id="activeGenreName">Semua Genre</span>
+    <span class="genre-count" id="activeGenreCount"></span>
+  </div>
+  <!-- Genre chips diisi JS -->
+  <div class="genre-chips-wrap">
+    <div class="genre-chips" id="genreChips">
+      <div class="genre-chip skeleton" style="width:70px;height:32px;border-radius:99px;"></div>
+      <div class="genre-chip skeleton" style="width:80px;height:32px;border-radius:99px;"></div>
+      <div class="genre-chip skeleton" style="width:60px;height:32px;border-radius:99px;"></div>
+      <div class="genre-chip skeleton" style="width:90px;height:32px;border-radius:99px;"></div>
+      <div class="genre-chip skeleton" style="width:70px;height:32px;border-radius:99px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toolbar sort + type filter -->
+<div class="genre-toolbar">
+  <select class="sort-select" id="sortSelect" onchange="onSortChange()">
+    <option value="">📊 Default</option>
+    <option value="rating">⭐ Rating Tertinggi</option>
+    <option value="az">🔤 A → Z</option>
+  </select>
+  <div class="type-filter-btns" id="typeFilterBtns">
+    <button class="type-btn active" onclick="setTypeFilter('', this)">Semua</button>
+    <button class="type-btn" onclick="setTypeFilter('manga', this)">Manga</button>
+    <button class="type-btn" onclick="setTypeFilter('manhwa', this)">Manhwa</button>
+    <button class="type-btn" onclick="setTypeFilter('manhua', this)">Manhua</button>
+  </div>
+</div>
+
+<!-- Grid komik -->
+<div class="genre-grid" id="genreGrid"></div>
+
+<!-- Pagination -->
+<div class="pagination" id="pagination" style="display:none;">
+  <button class="page-btn" id="prevPageBtn" onclick="changePage(-1)">← Prev</button>
+  <span class="page-info" id="pageInfo">Hal 1</span>
+  <button class="page-btn" id="nextPageBtn" onclick="changePage(1)">Next →</button>
+</div>
+
+<script type="module">
+  import { initAuthHeader } from "./auth-header.js";
+  initAuthHeader();
+</script>
+
+<script>
+/* ============================================================
+   GENRE PAGE — genre.js (inline)
+   ============================================================ */
+
+const GENRES_API = "https://www.sankavollerei.com/comic/bacakomik/genres";
+const GENRE_API  = "https://www.sankavollerei.com/comic/bacakomik/genre/";
+
+/* ---- STATE ---------------------------------------------- */
+let allGenres     = [];
+let currentGenre  = null; /* null = tampilkan daftar genre */
+let currentPage   = 1;
+let hasNextPage   = false;
+let typeFilter    = "";
+let sortMode      = "";
+let allFetched    = []; /* simpan semua hasil untuk filter/sort lokal */
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.addEventListener("DOMContentLoaded", async () => {
+  if (localStorage.getItem("theme") === "light") {
+    document.body.classList.add("light");
+  }
+
+  /* Cek apakah ada genre dari URL param ?genre=action */
+  const params = new URLSearchParams(window.location.search);
+  const genreFromUrl = params.get("genre");
+
+  await loadGenreList();
+
+  if (genreFromUrl) {
+    /* Aktifkan genre dari URL */
+    const found = allGenres.find(g => g.slug === genreFromUrl);
+    if (found) {
+      selectGenre(found.slug, found.title);
+    } else {
+      /* Fallback: langsung fetch meski tidak ada di list */
+      selectGenre(genreFromUrl, genreFromUrl.charAt(0).toUpperCase() + genreFromUrl.slice(1));
+    }
+  } else {
+    /* Tidak ada param → tampilkan daftar genre sebagai grid besar */
+    showGenreBrowse();
+  }
+
+  /* Back to top */
+  const btn = document.getElementById("backToTop");
+  if (btn) {
+    window.addEventListener("scroll", () => {
+      btn.classList.toggle("visible", window.scrollY > 300);
+    });
+  }
+});
+
+/* ============================================================
+   FETCH LIST GENRE
+   ============================================================ */
+async function loadGenreList() {
+  try {
+    const res  = await fetch(GENRES_API);
+    const data = await res.json();
+    allGenres = data.genres || [];
+    renderGenreChips();
+  } catch (err) {
+    console.error("Gagal fetch genre list:", err);
+    document.getElementById("genreChips").innerHTML =
+      `<p style="color:var(--text-muted);font-size:12px;padding:4px;">Gagal memuat genre.</p>`;
+  }
+}
+
+/* ============================================================
+   RENDER GENRE CHIPS (horizontal scroll pills)
+   ============================================================ */
+function renderGenreChips() {
+  const container = document.getElementById("genreChips");
+  if (!allGenres.length) { container.innerHTML = ""; return; }
+
+  /* Deduplicate: kalau ada "Actio" dan "Action", "Actio" kayak typo → filter min 3 char */
+  const cleaned = allGenres.filter(g => g.title.length >= 3);
+
+  container.innerHTML = cleaned.map(g => `
+    <button
+      class="genre-chip ${currentGenre === g.slug ? "active" : ""}"
+      id="chip-${g.slug}"
+      onclick="selectGenre('${g.slug}', '${g.title.replace(/'/g,"\\'")}')">
+      ${g.title}
+    </button>
+  `).join("");
+}
+
+/* ============================================================
+   SELECT GENRE → fetch komik
+   ============================================================ */
+function selectGenre(slug, title) {
+  currentGenre = slug;
+  currentPage  = 1;
+  allFetched   = [];
+  typeFilter   = "";
+  sortMode     = "";
+
+  /* Reset toolbar */
+  document.getElementById("sortSelect").value = "";
+  document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+  document.querySelector(".type-btn")?.classList.add("active"); /* "Semua" */
+
+  /* Update chip aktif */
+  document.querySelectorAll(".genre-chip").forEach(c => c.classList.remove("active"));
+  const activeChip = document.getElementById(`chip-${slug}`);
+  if (activeChip) {
+    activeChip.classList.add("active");
+    activeChip.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+  }
+
+  /* Update judul */
+  document.getElementById("activeGenreName").textContent = title;
+  document.getElementById("activeGenreCount").textContent = "";
+
+  /* Update URL tanpa reload */
+  const url = new URL(window.location.href);
+  url.searchParams.set("genre", slug);
+  history.pushState({}, "", url);
+
+  /* Fetch */
+  fetchGenreKomik(slug, 1);
+}
+
+/* ============================================================
+   FETCH KOMIK BY GENRE
+   ============================================================ */
+async function fetchGenreKomik(slug, page) {
+  const grid = document.getElementById("genreGrid");
+  const pagination = document.getElementById("pagination");
+
+  /* Skeleton */
+  grid.innerHTML = Array(9).fill(`
+    <div class="genre-card skeleton">
+      <img alt="" style="aspect-ratio:2/3;width:100%;display:block;">
+      <div class="genre-card-info">
+        <div class="genre-card-title">⠀⠀⠀⠀⠀⠀⠀</div>
+        <div class="genre-card-rating">⠀⠀⠀</div>
+      </div>
+    </div>`).join("");
+  pagination.style.display = "none";
+
+  try {
+    const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}?page=${page}`);
+    const data = await res.json();
+
+    allFetched  = data.komikList || [];
+    hasNextPage = !!data.hasNextPage;
+    currentPage = data.currentPage || page;
+
+    document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
+
+    applyFilterAndSort();
+    renderPagination();
+
+  } catch (err) {
+    console.error("Gagal fetch genre komik:", err);
+    grid.innerHTML = `
+      <div style="grid-column:1/-1" class="genre-empty">
+        <p>😕</p>
+        <p>Gagal memuat. Cek koneksi internet.</p>
+      </div>`;
+    pagination.style.display = "none";
+  }
+}
+
+/* ============================================================
+   FILTER & SORT (dilakukan lokal dari data yang sudah di-fetch)
+   ============================================================ */
+function applyFilterAndSort() {
+  let list = [...allFetched];
+
+  /* Filter by type */
+  if (typeFilter) {
+    list = list.filter(k => k.type?.toLowerCase() === typeFilter);
+  }
+
+  /* Sort */
+  if (sortMode === "rating") {
+    list.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+  } else if (sortMode === "az") {
+    list.sort((a, b) => a.title.localeCompare(b.title, "id"));
+  }
+
+  renderGenreGrid(list);
+}
+
+function onSortChange() {
+  sortMode = document.getElementById("sortSelect").value;
+  applyFilterAndSort();
+}
+
+function setTypeFilter(type, btn) {
+  typeFilter = type;
+  document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  applyFilterAndSort();
+}
+
+/* ============================================================
+   RENDER GRID KOMIK
+   ============================================================ */
+function renderGenreGrid(list) {
+  const grid = document.getElementById("genreGrid");
+
+  if (!list.length) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1" class="genre-empty">
+        <p>📭</p>
+        <p>Tidak ada komik dengan filter ini.</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = list.map(k => {
+    const cover = k.cover.split("?")[0];
+    const type  = k.type?.toLowerCase() || "";
+    const typeColor = type === "manhwa" ? "#27ae60" : type === "manhua" ? "#2980b9" : "#c0392b";
+    return `
+      <div class="genre-card" onclick="window.location.href='detail.html?slug=${k.slug}'">
+        <img src="${cover}" alt="${escHtml(k.title)}" loading="lazy">
+        <span class="genre-card-type badge ${type}">${k.type || ""}</span>
+        <div class="genre-card-info">
+          <div class="genre-card-title">${escHtml(k.title)}</div>
+          <div class="genre-card-rating">⭐ ${k.rating}</div>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+function renderPagination() {
+  const wrap    = document.getElementById("pagination");
+  const prevBtn = document.getElementById("prevPageBtn");
+  const nextBtn = document.getElementById("nextPageBtn");
+  const info    = document.getElementById("pageInfo");
+
+  wrap.style.display = (currentPage > 1 || hasNextPage) ? "flex" : "none";
+  prevBtn.disabled = currentPage <= 1;
+  nextBtn.disabled = !hasNextPage;
+  info.textContent = `Hal ${currentPage}`;
+}
+
+function changePage(dir) {
+  const newPage = currentPage + dir;
+  if (newPage < 1) return;
+  if (!hasNextPage && dir > 0) return;
+
+  currentPage = newPage;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  fetchGenreKomik(currentGenre, currentPage);
+}
+
+/* ============================================================
+   MODE: BROWSE SEMUA GENRE (tampilkan grid genre besar)
+   jika tidak ada param di URL
+   ============================================================ */
+function showGenreBrowse() {
+  document.getElementById("activeGenreName").textContent = "Semua Genre";
+  document.getElementById("activeGenreCount").textContent = `(${allGenres.length})`;
+
+  const grid = document.getElementById("genreGrid");
+  const pagination = document.getElementById("pagination");
+  pagination.style.display = "none";
+
+  if (!allGenres.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1" class="genre-empty"><p>😕</p><p>Gagal memuat genre.</p></div>`;
+    return;
+  }
+
+  /* Deduplicate dan filter */
+  const cleaned = allGenres.filter(g => g.title.length >= 3);
+
+  /* Render grid genre dengan emoji acak */
+  const emojiMap = {
+    action:"⚔️", adventure:"🗺️", comedy:"😄", drama:"🎭", fantasy:"🧙",
+    horror:"👻", romance:"💕", "sci-fi":"🚀", mystery:"🔍", sports:"⚽",
+    thriller:"😱", school:"🏫", supernatural:"✨", magic:"🪄", slice:"🍞",
+    martial:"🥋", historical:"📜", psychological:"🧠", isekai:"🌀",
+    mecha:"🤖", military:"🪖", music:"🎵", cooking:"🍳", ecchi:"🌸",
+    josei:"👩", seinen:"👨", shoujo:"🌹", shounen:"💥", yaoi:"💙", yuri:"💜"
+  };
+
+  const getEmoji = (slug) => {
+    const key = Object.keys(emojiMap).find(k => slug.toLowerCase().includes(k));
+    return key ? emojiMap[key] : "📚";
+  };
+
+  /* Gunakan style genre browse (beda dari grid komik) */
+  grid.style.gridTemplateColumns = "repeat(3, 1fr)";
+  grid.innerHTML = cleaned.map(g => `
+    <div
+      class="genre-browse-card"
+      onclick="selectGenre('${g.slug}', '${g.title.replace(/'/g,"\\'")}')">
+      <span class="genre-browse-emoji">${getEmoji(g.slug)}</span>
+      <span class="genre-browse-name">${g.title}</span>
+    </div>
+  `).join("");
+}
+
+/* ============================================================
+   SEARCH (shared dengan halaman lain)
+   ============================================================ */
+let searchTimeout = null;
+
+function liveSearch() {
+  const query     = document.getElementById("searchInput").value.trim();
+  const resultBox = document.getElementById("searchResult");
+  if (!query) { resultBox.style.display = "none"; return; }
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(async () => {
+    try {
+      const res  = await fetch(`https://www.sankavollerei.com/comic/bacakomik/search/${encodeURIComponent(query)}`);
+      const data = await res.json();
+      const list = data.komikList;
+      resultBox.innerHTML = "";
+      if (!list?.length) { resultBox.style.display = "none"; return; }
+      list.slice(0, 5).forEach(k => {
+        const item = document.createElement("div");
+        item.className = "search-item";
+        item.innerHTML = `<img src="${k.cover.split("?")[0]}" loading="lazy"><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`;
+        item.onclick = () => window.location.href = `detail.html?slug=${k.slug}`;
+        resultBox.appendChild(item);
+      });
+      resultBox.style.display = "block";
+    } catch(e) { console.error(e); }
+  }, 400);
+}
+
+document.addEventListener("click", e => {
+  const s = document.getElementById("searchInput");
+  const r = document.getElementById("searchResult");
+  const m = document.getElementById("menuDropdown");
+  const t = document.querySelector('button[onclick="toggleMenu()"]');
+  if (r && s && !s.contains(e.target) && !r.contains(e.target)) r.style.display = "none";
+  if (m && t && !m.contains(e.target) && !t.contains(e.target)) m.style.display = "none";
+});
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+function escHtml(str) {
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function goHome() { window.location.href = "index.html"; }
+
+function toggleDarkMode() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+}
+</script>
+</body>
+</html>
