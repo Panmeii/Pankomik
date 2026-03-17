@@ -429,6 +429,7 @@ body.dark p {
   overflow-y: auto;
   background: #1a1a1a;
   border-radius: 8px;
+  text-decoration: none;
 }
 
 .chapter-item {
