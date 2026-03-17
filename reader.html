@@ -68,7 +68,10 @@
 <!--
   Kedua script pakai type="module" karena pakai import dari supabase.js
 -->
-<script type="module" src="auth-header.js"></script>
+<script type="module">
+  import { initAuthHeader } from "./auth-header.js";
+  initAuthHeader();
+</script>
 <script type="module" src="reader.js"></script>
 </body>
 </html>
