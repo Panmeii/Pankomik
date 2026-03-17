@@ -1,112 +1,201 @@
-/* BASE */
-body {
+/* ============================================================
+   PANKOMIK - reader.css
+   File ini mengatur tampilan halaman baca komik (reader.html)
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+/* ---- RESET & BASE ----------------------------------------- */
+*, *::before, *::after {
   margin: 0;
-  background: #0f0f0f;
-  color: #fff;
-  font-family: 'Segoe UI', sans-serif;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* HEADER */
+html { scroll-behavior: smooth; }
+
+body {
+  background: #0e0e12;
+  color: #eaeaf0;
+  font-family: 'Nunito', sans-serif;
+  overscroll-behavior: none; /* cegah bounce di iOS */
+}
+
+/* ============================================================
+   HEADER READER
+   Posisinya fixed (menempel di atas), otomatis sembunyikan saat scroll
+   ============================================================ */
 .reader-header {
   position: fixed;
   top: 0;
-  width: 100%;
-  background: rgba(15, 15, 15, 0.85);
-  backdrop-filter: blur(10px);
+  left: 0;
+  right: 0;
+  z-index: 999;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
-  z-index: 999;
+  padding: 10px 14px;
+  background: rgba(14, 14, 18, 0.88);
+  backdrop-filter: blur(14px);        /* efek kaca buram */
+  border-bottom: 1px solid rgba(255,255,255,0.07);
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-/* HEADER HILANG */
+/* Kelas .hide ditambahkan JS saat user scroll ke bawah */
 .reader-header.hide {
   transform: translateY(-100%);
   opacity: 0;
+  pointer-events: none; /* tidak bisa diklik saat tersembunyi */
 }
 
-/* BUTTON */
-.reader-header button {
-  background: #1f1f1f;
-  border: none;
-  color: white;
-  padding: 6px 10px;
-  margin: 0 2px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.reader-header button:hover {
-  background: #333;
-}
-
-/* TITLE */
+/* Judul chapter di tengah header */
 .reader-header h3 {
-  font-size: 14px;
-  max-width: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  max-width: 45%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  color: #ccc;
 }
 
-/* READER */
+/* Tombol di header (home, prev, next, settings) */
+.reader-header button {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #eaeaf0;
+  padding: 6px 10px;
+  margin: 0 2px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.reader-header button:hover  { background: rgba(255,255,255,0.15); }
+.reader-header button:active { transform: scale(0.90); }
+
+/* Grup tombol kanan (prev/next/settings) */
+.reader-header .btn-group {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ============================================================
+   AREA GAMBAR KOMIK
+   ============================================================ */
 #reader {
-  margin-top: 60px;
+  margin-top: 58px;     /* ruang untuk header fixed */
   text-align: center;
+  padding-bottom: 40px;
 }
 
-/* IMAGE */
+/* Setiap gambar chapter */
 #reader img {
   width: 100%;
-  max-width: 800px;
-  margin: 8px auto;
+  max-width: 720px;     /* batas lebar agar nyaman dibaca */
+  margin: 0 auto;
   display: block;
-  border-radius: 8px;
-  transition: transform 0.2s;
+  /* Tidak ada gap antar gambar agar menyatu seperti baca komik asli */
 }
 
-#reader img:hover {
-  transform: scale(1.01);
-}
-
-/* SETTINGS PANEL */
+/* ============================================================
+   PANEL SETTINGS
+   Muncul di pojok kanan atas saat tombol ⚙️ diklik
+   ============================================================ */
 .settings {
   position: fixed;
   right: 10px;
-  top: 70px;
-  background: rgba(20, 20, 20, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 15px;
+  top: 66px;
+  width: 210px;
+  background: rgba(20, 20, 28, 0.96);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.10);
   border-radius: 12px;
-  display: none;
+  padding: 16px;
   z-index: 1000;
-  width: 200px;
+  display: none;        /* tersembunyi secara default */
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  animation: popIn 0.15s ease;
 }
 
-.settings.active {
-  display: block;
+/* Animasi panel muncul */
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
+
+/* Kelas .active ditambahkan JS saat tombol ⚙️ diklik */
+.settings.active { display: block; }
 
 .settings h3 {
-  margin-top: 0;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 12px;
+  color: #e8522a;
 }
 
+/* Label tiap opsi settings */
 .settings label {
-  font-size: 13px;
-  margin-top: 10px;
   display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 12px 0 4px;
 }
 
-.settings input,
-.settings select {
+/* Dropdown (select) dan range slider */
+.settings select,
+.settings input[type="range"] {
   width: 100%;
-  margin-top: 5px;
+  accent-color: #e8522a;  /* warna thumb slider & focus */
 }
 
-/* SMOOTH SCROLL */
-html {
-  scroll-behavior: smooth;
+.settings select {
+  padding: 6px 8px;
+  background: rgba(255,255,255,0.06);
+  color: #eaeaf0;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
 }
 
+/* Tombol auto scroll */
+.settings .btn-auto {
+  margin-top: 12px;
+  width: 100%;
+  padding: 8px;
+  background: #e8522a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.settings .btn-auto:hover  { background: #c73f1c; }
+.settings .btn-auto:active { transform: scale(0.96); }
+
+/* Saat auto scroll aktif, warnanya berubah */
+.settings .btn-auto.running {
+  background: #27ae60;
+}
+
+.settings .btn-auto.running:hover {
+  background: #1e8449;
+}
+
+/* ============================================================
+   SCROLLBAR KUSTOM
+   ============================================================ */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e8522a; border-radius: 99px; }
