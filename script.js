@@ -195,6 +195,9 @@ function tampilkanSearch(list) {
     `;
 
     resultBox.appendChild(item);
+    item.onclick = () => {
+  window.location.href = `detail.html?slug=${komik.slug}`;
+};
   });
 
   resultBox.style.display = "block";
