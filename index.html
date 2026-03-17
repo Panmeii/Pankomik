@@ -37,8 +37,31 @@
 -->
 <div id="menuDropdown" class="dropdown"></div>
 
+<!-- Toast notifikasi -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Tombol kembali ke atas -->
+<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
+
 <h2 class="section-title"><span>🔥</span>Top Komik</h2>
 <div id="topKomik" class="slider"></div>
+
+<!-- Genre Filter Chips -->
+<div class="genre-section-wrap">
+  <div class="genre-section-header">
+    <h2 class="section-title" style="padding:0;margin:0;"><span>🏷️</span>Genre</h2>
+    <button class="genre-see-all" onclick="window.location.href='genre.html'">Lihat Semua →</button>
+  </div>
+  <div class="genre-chips-index" id="genreChipsIndex">
+    <!-- diisi JS -->
+    <div class="genre-chip-index skeleton" style="width:70px;height:30px;border-radius:99px;"></div>
+    <div class="genre-chip-index skeleton" style="width:80px;height:30px;border-radius:99px;"></div>
+    <div class="genre-chip-index skeleton" style="width:60px;height:30px;border-radius:99px;"></div>
+    <div class="genre-chip-index skeleton" style="width:90px;height:30px;border-radius:99px;"></div>
+    <div class="genre-chip-index skeleton" style="width:70px;height:30px;border-radius:99px;"></div>
+    <div class="genre-chip-index skeleton" style="width:85px;height:30px;border-radius:99px;"></div>
+  </div>
+</div>
 
 <h2 class="section-title"><span>🆕</span>Update Terbaru</h2>
 <div id="komikLatest" class="grid-komik"></div>
