@@ -25,11 +25,17 @@
 <!-- Konten detail diisi detail.js -->
 <div id="detailKomik"></div>
 
+<!-- Seksi komentar diisi detail.js -->
+<div id="commentSection"></div>
+
 <!--
   Kedua script pakai type="module" karena keduanya
   menggunakan import/export dari supabase.js
 -->
-<script type="module" src="auth-header.js"></script>
+<script type="module">
+  import { initAuthHeader } from "./auth-header.js";
+  initAuthHeader();
+</script>
 <script type="module" src="detail.js"></script>
 </body>
 </html>
