@@ -20,22 +20,33 @@ const rekomURL  = "https://www.sankavollerei.com/comic/bacakomik/recomen";
    ============================================================ */
 
 async function getTopKomik() {
+  /* Tampilkan skeleton dulu */
+  const container = document.getElementById("topKomik");
+  container.innerHTML = Array(5).fill(`<div class="card skeleton skeleton-card"></div>`).join("");
+
   try {
     const res  = await fetch(apiURL);
     const data = await res.json();
+    container.innerHTML = "";
     tampilkanKomik(data.komikList);
   } catch (err) {
     console.error("Gagal fetch Top Komik:", err);
+    container.innerHTML = `<p style="padding:14px;color:var(--text-muted);font-size:13px;">Gagal memuat. Cek koneksi internet.</p>`;
   }
 }
 
 async function getKomikLatest() {
+  const container = document.getElementById("komikLatest");
+  container.innerHTML = Array(4).fill(`<div class="grid-card skeleton skeleton-grid"></div>`).join("");
+
   try {
     const res  = await fetch(latestURL);
     const data = await res.json();
+    container.innerHTML = "";
     tampilkanLatest(data.komikList);
   } catch (err) {
     console.error("Gagal fetch Latest:", err);
+    container.innerHTML = "";
   }
 }
 
@@ -153,13 +164,6 @@ function goHome() {
   window.location.href = "index.html";
 }
 
-/* Buka/tutup dropdown menu user */
-function toggleMenu() {
-  const menu = document.getElementById("menuDropdown");
-  /* Kalau sedang tampil → sembunyikan, dan sebaliknya */
-  menu.style.display = menu.style.display === "block" ? "none" : "block";
-}
-
 /* Ganti tema gelap ↔ terang, simpan pilihan ke localStorage */
 function toggleDarkMode() {
   document.body.classList.toggle("light");
@@ -172,19 +176,20 @@ function toggleDarkMode() {
   }
 }
 
-/* Tutup dropdown kalau klik di luar area dropdown */
+/* Klik di luar search → tutup hasil pencarian */
 document.addEventListener("click", function (e) {
-  const menu = document.getElementById("menuDropdown");
-  const btnUser = document.querySelector(".header-right button:last-child");
+  const searchBox = document.getElementById("searchInput");
+  const resultBox = document.getElementById("searchResult");
 
-  if (!menu.contains(e.target) && !btnUser.contains(e.target)) {
-    menu.style.display = "none";
+  if (searchBox && resultBox &&
+      !searchBox.contains(e.target) && !resultBox.contains(e.target)) {
+    resultBox.style.display = "none";
   }
 });
 
 /* ============================================================
    LIVE SEARCH
-   Debounce 400ms: API tidak dipanggil setiap ketikan, 
+   Debounce 400ms: API tidak dipanggil setiap ketikan,
    hanya dipanggil setelah user berhenti mengetik 400ms
    ============================================================ */
 let searchTimeout = null;
@@ -193,15 +198,9 @@ async function liveSearch() {
   const query     = document.getElementById("searchInput").value.trim();
   const resultBox = document.getElementById("searchResult");
 
-  /* Kalau input kosong, sembunyikan hasil */
-  if (!query) {
-    resultBox.style.display = "none";
-    return;
-  }
+  if (!query) { resultBox.style.display = "none"; return; }
 
-  /* Batalkan timer sebelumnya biar tidak spam API */
   clearTimeout(searchTimeout);
-
   searchTimeout = setTimeout(async () => {
     try {
       const url  = `https://www.sankavollerei.com/comic/bacakomik/search/${encodeURIComponent(query)}`;
@@ -217,59 +216,85 @@ async function liveSearch() {
 function tampilkanSearch(list) {
   const resultBox = document.getElementById("searchResult");
   resultBox.innerHTML = "";
+  if (!list || list.length === 0) { resultBox.style.display = "none"; return; }
 
-  if (!list || list.length === 0) {
-    resultBox.style.display = "none";
-    return;
-  }
-
-  /* Tampilkan maks 5 hasil */
   list.slice(0, 5).forEach(komik => {
     const coverHD = komik.cover.split("?")[0];
-
-    const item = document.createElement("div");
+    const item    = document.createElement("div");
     item.classList.add("search-item");
-
     item.innerHTML = `
       <img src="${coverHD}" alt="${komik.title}" loading="lazy">
       <div>
         <p>${komik.title}</p>
         <p>⭐ ${komik.rating}</p>
-      </div>
-    `;
-
-    item.onclick = () => {
-      window.location.href = `detail.html?slug=${komik.slug}`;
-    };
-
+      </div>`;
+    item.onclick = () => { window.location.href = `detail.html?slug=${komik.slug}`; };
     resultBox.appendChild(item);
   });
-
   resultBox.style.display = "block";
 }
-
-/* Klik di luar search → tutup hasil pencarian */
-document.addEventListener("click", function (e) {
-  const searchBox = document.getElementById("searchInput");
-  const resultBox = document.getElementById("searchResult");
-
-  if (!searchBox.contains(e.target) && !resultBox.contains(e.target)) {
-    resultBox.style.display = "none";
-  }
-});
 
 /* ============================================================
    INIT: Jalankan saat halaman pertama dibuka
    ============================================================ */
 window.onload = function () {
-  /* Terapkan tema yang sudah disimpan sebelumnya */
   const theme = localStorage.getItem("theme");
   if (theme === "light") {
     document.body.classList.add("light");
   }
-
-  /* Fetch semua data */
   getTopKomik();
   getKomikLatest();
   getKomikRekomen();
+  getGenreChips();
+
+  /* Back to top */
+  const btn = document.getElementById("backToTop");
+  if (btn) {
+    window.addEventListener("scroll", () => {
+      btn.classList.toggle("visible", window.scrollY > 300);
+    });
+  }
+};
+
+/* ============================================================
+   GENRE CHIPS (di index.html)
+   ============================================================ */
+async function getGenreChips() {
+  const container = document.getElementById("genreChipsIndex");
+  if (!container) return;
+
+  try {
+    const res  = await fetch("https://www.sankavollerei.com/comic/bacakomik/genres");
+    const data = await res.json();
+    const genres = (data.genres || []).filter(g => g.title.length >= 3);
+
+    container.innerHTML = genres.slice(0, 20).map(g => `
+      <button class="genre-chip-index"
+        onclick="window.location.href='genre.html?genre=${encodeURIComponent(g.slug)}'">
+        ${g.title}
+      </button>
+    `).join("") + `
+      <button class="genre-chip-index"
+        style="border-color:var(--accent);color:var(--accent);"
+        onclick="window.location.href='genre.html'">
+        Lainnya →
+      </button>`;
+  } catch (err) {
+    console.error("Gagal fetch genre chips:", err);
+    if (container) container.innerHTML = "";
+  }
+}
+
+/* ============================================================
+   TOAST UTILITY
+   Panggil: showToast("Pesan!", "success"|"error"|"info")
+   ============================================================ */
+window.showToast = function(msg, type = "info") {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
 };
