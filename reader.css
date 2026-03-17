@@ -1,0 +1,112 @@
+/* BASE */
+body {
+  margin: 0;
+  background: #0f0f0f;
+  color: #fff;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* HEADER */
+.reader-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background: rgba(15, 15, 15, 0.85);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  z-index: 999;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* HEADER HILANG */
+.reader-header.hide {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+/* BUTTON */
+.reader-header button {
+  background: #1f1f1f;
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  margin: 0 2px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.reader-header button:hover {
+  background: #333;
+}
+
+/* TITLE */
+.reader-header h3 {
+  font-size: 14px;
+  max-width: 50%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* READER */
+#reader {
+  margin-top: 60px;
+  text-align: center;
+}
+
+/* IMAGE */
+#reader img {
+  width: 100%;
+  max-width: 800px;
+  margin: 8px auto;
+  display: block;
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+#reader img:hover {
+  transform: scale(1.01);
+}
+
+/* SETTINGS PANEL */
+.settings {
+  position: fixed;
+  right: 10px;
+  top: 70px;
+  background: rgba(20, 20, 20, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 15px;
+  border-radius: 12px;
+  display: none;
+  z-index: 1000;
+  width: 200px;
+}
+
+.settings.active {
+  display: block;
+}
+
+.settings h3 {
+  margin-top: 0;
+}
+
+.settings label {
+  font-size: 13px;
+  margin-top: 10px;
+  display: block;
+}
+
+.settings input,
+.settings select {
+  width: 100%;
+  margin-top: 5px;
+}
+
+/* SMOOTH SCROLL */
+html {
+  scroll-behavior: smooth;
+}
+

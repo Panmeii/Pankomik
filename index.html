@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Pankomik</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="header">
+  <div class="logo" onclick="goHome()">Pankomik</div>
+
+  <input 
+    type="text" 
+    id="searchInput" 
+    placeholder="Cari komik..."
+    oninput="liveSearch()"
+  >
+
+  <div class="header-right">
+    <button onclick="toggleDarkMode()">🌙</button>
+    <button onclick="toggleMenu()">👤</button>
+  </div>
+</header>
+
+<!-- hasil search -->
+<div id="searchResult" class="search-result"></div>
+  
+  <!--Dropdown Menu -->
+  <div id="menuDropdown" class="dropdown">
+    <p onclick="alert('Nanti kita buat')">Login</p>
+    <p onclick="alert('Nanti kita buat')">Register</p>
+    <p onclick="Alert('Nanti Kita Buat')">Search</p>
+  </div>
+
+  <h2>🔥 Top Komik</h2>
+
+  <div id="topKomik" class="slider"></div>
+  <br>
+  
+  <h2>🆕 Update Terbaru</h2>
+  <div id="komikLatest" class="grid-komik"></div>
+  <br>
+  
+  <h2>⭐ Rekomendasi</h2>
+  <div id="komikRekomen" class="rekom-container"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
