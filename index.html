@@ -4,47 +4,59 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pankomik</title>
-    <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <header class="header">
   <div class="logo" onclick="goHome()">Pankomik</div>
 
-  <input 
-    type="text" 
-    id="searchInput" 
+  <input
+    type="text"
+    id="searchInput"
     placeholder="Cari komik..."
     oninput="liveSearch()"
+    autocomplete="off"
   >
 
   <div class="header-right">
-    <button onclick="toggleDarkMode()">🌙</button>
-    <button onclick="toggleMenu()">👤</button>
+    <button onclick="toggleDarkMode()" title="Ganti Tema">🌙</button>
+    <!-- Klik tombol ini → buka/tutup dropdown menu -->
+    <button onclick="toggleMenu()" title="Menu">👤</button>
   </div>
 </header>
 
-<!-- hasil search -->
+<!-- Hasil pencarian live -->
 <div id="searchResult" class="search-result"></div>
-  
-  <!--Dropdown Menu -->
-  <div id="menuDropdown" class="dropdown">
-    <p onclick="alert('Nanti kita buat')">Login</p>
-    <p onclick="alert('Nanti kita buat')">Register</p>
-    <p onclick="Alert('Nanti Kita Buat')">Search</p>
-  </div>
 
-  <h2>🔥 Top Komik</h2>
+<!--
+  Dropdown SENGAJA dikosongkan di sini.
+  Isinya diisi otomatis oleh auth-header.js:
+  → Belum login : tampil "Masuk" dan "Daftar"
+  → Sudah login : tampil nama user, Profil, Bookmark, Riwayat, Keluar
+-->
+<div id="menuDropdown" class="dropdown"></div>
 
-  <div id="topKomik" class="slider"></div>
-  <br>
-  
-  <h2>🆕 Update Terbaru</h2>
-  <div id="komikLatest" class="grid-komik"></div>
-  <br>
-  
-  <h2>⭐ Rekomendasi</h2>
-  <div id="komikRekomen" class="rekom-container"></div>
+<h2 class="section-title"><span>🔥</span>Top Komik</h2>
+<div id="topKomik" class="slider"></div>
 
-  <script src="script.js"></script>
+<h2 class="section-title"><span>🆕</span>Update Terbaru</h2>
+<div id="komikLatest" class="grid-komik"></div>
+
+<h2 class="section-title"><span>⭐</span>Rekomendasi</h2>
+<div id="komikRekomen" class="rekom-container"></div>
+
+<!--
+  CATATAN URUTAN SCRIPT:
+  • type="module" wajib untuk file yang pakai import/export (supabase.js, auth-header.js)
+  • script.js tetap pakai <script src="..."> biasa karena tidak pakai module
+  • auth-header.js dipanggil duluan agar dropdown langsung terisi saat halaman muat
+-->
+<script type="module">
+  import { initAuthHeader } from "./auth-header.js";
+  initAuthHeader(); /* Isi dropdown sesuai status login */
+</script>
+
+<script src="script.js"></script>
 </body>
 </html>
