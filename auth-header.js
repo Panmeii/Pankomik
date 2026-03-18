@@ -75,9 +75,9 @@ function renderDropdown(user) {
       </div>
 
       <!-- Menu item -->
-      <p onclick="window.location.href='profile.html'">👤 Profil Saya</p>
-      <p onclick="window.location.href='profile.html?tab=bookmark'">🔖 Bookmark</p>
-      <p onclick="window.location.href='profile.html?tab=history'">📖 Riwayat Baca</p>
+      <p onclick="window.location.href='/profil'">👤 Profil Saya</p>
+      <p onclick="window.location.href='/profil?tab=bookmark'">🔖 Bookmark</p>
+      <p onclick="window.location.href='/profil?tab=history'">📖 Riwayat Baca</p>
 
       <!-- Keluar (warna merah) -->
       <p
@@ -91,8 +91,8 @@ function renderDropdown(user) {
       Tampilkan tombol Masuk dan Daftar yang mengarah ke auth.html
     */
     menu.innerHTML = `
-      <p onclick="window.location.href='auth.html'">🔑 Masuk</p>
-      <p onclick="window.location.href='auth.html'">📝 Daftar</p>
+      <p onclick="window.location.href='/masuk'">🔑 Masuk</p>
+      <p onclick="window.location.href='/masuk'">📝 Daftar</p>
     `;
   }
 }
