@@ -14,7 +14,7 @@ import {
   deleteComment,
   toggleLike,
   getLikedComments
-} from "./supabase.js";
+} from "/supabase.js";
 
 /* ── IMAGE PROXY ─────────────────────────────────────────── */
 function proxyImg(url, width) {
@@ -30,7 +30,7 @@ function cleanTitle(str) {
 }
 
 /* ── SLUG dari URL (pretty URL atau query param) ──────────── */
-import { getKomikSlug, readerURL, komikURL } from "./router.js";
+import { getKomikSlug, readerURL, komikURL } from "/router.js";
 const slug = getKomikSlug();
 if (!slug) window.location.href = "/";
 
