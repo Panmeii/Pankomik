@@ -526,46 +526,46 @@ window.addEventListener("DOMContentLoaded", async () => {
    FETCH LIST GENRE
    ============================================================ */
 async function loadGenreList() {
+  const FALLBACK = [
+    {slug:"action",title:"Action"},{slug:"adventure",title:"Adventure"},
+    {slug:"comedy",title:"Comedy"},{slug:"drama",title:"Drama"},
+    {slug:"fantasy",title:"Fantasy"},{slug:"horror",title:"Horror"},
+    {slug:"romance",title:"Romance"},{slug:"school-life",title:"School Life"},
+    {slug:"sci-fi",title:"Sci-Fi"},{slug:"seinen",title:"Seinen"},
+    {slug:"shounen",title:"Shounen"},{slug:"slice-of-life",title:"Slice of Life"},
+    {slug:"supernatural",title:"Supernatural"},{slug:"thriller",title:"Thriller"},
+    {slug:"isekai",title:"Isekai"},{slug:"martial-arts",title:"Martial Arts"},
+    {slug:"harem",title:"Harem"},{slug:"ecchi",title:"Ecchi"},
+    {slug:"adult",title:"Adult"},{slug:"mystery",title:"Mystery"},
+    {slug:"psychological",title:"Psychological"},{slug:"sports",title:"Sports"},
+    {slug:"historical",title:"Historical"},{slug:"mecha",title:"Mecha"},
+    {slug:"josei",title:"Josei"},{slug:"shoujo",title:"Shoujo"},
+  ];
+
   try {
     const res  = await fetch(GENRES_API);
     const data = await res.json();
-
-    /* API baru pakai field: name (display) + value (slug untuk URL)
-       Deduplicate pakai value sebagai key, filter min 3 karakter & hapus typo */
-    const rawGenres = data.genres || data.data || data.genreList || [];
-
-    /* Fallback: genre populer mangakita kalau API tidak return list */
-    const FALLBACK_GENRES = [
-      {slug:"action",title:"Action"},{slug:"adventure",title:"Adventure"},
-      {slug:"comedy",title:"Comedy"},{slug:"drama",title:"Drama"},
-      {slug:"fantasy",title:"Fantasy"},{slug:"horror",title:"Horror"},
-      {slug:"romance",title:"Romance"},{slug:"school-life",title:"School Life"},
-      {slug:"sci-fi",title:"Sci-Fi"},{slug:"seinen",title:"Seinen"},
-      {slug:"shounen",title:"Shounen"},{slug:"slice-of-life",title:"Slice of Life"},
-      {slug:"supernatural",title:"Supernatural"},{slug:"thriller",title:"Thriller"},
-      {slug:"isekai",title:"Isekai"},{slug:"martial-arts",title:"Martial Arts"},
-      {slug:"harem",title:"Harem"},{slug:"ecchi",title:"Ecchi"},
-      {slug:"adult",title:"Adult"},{slug:"mystery",title:"Mystery"},
-    ];
-
+    console.log("[Genre] GENRES_API response keys:", Object.keys(data), "success:", data.success);
+    const raw  = data.genres || data.data || data.genreList || data.mangaList || [];
+    console.log("[Genre] Raw genres count:", raw.length, "sample:", raw[0]);
     const seen = new Set();
-    const parsed = rawGenres
+    const parsed = raw
       .map(g => ({
-        slug:  (g.value || g.slug  || g.id   || "").toLowerCase().trim(),
+        slug:  (g.value || g.slug  || g.id    || "").toLowerCase().trim(),
         title: (g.name  || g.title || g.label || "").trim(),
       }))
-      .filter(g => g.slug && g.title && g.title.length >= 2 && !seen.has(g.slug) && seen.add(g.slug));
+      .filter(g => g.slug && g.title.length >= 2 && !seen.has(g.slug) && seen.add(g.slug));
 
-    allGenres = (parsed.length > 3 ? parsed : FALLBACK_GENRES)
+    allGenres = (parsed.length >= 5 ? parsed : FALLBACK)
       .sort((a, b) => a.title.localeCompare(b.title, "id"));
-
-    renderGenreChips();
   } catch (err) {
-    console.error("Gagal fetch genre list:", err);
-    document.getElementById("genreChips").innerHTML =
-      `<p style="color:var(--text-muted);font-size:12px;padding:4px;">Gagal memuat genre.</p>`;
+    console.warn("[Genre] Gagal fetch genre list, pakai fallback:", err.message);
+    allGenres = FALLBACK;
   }
+
+  renderGenreChips();
 }
+
 
 /* ============================================================
    RENDER GENRE CHIPS (horizontal scroll pills)
@@ -641,7 +641,9 @@ async function fetchGenreKomik(slug, page) {
 
   try {
     /* Endpoint: /comic/mangakita/genres/:genre/page:N */
-    const url  = `${GENRE_API}${encodeURIComponent(slug)}/page${page}`;
+    /* Slug mangakita: lowercase + dash, tanpa encode spesial */
+    const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g,"-");
+    const url  = `${GENRE_API}${cleanSlug}/page${page}`;
     console.log("[Genre] Fetching:", url);
     const res  = await fetch(url);
     console.log("[Genre] Status:", res.status);
@@ -668,8 +670,10 @@ async function fetchGenreKomik(slug, page) {
     hasNextPage = !!(pag.hasNextPage ?? pag.hasNext);
     currentPage = pag.currentPage || page;
 
+    /* Kalau success=false tapi ada data, tetap render */
     if (!data.success && !raw.length) {
-      throw new Error(`API error: success=${data.success}, keys=${Object.keys(data).join(",")}`);
+      const msg = data.message || data.error || "";
+      throw new Error(`API error: ${msg || "Genre tidak ditemukan"}`);
     }
 
     document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
@@ -682,12 +686,22 @@ async function fetchGenreKomik(slug, page) {
     grid.innerHTML = `
       <div style="grid-column:1/-1" class="genre-empty">
         <p>😕</p>
-        <p>Gagal memuat genre <strong>${slug}</strong>.</p>
+        <p>Genre <strong>${slug}</strong> tidak tersedia.</p>
         <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">${err.message}</p>
-        <button onclick="fetchGenreKomik('${slug}',${page})"
-          style="margin-top:10px;padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;">
-          🔄 Coba Lagi
-        </button>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+          <button onclick="selectGenre('adult','Adult')"
+            style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;">
+            Adult
+          </button>
+          <button onclick="selectGenre('adventure','Adventure')"
+            style="padding:6px 14px;background:var(--bg-surface);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;">
+            Adventure
+          </button>
+          <button onclick="fetchGenreKomik('${slug}',${page})"
+            style="padding:6px 14px;background:var(--bg-surface);color:var(--text);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;">
+            🔄 Coba Lagi
+          </button>
+        </div>
       </div>`;
     pagination.style.display = "none";
   }
