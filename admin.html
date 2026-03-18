@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Pankomik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #07070f;
+      --bg-card:   #0f0f1a;
+      --bg-surface:#161625;
+      --border:    rgba(255,255,255,0.07);
+      --accent:    #e8522a;
+      --accent2:   #f5c842;
+      --text:      #eaeaf0;
+      --text-muted:#666;
+      --green:     #27ae60;
+      --blue:      #3498db;
+      --red:       #e74c3c;
+      --purple:    #9b59b6;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family:'Nunito', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── AUTH GATE ─────────────────────────────────────────── */
+    #authGate {
+      position:fixed; inset:0; z-index:9999;
+      display:flex; align-items:center; justify-content:center;
+      background: var(--bg);
+    }
+    .gate-card {
+      width: 100%; max-width: 360px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 28px;
+      text-align: center;
+    }
+    .gate-logo {
+      font-family:'Bebas Neue', cursive;
+      font-size: 42px; letter-spacing: 3px;
+      color: var(--accent); margin-bottom: 4px;
+    }
+    .gate-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
+    .gate-err {
+      display: none;
+      background: rgba(231,76,60,0.12);
+      border: 1px solid rgba(231,76,60,0.3);
+      color: var(--red); border-radius: 10px;
+      padding: 10px 14px; font-size: 13px;
+      margin-bottom: 14px;
+    }
+    .gate-err.show { display: block; }
+    .gate-spinner {
+      width:40px; height:40px; margin:0 auto 16px;
+      border:3px solid rgba(232,82,42,0.2);
+      border-top-color: var(--accent);
+      border-radius:50%; animation:spin .7s linear infinite; display:none;
+    }
+    .gate-spinner.show { display:block; }
+    .gate-label { color: var(--text-muted); font-size:16px; font-weight:700; margin-bottom:14px; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ── LAYOUT ────────────────────────────────────────────── */
+    #adminApp { display:none; }
+    #adminApp.show { display:flex; min-height:100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px; flex-shrink: 0;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    }
+    .sidebar-logo {
+      font-family:'Bebas Neue',cursive; font-size:26px;
+      letter-spacing:2px; color:var(--accent);
+      padding: 20px 20px 6px;
+    }
+    .sidebar-role {
+      font-size:10px; font-weight:800; letter-spacing:2px;
+      color:var(--text-muted); text-transform:uppercase;
+      padding: 0 20px 20px; border-bottom:1px solid var(--border);
+    }
+    .sidebar-section {
+      font-size:10px; font-weight:800; letter-spacing:1.5px;
+      color:var(--text-muted); text-transform:uppercase;
+      padding: 18px 20px 6px;
+    }
+    .sidebar-item {
+      display:flex; align-items:center; gap:10px;
+      padding: 10px 20px; cursor:pointer;
+      font-size:13px; font-weight:700;
+      color: var(--text-muted);
+      transition: background .15s, color .15s;
+      border-left: 3px solid transparent;
+    }
+    .sidebar-item:hover { background:rgba(255,255,255,0.04); color:var(--text); }
+    .sidebar-item.active { background:rgba(232,82,42,0.1); color:var(--accent); border-left-color:var(--accent); }
+    .sidebar-item .icon { font-size:16px; width:20px; text-align:center; }
+    .sidebar-footer {
+      margin-top:auto; padding:16px 20px;
+      border-top:1px solid var(--border);
+      font-size:12px; color:var(--text-muted);
+    }
+    .sidebar-footer strong { color:var(--text); display:block; font-size:13px; }
+
+    /* Main content */
+    .main { flex:1; overflow-x:hidden; }
+    .topbar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:16px 24px; border-bottom:1px solid var(--border);
+      position:sticky; top:0; z-index:100;
+      background:rgba(7,7,15,0.9); backdrop-filter:blur(14px);
+    }
+    .topbar h1 { font-size:20px; font-weight:800; }
+    .topbar-actions { display:flex; gap:10px; }
+    .btn {
+      padding:8px 16px; border:none; border-radius:9px;
+      font-family:'Nunito',sans-serif; font-weight:700;
+      font-size:13px; cursor:pointer; transition:all .2s;
+      display:inline-flex; align-items:center; gap:6px;
+    }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { background:#c73f1c; }
+    .btn-ghost { background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--border); }
+    .btn-ghost:hover { background:rgba(255,255,255,0.1); }
+    .btn-danger { background:rgba(231,76,60,0.15); color:var(--red); border:1px solid rgba(231,76,60,0.3); }
+    .btn-danger:hover { background:rgba(231,76,60,0.25); }
+    .btn-sm { padding:5px 10px; font-size:12px; }
+
+    /* Content pages */
+    .page { display:none; padding:24px; }
+    .page.active { display:block; }
+
+    /* ── STAT CARDS ─────────────────────────────────────────── */
+    .stats-grid {
+      display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+      gap:14px; margin-bottom:24px;
+    }
+    .stat-card {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:14px; padding:18px;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .stat-icon { font-size:24px; }
+    .stat-label { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; }
+    .stat-value { font-size:28px; font-weight:900; font-family:'Bebas Neue',cursive; }
+    .stat-sub { font-size:11px; color:var(--text-muted); }
+    .stat-card.green { border-color:rgba(39,174,96,.2); }
+    .stat-card.green .stat-value { color:var(--green); }
+    .stat-card.blue { border-color:rgba(52,152,219,.2); }
+    .stat-card.blue .stat-value { color:var(--blue); }
+    .stat-card.orange { border-color:rgba(232,82,42,.2); }
+    .stat-card.orange .stat-value { color:var(--accent); }
+    .stat-card.yellow { border-color:rgba(245,200,66,.2); }
+    .stat-card.yellow .stat-value { color:var(--accent2); }
+
+    /* ── TABLE ──────────────────────────────────────────────── */
+    .card-box {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:14px; overflow:hidden; margin-bottom:20px;
+    }
+    .card-box-header {
+      padding:14px 18px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+    }
+    .card-box-header h3 { font-size:14px; font-weight:800; }
+    .search-input {
+      padding:7px 12px; border-radius:8px;
+      border:1px solid var(--border); background:var(--bg-surface);
+      color:var(--text); font-family:'Nunito',sans-serif; font-size:13px;
+      outline:none; width:200px;
+    }
+    .search-input:focus { border-color:var(--accent); }
+    table { width:100%; border-collapse:collapse; }
+    thead th {
+      padding:10px 16px; font-size:11px; font-weight:800;
+      text-transform:uppercase; letter-spacing:.5px;
+      color:var(--text-muted); background:var(--bg-surface);
+      text-align:left;
+    }
+    tbody tr { border-top:1px solid rgba(255,255,255,0.04); transition:background .15s; }
+    tbody tr:hover { background:rgba(255,255,255,0.03); }
+    td { padding:10px 16px; font-size:13px; vertical-align:middle; }
+    .avatar-sm {
+      width:32px; height:32px; border-radius:50%;
+      object-fit:cover; vertical-align:middle; margin-right:8px;
+    }
+    .avatar-placeholder {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:32px; height:32px; border-radius:50%;
+      background:var(--accent); font-weight:800; font-size:13px; color:#fff;
+      vertical-align:middle; margin-right:8px; flex-shrink:0;
+    }
+    .badge-pill {
+      display:inline-block; padding:3px 9px; border-radius:99px;
+      font-size:11px; font-weight:800; text-transform:uppercase;
+    }
+    .badge-admin { background:rgba(232,82,42,0.15); color:var(--accent); border:1px solid rgba(232,82,42,.3); }
+    .badge-user  { background:rgba(52,152,219,0.12); color:var(--blue);   border:1px solid rgba(52,152,219,.25); }
+    .badge-banned{ background:rgba(231,76,60,0.12);  color:var(--red);    border:1px solid rgba(231,76,60,.25); }
+    .badge-online { background:rgba(39,174,96,0.15); color:var(--green); border:1px solid rgba(39,174,96,.3); }
+    .badge-offline{ background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid var(--border); }
+
+    .user-name-cell { display:flex; align-items:center; }
+    .loading-row td { text-align:center; padding:32px; color:var(--text-muted); }
+    .empty-row td { text-align:center; padding:32px; color:var(--text-muted); }
+
+    /* ── CHAT MANAGEMENT ────────────────────────────────────── */
+    .chat-preview {
+      background:var(--bg-surface); border-radius:10px;
+      padding:12px 14px; margin:4px 0; font-size:13px;
+    }
+    .chat-meta { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
+    .pinned-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      background:rgba(245,200,66,0.15); color:var(--accent2);
+      border:1px solid rgba(245,200,66,.3);
+      border-radius:99px; padding:2px 8px; font-size:11px; font-weight:800;
+    }
+    .chat-actions { margin-top:8px; display:flex; gap:8px; }
+
+    /* ── MODAL ──────────────────────────────────────────────── */
+    .modal-overlay {
+      display:none; position:fixed; inset:0; z-index:2000;
+      background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
+      align-items:center; justify-content:center; padding:20px;
+    }
+    .modal-overlay.open { display:flex; }
+    .modal {
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:16px; padding:24px 22px;
+      width:100%; max-width:440px;
+      animation:modalIn .2s ease;
+    }
+    @keyframes modalIn {
+      from{opacity:0;transform:scale(.94) translateY(8px)}
+      to  {opacity:1;transform:scale(1)  translateY(0)}
+    }
+    .modal h3 { font-size:16px; font-weight:800; margin-bottom:16px; }
+    .form-group { margin-bottom:14px; }
+    .form-label { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; display:block; }
+    .form-input, .form-select, .form-textarea {
+      width:100%; padding:10px 12px;
+      background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:9px; color:var(--text);
+      font-family:'Nunito',sans-serif; font-size:14px; outline:none;
+      transition:border .2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); }
+    .form-textarea { min-height:90px; resize:vertical; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+
+    /* ── TOAST ──────────────────────────────────────────────── */
+    #adminToast {
+      position:fixed; bottom:24px; right:24px; z-index:9999;
+      display:flex; flex-direction:column; gap:8px;
+    }
+    .toast-item {
+      padding:12px 18px; border-radius:10px; font-size:13px; font-weight:700;
+      animation:toastIn .3s ease; pointer-events:none;
+    }
+    .toast-item.success { background:#27ae60; color:#fff; }
+    .toast-item.error   { background:var(--red); color:#fff; }
+    .toast-item.info    { background:var(--blue); color:#fff; }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── ANNOUNCEMENT ───────────────────────────────────────── */
+    .ann-card {
+      background:var(--bg-surface); border-radius:12px;
+      padding:14px 16px; border:1px solid var(--border); margin-bottom:10px;
+      display:flex; align-items:flex-start; gap:12px;
+    }
+    .ann-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
+    .ann-body { flex:1; }
+    .ann-body strong { font-size:14px; display:block; margin-bottom:4px; }
+    .ann-body p { font-size:13px; color:var(--text-muted); line-height:1.5; }
+    .ann-time { font-size:11px; color:var(--text-muted); margin-top:4px; font-family:'JetBrains Mono',monospace; }
+    .ann-actions { display:flex; gap:8px; margin-top:8px; }
+
+    @media(max-width:768px) {
+      .sidebar { display:none; }
+      .topbar h1 { font-size:15px; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+  </style>
+</head>
+<body>
+
+<!-- ── AUTH GATE ─────────────────────────────────────────────── -->
+<div id="authGate">
+  <div class="gate-card">
+    <div class="gate-logo">Pankomik</div>
+    <p class="gate-sub">Admin Dashboard</p>
+    <div class="gate-spinner" id="gateSpinner"></div>
+    <div class="gate-err" id="gateErr"></div>
+    <p class="gate-label" id="gateLabel">🔐 Memeriksa akses...</p>
+  </div>
+</div>
+
+<!-- ── ADMIN APP ──────────────────────────────────────────────── -->
+<div id="adminApp">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">Pankomik</div>
+    <div class="sidebar-role" id="sidebarRole">Admin Panel</div>
+
+    <div class="sidebar-section">Dashboard</div>
+    <div class="sidebar-item active" data-page="overview" onclick="switchPage('overview')">
+      <span class="icon">📊</span> Overview
+    </div>
+
+    <div class="sidebar-section">Manajemen</div>
+    <div class="sidebar-item" data-page="users" onclick="switchPage('users')">
+      <span class="icon">👥</span> Pengguna
+    </div>
+    <div class="sidebar-item" data-page="chats" onclick="switchPage('chats')">
+      <span class="icon">💬</span> Global Chat
+    </div>
+    <div class="sidebar-item" data-page="announce" onclick="switchPage('announce')">
+      <span class="icon">📢</span> Pengumuman
+    </div>
+
+    <div class="sidebar-section">Pengaturan</div>
+    <div class="sidebar-item" onclick="handleLogout()">
+      <span class="icon">🚪</span> Keluar
+    </div>
+
+    <div class="sidebar-footer">
+      <strong id="adminName">–</strong>
+      <span id="adminEmail" style="font-size:11px;">–</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">📊 Overview</h1>
+      <div class="topbar-actions">
+        <button class="btn btn-ghost btn-sm" onclick="refreshPage()">🔄 Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="openAnnounceModal()">📢 Kirim Pengumuman</button>
+      </div>
+    </div>
+
+    <!-- ── OVERVIEW PAGE ──────────────────────────────────── -->
+    <div class="page active" id="page-overview">
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <span class="stat-icon">👥</span>
+          <span class="stat-label">Total User</span>
+          <span class="stat-value" id="statUsers">–</span>
+          <span class="stat-sub">Terdaftar</span>
+        </div>
+        <div class="stat-card blue">
+          <span class="stat-icon">🟢</span>
+          <span class="stat-label">Online Sekarang</span>
+          <span class="stat-value" id="statOnline">–</span>
+          <span class="stat-sub">5 menit terakhir</span>
+        </div>
+        <div class="stat-card orange">
+          <span class="stat-icon">💬</span>
+          <span class="stat-label">Total Chat</span>
+          <span class="stat-value" id="statChats">–</span>
+          <span class="stat-sub">Semua pesan</span>
+        </div>
+        <div class="stat-card yellow">
+          <span class="stat-icon">📌</span>
+          <span class="stat-label">Pesan Dipin</span>
+          <span class="stat-value" id="statPinned">–</span>
+          <span class="stat-sub">Aktif di chat</span>
+        </div>
+      </div>
+
+      <!-- Recent users -->
+      <div class="card-box">
+        <div class="card-box-header">
+          <h3>👤 Pengguna Terbaru</h3>
+          <button class="btn btn-ghost btn-sm" onclick="switchPage('users')">Lihat Semua →</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Bergabung</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recentUsersTable">
+            <tr class="loading-row"><td colspan="4">⏳ Memuat...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Recent chats -->
+      <div class="card-box">
+        <div class="card-box-header">
+          <h3>💬 Chat Terbaru</h3>
+          <button class="btn btn-ghost btn-sm" onclick="switchPage('chats')">Kelola →</button>
+        </div>
+        <div id="recentChatsBox" style="padding:12px;">
+          <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── USERS PAGE ──────────────────────────────────────── -->
+    <div class="page" id="page-users">
+      <div class="card-box">
+        <div class="card-box-header">
+          <h3>👥 Semua Pengguna</h3>
+          <input class="search-input" placeholder="🔍 Cari nama / email..." id="userSearch" oninput="filterUsers()">
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Bergabung</th>
+              <th>Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable">
+            <tr class="loading-row"><td colspan="6">⏳ Memuat data pengguna...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CHATS PAGE ──────────────────────────────────────── -->
+    <div class="page" id="page-chats">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <!-- Pinned messages -->
+        <div class="card-box">
+          <div class="card-box-header"><h3>📌 Pesan Dipin</h3></div>
+          <div id="pinnedChatsBox" style="padding:12px;max-height:500px;overflow-y:auto;">
+            <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
+          </div>
+        </div>
+        <!-- All recent messages -->
+        <div class="card-box">
+          <div class="card-box-header">
+            <h3>💬 Semua Pesan</h3>
+            <input class="search-input" style="width:140px;" placeholder="🔍 Cari..." id="chatSearch" oninput="filterChats()">
+          </div>
+          <div id="allChatsBox" style="padding:12px;max-height:500px;overflow-y:auto;">
+            <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ANNOUNCE PAGE ───────────────────────────────────── -->
+    <div class="page" id="page-announce">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card-box">
+          <div class="card-box-header"><h3>📢 Buat Pengumuman</h3></div>
+          <div style="padding:18px;">
+            <div class="form-group">
+              <label class="form-label">Judul</label>
+              <input class="form-input" id="annTitle" placeholder="Judul pengumuman...">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Isi Pesan</label>
+              <textarea class="form-textarea" id="annContent" placeholder="Tulis pesan di sini..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tipe</label>
+              <select class="form-select" id="annType">
+                <option value="info">ℹ️ Info</option>
+                <option value="warning">⚠️ Peringatan</option>
+                <option value="success">✅ Pengumuman Baik</option>
+                <option value="update">🚀 Update Fitur</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="sendAnnouncement()" style="width:100%;">📢 Kirim ke Global Chat</button>
+          </div>
+        </div>
+        <div class="card-box">
+          <div class="card-box-header"><h3>📋 Riwayat Pengumuman</h3></div>
+          <div id="announceHistory" style="padding:12px;max-height:500px;overflow-y:auto;">
+            <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODALS ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="userModal">
+  <div class="modal">
+    <h3 id="userModalTitle">Edit Pengguna</h3>
+    <div class="form-group">
+      <label class="form-label">Role</label>
+      <select class="form-select" id="editRole">
+        <option value="user">user</option>
+        <option value="admin">admin</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Status</label>
+      <select class="form-select" id="editBanned">
+        <option value="false">Aktif</option>
+        <option value="true">Banned</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('userModal')">Batal</button>
+      <button class="btn btn-primary" onclick="saveUserEdit()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="announceModal">
+  <div class="modal">
+    <h3>📢 Kirim Pengumuman Cepat</h3>
+    <div class="form-group">
+      <label class="form-label">Pesan</label>
+      <textarea class="form-textarea" id="quickAnnContent" placeholder="Tulis pengumuman..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('announceModal')">Batal</button>
+      <button class="btn btn-primary" onclick="sendQuickAnnouncement()">Kirim</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="adminToast"></div>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ── ADMIN EMAILS yang diizinkan ──────────────────────────── */
+const ADMIN_EMAILS = [
+  "pankomik@gmail.com",
+  "admin@pankomik.com",
+  /* Tambah email admin lainnya di sini */
+];
+
+let currentAdmin = null;
+let allUsers     = [];
+let allChats     = [];
+let editingUserId = null;
+
+/* ── TOAST ─────────────────────────────────────────────────── */
+window.showToast = function(msg, type="info") {
+  const el = document.createElement("div");
+  el.className = `toast-item ${type}`;
+  el.textContent = msg;
+  document.getElementById("adminToast").appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+};
+
+/* ── AUTH CHECK ─────────────────────────────────────────────── */
+async function init() {
+  const spinner  = document.getElementById("gateSpinner");
+  const errEl    = document.getElementById("gateErr");
+  const labelEl  = document.getElementById("gateLabel");
+
+  spinner.classList.add("show");
+  labelEl.textContent = "🔐 Memeriksa sesi...";
+
+  const { data: { session } } = await supabase.auth.getSession();
+
+  if (!session?.user) {
+    spinner.classList.remove("show");
+    errEl.textContent = "❌ Kamu belum login. Silakan login dulu.";
+    errEl.classList.add("show");
+    labelEl.textContent = "";
+    setTimeout(() => window.location.href = "/masuk", 2000);
+    return;
+  }
+
+  const user = session.user;
+  const email = user.email || "";
+
+  /* Cek apakah email terdaftar sebagai admin */
+  /* Juga cek dari tabel profiles jika punya kolom role */
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, username, avatar_url, is_banned")
+    .eq("id", user.id)
+    .single();
+
+  const isAdmin = ADMIN_EMAILS.includes(email) || profile?.role === "admin";
+
+  if (!isAdmin) {
+    spinner.classList.remove("show");
+    errEl.textContent = "🚫 Akses ditolak. Hanya admin yang bisa masuk.";
+    errEl.classList.add("show");
+    labelEl.textContent = "";
+    setTimeout(() => window.location.href = "/", 2500);
+    return;
+  }
+
+  currentAdmin = { ...user, profile };
+
+  /* Tampilkan app */
+  document.getElementById("authGate").style.display = "none";
+  document.getElementById("adminApp").classList.add("show");
+
+  const name = profile?.username || user.user_metadata?.full_name || email.split("@")[0];
+  document.getElementById("adminName").textContent  = name;
+  document.getElementById("adminEmail").textContent = email;
+  document.getElementById("sidebarRole").textContent = "⚡ " + (profile?.role || "admin").toUpperCase();
+
+  /* Load data */
+  await Promise.all([loadStats(), loadRecentUsers(), loadRecentChats()]);
+}
+
+/* ── NAVIGATION ──────────────────────────────────────────────── */
+const pageTitles = {
+  overview: "📊 Overview",
+  users:    "👥 Kelola Pengguna",
+  chats:    "💬 Kelola Global Chat",
+  announce: "📢 Pengumuman"
+};
+
+window.switchPage = function(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".sidebar-item").forEach(i => i.classList.remove("active"));
+  document.getElementById("page-" + page)?.classList.add("active");
+  document.querySelector(`[data-page="${page}"]`)?.classList.add("active");
+  document.getElementById("pageTitle").textContent = pageTitles[page] || page;
+
+  if (page === "users")    loadUsers();
+  if (page === "chats")    loadChats();
+  if (page === "announce") loadAnnouncements();
+};
+
+window.refreshPage = async function() {
+  const active = document.querySelector(".page.active")?.id?.replace("page-","");
+  if (active === "overview") { await Promise.all([loadStats(), loadRecentUsers(), loadRecentChats()]); }
+  if (active === "users")    loadUsers();
+  if (active === "chats")    loadChats();
+  if (active === "announce") loadAnnouncements();
+  showToast("Data diperbarui", "success");
+};
+
+/* ── STATS ───────────────────────────────────────────────────── */
+async function loadStats() {
+  /* Total users */
+  const { count: uCount } = await supabase
+    .from("profiles").select("*", { count:"exact", head:true });
+  document.getElementById("statUsers").textContent = uCount || 0;
+
+  /* Online (presence table atau last_seen < 5 min) */
+  const fiveMin = new Date(Date.now() - 5*60*1000).toISOString();
+  const { count: onlineCount } = await supabase
+    .from("profiles").select("*", { count:"exact", head:true })
+    .gte("last_seen", fiveMin);
+  document.getElementById("statOnline").textContent = onlineCount || 0;
+
+  /* Total chats */
+  const { count: chatCount } = await supabase
+    .from("global_chat").select("*", { count:"exact", head:true });
+  document.getElementById("statChats").textContent = chatCount || 0;
+
+  /* Pinned */
+  const { count: pinnedCount } = await supabase
+    .from("global_chat").select("*", { count:"exact", head:true })
+    .eq("is_pinned", true);
+  document.getElementById("statPinned").textContent = pinnedCount || 0;
+}
+
+/* ── RECENT USERS ─────────────────────────────────────────────── */
+async function loadRecentUsers() {
+  const tbody = document.getElementById("recentUsersTable");
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, role, is_banned, last_seen, created_at")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  if (!data?.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">Belum ada pengguna</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td><div class="user-name-cell">${avatarHtml(u)} ${u.username || "–"}</div></td>
+      <td style="color:var(--text-muted);font-size:12px;">${u.id.slice(0,8)}…</td>
+      <td>${fmtDate(u.created_at)}</td>
+      <td>${onlineBadge(u.last_seen)} ${roleBadge(u.role)} ${u.is_banned ? '<span class="badge-pill badge-banned">Banned</span>' : ""}</td>
+    </tr>
+  `).join("");
+}
+
+/* ── ALL USERS ────────────────────────────────────────────────── */
+async function loadUsers() {
+  const tbody = document.getElementById("usersTable");
+  tbody.innerHTML = `<tr class="loading-row"><td colspan="6">⏳ Memuat...</td></tr>`;
+
+  const { data } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, role, is_banned, last_seen, created_at")
+    .order("created_at", { ascending: false });
+
+  allUsers = data || [];
+  renderUsersTable(allUsers);
+}
+
+function renderUsersTable(users) {
+  const tbody = document.getElementById("usersTable");
+  if (!users.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Tidak ada pengguna</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><div class="user-name-cell">${avatarHtml(u)} ${u.username || "Anonim"}</div></td>
+      <td style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${u.id.slice(0,12)}…</td>
+      <td>${roleBadge(u.role)}</td>
+      <td>${onlineBadge(u.last_seen)} ${u.is_banned ? '<span class="badge-pill badge-banned">Banned</span>' : '<span style="font-size:12px;color:var(--green);">✓ Aktif</span>'}</td>
+      <td style="font-size:12px;color:var(--text-muted);">${fmtDate(u.created_at)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="openUserEdit('${u.id}','${u.role}','${u.is_banned}')">✏️ Edit</button>
+        ${!u.is_banned
+          ? `<button class="btn btn-danger btn-sm" onclick="banUser('${u.id}')">🚫 Ban</button>`
+          : `<button class="btn btn-ghost btn-sm" onclick="unbanUser('${u.id}')">✅ Unban</button>`
+        }
+      </td>
+    </tr>
+  `).join("");
+}
+
+window.filterUsers = function() {
+  const q = document.getElementById("userSearch").value.toLowerCase();
+  renderUsersTable(allUsers.filter(u =>
+    (u.username||"").toLowerCase().includes(q) || u.id.includes(q)
+  ));
+};
+
+/* ── USER ACTIONS ─────────────────────────────────────────────── */
+window.openUserEdit = function(id, role, banned) {
+  editingUserId = id;
+  document.getElementById("editRole").value   = role || "user";
+  document.getElementById("editBanned").value = String(banned) === "true" ? "true" : "false";
+  document.getElementById("userModalTitle").textContent = `Edit User: ${id.slice(0,8)}…`;
+  openModal("userModal");
+};
+
+window.saveUserEdit = async function() {
+  if (!editingUserId) return;
+  const role    = document.getElementById("editRole").value;
+  const banned  = document.getElementById("editBanned").value === "true";
+
+  const { error } = await supabase.from("profiles")
+    .update({ role, is_banned: banned })
+    .eq("id", editingUserId);
+
+  if (error) { showToast("Gagal menyimpan: " + error.message, "error"); return; }
+  showToast("Pengguna diperbarui ✓", "success");
+  closeModal("userModal");
+  loadUsers();
+};
+
+window.banUser = async function(id) {
+  if (!confirm("Ban pengguna ini?")) return;
+  await supabase.from("profiles").update({ is_banned: true }).eq("id", id);
+  showToast("Pengguna di-ban", "info");
+  loadUsers();
+};
+window.unbanUser = async function(id) {
+  await supabase.from("profiles").update({ is_banned: false }).eq("id", id);
+  showToast("Pengguna di-unban ✓", "success");
+  loadUsers();
+};
+
+/* ── CHATS ────────────────────────────────────────────────────── */
+async function loadRecentChats() {
+  const box = document.getElementById("recentChatsBox");
+  const { data } = await supabase
+    .from("global_chat")
+    .select("*, profiles(username,avatar_url)")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  allChats = data || [];
+  if (!allChats.length) { box.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada chat</p>`; return; }
+  box.innerHTML = allChats.map(c => chatCard(c, false)).join("");
+}
+
+async function loadChats() {
+  const pinnedBox = document.getElementById("pinnedChatsBox");
+  const allBox    = document.getElementById("allChatsBox");
+
+  pinnedBox.innerHTML = `<div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>`;
+  allBox.innerHTML    = `<div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>`;
+
+  const [{ data: pinned }, { data: all }] = await Promise.all([
+    supabase.from("global_chat").select("*, profiles(username,avatar_url)").eq("is_pinned", true).order("created_at", { ascending: false }),
+    supabase.from("global_chat").select("*, profiles(username,avatar_url)").order("created_at", { ascending: false }).limit(50),
+  ]);
+
+  allChats = all || [];
+
+  pinnedBox.innerHTML = (pinned||[]).length
+    ? (pinned||[]).map(c => chatCard(c, true)).join("")
+    : `<p style="color:var(--text-muted);text-align:center;padding:20px;">Tidak ada pesan dipin</p>`;
+
+  allBox.innerHTML = allChats.length
+    ? allChats.map(c => chatCard(c, true)).join("")
+    : `<p style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada chat</p>`;
+}
+
+function chatCard(c, showActions) {
+  const name = c.profiles?.username || "Anonim";
+  const pinBadge = c.is_pinned ? `<span class="pinned-badge">📌 Dipin</span>` : "";
+  const actions = showActions ? `
+    <div class="chat-actions">
+      ${c.is_pinned
+        ? `<button class="btn btn-ghost btn-sm" onclick="unpinChat('${c.id}')">📍 Cabut Pin</button>`
+        : `<button class="btn btn-ghost btn-sm" onclick="pinChat('${c.id}')">📌 Pin</button>`
+      }
+      <button class="btn btn-danger btn-sm" onclick="deleteChat('${c.id}')">🗑️ Hapus</button>
+    </div>` : "";
+  return `
+    <div class="chat-preview">
+      <div class="chat-meta">
+        <strong>${name}</strong> · ${fmtTime(c.created_at)} ${pinBadge}
+        ${c.is_announcement ? `<span class="badge-pill badge-admin" style="margin-left:4px;">📢 Pengumuman</span>` : ""}
+      </div>
+      <div>${escHtml(c.message || "")}</div>
+      ${c.page_url ? `<div style="font-size:11px;color:var(--blue);margin-top:4px;">📍 ${c.page_url}</div>` : ""}
+      ${actions}
+    </div>`;
+}
+
+window.filterChats = function() {
+  const q = document.getElementById("chatSearch").value.toLowerCase();
+  const filtered = allChats.filter(c => (c.message||"").toLowerCase().includes(q));
+  document.getElementById("allChatsBox").innerHTML = filtered.length
+    ? filtered.map(c => chatCard(c, true)).join("")
+    : `<p style="color:var(--text-muted);text-align:center;padding:20px;">Tidak ditemukan</p>`;
+};
+
+window.pinChat = async function(id) {
+  await supabase.from("global_chat").update({ is_pinned: true }).eq("id", id);
+  showToast("Pesan dipin ✓", "success");
+  loadChats();
+};
+window.unpinChat = async function(id) {
+  await supabase.from("global_chat").update({ is_pinned: false }).eq("id", id);
+  showToast("Pin dicabut", "info");
+  loadChats();
+};
+window.deleteChat = async function(id) {
+  if (!confirm("Hapus pesan ini?")) return;
+  await supabase.from("global_chat").delete().eq("id", id);
+  showToast("Pesan dihapus", "info");
+  loadChats();
+};
+
+/* ── ANNOUNCEMENTS ───────────────────────────────────────────── */
+async function loadAnnouncements() {
+  const box = document.getElementById("announceHistory");
+  const { data } = await supabase
+    .from("global_chat")
+    .select("*, profiles(username)")
+    .eq("is_announcement", true)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (!data?.length) { box.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada pengumuman</p>`; return; }
+
+  const typeIcon = { info:"ℹ️", warning:"⚠️", success:"✅", update:"🚀" };
+  box.innerHTML = data.map(a => `
+    <div class="ann-card">
+      <div class="ann-icon">${typeIcon[a.ann_type] || "📢"}</div>
+      <div class="ann-body">
+        <strong>${a.ann_title || "Pengumuman"}</strong>
+        <p>${escHtml(a.message || "")}</p>
+        <div class="ann-time">${fmtTime(a.created_at)} · oleh ${a.profiles?.username || "Admin"}</div>
+        <div class="ann-actions">
+          <button class="btn btn-danger btn-sm" onclick="deleteChat('${a.id}')">🗑️ Hapus</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+window.sendAnnouncement = async function() {
+  const title   = document.getElementById("annTitle").value.trim();
+  const content = document.getElementById("annContent").value.trim();
+  const type    = document.getElementById("annType").value;
+  if (!content) { showToast("Isi pesan tidak boleh kosong", "error"); return; }
+
+  const { error } = await supabase.from("global_chat").insert({
+    user_id:         currentAdmin.id,
+    message:         content,
+    is_pinned:       true,
+    is_announcement: true,
+    ann_title:       title || "Pengumuman",
+    ann_type:        type,
+  });
+
+  if (error) { showToast("Gagal kirim: " + error.message, "error"); return; }
+  showToast("Pengumuman dikirim ke chat! ✓", "success");
+  document.getElementById("annTitle").value   = "";
+  document.getElementById("annContent").value = "";
+  loadAnnouncements();
+};
+
+window.openAnnounceModal = function() { openModal("announceModal"); };
+window.sendQuickAnnouncement = async function() {
+  const content = document.getElementById("quickAnnContent").value.trim();
+  if (!content) return;
+  await supabase.from("global_chat").insert({
+    user_id: currentAdmin.id, message: content,
+    is_pinned: true, is_announcement: true, ann_type: "info"
+  });
+  showToast("Pengumuman terkirim ✓", "success");
+  closeModal("announceModal");
+  document.getElementById("quickAnnContent").value = "";
+};
+
+/* ── MODAL HELPERS ───────────────────────────────────────────── */
+window.openModal  = id => document.getElementById(id).classList.add("open");
+window.closeModal = id => document.getElementById(id).classList.remove("open");
+document.querySelectorAll(".modal-overlay").forEach(o =>
+  o.addEventListener("click", e => { if (e.target === o) o.classList.remove("open"); })
+);
+
+/* ── LOGOUT ──────────────────────────────────────────────────── */
+window.handleLogout = async function() {
+  if (!confirm("Keluar dari panel admin?")) return;
+  await supabase.auth.signOut();
+  window.location.href = "/";
+};
+
+/* ── UTILS ───────────────────────────────────────────────────── */
+function avatarHtml(u) {
+  if (u.avatar_url) return `<img src="${u.avatar_url}" class="avatar-sm" onerror="this.style.display='none'">`;
+  const name = u.username || "?";
+  return `<div class="avatar-placeholder">${name[0].toUpperCase()}</div>`;
+}
+function roleBadge(role) {
+  if (role === "admin") return `<span class="badge-pill badge-admin">Admin</span>`;
+  return `<span class="badge-pill badge-user">User</span>`;
+}
+function onlineBadge(lastSeen) {
+  if (!lastSeen) return `<span class="badge-pill badge-offline">Offline</span>`;
+  const diff = Date.now() - new Date(lastSeen).getTime();
+  if (diff < 5*60*1000) return `<span class="badge-pill badge-online">🟢 Online</span>`;
+  return `<span class="badge-pill badge-offline">Offline</span>`;
+}
+function fmtDate(d) {
+  if (!d) return "–";
+  return new Date(d).toLocaleDateString("id-ID", { day:"2-digit", month:"short", year:"numeric" });
+}
+function fmtTime(d) {
+  if (!d) return "–";
+  const dt = new Date(d);
+  const diffMs = Date.now() - dt.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1)  return "baru saja";
+  if (diffMin < 60) return diffMin + " mnt lalu";
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24)   return diffH + " jam lalu";
+  return dt.toLocaleDateString("id-ID", { day:"2-digit", month:"short" });
+}
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ── BOOT ──────────────────────────────────────────────────── */
+init();
+</script>
+</body>
+</html>
