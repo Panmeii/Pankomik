@@ -643,7 +643,7 @@ async function fetchGenreKomik(slug, page) {
     /* Endpoint: /comic/mangakita/genres/:genre/page:N */
     /* Slug mangakita: lowercase + dash, tanpa encode spesial */
     const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g,"-");
-    const url  = `${GENRE_API}${cleanSlug}/page${page}`;
+    const url  = `${GENRE_API}${cleanSlug}/${page}`;
     console.log("[Genre] Fetching:", url);
     const res  = await fetch(url);
     console.log("[Genre] Status:", res.status);
