@@ -363,49 +363,86 @@ function proxyImg(url, width) {
   return "/api/img?url=" + encodeURIComponent(clean);
 }
 
+/* ── Warna-warni cover placeholder berdasarkan hash judul ── */
+function _novelColor(str) {
+  var colors = [
+    ["#8e44ad","#d7bde2"],["#2980b9","#aed6f1"],["#27ae60","#a9dfbf"],
+    ["#e67e22","#fad7a0"],["#c0392b","#f1948a"],["#16a085","#a2d9ce"],
+    ["#2c3e50","#85929e"],["#6c3483","#d2b4de"],["#1a5276","#aed6f1"],
+    ["#784212","#f0b27a"],["#0e6655","#a2d9ce"],["#4a235a","#d7bde2"],
+  ];
+  var h = 0;
+  for (var i = 0; i < (str||"").length; i++) h = ((h << 5) - h) + str.charCodeAt(i);
+  return colors[Math.abs(h) % colors.length];
+}
+
+function createNovelPlaceholder(altText, cssText) {
+  var c     = _novelColor(altText);
+  var words = (altText || "Novel").trim().split(/\s+/);
+  /* Ambil huruf pertama tiap kata, max 2 kata */
+  var initials = words.slice(0, 2).map(function(w){ return w[0].toUpperCase(); }).join("");
+  /* Baris judul singkat: max 2 kata pertama */
+  var shortTitle = words.slice(0, 3).join(" ");
+  if (shortTitle.length > 18) shortTitle = shortTitle.slice(0, 16) + "…";
+
+  var div = document.createElement("div");
+  div.style.cssText = (cssText || "") +
+    ";background:linear-gradient(145deg," + c[0] + "," + c[0] + "cc);" +
+    "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+    "gap:6px;border-radius:inherit;overflow:hidden;position:relative;flex-shrink:0;";
+
+  div.innerHTML =
+    "<span style="font-size:28px;line-height:1;">📖</span>" +
+    "<span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:1px;" +
+      "text-shadow:0 2px 8px rgba(0,0,0,0.5);line-height:1;">" + initials + "</span>" +
+    "<span style="font-size:9px;color:" + c[1] + ";font-weight:700;text-align:center;" +
+      "padding:0 6px;line-height:1.3;word-break:break-word;max-width:90%;">" +
+      shortTitle.replace(/</g,"&lt;") + "</span>";
+
+  return div;
+}
+
 function createProxiedImg(originalUrl, altText, cssText) {
-  var img = document.createElement("img");
-  img.alt = altText || "";
+  /* 
+   * Sakuranovel.id memakai Cloudflare Bot Protection ketat — 
+   * semua server proxy (Vercel, wsrv, weserv, dll) diblokir karena IP cloud.
+   * Satu-satunya cara yang reliable: tampilkan generated cover placeholder
+   * yang menarik berdasarkan judul novel.
+   */
+  if (!originalUrl) {
+    return createNovelPlaceholder(altText, cssText);
+  }
+
+  var img   = document.createElement("img");
+  img.alt   = altText || "";
   if (cssText) img.style.cssText = cssText;
   img.style.background = "var(--bg-surface)";
 
-  var clean = (originalUrl || "").split("?")[0];
+  var clean = originalUrl.split("?")[0];
   var step  = 0;
-
-  function getUrl(n) {
-    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
-    if (n === 1) {
-      var ref = "";
-      try { var h = new URL(clean).hostname; for (var k in _NOVEL_REF_MAP) { if (h.indexOf(k)!==-1){ref=_NOVEL_REF_MAP[k];break;} } if(!ref)ref="https://"+h; } catch(e){}
-      return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1" + (ref?"&ref="+encodeURIComponent(ref):"");
-    }
-    return clean; // direct
-  }
 
   function onImgError() {
     step++;
     img.onerror = null;
-    console.log("[Pankomik Novel] img error step=" + step, "url was:", img.src.substring(0,80));
-    if (step <= 2) {
+    if (step === 1) {
+      /* Satu kali coba wsrv dengan referer */
       img.onerror = onImgError;
-      img.src = getUrl(step);
+      img.src = "https://wsrv.nl/?url=" + encodeURIComponent(clean) +
+                "&w=300&q=85&n=-1&ref=" + encodeURIComponent("https://sakuranovel.id");
     } else {
-      /* Semua proxy gagal - tampilkan fallback div */
-      var ph = document.createElement("div");
-      ph.className = "novel-card-fallback";
-      ph.style.cssText = "display:flex !important;width:100%;height:100%;";
-      ph.textContent = "📖";
+      /* Semua gagal → generated placeholder yang menarik */
+      var ph = createNovelPlaceholder(altText, cssText);
       if (img.parentNode) img.parentNode.replaceChild(ph, img);
-      /* Tampilkan sibling fallback jika ada */
-      var sib = img.nextElementSibling;
+      /* Sembunyikan sibling fallback yang plain */
+      var sib = ph.nextElementSibling;
       if (sib && sib.classList.contains("novel-card-fallback")) {
-        sib.style.display = "flex";
+        sib.style.display = "none";
       }
     }
   }
-  img.onerror = onImgError;
 
-  img.src = getUrl(0);
+  img.onerror = onImgError;
+  img.src = "/api/img?url=" + encodeURIComponent(clean);
   return img;
 }
 
