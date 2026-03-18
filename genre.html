@@ -455,6 +455,8 @@ function proxyImg(url) {
       "i1.wp.com":     "https://mangakita.me",
       "i2.wp.com":     "https://mangakita.me",
       "i3.wp.com":     "https://mangakita.me",
+      "bacakomik":     "https://bacakomik.my",
+      "bacakomik.my":  "https://bacakomik.my",
       "komikindo":     "https://komikindo.org",
       "komikcast":     "https://komikcast.me",
       "komiku":        "https://komiku.id",
@@ -473,8 +475,9 @@ function proxyImg(url) {
    GENRE PAGE — genre.js (inline)
    ============================================================ */
 
-const GENRES_API = "https://www.sankavollerei.com/comic/mangakita/genres";
-const GENRE_API  = "https://www.sankavollerei.com/comic/mangakita/genres/";
+const GENRES_API  = "https://www.sankavollerei.com/comic/mangakita/genres";
+const GENRE_API   = "https://www.sankavollerei.com/comic/mangakita/genres/";
+const GENRE_API_2 = "https://www.sankavollerei.com/comic/bacakomik/genre/";
 
 /* ---- STATE ---------------------------------------------- */
 let allGenres     = [];
@@ -640,43 +643,55 @@ async function fetchGenreKomik(slug, page) {
   pagination.style.display = "none";
 
   try {
-    /* Endpoint: /comic/mangakita/genres/:genre/page:N */
-    /* Slug mangakita: lowercase + dash, tanpa encode spesial */
-    const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g,"-");
-    const url  = `${GENRE_API}${cleanSlug}/${page}`;
-    console.log("[Genre] Fetching:", url);
-    const res  = await fetch(url);
-    console.log("[Genre] Status:", res.status);
-    const data = await res.json();
-    console.log("[Genre] Keys:", Object.keys(data), "mangaList:", data.mangaList?.length, "success:", data.success);
+    const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
 
-    /* API mangakita: mangaList[] dengan image, slug, rating, latestChapter, link */
-    const raw  = data.mangaList || data.data || [];
-    allFetched = raw.map(k => {
-      const rawImg = k.image || k.banner || k.cover || k.thumbnail || "";
-      return {
-        ...k,
-        cover:   rawImg,
-        title:   k.title   || k.name  || "Untitled",
-        slug:    k.slug    || k.id    || "",
-        type:    k.type    || "",
-        rating:  k.rating  || "–",
-        chapter: k.latestChapter || k.chapter || "",
-      };
+    /* Fetch kedua API paralel: mangakita (1) + bacakomik (2) */
+    const [r1, r2] = await Promise.allSettled([
+      fetch(`${GENRE_API}${cleanSlug}/${page}`).then(r => r.json()).catch(() => null),
+      fetch(`${GENRE_API_2}${cleanSlug}/${page}`).then(r => r.json()).catch(() => null),
+    ]);
+
+    const d1 = r1.status === "fulfilled" ? r1.value : null;
+    const d2 = r2.status === "fulfilled" ? r2.value : null;
+
+    /* Normalize mangakita: mangaList[{image, slug, rating, latestChapter}] */
+    const list1 = (d1?.mangaList || []).map(k => ({
+      cover:   k.image || k.banner || k.cover || "",
+      title:   k.title || "Untitled",
+      slug:    k.slug  || "",
+      type:    k.type  || "",
+      rating:  k.rating || "–",
+      chapter: k.latestChapter || k.chapter || "",
+    }));
+
+    /* Normalize bacakomik: komikList[{cover, slug, rating, type}] */
+    const list2 = (d2?.komikList || []).map(k => ({
+      cover:   k.cover || k.image || "",
+      title:   k.title || "Untitled",
+      slug:    k.slug  || "",
+      type:    k.type  || "",
+      rating:  k.rating || "–",
+      chapter: k.latestChapter || k.chapter || "",
+    }));
+
+    /* Merge deduplicate by slug: mangakita dulu, bacakomik tambal yg tidak ada */
+    const seen = new Set();
+    allFetched = [...list1, ...list2].filter(k => {
+      if (!k.slug || seen.has(k.slug)) return false;
+      seen.add(k.slug);
+      return true;
     });
 
-    /* Pagination dari data.pagination */
-    const pag   = data.pagination || {};
-    hasNextPage = !!(pag.hasNextPage ?? pag.hasNext);
-    currentPage = pag.currentPage || page;
-
-    /* Kalau success=false tapi ada data, tetap render */
-    if (!data.success && !raw.length) {
-      const msg = data.message || data.error || "";
-      throw new Error(`API error: ${msg || "Genre tidak ditemukan"}`);
+    if (!allFetched.length) {
+      throw new Error(`Tidak ada komik untuk genre "${slug}"`);
     }
 
-    document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
+    /* Pagination: prioritaskan mangakita, fallback bacakomik */
+    const pag   = d1?.pagination || {};
+    hasNextPage = !!(pag.hasNextPage ?? pag.hasNext ?? d2?.hasNextPage ?? false);
+    currentPage = pag.currentPage || d2?.currentPage || page;
+
+    document.getElementById("activeGenreCount").textContent = `(${allFetched.length}+)`;
 
     applyFilterAndSort();
     renderPagination();
