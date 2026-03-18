@@ -686,6 +686,10 @@ export async function getComments(komikSlug) {
 /**
  * Tambah komentar baru
  */
+/* Cooldown guard untuk addComment — cegah spam kiriman cepat */
+let _lastCommentAt = 0;
+const COMMENT_COOLDOWN_MS = 3000; /* 3 detik antar komentar */
+
 export async function addComment(userId, komikSlug, content, parentId = null) {
   try {
     if (!content || content.trim().length === 0) {
@@ -694,6 +698,14 @@ export async function addComment(userId, komikSlug, content, parentId = null) {
     if (content.length > 1000) {
       return { comment: null, error: { message: "Komentar terlalu panjang (maks 1000 karakter)" } };
     }
+
+    /* Cooldown check */
+    const now = Date.now();
+    if (now - _lastCommentAt < COMMENT_COOLDOWN_MS) {
+      const sisa = Math.ceil((COMMENT_COOLDOWN_MS - (now - _lastCommentAt)) / 1000);
+      return { comment: null, error: { message: `Harap tunggu ${sisa} detik sebelum komentar lagi.` } };
+    }
+    _lastCommentAt = now;
 
     const sanitizedContent = content
       .trim()
