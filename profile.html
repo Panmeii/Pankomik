@@ -6,127 +6,189 @@
   <title>Profil — Pankomik</title>
   <link rel="stylesheet" href="/style.css">
   <style>
-    /* ---- PROFIL HEADER ----------------------------------- */
-    .profile-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 28px 20px 20px;
-      gap: 10px;
-      text-align: center;
-    }
-
-    /* Avatar wrapper + overlay upload */
-    .avatar-wrap {
+    /* ---- PROFIL HEADER ─────────────────────────────────── */
+    .profile-hero {
       position: relative;
-      width: 86px;
-      height: 86px;
-      cursor: pointer;
+      overflow: hidden;
+      padding: 0 0 0;
     }
-    .avatar-wrap img {
-      width: 86px;
-      height: 86px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid var(--accent);
-      transition: filter 0.2s;
-      display: block;
-    }
-    .avatar-overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.55);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      opacity: 0;
-      transition: opacity 0.2s;
+    .profile-hero-bg {
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(232,82,42,0.18) 0%, rgba(245,166,35,0.10) 50%, transparent 100%);
       pointer-events: none;
     }
-    .avatar-overlay span { font-size: 18px; }
-    .avatar-overlay p { font-size: 10px; font-weight: 700; color: #fff; margin: 0; line-height: 1; }
-    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
-    .avatar-wrap:hover img { filter: brightness(0.7); }
+    .profile-hero-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(232,82,42,0.12) 0%, transparent 60%);
+    }
+    .profile-header {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 20px 24px;
+      gap: 8px;
+      text-align: center;
+      z-index: 1;
+    }
 
-    /* Upload loading ring */
+    /* Avatar */
+    .avatar-wrap {
+      position: relative;
+      width: 92px; height: 92px;
+      cursor: pointer;
+    }
+    .avatar-ring {
+      position: absolute; inset: -4px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) 0%, #f5a623 50%, var(--accent) 100%);
+      animation: ring-spin 4s linear infinite;
+      z-index: 0;
+    }
+    @keyframes ring-spin { to { transform: rotate(360deg); } }
+    .avatar-wrap img {
+      position: relative; z-index: 1;
+      width: 92px; height: 92px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--bg);
+      transition: filter 0.2s, transform 0.2s;
+      display: block;
+    }
+    .avatar-wrap:hover img { filter: brightness(0.75); transform: scale(1.04); }
+    .avatar-overlay {
+      position: absolute; inset: 3px;
+      z-index: 2; border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 2px; opacity: 0;
+      transition: opacity 0.2s; pointer-events: none;
+    }
+    .avatar-overlay span { font-size: 18px; }
+    .avatar-overlay p { font-size: 10px; font-weight: 700; color: #fff; margin: 0; }
+    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
+
     .avatar-uploading::after {
       content: '';
-      position: absolute;
-      inset: -4px;
+      position: absolute; inset: -4px;
       border-radius: 50%;
       border: 3px solid transparent;
       border-top-color: var(--accent);
       animation: spin 0.8s linear infinite;
+      z-index: 3;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
     .profile-name {
-      font-size: 18px;
-      font-weight: 800;
+      font-size: 20px; font-weight: 900;
+      margin-top: 4px; letter-spacing: -0.3px;
     }
     .profile-level {
-      font-size: 12px;
-      color: var(--accent);
-      font-weight: 700;
+      font-size: 11px; color: var(--accent); font-weight: 800;
       background: rgba(232,82,42,0.12);
-      padding: 3px 10px;
-      border-radius: 99px;
+      border: 1px solid rgba(232,82,42,0.25);
+      padding: 3px 12px; border-radius: 99px;
+      letter-spacing: 0.5px;
     }
-    .profile-stats {
-      display: flex;
-      gap: 28px;
-      margin-top: 4px;
-    }
-    .stat-item { text-align: center; }
-    .stat-item p:first-child { font-size: 20px; font-weight: 800; }
-    .stat-item p:last-child  { font-size: 11px; color: var(--text-muted); }
 
-    /* ---- BADGE CHIPS ------------------------------------- */
+    /* Stats row */
+    .profile-stats {
+      display: flex; gap: 0;
+      margin-top: 8px; width: 100%; max-width: 320px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+    }
+    .stat-item {
+      flex: 1; text-align: center;
+      padding: 10px 8px;
+      border-right: 1px solid var(--border);
+      transition: background 0.2s;
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-item:hover { background: var(--bg-surface); }
+    .stat-item p:first-child { font-size: 18px; font-weight: 900; color: var(--text); margin: 0; }
+    .stat-item p:last-child  { font-size: 10px; color: var(--text-muted); margin: 2px 0 0; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+
+    /* XP bar under stats */
+    .profile-xp-row {
+      width: 100%; max-width: 320px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .profile-xp-labels {
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--text-muted); font-weight: 700;
+    }
+    .profile-xp-bar {
+      height: 5px; background: var(--bg-surface);
+      border-radius: 99px; overflow: hidden;
+    }
+    .profile-xp-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), #f5a623);
+      border-radius: 99px;
+      transition: width 1s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ---- BADGE CHIPS ─────────────────────────────────── */
     .badge-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 0 16px 16px;
-      justify-content: center;
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 0 16px 16px; justify-content: center;
     }
     .badge-chip {
-      display: flex;
-      align-items: center;
-      gap: 5px;
+      display: flex; align-items: center; gap: 5px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 700;
+      border-radius: 99px; padding: 4px 11px;
+      font-size: 11px; font-weight: 700;
+      transition: border-color 0.2s, background 0.2s;
     }
+    .badge-chip:hover { border-color: var(--accent); background: rgba(232,82,42,0.08); }
 
-    /* ---- TABS -------------------------------------------- */
+    /* ---- TABS ─────────────────────────────────────────── */
     .profile-tabs {
       display: flex;
       border-bottom: 1px solid var(--border);
-      padding: 0 14px;
-      gap: 4px;
-      overflow-x: auto;
-      scrollbar-width: none;
+      padding: 0 14px; gap: 2px;
+      overflow-x: auto; scrollbar-width: none;
+      background: var(--bg-card);
+      position: sticky; top: 58px; z-index: 10;
     }
     .profile-tabs::-webkit-scrollbar { display: none; }
     .profile-tab {
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      cursor: pointer;
+      padding: 11px 13px;
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted); cursor: pointer;
       border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      background: none;
+      white-space: nowrap; background: none;
       border-top: none; border-left: none; border-right: none;
       transition: color 0.2s, border-color 0.2s;
     }
     .profile-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── Novel Progress Card ────────────────────────────── */
+    .novel-progress-item {
+      display: flex; gap: 12px; padding: 12px 0;
+      border-bottom: 1px solid var(--border); align-items: flex-start;
+    }
+    .novel-progress-item:last-child { border-bottom: none; }
+    .novel-progress-cover {
+      width: 50px; height: 68px; border-radius: 6px;
+      object-fit: cover; flex-shrink: 0;
+      background: var(--bg-surface);
+    }
+    .novel-progress-info { flex: 1; min-width: 0; }
+    .novel-progress-title {
+      font-weight: 700; font-size: 13px; margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .novel-progress-meta { font-size: 11px; color: var(--text-muted); margin: 2px 0; }
+    .novel-progress-pct {
+      font-size: 15px; font-weight: 900; color: var(--accent);
+      flex-shrink: 0; text-align: right;
+    }
 
     /* ---- TAB CONTENT ------------------------------------- */
     .tab-content { display: none; padding: 14px; }
@@ -348,7 +410,8 @@ import {
   getHistory, getProgress, syncProfileProgress, getTotalChaptersRead,
   getLeaderboard,
   getNovelBookmarks, removeNovelBookmark,
-  getNovelHistory
+  getNovelHistory, getNovelProgress,
+  getTotalNovelChaptersRead
 } from "/supabase.js";
 import { initAuthHeader } from "/auth-header.js";
 
@@ -371,7 +434,7 @@ window.onload = async function () {
   if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
   await initAuthHeader();
   currentUser = await getCurrentUser();
-  if (!currentUser) { window.location.href = "auth.html"; return; }
+  if (!currentUser) { window.location.href = "/masuk"; return; }
   await syncProfileProgress(currentUser.id);
   await loadProfile();
   const urlTab = new URLSearchParams(window.location.search).get("tab");
@@ -398,6 +461,8 @@ async function loadProfile() {
   const badgeCount = BADGE_DEFS.filter(b => liveTotal >= b.min_chapters).length;
   const liveLevel  = Math.floor(liveTotal / 50) + 1;
   const levelTitle = getLevelTitle(liveLevel);
+  const xpInLevel  = liveTotal % 50;
+  const xpPct      = Math.round((xpInLevel / 50) * 100);
   const isOAuth    = isOAuthUser(currentUser);
 
   const ownedChips = BADGE_DEFS
@@ -409,22 +474,35 @@ async function loadProfile() {
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.username || 'U')}&background=e8522a&color=fff&bold=true`;
 
   document.getElementById("profileContent").innerHTML = `
-    <!-- ── Header Profil ── -->
-    <div class="profile-header">
-      <div class="avatar-wrap" id="avatarWrap" onclick="document.getElementById('avatarInput').click()" title="Klik untuk ganti foto">
-        <img id="avatarImg" src="${avatarSrc}" alt="Avatar">
-        <div class="avatar-overlay">
-          <span>📷</span>
-          <p>Ganti Foto</p>
+    <!-- ── Hero Profil ── -->
+    <div class="profile-hero">
+      <div class="profile-hero-bg"></div>
+      <div class="profile-header">
+        <div class="avatar-wrap" id="avatarWrap" onclick="document.getElementById('avatarInput').click()" title="Klik untuk ganti foto">
+          <div class="avatar-ring"></div>
+          <img id="avatarImg" src="${avatarSrc}" alt="Avatar">
+          <div class="avatar-overlay"><span>📷</span><p>Ganti Foto</p></div>
         </div>
-      </div>
-      <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleAvatarUpload(event)">
+        <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleAvatarUpload(event)">
 
-      <div class="profile-name" id="profileNameDisplay">${profile?.username || 'User'}</div>
-      <div class="profile-level">Level ${liveLevel} — ${levelTitle}</div>
-      <div class="profile-stats">
-        <div class="stat-item"><p id="statChapters">${liveTotal}</p><p>Chapter Dibaca</p></div>
-        <div class="stat-item"><p>${badgeCount}</p><p>Badge</p></div>
+        <div class="profile-name" id="profileNameDisplay">${profile?.username || 'User'}</div>
+        <div class="profile-level">✨ Level ${liveLevel} — ${levelTitle}</div>
+
+        <div class="profile-stats">
+          <div class="stat-item"><p id="statChapters">${liveTotal}</p><p>Komik Ch</p></div>
+          <div class="stat-item"><p id="statNovelChapters">–</p><p>Novel Ch</p></div>
+          <div class="stat-item"><p>${badgeCount}</p><p>Badge</p></div>
+        </div>
+
+        <div class="profile-xp-row">
+          <div class="profile-xp-labels">
+            <span>XP Level ${liveLevel}</span>
+            <span>${xpInLevel}/50 — ${50 - xpInLevel} lagi ke Lv.${liveLevel + 1}</span>
+          </div>
+          <div class="profile-xp-bar">
+            <div class="profile-xp-fill" id="xpFill" style="width:0%"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -437,6 +515,7 @@ async function loadProfile() {
       <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')">📖 Riwayat</button>
       <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')">📝 Novel</button>
       <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')">📊 Progress</button>
+      <button class="profile-tab"        id="tab-novel-progress" onclick="switchTab('novel-progress')">📗 Novel</button>
       <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')">🏅 Badge</button>
       <button class="profile-tab"        id="tab-leaderboard"    onclick="switchTab('leaderboard')">🏆 Top</button>
       <button class="profile-tab"        id="tab-settings"       onclick="switchTab('settings')">⚙️ Profil</button>
@@ -474,6 +553,11 @@ async function loadProfile() {
 
     <div class="tab-content" id="content-progress">
       <div id="progressList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <!-- Tab: Novel Progress -->
+    <div class="tab-content" id="content-novel-progress">
+      <div id="novelProgressList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
     <div class="tab-content" id="content-badge">
@@ -544,6 +628,19 @@ async function loadProfile() {
   `;
 
   await loadBookmarks();
+
+  /* Animate XP bar */
+  setTimeout(() => {
+    const fill = document.getElementById("xpFill");
+    if (fill) fill.style.width = xpPct + "%";
+  }, 300);
+
+  /* Load novel chapter count */
+  try {
+    const { total: novelTotal } = await getTotalNovelChaptersRead(currentUser.id);
+    const el = document.getElementById("statNovelChapters");
+    if (el) el.textContent = novelTotal || 0;
+  } catch(e) {}
 }
 
 /* ============================================================
@@ -556,9 +653,10 @@ window.switchTab = function (tab) {
   document.getElementById(`content-${tab}`)?.classList.add("active");
 
   if (tab === "history")        loadHistory();
-  if (tab === "novel-history")  loadNovelHistory();
-  if (tab === "novel-bookmark") loadNovelBookmarks();
-  if (tab === "progress")       loadProgressTab();
+  if (tab === "novel-history")    loadNovelHistory();
+  if (tab === "novel-bookmark")  loadNovelBookmarks();
+  if (tab === "progress")         loadProgressTab();
+  if (tab === "novel-progress")   loadNovelProgressTab();
   if (tab === "badge")          loadBadgeTab();
   if (tab === "leaderboard")    loadLeaderboard();
 };
@@ -604,6 +702,19 @@ window.hapusBookmark = async function (slug, btn) {
   btn.textContent = "..."; btn.disabled = true;
   await removeBookmark(currentUser.id, slug);
   await loadBookmarks();
+
+  /* Animate XP bar */
+  setTimeout(() => {
+    const fill = document.getElementById("xpFill");
+    if (fill) fill.style.width = xpPct + "%";
+  }, 300);
+
+  /* Load novel chapter count */
+  try {
+    const { total: novelTotal } = await getTotalNovelChaptersRead(currentUser.id);
+    const el = document.getElementById("statNovelChapters");
+    if (el) el.textContent = novelTotal || 0;
+  } catch(e) {}
 };
 
 /* ============================================================
@@ -625,7 +736,7 @@ async function loadHistory() {
         <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
       </div>
       <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="window.location.href='reader.html?slug=${h.chapter_slug}'">Lanjut</button>
+        <button class="btn-sm primary" onclick="window.location.href='/baca/${h.chapter_slug}'">Lanjut</button>
         <button class="btn-sm" onclick="gotoDetail('${h.komik_slug}')">Detail</button>
       </div>
     </div>`).join("");
@@ -660,9 +771,55 @@ async function loadProgressTab() {
         </div>
         ${p.total_chapters > 0 ? `<div class="progress-bar-wrap" style="width:100%;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>` : ""}
         <div style="display:flex;gap:6px;width:100%;">
-          ${p.last_chapter_slug ? `<button class="btn-sm primary" onclick="window.location.href='reader.html?slug=${p.last_chapter_slug}'">▶️ Lanjut Baca</button>` : ""}
+          ${p.last_chapter_slug ? `<button class="btn-sm primary" onclick="window.location.href='/baca/${p.last_chapter_slug}'">▶️ Lanjut Baca</button>` : ""}
           <button class="btn-sm" onclick="gotoDetail('${p.komik_slug}')">Detail</button>
         </div>
+      </div>`;
+  }).join("");
+}
+
+/* ============================================================
+   NOVEL PROGRESS TAB
+   ============================================================ */
+async function loadNovelProgressTab() {
+  const el = document.getElementById("novelProgressList");
+  el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
+
+  const { progress } = await getNovelProgress(currentUser.id);
+
+  if (!progress.length) {
+    el.innerHTML = `<div class="empty-state"><p>📗</p><p>Belum ada progress novel. Mulai baca novel dulu!</p></div>`;
+    return;
+  }
+
+  el.innerHTML = progress.map(p => {
+    const updated = new Date(p.updated_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
+    const cover   = p.novel_cover
+      ? `<img class="novel-progress-cover" src="${proxyImg(p.novel_cover, 100)}" alt="${p.novel_title}"
+           onerror="this.style.display='none'">`
+      : `<div class="novel-progress-cover" style="display:flex;align-items:center;justify-content:center;font-size:24px;">📖</div>`;
+    return `
+      <div class="novel-progress-item">
+        <div style="cursor:pointer" onclick="gotoNovelDetail('${p.novel_slug}')">${cover}</div>
+        <div class="novel-progress-info">
+          <div class="novel-progress-title" onclick="gotoNovelDetail('${p.novel_slug}')" style="cursor:pointer">
+            ${p.novel_title || p.novel_slug}
+          </div>
+          <p class="novel-progress-meta">📖 ${p.read_chapters} chapter dibaca</p>
+          <p class="novel-progress-meta">🕒 ${updated}</p>
+          ${p.last_chapter_title
+            ? `<p class="novel-progress-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;">
+                 Terakhir: ${p.last_chapter_title}
+               </p>`
+            : ""}
+          <div class="komik-list-actions" style="flex-direction:row;margin-top:8px;">
+            ${p.last_chapter_slug
+              ? `<button class="btn-sm primary" onclick="window.location.href='/baca-novel/${p.last_chapter_slug}'">▶️ Lanjut</button>`
+              : ""}
+            <button class="btn-sm" onclick="gotoNovelDetail('${p.novel_slug}')">Detail</button>
+          </div>
+        </div>
+        <div class="novel-progress-pct">${p.read_chapters}<small style="font-size:10px;font-weight:600;color:var(--text-muted)"> ch</small></div>
       </div>`;
   }).join("");
 }
@@ -1039,15 +1196,15 @@ async function loadNovelHistory() {
         <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
       </div>
       <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="window.location.href='novel-reader.html?slug=${h.chapter_slug}'">Lanjut</button>
+        <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${h.chapter_slug}'">Lanjut</button>
         <button class="btn-sm" onclick="gotoNovelDetail('${h.novel_slug}')">Detail</button>
       </div>
     </div>`).join("");
 }
 
-window.gotoNovelDetail = slug => window.location.href = `novel-detail.html?slug=${slug}`;
-window.gotoDetail   = slug => window.location.href = `detail.html?slug=${slug}`;
-window.goHome       = () => window.location.href = "index.html";
+window.gotoNovelDetail = slug => window.location.href = '/novel/'+slug;
+window.gotoDetail = slug => window.location.href = '/komik/'+slug;
+window.goHome = () => window.location.href = "/";
 window.liveSearch   = () => {};
 window.toggleMenu   = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display === "block" ? "none" : "block"; };
 window.toggleDarkMode = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark"); };
@@ -1063,16 +1220,16 @@ function getLevelTitle(level) {
 
 <!-- ── Bottom Navigation ── -->
 <nav class="bottom-nav">
-  <button class="nav-item" onclick="window.location.href='index.html'">
+  <button class="nav-item" onclick="window.location.href='/'">
     <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='index.html'">
+  <button class="nav-item" onclick="window.location.href='/'">
     <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='novel.html'">
+  <button class="nav-item" onclick="window.location.href='/novel/'">
     <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='donatur.html'">
+  <button class="nav-item" onclick="window.location.href='/donatur'">
     <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
   </button>
   <button class="nav-item active">
