@@ -402,17 +402,39 @@ function renderScrollMode(images) {
   }
 }
 
+/* ── Image proxy helper untuk reader (hotlink bypass) ──────── */
+const _READER_REFS = {
+  "komikindo":"https://komikindo.org","komikcast":"https://komikcast.me",
+  "komiku":"https://komiku.id","bacakomik":"https://bacakomik.me",
+  "mangatale":"https://mangatale.co","westmanga":"https://westmanga.info",
+  "manhwaindo":"https://manhwaindo.id","shinigami":"https://shinigami.id",
+  "kiryuu":"https://kiryuu.id","mgkomik":"https://mgkomik.id",
+};
+function _rRef(url) {
+  try {
+    const host = new URL(url.startsWith("http")?url:"https://"+url).hostname;
+    for (const [k,v] of Object.entries(_READER_REFS)) { if (host.includes(k)) return v; }
+    return "https://"+host;
+  } catch { return ""; }
+}
+function _rProxy(rawUrl, n) {
+  const clean = rawUrl.split("?")[0];
+  if (n === 0) {
+    const ref = _rRef(clean);
+    let q = "https://wsrv.nl/?url="+encodeURIComponent(clean)+"&w=800&output=webp&q=85&n=-1";
+    if (ref) q += "&ref="+encodeURIComponent(ref);
+    return q;
+  }
+  if (n === 1) return "https://wsrv.nl/?url="+encodeURIComponent(clean)+"&w=800&n=-1";
+  return rawUrl;
+}
+
 /* Load satu gambar ke dalam wrapper, panggil onDone setelah selesai */
 function loadImageSequential(wrapper, url, idx, onDone) {
   const skeleton = wrapper.querySelector(".image-skeleton");
   let tried = 0;
 
-  function getUrl(n) {
-    const clean = url.split("?")[0].replace(/^https?:\/\//, "");
-    if (n === 0) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + "&w=800&output=webp&q=85";
-    if (n === 1) return "https://wsrv.nl/?url=" + encodeURIComponent(url.split("?")[0]) + "&w=800";
-    return url; /* direct fallback */
-  }
+  function getUrl(n) { return _rProxy(url, n); }
 
   const img = document.createElement("img");
   img.alt           = "Page " + idx;
@@ -630,18 +652,17 @@ function showPage(index) {
   img.style.cssText = "width:100%;max-width:720px;display:block;opacity:0;transition:opacity 0.25s;";
 
   let tried = 0;
-  function getUrl(n) {
-    const clean = url.split("?")[0].replace(/^https?:\/\//, "");
-    if (n === 0) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + "&w=800&output=webp&q=85";
-    if (n === 1) return "https://wsrv.nl/?url=" + encodeURIComponent(url.split("?")[0]) + "&w=800";
-    return url;
-  }
+  function getUrl(n) { return _rProxy(url, n); }
 
   img.onerror = function () {
     tried++;
     if (tried <= 2) { img.src = getUrl(tried); return; }
     if (skeleton) skeleton.style.display = "none";
-    img.style.display = "none";
+    img.onerror = null;
+    const ph = document.createElement("div");
+    ph.style.cssText = "display:flex;align-items:center;justify-content:center;min-height:280px;background:#151519;color:#666;font-size:14px;border:1px dashed #333;border-radius:8px;";
+    ph.textContent = "⚠️ Gambar gagal dimuat";
+    if (img.parentNode) img.parentNode.replaceChild(ph, img);
   };
   img.onload = function () {
     if (skeleton) skeleton.style.display = "none";
