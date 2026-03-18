@@ -3,57 +3,59 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pankomik</title>
+  <title>Pankomik — Baca Komik Online</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    #loadMoreWrap {
+      display: none; flex-direction: column;
+      align-items: center; gap: 10px; padding: 16px 14px 28px;
+    }
+    #pageInfo { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+    #loadMoreBtn {
+      width: 100%; max-width: 360px; padding: 13px 20px; border-radius: 12px;
+      border: 1.5px solid var(--border); background: var(--bg-card); color: var(--text);
+      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
+    }
+    #loadMoreBtn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #fff; transform: translateY(-2px); }
+    #loadMoreBtn:active:not(:disabled) { transform: scale(0.97); }
+    #loadMoreBtn:disabled { cursor: not-allowed; }
+    #loadMoreSpinner { display: none; grid-template-columns: repeat(2,1fr); gap: 10px; padding: 0 14px; width: 100%; }
+    .skeleton-pulse {
+      height: 210px; border-radius: 10px;
+      background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    #infiniteHint { text-align: center; font-size: 11px; color: var(--text-muted); padding: 4px 0 2px; }
+  </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 
 <header class="header">
   <div class="logo" onclick="goHome()">Pankomik</div>
-
-  <input
-    type="text"
-    id="searchInput"
-    placeholder="Cari komik..."
-    oninput="liveSearch()"
-    autocomplete="off"
-  >
-
+  <input type="text" id="searchInput" placeholder="Cari komik..." oninput="liveSearch()" autocomplete="off">
   <div class="header-right">
     <button onclick="toggleDarkMode()" title="Ganti Tema">🌙</button>
-    <!-- Klik tombol ini → buka/tutup dropdown menu -->
     <button onclick="toggleMenu()" title="Menu">👤</button>
   </div>
 </header>
 
-<!-- Hasil pencarian live -->
 <div id="searchResult" class="search-result"></div>
-
-<!--
-  Dropdown SENGAJA dikosongkan di sini.
-  Isinya diisi otomatis oleh auth-header.js:
-  → Belum login : tampil "Masuk" dan "Daftar"
-  → Sudah login : tampil nama user, Profil, Bookmark, Riwayat, Keluar
--->
 <div id="menuDropdown" class="dropdown"></div>
-
-<!-- Toast notifikasi -->
 <div class="toast-container" id="toastContainer"></div>
-
-<!-- Tombol kembali ke atas -->
 <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
 
 <h2 class="section-title"><span>🔥</span>Top Komik</h2>
 <div id="topKomik" class="slider"></div>
 
-<!-- Genre Filter Chips -->
 <div class="genre-section-wrap">
   <div class="genre-section-header">
     <h2 class="section-title" style="padding:0;margin:0;"><span>🏷️</span>Genre</h2>
-    <button class="genre-see-all" onclick="window.location.href='genre.html'">Lihat Semua →</button>
+    <button class="genre-see-all" onclick="window.location.href='/genre/'">Lihat Semua →</button>
   </div>
   <div class="genre-chips-index" id="genreChipsIndex">
-    <!-- diisi JS -->
     <div class="genre-chip-index skeleton" style="width:70px;height:30px;border-radius:99px;"></div>
     <div class="genre-chip-index skeleton" style="width:80px;height:30px;border-radius:99px;"></div>
     <div class="genre-chip-index skeleton" style="width:60px;height:30px;border-radius:99px;"></div>
@@ -66,20 +68,43 @@
 <h2 class="section-title"><span>🆕</span>Update Terbaru</h2>
 <div id="komikLatest" class="grid-komik"></div>
 
+<div id="loadMoreSpinner">
+  <div class="skeleton-pulse"></div><div class="skeleton-pulse"></div>
+  <div class="skeleton-pulse"></div><div class="skeleton-pulse"></div>
+</div>
+
+<div id="loadMoreWrap">
+  <p id="infiniteHint">Scroll ke bawah atau tekan tombol untuk muat lebih banyak</p>
+  <span id="pageInfo"></span>
+  <button id="loadMoreBtn" onclick="loadMore()">Muat Lebih Banyak ↓</button>
+</div>
+
 <h2 class="section-title"><span>⭐</span>Rekomendasi</h2>
 <div id="komikRekomen" class="rekom-container"></div>
 
-<!--
-  CATATAN URUTAN SCRIPT:
-  • type="module" wajib untuk file yang pakai import/export (supabase.js, auth-header.js)
-  • script.js tetap pakai <script src="..."> biasa karena tidak pakai module
-  • auth-header.js dipanggil duluan agar dropdown langsung terisi saat halaman muat
--->
+<!-- ── Bottom Navigation ── -->
+<nav class="bottom-nav">
+  <button class="nav-item active" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/novel/'">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/donatur'">
+    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
 <script type="module">
   import { initAuthHeader } from "./auth-header.js";
-  initAuthHeader(); /* Isi dropdown sesuai status login */
+  initAuthHeader();
 </script>
-
 <script src="script.js"></script>
 </body>
 </html>
