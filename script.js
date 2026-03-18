@@ -13,11 +13,12 @@
    ============================================================ */
 
 /* ── API ENDPOINTS ──────────────────────────────────────── */
-const API_TOP    = "https://www.sankavollerei.com/comic/bacakomik/top";
-const API_LATEST = "https://www.sankavollerei.com/comic/komikindo/latest";
-const API_REKOM  = "https://www.sankavollerei.com/comic/bacakomik/recomen";
-const API_SEARCH = "https://www.sankavollerei.com/comic/bacakomik/search/";
-const API_GENRES = "https://www.sankavollerei.com/comic/komikindo/genres";
+const API_TOP       = "https://www.sankavollerei.com/comic/bacakomik/top";
+const API_LATEST    = "https://www.sankavollerei.com/comic/komikindo/latest";
+const API_LATEST_MK = "https://www.sankavollerei.com/comic/mangakita/home"; /* mangakita latest */
+const API_REKOM     = "https://www.sankavollerei.com/comic/bacakomik/recomen";
+const API_SEARCH    = "https://www.sankavollerei.com/comic/bacakomik/search/";
+const API_GENRES    = "https://www.sankavollerei.com/comic/komikindo/genres";
 
 /* ── URL BUILDERS ───────────────────────────────────────── */
 function komikURL(slug)               { return `/komik/${slug}`; }
@@ -41,6 +42,11 @@ const DOMAIN_REF_MAP = {
   "shinigami":  "https://shinigami.id",
   "sakuranovel":"https://sakuranovel.id",
   "novelringan":"https://novelringan.com",
+  "mangakita":  "https://mangakita.me",
+  "i0.wp.com":  "https://mangakita.me",
+  "i1.wp.com":  "https://mangakita.me",
+  "i2.wp.com":  "https://mangakita.me",
+  "i3.wp.com":  "https://mangakita.me",
   "kiryuu":     "https://kiryuu.id",
   "mgkomik":    "https://mgkomik.id",
 };
@@ -74,7 +80,42 @@ function proxyImg(url, w = 300) {
 
 function safeCover(komik, w = 300) {
   const raw = komik?.image || komik?.cover || komik?.thumbnail || "";
-  return raw ? proxyImg(raw.split("?")[0], w) : "";
+  /* Skip SVG placeholder kosong yang dikembalikan beberapa API */
+  if (!raw || raw.startsWith("data:image/svg") || raw.startsWith("data:image/gif")) return "";
+  return proxyImg(raw.split("?")[0], w);
+}
+
+/* Generated cover berwarna berdasarkan hash judul */
+function _hashColor(str) {
+  const colors = [
+    ["#e8522a","#ffd0c0"],["#8e44ad","#e8daef"],["#2980b9","#d6eaf8"],
+    ["#27ae60","#d5f5e3"],["#e67e22","#fdebd0"],["#c0392b","#fadbd8"],
+    ["#16a085","#d1f2eb"],["#2c3e50","#d5d8dc"],["#6c3483","#e8daef"],
+    ["#1a5276","#d6eaf8"],["#784212","#fdebd0"],["#0e6655","#d1f2eb"],
+  ];
+  let h = 0;
+  for (let i = 0; i < (str||"").length; i++) h = ((h<<5)-h) + str.charCodeAt(i);
+  return colors[Math.abs(h) % colors.length];
+}
+
+function makeGeneratedCover(title, type, height) {
+  const c = _hashColor(title);
+  const words = (title||"Komik").trim().split(/\s+/);
+  const initials = words.slice(0,2).map(w => (w[0]||"").toUpperCase()).join("");
+  const short = words.slice(0,3).join(" ").slice(0,16);
+  const emoji = {manhwa:"🇰🇷",manhua:"🇨🇳",manga:"🇯🇵"}[(type||"").toLowerCase()] || "📚";
+  const d = document.createElement("div");
+  d.style.cssText = [
+    `width:100%`,`height:${height||155}px`,
+    `background:linear-gradient(145deg,${c[0]},${c[0]}cc)`,
+    `display:flex`,`flex-direction:column`,`align-items:center`,`justify-content:center`,
+    `gap:4px`,`border-radius:inherit`,`flex-shrink:0`,`overflow:hidden`,
+  ].join(";");
+  d.innerHTML =
+    `<span style="font-size:22px;line-height:1;">${emoji}</span>` +
+    `<span style="font-size:18px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);letter-spacing:1px;">${escHtml(initials)}</span>` +
+    `<span style="font-size:8px;font-weight:700;color:rgba(255,255,255,.85);text-align:center;padding:0 4px;line-height:1.3;max-width:90%;">${escHtml(short)}</span>`;
+  return d;
 }
 
 /**
@@ -106,6 +147,38 @@ function showImgPlaceholder(img) {
   ph.style.cssText = `width:100%;height:${h}px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;`;
   ph.textContent = "📚";
   if (img.parentNode) img.parentNode.replaceChild(ph, img);
+}
+
+
+/* ── Normalize mangakita latestReleases item → format komikindo ── */
+function normalizeMKLatest(k) {
+  /* latestReleases: {title, slug, image, chapters:[{title,slug,time}]} */
+  const chapters = (k.chapters || []).map(ch => ({
+    title: ch.title || "",
+    slug:  ch.slug  || "",
+    date:  ch.time  || "",
+  }));
+  return {
+    title:    k.title || "Untitled",
+    slug:     k.slug  || "",
+    image:    k.image || k.banner || "",
+    type:     k.type  || "Manga",
+    rating:   k.rating || "",
+    chapters: chapters,
+    _src:     "mangakita",
+  };
+}
+
+/* ── Merge dua list latest, deduplicate by slug ── */
+function mergeLatestLists(list1, list2) {
+  const seen = new Set();
+  const merged = [];
+  for (const k of [...list1, ...list2]) {
+    if (!k.slug || seen.has(k.slug)) continue;
+    seen.add(k.slug);
+    merged.push(k);
+  }
+  return merged;
 }
 
 /* ── ANIMASI MASUK ──────────────────────────────────────── */
@@ -155,7 +228,9 @@ async function getTopKomik() {
 function renderTopKomik(list, container) {
   list.slice(0, 10).forEach((komik, i) => {
     if (!komik?.slug) return;
-    const origUrl = (komik.image || komik.cover || "").split("?")[0];
+    const rawImg  = komik.image || komik.cover || "";
+    const isSvg   = !rawImg || rawImg.startsWith("data:image/svg") || rawImg.startsWith("data:image/gif");
+    const origUrl = isSvg ? "" : rawImg.split("?")[0];
     const cover   = origUrl ? proxyImg(origUrl, 260) : "";
     const card    = document.createElement("div");
     card.className = "card";
@@ -164,7 +239,7 @@ function renderTopKomik(list, container) {
       <div class="rank">#${i + 1}</div>
       ${cover
         ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="${i < 3 ? "eager" : "lazy"}" style="background:var(--bg-surface);">`
-        : `<div class="card-img-fallback">📚</div>`}
+        : `<div class="card-generated-cover" data-title="${escHtml(komik.title||"")}" data-type="${escHtml(komik.type||"")}"></div>`}
       <div class="info">
         <p class="card-title">${escHtml(komik.title || "Untitled")}</p>
         <p>⭐ ${komik.rating || "–"}</p>
@@ -173,6 +248,9 @@ function renderTopKomik(list, container) {
     if (cover && origUrl) {
       const img = card.querySelector("img");
       if (img) imgFallback(img, origUrl);
+    } else if (!cover) {
+      const ph = card.querySelector(".card-generated-cover");
+      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type, 175), ph);
     }
 
     card.onclick = () => { window.location.href = komikURL(komik.slug); };
@@ -192,22 +270,36 @@ async function getKomikLatest() {
   hasNextPage = false;
   container.innerHTML = Array(4).fill(`<div class="grid-card skeleton skeleton-grid"></div>`).join("");
 
-  try {
-    const res  = await fetch(`${API_LATEST}/${latestPage}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    const list = data.komikList || data.data || data.comics || [];
+  /* Fetch kedua API paralel */
+  const [res1, res2] = await Promise.allSettled([
+    fetch(`${API_LATEST}/${latestPage}`).then(r => r.json()).catch(() => null),
+    fetch(API_LATEST_MK).then(r => r.json()).catch(() => null),
+  ]);
 
-    container.innerHTML = "";
-    renderLatest(list, container);
+  const data1 = res1.status === "fulfilled" ? res1.value : null;
+  const data2 = res2.status === "fulfilled" ? res2.value : null;
 
-    hasNextPage = data.pagination?.hasNextPage ?? data.hasNextPage ?? (list.length >= 10);
-    updateLoadMoreUI();
-    setupInfiniteScroll();
-  } catch (err) {
-    console.error("[Latest] Gagal:", err);
+  /* List dari komikindo */
+  const list1 = (data1?.komikList || data1?.data || data1?.comics || []);
+
+  /* List dari mangakita: pakai latestReleases */
+  const list2mk = (data2?.latestReleases || []).map(normalizeMKLatest);
+
+  /* Merge: komikindo dulu, mangakita tambal yang tidak ada */
+  const merged = mergeLatestLists(list1, list2mk);
+
+  if (!merged.length) {
     container.innerHTML = `<p style="grid-column:1/-1;padding:20px;color:var(--text-muted);text-align:center;font-size:13px;">😕 Gagal memuat konten terbaru.</p>`;
+    return;
   }
+
+  container.innerHTML = "";
+  renderLatest(merged, container);
+
+  /* hasNextPage: true kalau komikindo masih ada halaman berikutnya */
+  hasNextPage = data1?.pagination?.hasNextPage ?? data1?.hasNextPage ?? (list1.length >= 10);
+  updateLoadMoreUI();
+  setupInfiniteScroll();
 }
 
 /* ── Render & append kartu latest ── */
@@ -216,7 +308,9 @@ function renderLatest(list, container) {
   list.forEach((komik, i) => {
     if (!komik?.slug) return;
 
-    const origUrl  = (komik.image || komik.cover || "").split("?")[0];
+    const rawImg2  = komik.image || komik.cover || "";
+    const isSvg2   = !rawImg2 || rawImg2.startsWith("data:image/svg") || rawImg2.startsWith("data:image/gif");
+    const origUrl  = isSvg2 ? "" : rawImg2.split("?")[0];
     const cover    = origUrl ? proxyImg(origUrl, 260) : "";
     const type     = (komik.type || "manhwa").toLowerCase();
     const title    = komik.title || "Untitled";
@@ -233,7 +327,7 @@ function renderLatest(list, container) {
       <div class="badge ${type}">${komik.type || "Manhwa"}</div>
       ${cover
         ? `<img src="${cover}" alt="${escHtml(title)}" loading="lazy" style="background:var(--bg-surface);">`
-        : `<div class="card-img-fallback" style="height:155px;">📚</div>`}
+        : `<div class="card-gen-wrap" data-title="${escHtml(title)}" data-type="${escHtml(type)}"></div>`}
       <div class="grid-info">
         <p class="title">${escHtml(title)}</p>
         <div class="grid-meta">
@@ -248,6 +342,9 @@ function renderLatest(list, container) {
     if (cover && origUrl) {
       const img = card.querySelector("img");
       if (img) imgFallback(img, origUrl);
+    } else if (!cover) {
+      const ph = card.querySelector(".card-gen-wrap");
+      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(title, type, 155), ph);
     }
 
     card.onclick = () => { window.location.href = komikURL(komik.slug); };
@@ -362,15 +459,17 @@ function renderRekomen(list) {
 
   list.forEach((komik, i) => {
     if (!komik?.slug) return;
-    const origUrl = (komik.image || komik.cover || "").split("?")[0];
-    const cover   = origUrl ? proxyImg(origUrl, 160) : "";
+    const rawImg3  = komik.image || komik.cover || "";
+    const isSvg3   = !rawImg3 || rawImg3.startsWith("data:image/svg") || rawImg3.startsWith("data:image/gif");
+    const origUrl  = isSvg3 ? "" : rawImg3.split("?")[0];
+    const cover    = origUrl ? proxyImg(origUrl, 160) : "";
     const card    = document.createElement("div");
     card.className = "rekom-card";
 
     card.innerHTML = `
       ${cover
         ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="lazy" style="background:var(--bg-surface);width:80px;height:110px;object-fit:cover;flex-shrink:0;">`
-        : `<div style="width:80px;height:110px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);flex-shrink:0;">📚</div>`}
+        : `<div class="rekom-gen-wrap" data-title="${escHtml(komik.title||"")}" data-type="${escHtml(komik.type||"")}"></div>`}
       <div class="rekom-info">
         <p class="title">${escHtml(komik.title || "Untitled")}</p>
         <p>⭐ ${komik.rating || "–"}</p>
@@ -380,6 +479,13 @@ function renderRekomen(list) {
     if (cover && origUrl) {
       const img = card.querySelector("img");
       if (img) imgFallback(img, origUrl);
+    } else if (!cover) {
+      const ph = card.querySelector(".rekom-gen-wrap");
+      if (ph) {
+        const gc = makeGeneratedCover(komik.title, komik.type, 110);
+        gc.style.width = "80px"; gc.style.flexShrink = "0";
+        ph.parentNode.replaceChild(gc, ph);
+      }
     }
 
     card.onclick = () => { window.location.href = komikURL(komik.slug); };
