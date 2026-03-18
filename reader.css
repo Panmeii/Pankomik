@@ -520,3 +520,70 @@ body::-webkit-scrollbar-thumb {
 body::-webkit-scrollbar-thumb:hover {
   background: #e8522a;
 }
+
+/* ============================================================
+   READER.CSS ENHANCEMENTS — Tambahan v2
+   ============================================================ */
+
+/* ── Bottom chapter nav (ditambahkan oleh reader.js) ──── */
+#bottomChapterNav {
+  user-select: none;
+}
+
+#bottomChapterNav button:focus-visible {
+  outline: 2px solid var(--accent, #e8522a);
+  outline-offset: 2px;
+}
+
+/* ── Image sequential loading fade ───────────────────── */
+.image-wrapper img {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.image-wrapper img[style*="opacity: 1"] {
+  opacity: 1;
+}
+
+/* ── Page number overlay ──────────────────────────────── */
+.image-wrapper {
+  position: relative;
+}
+
+/* ── Single viewer smooth ─────────────────────────────── */
+#singleImgWrap img {
+  border-radius: 4px;
+}
+
+/* ── Settings panel polish ────────────────────────────── */
+.settings {
+  border-radius: 14px;
+}
+.settings select {
+  border-radius: 8px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+}
+
+/* ── Reader header button active ──────────────────────── */
+.reader-header button:active {
+  transform: scale(0.88) !important;
+}
+
+/* ── Progress bar glow ────────────────────────────────── */
+#readingProgressBar {
+  box-shadow: 0 0 8px rgba(232,82,42,0.6);
+}
+
+/* ── Mobile: chapter list full width ─────────────────── */
+@media (max-width: 480px) {
+  #chapterListPanel {
+    width: 100%;
+    left: -100%;
+  }
+  #chapterListPanel.open {
+    left: 0;
+  }
+}
