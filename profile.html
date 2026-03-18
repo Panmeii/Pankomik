@@ -3,372 +3,1082 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Top Donatur — Pankomik</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <title>Profil — Pankomik</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    :root {
-      --gold:      #f5c842;
-      --gold-soft: rgba(245,200,66,0.1);
-      --gold-glow: rgba(245,200,66,0.25);
-    }
-
-    body { background: #08080f; }
-    body.light { background: #f0f0f5; }
-
-    /* ── Header override ──────────────────────────────── */
-    .header {
-      background: rgba(8,8,15,0.95) !important;
-      border-bottom-color: rgba(245,200,66,0.12) !important;
-    }
-    body.light .header { background: rgba(240,240,245,0.95) !important; }
-
-    /* ── Hero ─────────────────────────────────────────── */
-    .hero {
-      position: relative;
-      overflow: hidden;
-      padding: 30px 20px 22px;
-      text-align: center;
-    }
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0; pointer-events: none;
-      background:
-        radial-gradient(ellipse 90% 60% at 50% 0%,
-          rgba(245,200,66,0.13) 0%, transparent 70%),
-        radial-gradient(circle at 80% 15%,
-          rgba(232,82,42,0.07) 0%, transparent 50%);
-    }
-    .hero::after {
-      content: '✦  ✧  ✦  ✧  ✦  ✧  ✦';
-      position: absolute; top: 8px; left: 0; right: 0;
-      font-size: 9px; letter-spacing: 10px;
-      color: rgba(245,200,66,0.15);
-      text-align: center;
-      animation: twinkle 4s ease-in-out infinite;
-    }
-    @keyframes twinkle { 0%,100%{opacity:.3} 50%{opacity:1} }
-
-    .hero-crown {
-      font-size: 46px; display: block;
-      position: relative; z-index: 1;
-      margin-bottom: 8px;
-      filter: drop-shadow(0 0 18px rgba(245,200,66,0.7));
-      animation: crownFloat 3s ease-in-out infinite;
-    }
-    @keyframes crownFloat {
-      0%,100%{transform:translateY(0) rotate(-5deg)}
-      50%{transform:translateY(-8px) rotate(5deg)}
-    }
-
-    .hero-title {
-      font-family: 'Bebas Neue', cursive;
-      font-size: 44px; letter-spacing: 4px;
-      color: var(--gold); line-height: 1;
-      text-shadow: 0 0 28px var(--gold-glow), 0 2px 0 rgba(0,0,0,0.7);
-      position: relative; z-index: 1;
-      animation: titlePulse 4s ease-in-out infinite;
-    }
-    @keyframes titlePulse {
-      0%,100%{text-shadow:0 0 18px rgba(245,200,66,0.35),0 2px 0 #000}
-      50%{text-shadow:0 0 38px rgba(245,200,66,0.7),0 2px 0 #000}
-    }
-
-    .hero-sub {
-      font-size: 10px; font-weight: 800;
-      letter-spacing: 3px; text-transform: uppercase;
-      color: rgba(245,200,66,0.5);
-      position: relative; z-index: 1;
-      margin: 6px 0 10px;
-    }
-
-    .hero-desc {
-      font-size: 12px; color: rgba(255,255,255,0.35);
-      max-width: 260px; margin: 0 auto; line-height: 1.7;
-      position: relative; z-index: 1;
-    }
-    body.light .hero-desc { color: rgba(0,0,0,0.45); }
-
-    /* ── Widget section ───────────────────────────────── */
-    .widget-section { padding: 14px 16px 0; }
-
-    .section-label {
-      font-size: 11px; font-weight: 800;
-      color: rgba(245,200,66,0.45);
-      letter-spacing: 1.5px; text-transform: uppercase;
-      margin-bottom: 12px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .section-label::after {
-      content: ''; flex: 1; height: 1px;
-      background: linear-gradient(90deg, rgba(245,200,66,0.2), transparent);
-    }
-
-    /* Iframe card */
-    .iframe-card {
-      border-radius: 20px;
-      overflow: hidden;
-      border: 1px solid rgba(245,200,66,0.18);
-      background: #0d0d18;
-      box-shadow:
-        0 0 0 1px rgba(245,200,66,0.05),
-        0 16px 48px rgba(0,0,0,0.55),
-        inset 0 1px 0 rgba(245,200,66,0.07);
-      position: relative;
-    }
-    body.light .iframe-card {
-      background: #fff;
-      border-color: rgba(245,200,66,0.25);
-    }
-
-    /* Gold shimmer line top */
-    .iframe-card::before {
-      content: '';
-      position: absolute; top: 0; left: 10%; right: 10%;
-      height: 2px; z-index: 3; pointer-events: none;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-      animation: scanTop 3s linear infinite;
-    }
-    @keyframes scanTop {
-      0%{transform:translateX(-100%)} 100%{transform:translateX(100%)}
-    }
-
-    /* Loading overlay */
-    .iframe-loader {
-      position: absolute; inset: 0; z-index: 2;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 14px; background: #0d0d18;
-      transition: opacity 0.5s ease;
-    }
-    body.light .iframe-loader { background: #fff; }
-    .iframe-loader.gone { opacity: 0; pointer-events: none; }
-
-    .spin-ring {
-      width: 42px; height: 42px;
-      border: 3px solid rgba(245,200,66,0.1);
-      border-top-color: var(--gold);
-      border-radius: 50%;
-      animation: spin .8s linear infinite;
-    }
-    @keyframes spin { to{transform:rotate(360deg)} }
-
-    .iframe-loader p {
-      font-size: 12px; font-weight: 700;
-      color: rgba(245,200,66,0.5);
-      font-family: 'Nunito', sans-serif;
-    }
-
-    /* The iframe itself */
-    #donaturFrame {
-      width: 100%;
-      min-height: 460px;
-      display: block;
-      border: none;
-      background: transparent;
-    }
-
-    /* ── Support cards ────────────────────────────────── */
-    .support-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding: 14px 16px 0;
-    }
-
-    .support-card {
-      border-radius: 14px;
-      padding: 14px 12px;
-      text-align: center;
-      text-decoration: none;
-      border: 1px solid rgba(245,200,66,0.15);
-      background: rgba(245,200,66,0.05);
-      transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
-      display: flex; flex-direction: column;
-      align-items: center; gap: 6px;
-    }
-    .support-card:hover {
-      background: rgba(245,200,66,0.1);
-      border-color: rgba(245,200,66,0.35);
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(245,200,66,0.15);
-    }
-    .support-card:active { transform: scale(0.97); }
-
-    .support-card .icon { font-size: 26px; line-height: 1; }
-    .support-card .s-title {
-      font-size: 12px; font-weight: 800;
-      color: var(--gold);
-    }
-    .support-card .s-desc {
-      font-size: 10px; color: rgba(255,255,255,0.35);
-      line-height: 1.4;
-    }
-    body.light .support-card .s-desc { color: rgba(0,0,0,0.4); }
-
-    /* Primary CTA — full width */
-    .cta-primary {
-      margin: 10px 16px 0;
+    /* ---- PROFIL HEADER ----------------------------------- */
+    .profile-header {
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px 20px;
+      gap: 10px;
+      text-align: center;
+    }
+
+    /* Avatar wrapper + overlay upload */
+    .avatar-wrap {
+      position: relative;
+      width: 86px;
+      height: 86px;
+      cursor: pointer;
+    }
+    .avatar-wrap img {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--accent);
+      transition: filter 0.2s;
+      display: block;
+    }
+    .avatar-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      padding: 14px 20px;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--gold) 0%, #e8a000 100%);
-      color: #08080f;
-      font-family: 'Nunito', sans-serif;
-      font-size: 15px; font-weight: 900;
-      text-decoration: none;
-      box-shadow: 0 6px 24px rgba(245,200,66,0.4);
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .avatar-overlay span { font-size: 18px; }
+    .avatar-overlay p { font-size: 10px; font-weight: 700; color: #fff; margin: 0; line-height: 1; }
+    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
+    .avatar-wrap:hover img { filter: brightness(0.7); }
+
+    /* Upload loading ring */
+    .avatar-uploading::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: var(--accent);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .profile-name {
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .profile-level {
+      font-size: 12px;
+      color: var(--accent);
+      font-weight: 700;
+      background: rgba(232,82,42,0.12);
+      padding: 3px 10px;
+      border-radius: 99px;
+    }
+    .profile-stats {
+      display: flex;
+      gap: 28px;
+      margin-top: 4px;
+    }
+    .stat-item { text-align: center; }
+    .stat-item p:first-child { font-size: 20px; font-weight: 800; }
+    .stat-item p:last-child  { font-size: 11px; color: var(--text-muted); }
+
+    /* ---- BADGE CHIPS ------------------------------------- */
+    .badge-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 16px 16px;
+      justify-content: center;
+    }
+    .badge-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* ---- TABS -------------------------------------------- */
+    .profile-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 14px;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .profile-tabs::-webkit-scrollbar { display: none; }
+    .profile-tab {
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+      background: none;
+      border-top: none; border-left: none; border-right: none;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .profile-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ---- TAB CONTENT ------------------------------------- */
+    .tab-content { display: none; padding: 14px; }
+    .tab-content.active { display: block; }
+
+    /* ---- KATEGORI BOOKMARK ------------------------------- */
+    .kategori-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .kategori-btn {
+      padding: 5px 12px; border-radius: 99px;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      color: var(--text-muted); font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s, color 0.2s;
+    }
+    .kategori-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ---- KARTU KOMIK ------------------------------------- */
+    .komik-list-item {
+      display: flex; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid var(--border); align-items: center;
+    }
+    .komik-list-item:last-child { border-bottom: none; }
+    .komik-list-item img { width: 50px; height: 68px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
+    .komik-list-info { flex: 1; }
+    .komik-list-info .title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
+    .komik-list-info p { font-size: 11px; color: var(--text-muted); margin: 2px 0; }
+    .komik-list-actions { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+    .btn-sm {
+      padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg-surface); color: var(--text); font-size: 11px;
+      font-weight: 700; cursor: pointer; white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn-sm:hover { filter: brightness(1.15); }
+
+    /* ---- PROGRESS BAR ------------------------------------ */
+    .progress-bar-wrap { height: 4px; background: var(--bg-surface); border-radius: 99px; margin-top: 5px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s ease; }
+
+    /* ---- EMPTY STATE ------------------------------------- */
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+    .empty-state p:first-child { font-size: 32px; margin-bottom: 8px; }
+
+    /* ---- EDIT PROFIL FORM -------------------------------- */
+    .edit-section-title {
+      font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--text);
+    }
+    .edit-form-row { margin-bottom: 18px; }
+    .edit-form input, .edit-form textarea {
+      width: 100%; padding: 10px 12px; margin-bottom: 0;
+      background: var(--bg-surface); border: 1.5px solid var(--border);
+      border-radius: 9px; color: var(--text); font-family: 'Nunito', sans-serif;
+      font-size: 14px; outline: none; box-sizing: border-box; transition: border-color 0.2s;
+    }
+    .edit-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,82,42,0.12); }
+    .input-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+    .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 3px; }
+    .edit-btn {
+      width: 100%; padding: 11px 20px; background: var(--accent); color: #fff;
+      border: none; border-radius: 9px; font-family: 'Nunito', sans-serif;
+      font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+    .edit-btn:hover    { background: #c73f1c; }
+    .edit-btn:active   { transform: scale(0.97); }
+    .edit-btn:disabled { background: var(--bg-surface); color: var(--text-muted); cursor: not-allowed; }
+    .form-msg {
+      font-size: 12px; margin-top: 8px; padding: 8px 12px;
+      border-radius: 8px; display: none;
+    }
+    .form-msg.success { display: block; background: rgba(39,174,96,0.1); border: 1px solid rgba(39,174,96,0.3); color: #27ae60; }
+    .form-msg.error   { display: block; background: rgba(232,82,42,0.1); border: 1px solid rgba(232,82,42,0.3); color: var(--accent); }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+    /* ---- AVATAR UPLOAD AREA ------------------------------ */
+    .avatar-upload-area {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px; background: var(--bg-surface);
+      border: 1.5px dashed var(--border); border-radius: 12px;
+      cursor: pointer; transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 4px;
+    }
+    .avatar-upload-area:hover { border-color: var(--accent); background: rgba(232,82,42,0.05); }
+    .avatar-upload-area img {
+      width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--accent); flex-shrink: 0;
+    }
+    .avatar-upload-text p:first-child { font-size: 13px; font-weight: 700; color: var(--text); }
+    .avatar-upload-text p:last-child  { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
+
+    /* ---- LEVEL & BADGE ----------------------------------- */
+    .level-card {
+      background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(232,82,42,0.08) 100%);
+      border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+    }
+    .level-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .level-number { font-size: 22px; font-weight: 800; color: var(--accent); line-height: 1; }
+    .level-title  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+    .level-total  { text-align: right; }
+    .level-total span  { font-size: 24px; font-weight: 800; color: var(--text); display: block; line-height: 1; }
+    .level-total small { font-size: 10px; color: var(--text-muted); }
+    .badge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .badge-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 12px; text-align: center;
       transition: transform 0.2s, box-shadow 0.2s;
     }
-    .cta-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 12px 32px rgba(245,200,66,0.55);
-    }
-    .cta-primary:active { transform: scale(0.97); }
+    .badge-card.owned { border-color: var(--accent); background: rgba(232,82,42,0.06); }
+    .badge-card.locked { opacity: 0.55; }
+    .badge-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+    .badge-icon   { font-size: 28px; margin-bottom: 6px; }
+    .badge-name   { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
+    .badge-desc   { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
+    .badge-status-owned  { margin-top: 6px; font-size: 11px; color: #27ae60; font-weight: 700; }
+    .badge-status-locked { margin-top: 6px; font-size: 11px; color: var(--text-muted); }
 
-    .page-bottom { height: 20px; }
+    /* ---- LEADERBOARD ------------------------------------- */
+    .lb-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .lb-header h3 { font-size: 15px; font-weight: 800; }
+    .lb-refresh-btn {
+      padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg-surface); color: var(--text-muted);
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .lb-refresh-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    .lb-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 12px; border-radius: 12px;
+      margin-bottom: 6px; border: 1px solid var(--border);
+      background: var(--bg-card); transition: background 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .lb-row:hover { background: var(--bg-surface); }
+    .lb-row.me    { border-color: var(--accent); background: rgba(232,82,42,0.07); }
+
+    /* Shimmer untuk baris top 3 */
+    .lb-row.rank-1 { border-color: #f5a623; background: rgba(245,166,35,0.07); }
+    .lb-row.rank-2 { border-color: #b0b0c0; background: rgba(176,176,192,0.06); }
+    .lb-row.rank-3 { border-color: #cd7f32; background: rgba(205,127,50,0.06); }
+
+    .lb-rank {
+      font-size: 15px; font-weight: 800; min-width: 28px; text-align: center;
+      color: var(--text-muted); flex-shrink: 0;
+    }
+    .lb-row.rank-1 .lb-rank { color: #f5a623; font-size: 20px; }
+    .lb-row.rank-2 .lb-rank { color: #b0b0c0; font-size: 18px; }
+    .lb-row.rank-3 .lb-rank { color: #cd7f32; font-size: 16px; }
+
+    .lb-avatar {
+      width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--border); flex-shrink: 0;
+    }
+    .lb-row.rank-1 .lb-avatar { border-color: #f5a623; }
+    .lb-row.rank-2 .lb-avatar { border-color: #b0b0c0; }
+    .lb-row.rank-3 .lb-avatar { border-color: #cd7f32; }
+
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name {
+      font-weight: 700; font-size: 13px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lb-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .lb-score {
+      text-align: right; flex-shrink: 0;
+    }
+    .lb-score-num { font-size: 18px; font-weight: 800; color: var(--accent); display: block; line-height: 1; }
+    .lb-score-label { font-size: 10px; color: var(--text-muted); }
+
+    .lb-me-badge {
+      font-size: 10px; font-weight: 800; color: var(--accent);
+      background: rgba(232,82,42,0.15); padding: 2px 7px;
+      border-radius: 99px; margin-left: 5px; vertical-align: middle;
+    }
+
+    /* User's own rank card if not in top 20 */
+    .lb-my-rank {
+      margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+      border: 1.5px dashed var(--accent); background: rgba(232,82,42,0.05);
+      font-size: 13px; color: var(--text-muted); text-align: center;
+    }
+
+    /* Skeleton for leaderboard */
+    .lb-skeleton {
+      height: 64px; border-radius: 12px; margin-bottom: 6px;
+      background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
   </style>
 </head>
 <body class="has-bottom-nav">
 
-<!-- Header -->
 <header class="header">
-  <div class="logo" onclick="window.location.href='/'"
-       style="font-family:'Bebas Neue',cursive;letter-spacing:2px;color:var(--gold);">
-    Pankomik
-  </div>
-  <div style="flex:1;"></div>
+  <div class="logo" onclick="goHome()">Pankomik</div>
+  <input type="text" id="searchInput" placeholder="Cari komik..." oninput="liveSearch()" autocomplete="off">
   <div class="header-right">
     <button onclick="toggleDarkMode()">🌙</button>
     <button onclick="toggleMenu()">👤</button>
   </div>
 </header>
+<div id="searchResult" class="search-result"></div>
 <div id="menuDropdown" class="dropdown"></div>
 
-<!-- Hero -->
-<div class="hero">
-  <span class="hero-crown">👑</span>
-  <div class="hero-title">SULTAN LIST</div>
-  <div class="hero-sub">Top Donatur Pankomik</div>
-  <p class="hero-desc">Para pahlawan yang membuat Pankomik tetap hidup. Terima kasih! 🙏</p>
+<div id="profileContent">
+  <div class="empty-state"><p>⏳</p><p>Memuat profil...</p></div>
 </div>
 
-<!-- Widget Trakteer -->
-<div class="widget-section">
-  <div class="section-label">🏆 Live Leaderboard</div>
-  <div class="iframe-card">
-    <div class="iframe-loader" id="iframeLoader">
-      <div class="spin-ring"></div>
-      <p>Memuat data donatur...</p>
+<script type="module">
+import {
+  getCurrentUser, getProfile, updateProfile, updatePassword,
+  isOAuthUser, uploadAvatar,
+  getBookmarks, removeBookmark, addBookmark,
+  getHistory, getProgress, syncProfileProgress, getTotalChaptersRead,
+  getLeaderboard,
+  getNovelBookmarks, removeNovelBookmark,
+  getNovelHistory
+} from "./supabase.js";
+import { initAuthHeader } from "./auth-header.js";
+
+let currentUser    = null;
+
+/* Image proxy — bypass CORS/hotlink */
+function proxyImg(url, w) {
+  if (!url) return "";
+  if (url.includes("wsrv.nl") || url.includes("ui-avatars")) return url;
+  return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=" + (w||200) + "&output=webp&q=80";
+}
+let currentProfile = null;
+let bookmarkData   = {};
+let activeKategori = "favorit";
+
+/* ============================================================
+   INIT
+   ============================================================ */
+window.onload = async function () {
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+  await initAuthHeader();
+  currentUser = await getCurrentUser();
+  if (!currentUser) { window.location.href = "auth.html"; return; }
+  await syncProfileProgress(currentUser.id);
+  await loadProfile();
+  const urlTab = new URLSearchParams(window.location.search).get("tab");
+  if (urlTab) switchTab(urlTab);
+};
+
+/* ============================================================
+   LOAD PROFIL — render kerangka halaman
+   ============================================================ */
+async function loadProfile() {
+  const [{ profile }, { total: liveTotal }] = await Promise.all([
+    getProfile(currentUser.id),
+    getTotalChaptersRead(currentUser.id)
+  ]);
+  currentProfile = profile;
+
+  const BADGE_DEFS = [
+    { id:"pemula",        icon:"📖", name:"Pemula",        min_chapters:1    },
+    { id:"pembaca_aktif", icon:"🔥", name:"Pembaca Aktif",  min_chapters:50   },
+    { id:"otaku",         icon:"⭐", name:"Otaku",          min_chapters:200  },
+    { id:"legenda",       icon:"👑", name:"Legenda",        min_chapters:500  },
+    { id:"top_reader",    icon:"🏆", name:"Top Reader",     min_chapters:1000 },
+  ];
+  const badgeCount = BADGE_DEFS.filter(b => liveTotal >= b.min_chapters).length;
+  const liveLevel  = Math.floor(liveTotal / 50) + 1;
+  const levelTitle = getLevelTitle(liveLevel);
+  const isOAuth    = isOAuthUser(currentUser);
+
+  const ownedChips = BADGE_DEFS
+    .filter(b => liveTotal >= b.min_chapters)
+    .map(b => `<div class="badge-chip">${b.icon} ${b.name}</div>`)
+    .join("");
+
+  const avatarSrc  = profile?.avatar_url
+    || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.username || 'U')}&background=e8522a&color=fff&bold=true`;
+
+  document.getElementById("profileContent").innerHTML = `
+    <!-- ── Header Profil ── -->
+    <div class="profile-header">
+      <div class="avatar-wrap" id="avatarWrap" onclick="document.getElementById('avatarInput').click()" title="Klik untuk ganti foto">
+        <img id="avatarImg" src="${avatarSrc}" alt="Avatar">
+        <div class="avatar-overlay">
+          <span>📷</span>
+          <p>Ganti Foto</p>
+        </div>
+      </div>
+      <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleAvatarUpload(event)">
+
+      <div class="profile-name" id="profileNameDisplay">${profile?.username || 'User'}</div>
+      <div class="profile-level">Level ${liveLevel} — ${levelTitle}</div>
+      <div class="profile-stats">
+        <div class="stat-item"><p id="statChapters">${liveTotal}</p><p>Chapter Dibaca</p></div>
+        <div class="stat-item"><p>${badgeCount}</p><p>Badge</p></div>
+      </div>
     </div>
-    <iframe
-      id="donaturFrame"
-      src="https://stream.trakteer.id/top-supporter/index.html?ts_count=7&ts_theme=custom&ts_1_clr1=rgba%2863%2C+81%2C+181%2C+1%29&ts_1_clr2=rgba%28243%2C+150%2C+33%2C+1%29&ts_1_clr3=rgba%283%2C+169%2C+244%2C+1%29&ts_1_clr4=rgba%28243%2C+221%2C+202%2C+1%29&ts_1_clr5=rgba%28255%2C+255%2C+255%2C+1%29&ts_1_clr6=rgba%280%2C+0%2C+0%2C+1%29&ts_sortby=unit&ts_interval=90&ts_customtitle=Sultan&key=trstream-1ZxhQqj8hDuOc8qqJlyW&page_url=trakteer.id%2FPankomik%2Fgift&mod=3&hash=zb8r4zvgwyq369an"
-      scrolling="no"
-      frameborder="0"
-      allowtransparency="true"
-      title="Top Donatur Pankomik"
-    ></iframe>
-  </div>
-</div>
 
-<!-- Support links grid -->
-<div class="support-grid">
-  <a href="https://trakteer.id/Pankomik" target="_blank" rel="noopener" class="support-card">
-    <span class="icon">🎁</span>
-    <span class="s-title">Trakteer</span>
-    <span class="s-desc">Halaman utama kreator</span>
-  </a>
-  <a href="https://trakteer.id/Pankomik/gift" target="_blank" rel="noopener" class="support-card">
-    <span class="icon">🎀</span>
-    <span class="s-title">Gift</span>
-    <span class="s-desc">Kirim gift ke streamer</span>
-  </a>
-  <a href="https://trakteer.id/Pankomik/tip" target="_blank" rel="noopener" class="support-card">
-    <span class="icon">☕</span>
-    <span class="s-title">Tip</span>
-    <span class="s-desc">Beri tip langsung</span>
-  </a>
-  <a href="https://teer.id/Pankomik" target="_blank" rel="noopener" class="support-card">
-    <span class="icon">🔗</span>
-    <span class="s-title">Linkteer</span>
-    <span class="s-desc">Semua link dalam satu</span>
-  </a>
-</div>
+    ${badgeCount > 0 ? `<div class="badge-list">${ownedChips}</div>` : ""}
 
-<!-- CTA utama -->
-<a href="https://trakteer.id/Pankomik/tip" target="_blank" rel="noopener" class="cta-primary">
-  ☕ Dukung Pankomik Sekarang
-</a>
+    <!-- ── Tab Navigasi ── -->
+    <div class="profile-tabs">
+      <button class="profile-tab active" id="tab-bookmark"       onclick="switchTab('bookmark')">🔖 Komik</button>
+      <button class="profile-tab"        id="tab-novel-bookmark" onclick="switchTab('novel-bookmark')">📚 Novel</button>
+      <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')">📖 Riwayat</button>
+      <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')">📝 Novel</button>
+      <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')">📊 Progress</button>
+      <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')">🏅 Badge</button>
+      <button class="profile-tab"        id="tab-leaderboard"    onclick="switchTab('leaderboard')">🏆 Top</button>
+      <button class="profile-tab"        id="tab-settings"       onclick="switchTab('settings')">⚙️ Profil</button>
+    </div>
 
-<div class="page-bottom"></div>
+    <!-- ── Konten Tab ── -->
+    <div class="tab-content active" id="content-bookmark">
+      <div class="kategori-tabs">
+        <button class="kategori-btn active" onclick="filterKategori('favorit',this)">❤️ Favorit</button>
+        <button class="kategori-btn" onclick="filterKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
+        <button class="kategori-btn" onclick="filterKategori('tamat',this)">✅ Tamat</button>
+      </div>
+      <div id="bookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
 
-<!-- Bottom Nav -->
+    <!-- Tab: Bookmark Novel -->
+    <div class="tab-content" id="content-novel-bookmark">
+      <div class="kategori-tabs">
+        <button class="kategori-btn active" onclick="filterNovelKategori('favorit',this)">❤️ Favorit</button>
+        <button class="kategori-btn" onclick="filterNovelKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
+        <button class="kategori-btn" onclick="filterNovelKategori('tamat',this)">✅ Tamat</button>
+      </div>
+      <div id="novelBookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <!-- Tab: Riwayat Novel -->
+    <div class="tab-content" id="content-novel-history">
+      <div id="novelHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <!-- Tab: Riwayat Komik -->
+    <div class="tab-content" id="content-history">
+      <div id="historyList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <div class="tab-content" id="content-progress">
+      <div id="progressList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <div class="tab-content" id="content-badge">
+      <div id="badgeContent"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <div class="tab-content" id="content-leaderboard">
+      <div id="leaderboardContent"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <!-- ── Edit Profil ── -->
+    <div class="tab-content" id="content-settings">
+      <div class="edit-form">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">
+          📧 Login sebagai <strong>${currentUser.email}</strong>
+        </p>
+
+        <!-- Ganti Foto -->
+        <div class="edit-form-row">
+          <p class="edit-section-title">📷 Foto Profil</p>
+          <div class="avatar-upload-area" onclick="document.getElementById('avatarInput').click()">
+            <img id="avatarImgSettings" src="${avatarSrc}" alt="Avatar">
+            <div class="avatar-upload-text">
+              <p>Klik untuk ganti foto</p>
+              <p>JPG, PNG, atau WebP · Maks 2MB</p>
+            </div>
+          </div>
+          <div id="uploadMsg" class="form-msg"></div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Ganti Username -->
+        <div class="edit-form-row">
+          <p class="edit-section-title">👤 Username</p>
+          <input
+            type="text"
+            id="usernameInput"
+            placeholder="Masukkan username baru"
+            value="${profile?.username || ''}"
+            maxlength="30"
+            oninput="document.getElementById('usernameCounter').textContent = this.value.length + '/30'"
+          >
+          <div class="char-counter"><span id="usernameCounter">${(profile?.username || '').length}/30</span></div>
+          <p class="input-hint">3–30 karakter. Huruf, angka, underscore, dan strip saja.</p>
+          <button class="edit-btn" onclick="saveProfile()" id="saveUsernameBtn">💾 Simpan Username</button>
+          <div id="saveMsg" class="form-msg"></div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- Ganti Password -->
+        <div class="edit-form-row">
+          <p class="edit-section-title">🔐 Password</p>
+          ${isOAuth ? `
+            <div style="padding:14px;background:var(--bg-surface);border-radius:10px;border:1px solid var(--border);text-align:center;">
+              <p style="font-size:13px;color:var(--text-muted);">Login via Google — password tidak bisa diubah di sini.</p>
+            </div>
+          ` : `
+            <input type="password" id="newPasswordInput" placeholder="Password baru (min. 6 karakter)" style="margin-bottom:8px;">
+            <input type="password" id="confirmPasswordInput" placeholder="Konfirmasi password baru">
+            <button class="edit-btn" onclick="savePassword()" id="savePasswordBtn">🔒 Ganti Password</button>
+            <div id="passwordMsg" class="form-msg"></div>
+          `}
+        </div>
+      </div>
+    </div>
+  `;
+
+  await loadBookmarks();
+}
+
+/* ============================================================
+   SWITCH TAB
+   ============================================================ */
+window.switchTab = function (tab) {
+  document.querySelectorAll(".profile-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  document.getElementById(`tab-${tab}`)?.classList.add("active");
+  document.getElementById(`content-${tab}`)?.classList.add("active");
+
+  if (tab === "history")        loadHistory();
+  if (tab === "novel-history")  loadNovelHistory();
+  if (tab === "novel-bookmark") loadNovelBookmarks();
+  if (tab === "progress")       loadProgressTab();
+  if (tab === "badge")          loadBadgeTab();
+  if (tab === "leaderboard")    loadLeaderboard();
+};
+
+/* ============================================================
+   BOOKMARK
+   ============================================================ */
+async function loadBookmarks() {
+  const { bookmarks } = await getBookmarks(currentUser.id);
+  bookmarkData = bookmarks;
+  renderBookmarks(activeKategori);
+}
+
+function renderBookmarks(kategori) {
+  const list = bookmarkData[kategori] || [];
+  const el   = document.getElementById("bookmarkList");
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada komik di kategori ini.</p></div>`;
+    return;
+  }
+  el.innerHTML = list.map(bm => `
+    <div class="komik-list-item">
+      <img src="${bm.komik_cover || ''}" alt="${bm.komik_title}" onclick="gotoDetail('${bm.komik_slug}')" style="cursor:pointer">
+      <div class="komik-list-info" onclick="gotoDetail('${bm.komik_slug}')" style="cursor:pointer">
+        <div class="title">${bm.komik_title}</div>
+        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
+      </div>
+      <div class="komik-list-actions">
+        <button class="btn-sm primary" onclick="gotoDetail('${bm.komik_slug}')">Buka</button>
+        <button class="btn-sm" onclick="hapusBookmark('${bm.komik_slug}',this)">Hapus</button>
+      </div>
+    </div>`).join("");
+}
+
+window.filterKategori = function (kategori, btn) {
+  activeKategori = kategori;
+  document.querySelectorAll(".kategori-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderBookmarks(kategori);
+};
+
+window.hapusBookmark = async function (slug, btn) {
+  btn.textContent = "..."; btn.disabled = true;
+  await removeBookmark(currentUser.id, slug);
+  await loadBookmarks();
+};
+
+/* ============================================================
+   RIWAYAT BACA
+   ============================================================ */
+async function loadHistory() {
+  const { history } = await getHistory(currentUser.id);
+  const el = document.getElementById("historyList");
+  if (!history.length) {
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p></div>`;
+    return;
+  }
+  el.innerHTML = history.map(h => `
+    <div class="komik-list-item">
+      <img src="${h.komik_cover || ''}" alt="${h.komik_title}" onclick="gotoDetail('${h.komik_slug}')" style="cursor:pointer">
+      <div class="komik-list-info">
+        <div class="title">${h.komik_title}</div>
+        <p>📖 Chapter ${h.chapter_number || '?'}</p>
+        <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
+      </div>
+      <div class="komik-list-actions">
+        <button class="btn-sm primary" onclick="window.location.href='reader.html?slug=${h.chapter_slug}'">Lanjut</button>
+        <button class="btn-sm" onclick="gotoDetail('${h.komik_slug}')">Detail</button>
+      </div>
+    </div>`).join("");
+}
+
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+async function loadProgressTab() {
+  const el = document.getElementById("progressList");
+  el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
+  const { progress } = await getProgress(currentUser.id);
+  if (!progress.length) {
+    el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`;
+    return;
+  }
+  el.innerHTML = progress.map(p => {
+    const pct      = p.total_chapters > 0 ? Math.min(100, Math.round((p.read_chapters / p.total_chapters) * 100)) : 0;
+    const pctLabel = p.total_chapters > 0 ? `${pct}%` : "—";
+    const chapLabel = p.total_chapters > 0 ? `${p.read_chapters} / ${p.total_chapters} chapter` : `${p.read_chapters} chapter dibaca`;
+    const updated   = new Date(p.updated_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
+    return `
+      <div class="komik-list-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
+        <div style="display:flex;gap:12px;align-items:center;width:100%;">
+          <div style="flex:1;min-width:0;">
+            <div class="title" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="gotoDetail('${p.komik_slug}')">${p.komik_title}</div>
+            <p style="font-size:11px;color:var(--text-muted);margin:0;">📖 ${chapLabel} &nbsp;·&nbsp; 🕒 ${updated}</p>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <span style="font-size:16px;font-weight:800;color:var(--accent);">${pctLabel}</span>
+          </div>
+        </div>
+        ${p.total_chapters > 0 ? `<div class="progress-bar-wrap" style="width:100%;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>` : ""}
+        <div style="display:flex;gap:6px;width:100%;">
+          ${p.last_chapter_slug ? `<button class="btn-sm primary" onclick="window.location.href='reader.html?slug=${p.last_chapter_slug}'">▶️ Lanjut Baca</button>` : ""}
+          <button class="btn-sm" onclick="gotoDetail('${p.komik_slug}')">Detail</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+/* ============================================================
+   BADGE & LEVEL
+   ============================================================ */
+async function loadBadgeTab() {
+  const el = document.getElementById("badgeContent");
+  const { total: liveTotal } = await getTotalChaptersRead(currentUser.id);
+  const level         = Math.floor(liveTotal / 50) + 1;
+  const title         = getLevelTitle(level);
+  const xpInLevel     = liveTotal % 50;
+  const xpPct         = Math.round((xpInLevel / 50) * 100);
+  const ownedBadges   = currentProfile?.user_badges || [];
+  const ownedIds      = new Set(ownedBadges.map(b => b.badge_id));
+  const ownedNames    = new Set(ownedBadges.map(b => b.badges?.name).filter(Boolean));
+  const allBadges = [
+    { id:"pemula",        name:"Pemula",        icon:"📖", desc:"Baca 1 chapter pertama",  min_chapters:1    },
+    { id:"pembaca_aktif", name:"Pembaca Aktif",  icon:"🔥", desc:"Sudah baca 50 chapter",   min_chapters:50   },
+    { id:"otaku",         name:"Otaku",          icon:"⭐", desc:"Sudah baca 200 chapter",  min_chapters:200  },
+    { id:"legenda",       name:"Legenda",        icon:"👑", desc:"Sudah baca 500 chapter",  min_chapters:500  },
+    { id:"top_reader",    name:"Top Reader",     icon:"🏆", desc:"Sudah baca 1000 chapter", min_chapters:1000 },
+    { id:"komentator",    name:"Komentator",     icon:"💬", desc:"Sudah buat 10 komentar",  min_chapters:0    },
+  ];
+  const countOwned = allBadges.filter(b => b.min_chapters > 0 && b.min_chapters <= liveTotal).length;
+
+  el.innerHTML = `
+    <div class="level-card">
+      <div class="level-top">
+        <div><div class="level-number">Level ${level}</div><div class="level-title">${title}</div></div>
+        <div class="level-total"><span>${liveTotal}</span><small>Chapter Dibaca</small></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:5px;">
+          <span>XP Level ${level}</span>
+          <span>${xpInLevel}/50 — ${50-xpInLevel} lagi ke Level ${level+1}</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill" style="width:${xpPct}%;background:linear-gradient(90deg,var(--accent),#f5a623);"></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <p style="font-size:13px;font-weight:800;margin-bottom:10px;">
+        🏅 Koleksi Badge
+        <span style="font-weight:400;font-size:12px;color:var(--text-muted)">(${countOwned}/${allBadges.filter(b=>b.min_chapters>0).length} didapat)</span>
+      </p>
+      <div class="badge-grid">
+        ${allBadges.map(b => {
+          const owned    = b.min_chapters > 0 ? (ownedIds.has(b.id) || ownedNames.has(b.name) || liveTotal >= b.min_chapters) : (ownedIds.has(b.id) || ownedNames.has(b.name));
+          const progress = b.min_chapters > 0 ? Math.min(100, Math.round((liveTotal / b.min_chapters) * 100)) : 0;
+          return `<div class="badge-card ${owned ? "owned" : "locked"}">
+            <div class="badge-icon">${b.icon}</div>
+            <div class="badge-name">${b.name}</div>
+            <div class="badge-desc">${b.desc}</div>
+            ${owned ? `<div class="badge-status-owned">✅ Didapat</div>` : b.min_chapters > 0 ? `
+              <div style="margin-top:6px;">
+                <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:3px;text-align:center;">${liveTotal}/${b.min_chapters}</div>
+              </div>` : `<div class="badge-status-locked">🔒 Terkunci</div>`}
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   LEADERBOARD
+   ============================================================ */
+async function loadLeaderboard(forceRefresh = false) {
+  const el = document.getElementById("leaderboardContent");
+
+  // Skeleton loading
+  el.innerHTML = Array(8).fill(`<div class="lb-skeleton"></div>`).join("");
+
+  const { leaderboard, error } = await getLeaderboard(20);
+
+  if (error || !leaderboard.length) {
+    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat leaderboard. Coba lagi.</p>
+      <button onclick="loadLeaderboard(true)" style="margin-top:12px;padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;">Coba Lagi</button>
+    </div>`;
+    return;
+  }
+
+  // Cari rank user sendiri
+  const myRankIndex = leaderboard.findIndex(u => u.id === currentUser.id);
+  const myRank      = myRankIndex >= 0 ? myRankIndex + 1 : null;
+
+  const rankEmoji = (i) => {
+    if (i === 0) return "🥇";
+    if (i === 1) return "🥈";
+    if (i === 2) return "🥉";
+    return `#${i + 1}`;
+  };
+
+  const rankClass = (i) => {
+    if (i === 0) return "rank-1";
+    if (i === 1) return "rank-2";
+    if (i === 2) return "rank-3";
+    return "";
+  };
+
+  const rows = leaderboard.map((u, i) => {
+    const isMe    = u.id === currentUser.id;
+    const name    = u.username || "Anonim";
+    const avatar  = u.avatar_url
+      || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e8522a&color=fff&bold=true&size=80`;
+    const level   = u.level || 1;
+    const chaps   = u.total_chapters_read || 0;
+
+    return `
+      <div class="lb-row ${rankClass(i)} ${isMe ? "me" : ""}">
+        <div class="lb-rank">${rankEmoji(i)}</div>
+        <img class="lb-avatar" src="${avatar}" alt="${name}" loading="lazy">
+        <div class="lb-info">
+          <div class="lb-name">
+            ${name}${isMe ? `<span class="lb-me-badge">Kamu</span>` : ""}
+          </div>
+          <div class="lb-meta">Level ${level} · ${getLevelTitle(level)}</div>
+        </div>
+        <div class="lb-score">
+          <span class="lb-score-num">${chaps.toLocaleString("id-ID")}</span>
+          <span class="lb-score-label">chapter</span>
+        </div>
+      </div>`;
+  }).join("");
+
+  // Tampilkan rank user jika tidak ada di top 20
+  const myRankCard = (!myRank) ? `
+    <div class="lb-my-rank">
+      Kamu belum masuk top 20. Terus baca komik untuk naik peringkat! 📚
+    </div>` : "";
+
+  el.innerHTML = `
+    <div class="lb-header">
+      <h3>🏆 Top 20 Pembaca</h3>
+      <button class="lb-refresh-btn" onclick="loadLeaderboard(true)">🔄 Refresh</button>
+    </div>
+    ${rows}
+    ${myRankCard}`;
+}
+
+window.loadLeaderboard = loadLeaderboard;
+
+/* ============================================================
+   UPLOAD AVATAR — FIXED
+   ============================================================ */
+window.handleAvatarUpload = async function (event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  // Reset input agar bisa upload file sama lagi
+  event.target.value = "";
+
+  // Validasi tipe
+  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+  if (!allowed.includes(file.type)) {
+    showUploadMsg("❌ Format tidak didukung. Gunakan JPG, PNG, atau WebP.", "error");
+    return;
+  }
+
+  // Validasi ukuran (2MB)
+  if (file.size > 2 * 1024 * 1024) {
+    showUploadMsg("❌ Ukuran foto maksimal 2MB.", "error");
+    return;
+  }
+
+  // Tunjukkan preview lokal + loading state
+  const reader = new FileReader();
+  reader.onload = e => {
+    const src = e.target.result;
+    ["avatarImg", "avatarImgSettings"].forEach(id => {
+      const img = document.getElementById(id);
+      if (img) img.src = src;
+    });
+  };
+  reader.readAsDataURL(file);
+
+  const wrap = document.getElementById("avatarWrap");
+  wrap?.classList.add("avatar-uploading");
+  showUploadMsg("⏳ Mengupload foto...", "");
+
+  // Upload ke Supabase Storage
+  const { url, error } = await uploadAvatar(currentUser.id, file);
+
+  wrap?.classList.remove("avatar-uploading");
+
+  if (error) {
+    console.error("Upload error:", error);
+    showUploadMsg(`❌ Gagal upload: ${error.message || "Coba lagi."}`, "error");
+    // Kembalikan avatar lama
+    const oldSrc = currentProfile?.avatar_url
+      || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentProfile?.username || 'U')}&background=e8522a&color=fff`;
+    ["avatarImg", "avatarImgSettings"].forEach(id => {
+      const img = document.getElementById(id); if (img) img.src = oldSrc;
+    });
+    return;
+  }
+
+  // Simpan URL baru ke profil
+  const { error: updateErr } = await updateProfile(currentUser.id, { avatar_url: url });
+  if (updateErr) {
+    showUploadMsg("⚠️ Foto terupload tapi gagal disimpan ke profil. Coba muat ulang.", "error");
+    return;
+  }
+
+  if (currentProfile) currentProfile.avatar_url = url;
+  // Pastikan kedua gambar tampilkan URL final (bukan blob)
+  ["avatarImg", "avatarImgSettings"].forEach(id => {
+    const img = document.getElementById(id); if (img) img.src = url + "?t=" + Date.now();
+  });
+
+  showUploadMsg("✅ Foto profil berhasil diperbarui!", "success");
+};
+
+function showUploadMsg(text, type) {
+  const el = document.getElementById("uploadMsg");
+  if (!el) return;
+  el.textContent  = text;
+  el.className    = `form-msg ${type}`;
+  el.style.display = "block";
+  if (type === "success") setTimeout(() => { el.style.display = "none"; }, 4000);
+}
+
+/* ============================================================
+   SIMPAN USERNAME — FIXED
+   ============================================================ */
+window.saveProfile = async function () {
+  const input    = document.getElementById("usernameInput");
+  const btn      = document.getElementById("saveUsernameBtn");
+  const username = input.value.trim();
+
+  if (!username) { showFormMsg("saveMsg", "❌ Username tidak boleh kosong.", "error"); return; }
+  if (username.length < 3) { showFormMsg("saveMsg", "❌ Username minimal 3 karakter.", "error"); return; }
+  if (username.length > 30) { showFormMsg("saveMsg", "❌ Username maksimal 30 karakter.", "error"); return; }
+
+  // Validasi karakter: huruf, angka, underscore, dash
+  if (!/^[a-zA-Z0-9_\-]+$/.test(username)) {
+    showFormMsg("saveMsg", "❌ Hanya huruf, angka, underscore (_), dan dash (-) yang diizinkan.", "error");
+    return;
+  }
+
+  btn.disabled    = true;
+  btn.textContent = "⏳ Menyimpan...";
+
+  const { profile: updated, error } = await updateProfile(currentUser.id, { username });
+
+  btn.disabled    = false;
+  btn.textContent = "💾 Simpan Username";
+
+  if (error) {
+    const isDuplicate = error.message?.includes("duplicate") || error.message?.includes("unique") || error.code === "23505";
+    showFormMsg("saveMsg", isDuplicate ? "❌ Username sudah dipakai orang lain." : `❌ Gagal: ${error.message}`, "error");
+    return;
+  }
+
+  // Verifikasi dengan fetch ulang dari DB
+  const { profile: verified } = await getProfile(currentUser.id);
+  const savedUsername = verified?.username || updated?.username || username;
+
+  // Update semua tampilan nama
+  const nameEl = document.getElementById("profileNameDisplay");
+  if (nameEl) nameEl.textContent = savedUsername;
+  if (currentProfile) currentProfile.username = savedUsername;
+  input.value = savedUsername;
+
+  showFormMsg("saveMsg", "✅ Username berhasil diperbarui!", "success");
+};
+
+/* ============================================================
+   GANTI PASSWORD
+   ============================================================ */
+window.savePassword = async function () {
+  const newPass     = document.getElementById("newPasswordInput")?.value;
+  const confirmPass = document.getElementById("confirmPasswordInput")?.value;
+  const btn         = document.getElementById("savePasswordBtn");
+
+  if (!newPass) { showFormMsg("passwordMsg", "❌ Password baru tidak boleh kosong.", "error"); return; }
+  if (newPass.length < 6) { showFormMsg("passwordMsg", "❌ Password minimal 6 karakter.", "error"); return; }
+  if (newPass !== confirmPass) { showFormMsg("passwordMsg", "❌ Konfirmasi password tidak cocok.", "error"); return; }
+
+  btn.disabled = true; btn.textContent = "⏳ Menyimpan...";
+  const { error } = await updatePassword(newPass);
+  btn.disabled = false; btn.textContent = "🔒 Ganti Password";
+
+  if (!error) {
+    document.getElementById("newPasswordInput").value     = "";
+    document.getElementById("confirmPasswordInput").value = "";
+    showFormMsg("passwordMsg", "✅ Password berhasil diubah!", "success");
+  } else {
+    const msg = error.message?.includes("same password")
+      ? "❌ Password baru tidak boleh sama dengan yang lama."
+      : "❌ Gagal mengubah password. Coba lagi.";
+    showFormMsg("passwordMsg", msg, "error");
+  }
+};
+
+/* Tampilkan pesan form dengan auto-hide */
+function showFormMsg(id, text, type) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className   = `form-msg ${type}`;
+  if (type === "success") setTimeout(() => { el.className = "form-msg"; el.textContent = ""; }, 5000);
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+/* Novel functions */
+let novelBookmarkData   = {};
+let activeNovelKategori = "favorit";
+
+async function loadNovelBookmarks() {
+  const { bookmarks } = await getNovelBookmarks(currentUser.id);
+  novelBookmarkData = bookmarks;
+  renderNovelBookmarks(activeNovelKategori);
+}
+
+function renderNovelBookmarks(kategori) {
+  const list = novelBookmarkData[kategori] || [];
+  const el   = document.getElementById("novelBookmarkList");
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state"><p>📭</p><p>Belum ada novel di kategori ini.</p></div>';
+    return;
+  }
+  el.innerHTML = list.map(bm => `
+    <div class="komik-list-item">
+      <div style="width:50px;height:68px;background:var(--bg-surface);border-radius:6px;
+        display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
+        ${bm.novel_cover ? 'display:none' : ''}">📖</div>
+      ${bm.novel_cover ? `<img src="${proxyImg(bm.novel_cover,120)}" alt="${bm.novel_title}" style="width:50px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer" onclick="gotoNovelDetail('${bm.novel_slug}')">` : ''}
+      <div class="komik-list-info" onclick="gotoNovelDetail('${bm.novel_slug}')" style="cursor:pointer">
+        <div class="title">${bm.novel_title}</div>
+        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
+      </div>
+      <div class="komik-list-actions">
+        <button class="btn-sm primary" onclick="gotoNovelDetail('${bm.novel_slug}')">Buka</button>
+        <button class="btn-sm" onclick="hapusNovelBookmark('${bm.novel_slug}',this)">Hapus</button>
+      </div>
+    </div>`).join("");
+}
+
+window.filterNovelKategori = function (kategori, btn) {
+  activeNovelKategori = kategori;
+  document.querySelectorAll("#content-novel-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderNovelBookmarks(kategori);
+};
+
+window.hapusNovelBookmark = async function (slug, btn) {
+  btn.textContent = "..."; btn.disabled = true;
+  await removeNovelBookmark(currentUser.id, slug);
+  await loadNovelBookmarks();
+};
+
+async function loadNovelHistory() {
+  const { history } = await getNovelHistory(currentUser.id);
+  const el = document.getElementById("novelHistoryList");
+  if (!history?.length) {
+    el.innerHTML = '<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca novel.</p></div>';
+    return;
+  }
+  el.innerHTML = history.map(h => `
+    <div class="komik-list-item">
+      <div style="width:50px;height:68px;background:var(--bg-surface);border-radius:6px;
+        display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📖</div>
+      <div class="komik-list-info">
+        <div class="title">${h.novel_title || h.novel_slug || '–'}</div>
+        <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">
+          ${h.chapter_title || h.chapter_slug || ''}
+        </p>
+        <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
+      </div>
+      <div class="komik-list-actions">
+        <button class="btn-sm primary" onclick="window.location.href='novel-reader.html?slug=${h.chapter_slug}'">Lanjut</button>
+        <button class="btn-sm" onclick="gotoNovelDetail('${h.novel_slug}')">Detail</button>
+      </div>
+    </div>`).join("");
+}
+
+window.gotoNovelDetail = slug => window.location.href = `novel-detail.html?slug=${slug}`;
+window.gotoDetail   = slug => window.location.href = `detail.html?slug=${slug}`;
+window.goHome       = () => window.location.href = "index.html";
+window.liveSearch   = () => {};
+window.toggleMenu   = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display === "block" ? "none" : "block"; };
+window.toggleDarkMode = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark"); };
+
+function getLevelTitle(level) {
+  if (level >= 20) return "Legenda Komik 👑";
+  if (level >= 10) return "Otaku Sejati ⭐";
+  if (level >= 5)  return "Pembaca Aktif 🔥";
+  if (level >= 2)  return "Pecinta Komik 📚";
+  return "Pemula 🌱";
+}
+</script>
+
+<!-- ── Bottom Navigation ── -->
 <nav class="bottom-nav">
-  <button class="nav-item" onclick="window.location.href='/'">
+  <button class="nav-item" onclick="window.location.href='index.html'">
     <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='/'">
+  <button class="nav-item" onclick="window.location.href='index.html'">
     <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='/novel/'">
+  <button class="nav-item" onclick="window.location.href='novel.html'">
     <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
   </button>
-  <button class="nav-item active">
+  <button class="nav-item" onclick="window.location.href='donatur.html'">
     <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='/profil'">
+  <button class="nav-item active">
     <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
   </button>
 </nav>
 
-<script type="module">
-  import { initAuthHeader } from "./auth-header.js";
-  initAuthHeader();
-</script>
-
-<script>
-window.onload = function () {
-  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
-
-  const frame  = document.getElementById("donaturFrame");
-  const loader = document.getElementById("iframeLoader");
-
-  /* Hide loader saat iframe selesai load */
-  frame.addEventListener("load", function () {
-    loader.classList.add("gone");
-
-    /* Auto-resize (works jika same-origin, fallback ke estimasi) */
-    try {
-      const h = frame.contentDocument?.documentElement?.scrollHeight
-             || frame.contentWindow?.document?.documentElement?.scrollHeight;
-      if (h && h > 100) frame.style.minHeight = (h + 20) + "px";
-    } catch {
-      /* Cross-origin: estimasi tinggi 7 item × ~66px + header ~100px */
-      frame.style.minHeight = "570px";
-    }
-  });
-
-  /* Fallback: sembunyikan loader setelah 5 detik */
-  setTimeout(() => loader.classList.add("gone"), 5000);
-};
-
-function toggleDarkMode() {
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
-}
-function toggleMenu() {
-  const m = document.getElementById("menuDropdown");
-  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
-}
-document.addEventListener("click", e => {
-  const m = document.getElementById("menuDropdown");
-  const b = document.querySelector('button[onclick="toggleMenu()"]');
-  if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
-});
-</script>
 </body>
 </html>
