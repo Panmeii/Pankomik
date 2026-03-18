@@ -43,6 +43,7 @@ const DOMAIN_REF_MAP = {
   "sakuranovel":"https://sakuranovel.id",
   "novelringan":"https://novelringan.com",
   "mangakita":  "https://mangakita.me",
+  "bacakomik.my":"https://bacakomik.my",
   "i0.wp.com":  "https://mangakita.me",
   "i1.wp.com":  "https://mangakita.me",
   "i2.wp.com":  "https://mangakita.me",
