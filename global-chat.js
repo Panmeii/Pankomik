@@ -915,7 +915,7 @@ function setupRealtime() {
         .from("profiles")
         .select("username, avatar_url, role")
         .eq("id", p.new.user_id)
-        .single();
+        .maybeSingle();
 
       appendNewMsg({ ...p.new, profiles: prof || null });
     })
@@ -965,7 +965,7 @@ async function sendMsg() {
     .select(`id, user_id, message, is_pinned, is_announcement,
              ann_title, ann_type, page_url,
              reply_to, reply_preview, reactions, created_at`)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("[GC] sendMsg error:", error);
@@ -982,7 +982,7 @@ async function sendMsg() {
       .from("profiles")
       .select("username, avatar_url, role")
       .eq("id", currentUser.id)
-      .single();
+      .maybeSingle();
 
     const fullMsg = { ...inserted, profiles: myProfile || null };
 
@@ -1141,32 +1141,44 @@ async function init() {
   currentUser = session?.user || null;
 
   if (currentUser) {
-    /* Ambil profile yang sudah ada */
+    const meta       = currentUser.user_metadata || {};
+    const autoName   = meta.full_name || meta.name || meta.preferred_username
+                       || currentUser.email?.split("@")[0] || "User";
+    const autoAvatar = meta.avatar_url || meta.picture || null;
+
+    /* Pakai maybeSingle() — tidak throw error kalau row belum ada */
     let { data: p } = await supabase
       .from("profiles")
       .select("username, avatar_url, role, is_banned")
       .eq("id", currentUser.id)
-      .single();
+      .maybeSingle();
 
-    /* Kalau profile belum ada atau username kosong → auto-upsert dari data Google/Auth */
+    /* Kalau profile belum ada ATAU username masih kosong → upsert */
     if (!p || !p.username) {
-      const meta       = currentUser.user_metadata || {};
-      const autoName   = meta.full_name || meta.name || meta.preferred_username
-                         || currentUser.email?.split("@")[0] || "User";
-      const autoAvatar = meta.avatar_url || meta.picture || null;
-
-      const { data: upserted } = await supabase
+      const { data: upserted, error: upsertErr } = await supabase
         .from("profiles")
-        .upsert({
-          id:         currentUser.id,
-          username:   autoName,
-          avatar_url: autoAvatar,
-          role:       "user",
-        }, { onConflict: "id" })
+        .upsert(
+          {
+            id:         currentUser.id,
+            username:   autoName,
+            avatar_url: autoAvatar,
+            role:       "user",
+          },
+          {
+            onConflict:       "id",
+            ignoreDuplicates: false,   /* selalu update meski row sudah ada */
+          }
+        )
         .select("username, avatar_url, role, is_banned")
-        .single();
+        .maybeSingle();
 
-      p = upserted;
+      if (upsertErr) console.warn("[GC] upsert profile error:", upsertErr.message);
+      p = upserted || p;
+    }
+
+    /* Kalau masih null (misal RLS block upsert), fallback ke data dari auth */
+    if (!p) {
+      p = { username: autoName, avatar_url: autoAvatar, role: "user", is_banned: false };
     }
 
     isAdmin = ADMIN_EMAILS.includes(currentUser.email) || p?.role === "admin";
