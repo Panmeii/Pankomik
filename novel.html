@@ -382,19 +382,28 @@ function createProxiedImg(originalUrl, altText, cssText) {
     return clean; // direct
   }
 
-  img.onerror = function() {
+  function onImgError() {
     step++;
     img.onerror = null;
+    console.log("[Pankomik Novel] img error step=" + step, "url was:", img.src.substring(0,80));
     if (step <= 2) {
-      img.onerror = arguments.callee; // reattach
+      img.onerror = onImgError;
       img.src = getUrl(step);
     } else {
+      /* Semua proxy gagal - tampilkan fallback div */
       var ph = document.createElement("div");
-      ph.style.cssText = "display:flex;align-items:center;justify-content:center;background:var(--bg-surface);font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;width:" + (img.width||80) + "px;height:" + (img.offsetHeight||110) + "px;";
+      ph.className = "novel-card-fallback";
+      ph.style.cssText = "display:flex !important;width:100%;height:100%;";
       ph.textContent = "📖";
       if (img.parentNode) img.parentNode.replaceChild(ph, img);
+      /* Tampilkan sibling fallback jika ada */
+      var sib = img.nextElementSibling;
+      if (sib && sib.classList.contains("novel-card-fallback")) {
+        sib.style.display = "flex";
+      }
     }
-  };
+  }
+  img.onerror = onImgError;
 
   img.src = getUrl(0);
   return img;
@@ -561,7 +570,7 @@ async function doSearch(query) {
 
 function appendSearchCard(novel) {
   if (!novel?.slug) return;
-  const originalUrl = novel.poster || novel.image || "";
+  const originalUrl = novel.poster || novel.cover || novel.image || novel.thumbnail || novel.img || novel.cover_url || "";
   const title   = novel.title || "Untitled";
   const rating  = novel.rating ? "⭐ " + novel.rating : "";
   const type    = novel.type || "Novel";
@@ -711,6 +720,10 @@ async function novelFetch(page, reset) {
     novelHasNext = pag.hasNext ?? false;
     novelPage    = page;
     if (reset) document.getElementById("novelGrid").innerHTML = "";
+    /* Debug: log data novel pertama ke console */
+    if (list.length > 0 && novelPage === 1) {
+      console.log("[Pankomik Novel] Sample data:", JSON.stringify(list[0], null, 2));
+    }
     list.forEach(n => appendNovelCard(n));
     novelAllData = novelAllData.concat(list);
     totalLoaded += list.length;
@@ -756,7 +769,8 @@ window.novelLoadMore = async function () {
    ============================================================ */
 function appendNovelCard(novel) {
   if (!novel?.slug) return;
-  const originalUrl = novel.poster || novel.image || novel.cover || "";
+  const originalUrl = novel.poster || novel.cover || novel.image || novel.thumbnail || novel.img || novel.cover_url || novel.poster_url || novel.picture || "";
+  if (!originalUrl && novel.slug) console.warn("[Pankomik] No cover for:", novel.slug, "keys:", Object.keys(novel));
   const title   = novel.title || "Untitled";
   const chapter    = novel.latest_chapter || novel.chapter || "";
   const short      = chapter.length > 60 ? chapter.slice(0, 57) + "…" : chapter;
