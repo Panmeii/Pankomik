@@ -509,7 +509,7 @@ container.id = "gc-root";
 container.innerHTML = `
   <!-- Toggle button -->
   <button id="gc-toggle" title="Global Chat">
-    💬
+    <span class="gc-toggle-icon">💬</span>
     <span id="gc-badge"></span>
     <span id="gc-online-dot"></span>
   </button>
@@ -681,7 +681,11 @@ function bindEvents() {
     const dist = gcMsgs.scrollHeight - gcMsgs.scrollTop - gcMsgs.clientHeight;
     isAtBottom = dist < 60;
     gcScrollBtn.classList.toggle("show", dist > 150 && !isAtBottom);
-    if (isAtBottom) { unreadCount = 0; gcBadge.classList.remove("show"); }
+    if (isAtBottom) {
+      unreadCount = 0;
+      const badge = document.getElementById("gc-badge");
+      if (badge) badge.classList.remove("show");
+    }
   }, { passive: true });
   gcScrollBtn.addEventListener("click", scrollBottom);
 
@@ -703,10 +707,14 @@ function bindEvents() {
 function togglePanel() {
   isOpen = !isOpen;
   gcPanel.classList.toggle("open", isOpen);
-  gcToggle.innerHTML = isOpen ? `✕<span id="gc-badge" class="${unreadCount>0?"show":""}"></span><span id="gc-online-dot"></span>` : `💬<span id="gc-badge" class="${unreadCount>0?"show":""}"></span><span id="gc-online-dot"></span>`;
+  /* Perbarui ikon toggle tanpa menghancurkan span badge/dot yang sudah ada */
+  const iconSpan = gcToggle.querySelector(".gc-toggle-icon");
+  if (iconSpan) iconSpan.textContent = isOpen ? "✕" : "💬";
   if (isOpen) {
     unreadCount = 0;
-    gcBadge.classList.remove("show");
+    /* Re-query karena badge span tidak di-replace */
+    const badge = document.getElementById("gc-badge");
+    if (badge) badge.classList.remove("show");
     scrollBottom();
     setTimeout(() => gcInput.focus(), 280);
   }
@@ -942,13 +950,14 @@ function setupRealtime() {
       const m = { ...p.new, profiles: prof || null };
       messages.push(m);
 
-      /* Date sep jika perlu */
-      const d   = dateLabel(m.created_at);
-      const seps = gcMsgs.querySelectorAll(".gc-date-sep");
-      const last = seps[seps.length-1]?.textContent;
-      const today = todayLabel();
-      if (d !== last && d !== "Hari ini" || (d === today && last !== "Hari ini")) {
-        gcMsgs.appendChild(makeDateSep(d === today ? "Hari ini" : d));
+      /* Date sep jika perlu — cek tanggal pesan vs separator terakhir */
+      const msgDateLabel = dateLabel(m.created_at);
+      const todayStr     = todayLabel();
+      const displayLabel = (msgDateLabel === todayStr) ? "Hari ini" : msgDateLabel;
+      const seps         = gcMsgs.querySelectorAll(".gc-date-sep");
+      const lastSepLabel = seps.length > 0 ? seps[seps.length - 1].textContent.trim() : "";
+      if (displayLabel !== lastSepLabel) {
+        gcMsgs.appendChild(makeDateSep(displayLabel));
       }
 
       gcMsgs.appendChild(buildMsg(m));
@@ -959,8 +968,11 @@ function setupRealtime() {
         scrollBottom();
       } else {
         unreadCount++;
-        gcBadge.textContent = unreadCount > 9 ? "9+" : unreadCount;
-        gcBadge.classList.add("show");
+        const badge = document.getElementById("gc-badge");
+        if (badge) {
+          badge.textContent = unreadCount > 9 ? "9+" : unreadCount;
+          badge.classList.add("show");
+        }
       }
     })
     .on("postgres_changes", { event:"DELETE", schema:"public", table:"global_chat" }, p => {
@@ -1133,6 +1145,8 @@ function scrollBottom() {
   gcMsgs.scrollTop = gcMsgs.scrollHeight;
   isAtBottom = true;
   gcScrollBtn.classList.remove("show");
+  const badge = document.getElementById("gc-badge");
+  if (badge) badge.classList.remove("show");
 }
 
 /* ============================================================
