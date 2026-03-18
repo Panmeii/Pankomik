@@ -25,15 +25,16 @@ function readerURL(chSlug, komikSlug) { return komikSlug ? `/komik/${komikSlug}/
 
 /* ── IMAGE PROXY ────────────────────────────────────────── */
 /**
- * Ambil URL cover dengan fallback proxy.
- * Urutan: weserv.nl → wsrv.nl → direct
+ * Proxy chain: wsrv.nl (paling stabil) → imageproxy → direct
+ * weserv.nl dihapus karena sering rate-limit & blokir.
  */
+
+/* Buat URL proxy wsrv.nl (lebih stabil dari weserv) */
 function proxyImg(url, w = 300) {
   if (!url) return "";
-  // Jangan proxy kalau sudah lewat proxy atau data URI
-  if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("wsrv.nl")) return url;
-  const clean = url.split("?")[0];
-  return `https://images.weserv.nl/?url=${encodeURIComponent(clean.replace(/^https?:\/\//, ""))}&w=${w}&output=webp&q=82`;
+  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("images.weserv.nl")) return url;
+  const clean = encodeURIComponent(url.split("?")[0]);
+  return `https://wsrv.nl/?url=${clean}&w=${w}&output=webp&q=85&n=-1`;
 }
 
 function safeCover(komik, w = 300) {
@@ -41,21 +42,50 @@ function safeCover(komik, w = 300) {
   return raw ? proxyImg(raw.split("?")[0], w) : "";
 }
 
-/* Fungsi untuk pasang onerror fallback pada elemen img */
+/**
+ * imgFallback: pasang onerror chain ke img element.
+ * Urutan: wsrv.nl → direct URL → placeholder emoji
+ */
 function imgFallback(img, originalUrl) {
+  if (!originalUrl || img.dataset.fallbackSet) return;
+  img.dataset.fallbackSet = "1";
   let tried = 0;
+  const clean = originalUrl.split("?")[0];
+
   img.onerror = function () {
     tried++;
-    const clean = originalUrl.split("?")[0];
+    img.onerror = null; // reset dulu
     if (tried === 1) {
-      img.src = `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=300`;
-    } else if (tried === 2) {
+      // Fallback ke direct URL (tanpa proxy)
+      img.onerror = function () {
+        tried++;
+        img.onerror = null;
+        if (tried === 2) {
+          // Fallback ke placeholder visual
+          showImgPlaceholder(img);
+        }
+      };
       img.src = clean;
     } else {
-      img.style.display = "none";
-      img.onerror = null;
+      showImgPlaceholder(img);
     }
   };
+}
+
+function showImgPlaceholder(img) {
+  img.onerror = null;
+  // Ganti img dengan div placeholder agar tidak blank hitam
+  const ph = document.createElement("div");
+  ph.style.cssText = `
+    width:100%; height:${img.height || img.offsetHeight || 155}px;
+    background:var(--bg-surface);
+    display:flex; align-items:center; justify-content:center;
+    font-size:32px; color:var(--text-muted);
+    border-radius:inherit;
+    flex-shrink:0;
+  `;
+  ph.textContent = "📚";
+  if (img.parentNode) img.parentNode.replaceChild(ph, img);
 }
 
 /* ── ANIMASI MASUK ──────────────────────────────────────── */
@@ -103,23 +133,24 @@ async function getTopKomik() {
 function renderTopKomik(list, container) {
   list.slice(0, 10).forEach((komik, i) => {
     if (!komik?.slug) return;
-    const cover = safeCover(komik, 260);
-    const card  = document.createElement("div");
+    const origUrl = (komik.image || komik.cover || "").split("?")[0];
+    const cover   = origUrl ? proxyImg(origUrl, 260) : "";
+    const card    = document.createElement("div");
     card.className = "card";
 
     card.innerHTML = `
       <div class="rank">#${i + 1}</div>
       ${cover
-        ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="${i < 3 ? "eager" : "lazy"}">`
+        ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="${i < 3 ? "eager" : "lazy"}" style="background:var(--bg-surface);">`
         : `<div class="card-img-fallback">📚</div>`}
       <div class="info">
         <p class="card-title">${escHtml(komik.title || "Untitled")}</p>
         <p>⭐ ${komik.rating || "–"}</p>
       </div>`;
 
-    if (cover) {
+    if (cover && origUrl) {
       const img = card.querySelector("img");
-      imgFallback(img, komik.image || komik.cover || "");
+      if (img) imgFallback(img, origUrl);
     }
 
     card.onclick = () => { window.location.href = komikURL(komik.slug); };
@@ -163,14 +194,15 @@ function renderLatest(list, container) {
   list.forEach((komik, i) => {
     if (!komik?.slug) return;
 
-    const cover = safeCover(komik, 260);
-    const type  = (komik.type || "manhwa").toLowerCase();
-    const title = komik.title || "Untitled";
+    const origUrl  = (komik.image || komik.cover || "").split("?")[0];
+    const cover    = origUrl ? proxyImg(origUrl, 260) : "";
+    const type     = (komik.type || "manhwa").toLowerCase();
+    const title    = komik.title || "Untitled";
 
-    const latestCh    = (komik.chapters && komik.chapters[0]) || {};
-    const chTitle     = latestCh.title || komik.chapter || komik.ch || "";
-    const chDate      = latestCh.date  || komik.date || komik.time || "";
-    const chSlug      = latestCh.slug  || komik.slug;
+    const latestCh = (komik.chapters && komik.chapters[0]) || {};
+    const chTitle  = latestCh.title || komik.chapter || komik.ch || "";
+    const chDate   = latestCh.date  || komik.date || komik.time || "";
+    const chSlug   = latestCh.slug  || komik.slug;
 
     const card = document.createElement("div");
     card.className = "grid-card";
@@ -178,7 +210,7 @@ function renderLatest(list, container) {
     card.innerHTML = `
       <div class="badge ${type}">${komik.type || "Manhwa"}</div>
       ${cover
-        ? `<img src="${cover}" alt="${escHtml(title)}" loading="lazy">`
+        ? `<img src="${cover}" alt="${escHtml(title)}" loading="lazy" style="background:var(--bg-surface);">`
         : `<div class="card-img-fallback" style="height:155px;">📚</div>`}
       <div class="grid-info">
         <p class="title">${escHtml(title)}</p>
@@ -191,9 +223,9 @@ function renderLatest(list, container) {
         </div>
       </div>`;
 
-    if (cover) {
+    if (cover && origUrl) {
       const img = card.querySelector("img");
-      imgFallback(img, komik.image || komik.cover || "");
+      if (img) imgFallback(img, origUrl);
     }
 
     card.onclick = () => { window.location.href = komikURL(komik.slug); };
@@ -308,21 +340,24 @@ function renderRekomen(list) {
 
   list.forEach((komik, i) => {
     if (!komik?.slug) return;
-    const cover = safeCover(komik, 160);
-    const card  = document.createElement("div");
+    const origUrl = (komik.image || komik.cover || "").split("?")[0];
+    const cover   = origUrl ? proxyImg(origUrl, 160) : "";
+    const card    = document.createElement("div");
     card.className = "rekom-card";
 
     card.innerHTML = `
-      ${cover ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="lazy">` : ""}
+      ${cover
+        ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="lazy" style="background:var(--bg-surface);width:80px;height:110px;object-fit:cover;flex-shrink:0;">`
+        : `<div style="width:80px;height:110px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);flex-shrink:0;">📚</div>`}
       <div class="rekom-info">
         <p class="title">${escHtml(komik.title || "Untitled")}</p>
         <p>⭐ ${komik.rating || "–"}</p>
         <p>🎭 ${escHtml(komik.genre || "")}</p>
       </div>`;
 
-    if (cover) {
+    if (cover && origUrl) {
       const img = card.querySelector("img");
-      imgFallback(img, komik.image || komik.cover || "");
+      if (img) imgFallback(img, origUrl);
     }
 
     card.onclick = () => { window.location.href = komikURL(komik.slug); };
@@ -434,23 +469,26 @@ function renderSearch(list, query) {
   resultBox.innerHTML = "";
   list.slice(0, 6).forEach(komik => {
     if (!komik?.slug) return;
-    const cover = safeCover(komik, 80);
-    const item  = document.createElement("div");
+    const origUrl = (komik.image || komik.cover || "").split("?")[0];
+    const cover   = origUrl ? proxyImg(origUrl, 80) : "";
+    const item    = document.createElement("div");
     item.className = "search-item";
 
     /* Highlight kata kunci dalam judul */
     const hl = highlightText(komik.title || "Untitled", query);
 
     item.innerHTML = `
-      ${cover ? `<img src="${cover}" alt="" loading="lazy">` : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">📚</div>`}
+      ${cover
+        ? `<img src="${cover}" alt="" loading="lazy" style="background:var(--bg-surface);">`
+        : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">📚</div>`}
       <div>
         <p>${hl}</p>
         <p style="color:var(--accent2);">⭐ ${komik.rating || "–"} &nbsp;·&nbsp; ${escHtml(komik.type || "")}</p>
       </div>`;
 
-    if (cover) {
+    if (cover && origUrl) {
       const img = item.querySelector("img");
-      if (img) imgFallback(img, komik.image || komik.cover || "");
+      if (img) imgFallback(img, origUrl);
     }
 
     item.onclick = () => { window.location.href = komikURL(komik.slug); };
