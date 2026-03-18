@@ -226,7 +226,12 @@ function normalizeFromMangakita(det) {
     theme:          "",
     altTitle:       det.alternative  || "",
     synopsis:       det.synopsis     || "",
-    genres:         det.genres       || [],
+    /* Mangakita genres: ["Action","Adventure"] → [{name, slug}] */
+    genres:         (det.genres || []).map(g =>
+      typeof g === "string"
+        ? { name: g, slug: g.toLowerCase().replace(/\s+/g, "-") }
+        : g
+    ),
     chapters:       chapters,
     firstChapter:   chapters.length ? chapters[chapters.length - 1] : null,
     latestChapter:  chapters.length ? chapters[0] : null,
@@ -339,8 +344,12 @@ async function tampilkanDetail(d) {
 
         <div class="genres">
           ${d.genres.map(g => {
-            const gSlug = (g.slug || "").replace(/^\/genres?\//,"");
-            return `<span class="genre" onclick="window.location.href='/genre/${encodeURIComponent(gSlug)}'" style="cursor:pointer;">${escHtml(g.name)}</span>`;
+            const name  = typeof g === "string" ? g : (g.name  || "");
+            const gSlug = typeof g === "string"
+              ? g.toLowerCase().replace(/\s+/g, "-")
+              : (g.slug || "").replace(/^\/genres?\//,"");
+            if (!name) return "";
+            return `<span class="genre" onclick="window.location.href='/genre/${encodeURIComponent(gSlug)}'" style="cursor:pointer;">${escHtml(name)}</span>`;
           }).join("")}
         </div>
 
