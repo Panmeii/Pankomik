@@ -172,14 +172,7 @@
       color: var(--accent);
     }
 
-    /* ---- KOMIK GRID ----------------------------------------- */
-    .genre-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 12px 14px;
-    }
-
+    /* ---- KOMIK CARDS --------------------------------------- */
     .genre-card {
       background: var(--bg-card);
       border-radius: var(--radius);
@@ -222,6 +215,57 @@
       font-size: 10px;
       color: var(--accent2);
       font-weight: 700;
+    }
+
+    .genre-card-chapter {
+      font-size: 10px;
+      color: var(--text-muted);
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ---- RESPONSIVE GRID ------------------------------------ */
+    /* Mobile default: 3 kolom */
+    .genre-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 12px 14px;
+    }
+
+    /* Tablet: 4 kolom */
+    @media (min-width: 540px) {
+      .genre-grid { grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 14px 18px; }
+      .genre-card-title { font-size: 12px; }
+      .genre-card-chapter, .genre-card-rating { font-size: 11px; }
+    }
+
+    /* Desktop kecil: 5 kolom */
+    @media (min-width: 768px) {
+      .genre-grid { grid-template-columns: repeat(5, 1fr); gap: 14px; padding: 16px 24px; }
+      .genre-hero { padding: 20px 24px 14px; }
+      .genre-toolbar { padding: 10px 24px; }
+    }
+
+    /* Desktop besar: 6 kolom */
+    @media (min-width: 1024px) {
+      .genre-grid { grid-template-columns: repeat(6, 1fr); gap: 16px; padding: 18px 32px; }
+      .genre-hero { padding: 24px 32px 16px; }
+      .genre-toolbar { padding: 12px 32px; }
+      .pagination { padding: 20px 32px 32px; }
+    }
+
+    /* Genre browse cards juga responsif */
+    @media (min-width: 540px) {
+      .genre-browse-grid { grid-template-columns: repeat(4, 1fr) !important; }
+    }
+    @media (min-width: 768px) {
+      .genre-browse-grid { grid-template-columns: repeat(5, 1fr) !important; padding: 16px 24px !important; }
+    }
+    @media (min-width: 1024px) {
+      .genre-browse-grid { grid-template-columns: repeat(6, 1fr) !important; padding: 18px 32px !important; }
     }
 
     .genre-card-type {
@@ -407,7 +451,7 @@ function proxyImg(url) {
    ============================================================ */
 
 const GENRES_API = "https://www.sankavollerei.com/comic/komikindo/genres";
-const GENRE_API  = "https://www.sankavollerei.com/comic/komikindo/genre/";
+const GENRE_API  = "https://www.sankavollerei.com/comic/genre/";
 
 /* ---- STATE ---------------------------------------------- */
 let allGenres     = [];
@@ -570,19 +614,33 @@ async function fetchGenreKomik(slug, page) {
     const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}?page=${page}`);
     const data = await res.json();
 
-    /* API komikindo: komikList[] dengan field image/cover */
-    const raw   = data.komikList || data.data || data.comics || [];
-    allFetched  = raw.map(k => ({
-      ...k,
-      /* Normalize cover: API bisa pakai 'image' atau 'cover' */
-      cover: k.cover || k.image || k.thumbnail || "",
-      title: k.title || k.name || "Untitled",
-      slug:  k.slug  || k.id   || "",
-      type:  k.type  || k.type_name || "",
-      rating: k.rating || k.score || "–",
-    }));
-    hasNextPage = !!(data.hasNextPage || data.pagination?.hasNextPage || (raw.length >= 15));
-    currentPage = data.currentPage || data.pagination?.currentPage || page;
+    /* API baru: comics[] dengan field image, link, chapter, dll */
+    const raw   = data.comics || data.komikList || data.data || [];
+    allFetched  = raw.map(k => {
+      let kslug = k.slug || k.id || "";
+      if (!kslug && k.link) {
+        const m = k.link.match(/\/manga\/([^/]+)\/?$/);
+        if (m) kslug = m[1];
+      }
+      return {
+        ...k,
+        cover:   k.image   || k.cover   || k.thumbnail || "",
+        title:   k.title   || k.name    || "Untitled",
+        slug:    kslug,
+        type:    k.type    || k.type_name || "",
+        rating:  k.rating  || k.score   || "–",
+        chapter: k.chapter || "",
+        link:    k.link    || "",
+      };
+    });
+    /* Pagination: API baru pakai pagination.has_more */
+    hasNextPage = !!(
+      data.pagination?.has_more ||
+      data.pagination?.hasNextPage ||
+      data.hasNextPage ||
+      (raw.length >= 15)
+    );
+    currentPage = data.pagination?.current_page || data.currentPage || page;
 
     document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
 
@@ -648,17 +706,25 @@ function renderGenreGrid(list) {
     return;
   }
 
+  grid.className = "genre-grid";
+
   grid.innerHTML = list.map(k => {
     const cover = proxyImg(k.cover || k.image || k.thumbnail || "");
     const type  = (k.type || "").toLowerCase();
+    /* Gunakan link langsung dari API jika tidak ada slug lokal */
+    const href  = k.slug ? `/komik/${k.slug}` : (k.link || "#");
     return `
-      <div class="genre-card" onclick="window.location.href='/komik/${k.slug}'">
+      <div class="genre-card" onclick="window.location.href='${href}'">
         <img src="${cover}" alt="${escHtml(k.title)}" loading="lazy"
              onerror="this.style.opacity='0.3'">
-        <span class="genre-card-type badge ${type}">${k.type || ""}</span>
+        ${k.type ? `<span class="genre-card-type badge ${type}">${k.type}</span>` : ""}
         <div class="genre-card-info">
           <div class="genre-card-title">${escHtml(k.title)}</div>
-          <div class="genre-card-rating">⭐ ${k.rating || "–"}</div>
+          ${k.chapter
+            ? `<div class="genre-card-chapter">📖 ${escHtml(k.chapter)}</div>`
+            : k.rating && k.rating !== "–"
+              ? `<div class="genre-card-rating">⭐ ${k.rating}</div>`
+              : ""}
         </div>
       </div>`;
   }).join("");
@@ -725,6 +791,7 @@ function showGenreBrowse() {
   };
 
   /* Gunakan style genre browse (beda dari grid komik) */
+  grid.className = "genre-grid genre-browse-grid";
   grid.style.gridTemplateColumns = "repeat(3, 1fr)";
   grid.innerHTML = cleaned.map(g => `
     <div
