@@ -407,11 +407,44 @@ export async function getTotalChaptersRead(userId) {
 }
 
 /**
- * Sync ulang total_chapters_read dan level di profil.
- * Panggil ini saat halaman profil dibuka untuk pastikan data up-to-date.
+ * Sync ulang total_chapters_read, level, DAN nama/avatar dari Google.
+ * Panggil ini saat halaman profil dibuka.
  */
 export async function syncProfileProgress(userId) {
+  /* 1. Sync chapter count & level */
   await updateTotalChapters(userId);
+
+  /* 2. Sync nama & avatar dari Google metadata kalau profile masih kosong */
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) return;
+
+    /* Pakai maybeSingle() agar tidak error kalau row belum ada */
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const meta       = user.user_metadata || {};
+    const googleName = meta.full_name || meta.name || meta.preferred_username
+                       || user.email?.split("@")[0] || "User";
+    const googleAv   = meta.avatar_url || meta.picture || null;
+
+    /* Hanya update kolom yang masih kosong — tidak timpa yang sudah diset user */
+    const updates = {};
+    if (!profile?.username)   updates.username   = googleName;
+    if (!profile?.avatar_url) updates.avatar_url = googleAv;
+
+    if (Object.keys(updates).length > 0) {
+      await supabase
+        .from("profiles")
+        .upsert({ id: userId, ...updates }, { onConflict: "id", ignoreDuplicates: false });
+    }
+  } catch (e) {
+    console.warn("[syncProfileProgress] metadata sync error:", e);
+  }
 }
 
 
