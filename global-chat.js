@@ -8,7 +8,7 @@ const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";
 const supabase     = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const ADMIN_EMAILS = ["pankomik@gmail.com", "admin@pankomik.com"];
+const ADMIN_EMAILS = ["pankomik@gmail.com", "rian.samuji@pankomik.com"];
 const MAX_CHARS    = 500;
 const EMOJIS = ["😂","😍","🔥","💯","👏","😭","❤️","😎","💪","🙏","😤","✨","🎉","😱","🤩","💀","😅","🫶","🏆","👑","💛","🫡","🤣","👀","⭐","🎭"];
 
@@ -795,56 +795,70 @@ async function updatePresence() {
 }
 
 /* ============================================================
-   REALTIME
+   REALTIME — pakai Broadcast + postgres_changes sebagai fallback
+   Broadcast jauh lebih reliable untuk chat real-time karena
+   tidak butuh REPLICA IDENTITY FULL di tabel
    ============================================================ */
+function appendNewMsg(m) {
+  /* Jangan duplikat */
+  if ($("gcm-" + m.id)) return;
+  messages.push(m);
+
+  /* Date separator */
+  const msgDate   = dateLabel(m.created_at);
+  const todayStr  = todayLabel();
+  const dispLabel = msgDate === todayStr ? "Hari ini" : msgDate;
+  const seps      = gcMsgs.querySelectorAll(".gc-date-sep");
+  const lastLabel = seps.length ? seps[seps.length - 1].textContent.trim() : "";
+  if (dispLabel !== lastLabel) gcMsgs.appendChild(makeDateSep(dispLabel));
+
+  gcMsgs.appendChild(buildMsg(m));
+  if (m.is_pinned || m.is_announcement) loadPinned();
+
+  if (isAtBottom && isOpen) {
+    scrollBottom();
+  } else {
+    unreadCount++;
+    showBadge(unreadCount);
+  }
+}
+
 function setupRealtime() {
   realtimeChannel = supabase
-    .channel("gc_realtime_v3")
-    .on("postgres_changes", { event:"INSERT", schema:"public", table:"global_chat" }, async p => {
-      /* Fetch profile untuk pesan baru */
+    .channel("gc_realtime_v4", { config: { broadcast: { self: true } } })
+
+    /* ── Broadcast: pesan masuk dari sendMsg ─────────────── */
+    .on("broadcast", { event: "new_msg" }, ({ payload }) => {
+      if (payload?.msg) appendNewMsg(payload.msg);
+    })
+
+    /* ── postgres_changes: sebagai backup / sinkronisasi ── */
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "global_chat" }, async p => {
+      /* Kalau sudah ada di DOM via broadcast, skip */
+      if ($("gcm-" + p.new.id)) return;
+
       const { data: prof } = await supabase
         .from("profiles")
         .select("username, avatar_url, role")
         .eq("id", p.new.user_id)
         .single();
 
-      const m = { ...p.new, profiles: prof || null };
-      messages.push(m);
-
-      /* Date separator — logika bersih */
-      const msgDate   = dateLabel(m.created_at);
-      const todayStr  = todayLabel();
-      const dispLabel = msgDate === todayStr ? "Hari ini" : msgDate;
-      const seps      = gcMsgs.querySelectorAll(".gc-date-sep");
-      const lastLabel = seps.length ? seps[seps.length-1].textContent.trim() : "";
-      if (dispLabel !== lastLabel) {
-        gcMsgs.appendChild(makeDateSep(dispLabel));
-      }
-
-      gcMsgs.appendChild(buildMsg(m));
-      if (m.is_pinned || m.is_announcement) loadPinned();
-
-      if (isAtBottom && isOpen) {
-        scrollBottom();
-      } else {
-        unreadCount++;
-        showBadge(unreadCount);
-      }
+      appendNewMsg({ ...p.new, profiles: prof || null });
     })
-    .on("postgres_changes", { event:"DELETE", schema:"public", table:"global_chat" }, p => {
-      $("gcm-"+p.old.id)?.remove();
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "global_chat" }, p => {
+      $("gcm-" + p.old.id)?.remove();
       messages = messages.filter(x => x.id !== p.old.id);
     })
-    .on("postgres_changes", { event:"UPDATE", schema:"public", table:"global_chat" }, p => {
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "global_chat" }, p => {
       loadPinned();
-      const el = $("gcm-"+p.new.id);
+      const el = $("gcm-" + p.new.id);
       if (el) {
         const m = messages.find(x => x.id === p.new.id);
         if (m) { Object.assign(m, p.new); el.replaceWith(buildMsg(m)); }
       }
     })
     .subscribe(status => {
-      console.log("[GC] realtime status:", status);
+      console.log("[GC] realtime:", status);
     });
 }
 
@@ -871,7 +885,13 @@ async function sendMsg() {
     payload.reply_preview = (replyingTo.message || "").slice(0, 60);
   }
 
-  const { error } = await supabase.from("global_chat").insert(payload);
+  const { data: inserted, error } = await supabase
+    .from("global_chat")
+    .insert(payload)
+    .select(`id, user_id, message, is_pinned, is_announcement,
+             ann_title, ann_type, page_url,
+             reply_to, reply_preview, reactions, created_at`)
+    .single();
 
   if (error) {
     console.error("[GC] sendMsg error:", error);
@@ -882,6 +902,22 @@ async function sendMsg() {
     gcChar.textContent    = MAX_CHARS;
     gcChar.classList.remove("warn");
     cancelReply();
+
+    /* Fetch profile pengirim lalu broadcast ke semua user di channel */
+    const { data: myProfile } = await supabase
+      .from("profiles")
+      .select("username, avatar_url, role")
+      .eq("id", currentUser.id)
+      .single();
+
+    const fullMsg = { ...inserted, profiles: myProfile || null };
+
+    /* Broadcast — ini yang membuat chat realtime tanpa butuh RLS khusus */
+    realtimeChannel?.send({
+      type:    "broadcast",
+      event:   "new_msg",
+      payload: { msg: fullMsg },
+    });
   }
 
   gcSend.disabled  = false;
@@ -1031,11 +1067,33 @@ async function init() {
   currentUser = session?.user || null;
 
   if (currentUser) {
-    const { data: p } = await supabase
+    /* Ambil profile yang sudah ada */
+    let { data: p } = await supabase
       .from("profiles")
       .select("username, avatar_url, role, is_banned")
       .eq("id", currentUser.id)
       .single();
+
+    /* Kalau profile belum ada atau username kosong → auto-upsert dari data Google/Auth */
+    if (!p || !p.username) {
+      const meta       = currentUser.user_metadata || {};
+      const autoName   = meta.full_name || meta.name || meta.preferred_username
+                         || currentUser.email?.split("@")[0] || "User";
+      const autoAvatar = meta.avatar_url || meta.picture || null;
+
+      const { data: upserted } = await supabase
+        .from("profiles")
+        .upsert({
+          id:         currentUser.id,
+          username:   autoName,
+          avatar_url: autoAvatar,
+          role:       "user",
+        }, { onConflict: "id" })
+        .select("username, avatar_url, role, is_banned")
+        .single();
+
+      p = upserted;
+    }
 
     isAdmin = ADMIN_EMAILS.includes(currentUser.email) || p?.role === "admin";
 
