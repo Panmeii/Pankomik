@@ -44,6 +44,8 @@ const _DOMAIN_REF = {
   "bacakomik":  "https://bacakomik.me",
   "mangatale":  "https://mangatale.co",
   "westmanga":  "https://westmanga.info",
+  "sakuranovel":"https://sakuranovel.id",
+  "novelringan":"https://novelringan.com",
 };
 
 function _getRef(url) {
