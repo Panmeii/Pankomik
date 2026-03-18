@@ -327,7 +327,7 @@
     }
   </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 
 <header class="header">
   <div class="logo" onclick="goHome()">Pankomik</div>
@@ -393,6 +393,13 @@
 </script>
 
 <script>
+
+function proxyImg(url) {
+  if (!url) return "";
+  if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
+  return "https://wsrv.nl/?url=" + encodeURIComponent(url.split("?")[0]) + "&w=300&output=webp&q=80";
+}
+
 /* ============================================================
    GENRE PAGE — genre.js (inline)
    ============================================================ */
@@ -609,11 +616,11 @@ function renderGenreGrid(list) {
   }
 
   grid.innerHTML = list.map(k => {
-    const cover = k.cover.split("?")[0];
+    const cover = proxyImg(k.cover);
     const type  = k.type?.toLowerCase() || "";
     const typeColor = type === "manhwa" ? "#27ae60" : type === "manhua" ? "#2980b9" : "#c0392b";
     return `
-      <div class="genre-card" onclick="window.location.href='detail.html?slug=${k.slug}'">
+      <div class="genre-card" onclick="window.location.href='/komik/'+k.slug">
         <img src="${cover}" alt="${escHtml(k.title)}" loading="lazy">
         <span class="genre-card-type badge ${type}">${k.type || ""}</span>
         <div class="genre-card-info">
@@ -716,8 +723,8 @@ function liveSearch() {
       list.slice(0, 5).forEach(k => {
         const item = document.createElement("div");
         item.className = "search-item";
-        item.innerHTML = `<img src="${k.cover.split("?")[0]}" loading="lazy"><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`;
-        item.onclick = () => window.location.href = `detail.html?slug=${k.slug}`;
+        item.innerHTML = `<img src="${proxyImg(k.cover)}" loading="lazy"><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`;
+        item.onclick = () => window.location.href = '/komik/'+k.slug;
         resultBox.appendChild(item);
       });
       resultBox.style.display = "block";
@@ -741,12 +748,32 @@ function escHtml(str) {
   return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-function goHome() { window.location.href = "index.html"; }
+function goHome() { window.location.href = "/"; }
 
 function toggleDarkMode() {
   document.body.classList.toggle("light");
   localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
 }
 </script>
+
+<!-- ── Bottom Navigation ── -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item active" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/novel/'">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/donatur'">
+    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
 </body>
 </html>
