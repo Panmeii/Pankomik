@@ -38,9 +38,38 @@ const API_DETAIL = `https://www.sankavollerei.com/comic/komikindo/detail/${slug}
 /* ── IMAGE PROXY ────────────────────────────────────────── */
 function proxyImg(url, w = 300) {
   if (!url) return "";
-  if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("wsrv.nl")) return url;
-  const clean = url.split("?")[0];
-  return `https://images.weserv.nl/?url=${encodeURIComponent(clean.replace(/^https?:\/\//, ""))}&w=${w}&output=webp&q=82`;
+  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
+  const clean = encodeURIComponent(url.split("?")[0]);
+  return `https://wsrv.nl/?url=${clean}&w=${w}&output=webp&q=85&n=-1`;
+}
+
+function imgFallback(img, originalUrl) {
+  if (!originalUrl || img.dataset.fallbackSet) return;
+  img.dataset.fallbackSet = "1";
+  let tried = 0;
+  const clean = originalUrl.split("?")[0];
+  img.onerror = function () {
+    tried++;
+    img.onerror = null;
+    if (tried === 1) {
+      img.onerror = function () {
+        tried++;
+        img.onerror = null;
+        showImgPlaceholder(img);
+      };
+      img.src = clean;
+    } else {
+      showImgPlaceholder(img);
+    }
+  };
+}
+
+function showImgPlaceholder(img) {
+  img.onerror = null;
+  const ph = document.createElement("div");
+  ph.style.cssText = `width:100%;height:${img.height||img.offsetHeight||155}px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;`;
+  ph.textContent = "📚";
+  if (img.parentNode) img.parentNode.replaceChild(ph, img);
 }
 
 function escHtml(str) {
@@ -347,18 +376,7 @@ async function tampilkanDetail(d) {
   /* Pasang fallback pada cover img */
   const coverImg = document.getElementById("detailCoverImg");
   if (coverImg && d.cover) {
-    let cTried = 0;
-    const origCover = d.cover;
-    coverImg.onerror = function () {
-      cTried++;
-      if (cTried === 1) {
-        coverImg.src = `https://wsrv.nl/?url=${encodeURIComponent(origCover.split("?")[0])}&w=280`;
-      } else if (cTried === 2) {
-        coverImg.src = origCover.split("?")[0];
-      } else {
-        coverImg.style.display = "none";
-      }
-    };
+    imgFallback(coverImg, d.cover.split("?")[0]);
   }
 
   renderChapterList(d.chapters, lastReadData);
@@ -540,11 +558,19 @@ window.liveSearch = async function () {
       resultBox.innerHTML = "";
       if (!list.length) { resultBox.style.display = "none"; return; }
       list.slice(0, 6).forEach(k => {
-        const item = document.createElement("div");
+        const item    = document.createElement("div");
+        const origUrl = (k.cover || k.image || "").split("?")[0];
+        const cover   = origUrl ? proxyImg(origUrl, 80) : "";
         item.className = "search-item";
         item.innerHTML = `
-          ${k.cover || k.image ? `<img src="${proxyImg(k.cover || k.image, 80)}" loading="lazy">` : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">📚</div>`}
+          ${cover
+            ? `<img src="${cover}" loading="lazy" style="background:var(--bg-surface);">`
+            : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">📚</div>`}
           <div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating || "–"}</p></div>`;
+        if (cover && origUrl) {
+          const img = item.querySelector("img");
+          if (img) imgFallback(img, origUrl);
+        }
         item.onclick = () => { window.location.href = "/komik/" + k.slug; };
         resultBox.appendChild(item);
       });
