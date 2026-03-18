@@ -329,7 +329,14 @@
    ============================================================ */
 
 const BASE   = "https://www.sankavollerei.com/novel/sakuranovel";
-const slug   = new URLSearchParams(window.location.search).get("slug");
+
+/* Baca slug dari pretty URL (/novel/slug) atau query param (?slug=) */
+function getNovelSlug() {
+  const pathMatch = window.location.pathname.match(/^\/novel\/([^/]+)\/?$/);
+  if (pathMatch) return pathMatch[1];
+  return new URLSearchParams(window.location.search).get("slug");
+}
+const slug = getNovelSlug();
 if (!slug) window.location.href = "/novel/";
 
 let chaptersAsc    = false;
