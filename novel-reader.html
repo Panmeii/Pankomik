@@ -309,7 +309,7 @@
 
 const BASE        = "https://www.sankavollerei.com/novel/sakuranovel/read";
 const chapterSlug = new URLSearchParams(window.location.search).get("slug");
-if (!chapterSlug) window.location.href = "novel.html";
+if (!chapterSlug) window.location.href = "/novel/";
 
 /* ── State ─────────────────────────────────────────────────── */
 let currentSlug   = chapterSlug;
@@ -407,7 +407,7 @@ function renderChapter(d) {
       <div class="novel-label">📖 Novel</div>
       <h2>${escHtml(d.title || "")}</h2>
       <div class="nav-pills">
-        ${parentSlug ? `<a class="nav-pill" href="novel-detail.html?slug=${parentSlug}">← Detail Novel</a>` : ""}
+        ${parentSlug ? `<a class="nav-pill" href="/novel/${parentSlug}">← Detail Novel</a>` : ""}
         ${prevSlug   ? `<span class="nav-pill" onclick="goToChapter('${prevSlug}')">⬅ Sebelumnya</span>` : ""}
         ${nextSlug   ? `<span class="nav-pill accent" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</span>` : ""}
       </div>
@@ -423,7 +423,7 @@ function renderChapter(d) {
       ${nextSlug
         ? `<button class="cnav-btn primary" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</button>`
         : parentSlug
-          ? `<button class="cnav-btn primary" onclick="window.location.href='novel-detail.html?slug=${parentSlug}'">📋 Kembali ke Detail</button>`
+          ? `<button class="cnav-btn primary" onclick="window.location.href='/novel/'+parentSlug">📋 Kembali ke Detail</button>`
           : `<button class="cnav-btn" disabled>✅ Selesai</button>`
       }
     </div>
@@ -457,14 +457,14 @@ window.goToChapter = function (slug) {
 
 window.goBack = function () {
   if (parentSlug) {
-    window.location.href = `novel-detail.html?slug=${parentSlug}`;
+    window.location.href = '/novel/'+parentSlug;
   } else {
     history.back();
   }
 };
 
 window.goToDetail = function () {
-  if (parentSlug) window.location.href = `novel-detail.html?slug=${parentSlug}`;
+  if (parentSlug) window.location.href = '/novel/'+parentSlug;
   else history.back();
 };
 
