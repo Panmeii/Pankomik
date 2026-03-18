@@ -39,6 +39,8 @@ const DOMAIN_REF_MAP = {
   "mangatale":  "https://mangatale.co",
   "westmanga":  "https://westmanga.info",
   "shinigami":  "https://shinigami.id",
+  "sakuranovel":"https://sakuranovel.id",
+  "novelringan":"https://novelringan.com",
   "kiryuu":     "https://kiryuu.id",
   "mgkomik":    "https://mgkomik.id",
 };
