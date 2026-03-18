@@ -443,8 +443,21 @@ function proxyImg(url) {
   if (!url || url === "undefined" || url === "null") return "";
   if (url.startsWith("data:image/svg") && url.includes("viewBox")) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
-  const clean = url.split("?")[0];
-  return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
+  var clean = url.split("?")[0];
+  var ref = "";
+  try {
+    var host = new URL(clean.startsWith("http") ? clean : "https://" + clean).hostname;
+    var refMap = {
+      "komikindo":"https://komikindo.org","komikcast":"https://komikcast.me",
+      "komiku":"https://komiku.id","bacakomik":"https://bacakomik.me",
+      "mangatale":"https://mangatale.co","westmanga":"https://westmanga.info",
+    };
+    for (var k in refMap) { if (host.indexOf(k)!==-1){ ref=refMap[k]; break; } }
+    if (!ref) ref = "https://" + host;
+  } catch(e) {}
+  var q = "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
+  if (ref) q += "&ref=" + encodeURIComponent(ref);
+  return q;
 }
 
 /* ============================================================
