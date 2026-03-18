@@ -116,17 +116,6 @@ export async function getProfile(userId) {
     .select("*, user_badges(badge_id, earned_at, badges(name, icon, description))")
     .eq("id", userId)
     .single();
-
-  /* Jika row belum ada (user baru), buat dulu */
-  if (error?.code === "PGRST116" || (!data && !error)) {
-    const { data: created } = await supabase
-      .from("profiles")
-      .upsert({ id: userId }, { onConflict: "id" })
-      .select("*, user_badges(badge_id, earned_at, badges(name, icon, description))")
-      .single();
-    return { profile: created, error: null };
-  }
-
   return { profile: data, error };
 }
 
@@ -507,6 +496,19 @@ export async function getLeaderboard(limit = 20) {
     .select("id, username, avatar_url, level, total_chapters_read")
     .order("total_chapters_read", { ascending: false })
     .gt("total_chapters_read", 0)
+    .limit(limit);
+  return { leaderboard: data || [], error };
+}
+
+/**
+ * Leaderboard novel — top pembaca berdasarkan total_novel_chapters_read
+ */
+export async function getNovelLeaderboard(limit = 20) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, level, total_novel_chapters_read")
+    .order("total_novel_chapters_read", { ascending: false })
+    .gt("total_novel_chapters_read", 0)
     .limit(limit);
   return { leaderboard: data || [], error };
 }
