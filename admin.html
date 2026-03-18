@@ -3,474 +3,625 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard — Pankomik</title>
+  <title>Admin — Pankomik</title>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:        #07070f;
-      --bg-card:   #0f0f1a;
-      --bg-surface:#161625;
-      --border:    rgba(255,255,255,0.07);
-      --accent:    #e8522a;
-      --accent2:   #f5c842;
-      --text:      #eaeaf0;
-      --text-muted:#666;
-      --green:     #27ae60;
-      --blue:      #3498db;
-      --red:       #e74c3c;
-      --purple:    #9b59b6;
+      --bg:         #07070f;
+      --bg-card:    #0f0f1a;
+      --bg-surface: #161625;
+      --bg-hover:   #1c1c2e;
+      --border:     rgba(255,255,255,0.07);
+      --border-s:   rgba(255,255,255,0.04);
+      --accent:     #e8522a;
+      --accent-dim: rgba(232,82,42,0.12);
+      --accent2:    #f5c842;
+      --text:       #eaeaf0;
+      --text-muted: #55556a;
+      --text-soft:  #8888a0;
+      --green:      #2ecc71;
+      --blue:       #3498db;
+      --red:        #e74c3c;
+      --sidebar-w:  240px;
     }
-
-    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
+    *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
     body {
-      font-family:'Nunito', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      font-family:'Nunito',sans-serif;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; overflow-x:hidden;
     }
 
-    /* ── AUTH GATE ─────────────────────────────────────────── */
+    /* ── SCROLLBAR ──────────────────────────────────────────── */
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:99px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(232,82,42,0.4); }
+
+    /* ── AUTH GATE ──────────────────────────────────────────── */
     #authGate {
       position:fixed; inset:0; z-index:9999;
       display:flex; align-items:center; justify-content:center;
-      background: var(--bg);
+      background:var(--bg);
     }
     .gate-card {
-      width: 100%; max-width: 360px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 36px 28px;
-      text-align: center;
+      width:100%; max-width:340px;
+      background:var(--bg-card);
+      border:1px solid var(--border);
+      border-radius:20px; padding:36px 28px; text-align:center;
     }
     .gate-logo {
-      font-family:'Bebas Neue', cursive;
-      font-size: 42px; letter-spacing: 3px;
-      color: var(--accent); margin-bottom: 4px;
+      font-family:'Bebas Neue',cursive; font-size:44px;
+      letter-spacing:3px; color:var(--accent); margin-bottom:2px;
     }
-    .gate-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 28px; }
-    .gate-err {
-      display: none;
-      background: rgba(231,76,60,0.12);
-      border: 1px solid rgba(231,76,60,0.3);
-      color: var(--red); border-radius: 10px;
-      padding: 10px 14px; font-size: 13px;
-      margin-bottom: 14px;
-    }
-    .gate-err.show { display: block; }
+    .gate-sub { font-size:12px; color:var(--text-muted); margin-bottom:24px; letter-spacing:2px; text-transform:uppercase; }
     .gate-spinner {
-      width:40px; height:40px; margin:0 auto 16px;
-      border:3px solid rgba(232,82,42,0.2);
-      border-top-color: var(--accent);
+      width:36px; height:36px; margin:0 auto 14px;
+      border:3px solid rgba(232,82,42,0.15);
+      border-top-color:var(--accent);
       border-radius:50%; animation:spin .7s linear infinite; display:none;
     }
     .gate-spinner.show { display:block; }
-    .gate-label { color: var(--text-muted); font-size:16px; font-weight:700; margin-bottom:14px; }
+    .gate-err {
+      display:none; background:rgba(231,76,60,0.1);
+      border:1px solid rgba(231,76,60,0.25);
+      color:var(--red); border-radius:10px;
+      padding:10px 14px; font-size:13px; margin-bottom:14px;
+    }
+    .gate-err.show { display:block; }
+    .gate-label { font-size:13px; color:var(--text-muted); font-weight:700; }
     @keyframes spin { to{transform:rotate(360deg)} }
 
-    /* ── LAYOUT ────────────────────────────────────────────── */
+    /* ── APP SHELL ──────────────────────────────────────────── */
     #adminApp { display:none; }
     #adminApp.show { display:flex; min-height:100vh; }
 
-    /* Sidebar */
+    /* ── SIDEBAR ────────────────────────────────────────────── */
     .sidebar {
-      width: 220px; flex-shrink: 0;
-      background: var(--bg-card);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      position: sticky; top: 0; height: 100vh; overflow-y: auto;
+      width:var(--sidebar-w); flex-shrink:0;
+      background:var(--bg-card);
+      border-right:1px solid var(--border);
+      display:flex; flex-direction:column;
+      position:fixed; top:0; left:0; height:100vh;
+      z-index:200; overflow-y:auto;
+      transition:transform .3s cubic-bezier(.4,0,.2,1);
+    }
+    .sidebar-head {
+      padding:22px 20px 14px;
+      border-bottom:1px solid var(--border-s);
     }
     .sidebar-logo {
-      font-family:'Bebas Neue',cursive; font-size:26px;
-      letter-spacing:2px; color:var(--accent);
-      padding: 20px 20px 6px;
+      font-family:'Bebas Neue',cursive; font-size:24px;
+      letter-spacing:2px; color:var(--accent); line-height:1;
     }
     .sidebar-role {
       font-size:10px; font-weight:800; letter-spacing:2px;
-      color:var(--text-muted); text-transform:uppercase;
-      padding: 0 20px 20px; border-bottom:1px solid var(--border);
+      color:var(--text-muted); text-transform:uppercase; margin-top:3px;
     }
-    .sidebar-section {
-      font-size:10px; font-weight:800; letter-spacing:1.5px;
+    .nav-section {
+      font-size:9px; font-weight:900; letter-spacing:2px;
       color:var(--text-muted); text-transform:uppercase;
-      padding: 18px 20px 6px;
+      padding:16px 20px 6px;
     }
-    .sidebar-item {
+    .nav-item {
       display:flex; align-items:center; gap:10px;
-      padding: 10px 20px; cursor:pointer;
+      padding:10px 20px; cursor:pointer;
       font-size:13px; font-weight:700;
-      color: var(--text-muted);
-      transition: background .15s, color .15s;
-      border-left: 3px solid transparent;
+      color:var(--text-soft);
+      border-left:3px solid transparent;
+      transition:all .15s; user-select:none;
     }
-    .sidebar-item:hover { background:rgba(255,255,255,0.04); color:var(--text); }
-    .sidebar-item.active { background:rgba(232,82,42,0.1); color:var(--accent); border-left-color:var(--accent); }
-    .sidebar-item .icon { font-size:16px; width:20px; text-align:center; }
+    .nav-item:hover { background:var(--bg-hover); color:var(--text); }
+    .nav-item.active {
+      background:var(--accent-dim); color:var(--accent);
+      border-left-color:var(--accent);
+    }
+    .nav-item .ni { font-size:15px; width:18px; text-align:center; flex-shrink:0; }
     .sidebar-footer {
-      margin-top:auto; padding:16px 20px;
-      border-top:1px solid var(--border);
-      font-size:12px; color:var(--text-muted);
+      margin-top:auto; padding:14px 18px;
+      border-top:1px solid var(--border-s);
+      display:flex; align-items:center; gap:10px;
     }
-    .sidebar-footer strong { color:var(--text); display:block; font-size:13px; }
+    .admin-av {
+      width:34px; height:34px; border-radius:50%; flex-shrink:0;
+      background:var(--accent-dim); border:1px solid rgba(232,82,42,.2);
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:800; color:var(--accent); overflow:hidden;
+    }
+    .admin-av img { width:100%; height:100%; object-fit:cover; }
+    .admin-info { flex:1; min-width:0; }
+    .admin-name { font-size:13px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .admin-email { font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    /* Main content */
-    .main { flex:1; overflow-x:hidden; }
-    .topbar {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:16px 24px; border-bottom:1px solid var(--border);
-      position:sticky; top:0; z-index:100;
-      background:rgba(7,7,15,0.9); backdrop-filter:blur(14px);
+    /* ── OVERLAY (mobile) ───────────────────────────────────── */
+    #sidebarOverlay {
+      display:none; position:fixed; inset:0; z-index:199;
+      background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
     }
-    .topbar h1 { font-size:20px; font-weight:800; }
-    .topbar-actions { display:flex; gap:10px; }
+    #sidebarOverlay.show { display:block; }
+
+    /* ── MAIN ───────────────────────────────────────────────── */
+    .main {
+      flex:1; min-width:0;
+      margin-left:var(--sidebar-w);
+      display:flex; flex-direction:column; min-height:100vh;
+    }
+
+    /* ── TOPBAR ─────────────────────────────────────────────── */
+    .topbar {
+      position:sticky; top:0; z-index:100;
+      display:flex; align-items:center; gap:12px;
+      padding:0 24px; height:58px;
+      background:rgba(7,7,15,.92); backdrop-filter:blur(16px);
+      border-bottom:1px solid var(--border);
+    }
+    .topbar-menu {
+      display:none; background:none; border:none; color:var(--text-soft);
+      cursor:pointer; font-size:20px; padding:4px; flex-shrink:0;
+    }
+    .topbar-title { font-size:17px; font-weight:800; flex:1; }
+    .topbar-actions { display:flex; gap:8px; }
+
+    /* ── BUTTONS ────────────────────────────────────────────── */
     .btn {
       padding:8px 16px; border:none; border-radius:9px;
-      font-family:'Nunito',sans-serif; font-weight:700;
-      font-size:13px; cursor:pointer; transition:all .2s;
-      display:inline-flex; align-items:center; gap:6px;
+      font-family:'Nunito',sans-serif; font-weight:700; font-size:13px;
+      cursor:pointer; transition:all .18s;
+      display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
     }
+    .btn:active { transform:scale(.95); }
     .btn-primary { background:var(--accent); color:#fff; }
     .btn-primary:hover { background:#c73f1c; }
-    .btn-ghost { background:rgba(255,255,255,0.06); color:var(--text); border:1px solid var(--border); }
-    .btn-ghost:hover { background:rgba(255,255,255,0.1); }
-    .btn-danger { background:rgba(231,76,60,0.15); color:var(--red); border:1px solid rgba(231,76,60,0.3); }
-    .btn-danger:hover { background:rgba(231,76,60,0.25); }
-    .btn-sm { padding:5px 10px; font-size:12px; }
+    .btn-ghost {
+      background:rgba(255,255,255,.06); color:var(--text);
+      border:1px solid var(--border);
+    }
+    .btn-ghost:hover { background:rgba(255,255,255,.1); }
+    .btn-danger {
+      background:rgba(231,76,60,.12); color:var(--red);
+      border:1px solid rgba(231,76,60,.25);
+    }
+    .btn-danger:hover { background:rgba(231,76,60,.22); }
+    .btn-success {
+      background:rgba(46,204,113,.12); color:var(--green);
+      border:1px solid rgba(46,204,113,.25);
+    }
+    .btn-success:hover { background:rgba(46,204,113,.22); }
+    .btn-sm { padding:5px 11px; font-size:12px; border-radius:7px; }
+    .btn-xs { padding:3px 8px; font-size:11px; border-radius:6px; }
 
-    /* Content pages */
-    .page { display:none; padding:24px; }
+    /* ── PAGES ──────────────────────────────────────────────── */
+    .page { display:none; padding:22px; animation:fadeUp .2s ease; }
     .page.active { display:block; }
+    @keyframes fadeUp {
+      from{opacity:0;transform:translateY(6px)}
+      to  {opacity:1;transform:translateY(0)}
+    }
 
-    /* ── STAT CARDS ─────────────────────────────────────────── */
+    /* ── STAT GRID ──────────────────────────────────────────── */
     .stats-grid {
-      display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-      gap:14px; margin-bottom:24px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:12px; margin-bottom:22px;
     }
     .stat-card {
       background:var(--bg-card); border:1px solid var(--border);
-      border-radius:14px; padding:18px;
-      display:flex; flex-direction:column; gap:6px;
+      border-radius:14px; padding:16px 18px;
+      display:flex; flex-direction:column; gap:4px;
+      position:relative; overflow:hidden;
+      transition:border-color .2s, transform .2s;
     }
-    .stat-icon { font-size:24px; }
-    .stat-label { font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; }
-    .stat-value { font-size:28px; font-weight:900; font-family:'Bebas Neue',cursive; }
-    .stat-sub { font-size:11px; color:var(--text-muted); }
-    .stat-card.green { border-color:rgba(39,174,96,.2); }
-    .stat-card.green .stat-value { color:var(--green); }
-    .stat-card.blue { border-color:rgba(52,152,219,.2); }
-    .stat-card.blue .stat-value { color:var(--blue); }
-    .stat-card.orange { border-color:rgba(232,82,42,.2); }
+    .stat-card:hover { transform:translateY(-2px); }
+    .stat-card::after {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(135deg,var(--c1,.1) 0%,transparent 60%);
+      opacity:.06; pointer-events:none;
+    }
+    .stat-card.green  { border-color:rgba(46,204,113,.18); --c1:#2ecc71; }
+    .stat-card.blue   { border-color:rgba(52,152,219,.18); --c1:#3498db; }
+    .stat-card.orange { border-color:rgba(232,82,42,.18);  --c1:#e8522a; }
+    .stat-card.yellow { border-color:rgba(245,200,66,.18); --c1:#f5c842; }
+    .stat-icon { font-size:22px; margin-bottom:2px; }
+    .stat-label {
+      font-size:10px; font-weight:800; letter-spacing:.8px;
+      text-transform:uppercase; color:var(--text-muted);
+    }
+    .stat-value {
+      font-family:'Bebas Neue',cursive; font-size:32px; line-height:1;
+    }
+    .stat-card.green  .stat-value { color:var(--green); }
+    .stat-card.blue   .stat-value { color:var(--blue); }
     .stat-card.orange .stat-value { color:var(--accent); }
-    .stat-card.yellow { border-color:rgba(245,200,66,.2); }
     .stat-card.yellow .stat-value { color:var(--accent2); }
+    .stat-sub { font-size:11px; color:var(--text-muted); }
+    .stat-loading { animation:gcShim 1.4s ease infinite; }
+    @keyframes gcShim { 0%,100%{opacity:.4}50%{opacity:.9} }
 
-    /* ── TABLE ──────────────────────────────────────────────── */
+    /* ── CARD BOX ───────────────────────────────────────────── */
     .card-box {
       background:var(--bg-card); border:1px solid var(--border);
-      border-radius:14px; overflow:hidden; margin-bottom:20px;
+      border-radius:14px; overflow:hidden; margin-bottom:18px;
     }
-    .card-box-header {
-      padding:14px 18px; border-bottom:1px solid var(--border);
-      display:flex; align-items:center; justify-content:space-between;
-      gap:10px;
+    .card-head {
+      padding:13px 18px;
+      border-bottom:1px solid var(--border-s);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      flex-wrap:wrap; gap:8px;
     }
-    .card-box-header h3 { font-size:14px; font-weight:800; }
+    .card-head h3 { font-size:14px; font-weight:800; }
     .search-input {
       padding:7px 12px; border-radius:8px;
       border:1px solid var(--border); background:var(--bg-surface);
       color:var(--text); font-family:'Nunito',sans-serif; font-size:13px;
-      outline:none; width:200px;
+      outline:none; width:190px; transition:border .2s;
     }
     .search-input:focus { border-color:var(--accent); }
-    table { width:100%; border-collapse:collapse; }
+
+    /* ── TABLE ──────────────────────────────────────────────── */
+    .tbl-wrap { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; min-width:520px; }
     thead th {
-      padding:10px 16px; font-size:11px; font-weight:800;
-      text-transform:uppercase; letter-spacing:.5px;
-      color:var(--text-muted); background:var(--bg-surface);
-      text-align:left;
+      padding:9px 16px; font-size:10px; font-weight:900;
+      text-transform:uppercase; letter-spacing:.6px;
+      color:var(--text-muted); background:var(--bg-surface); text-align:left;
+      white-space:nowrap;
     }
-    tbody tr { border-top:1px solid rgba(255,255,255,0.04); transition:background .15s; }
-    tbody tr:hover { background:rgba(255,255,255,0.03); }
+    tbody tr { border-top:1px solid var(--border-s); transition:background .12s; }
+    tbody tr:hover { background:var(--bg-hover); }
     td { padding:10px 16px; font-size:13px; vertical-align:middle; }
-    .avatar-sm {
-      width:32px; height:32px; border-radius:50%;
-      object-fit:cover; vertical-align:middle; margin-right:8px;
+    .td-actions { display:flex; gap:6px; flex-wrap:wrap; }
+
+    /* Avatars */
+    .av-sm {
+      width:30px; height:30px; border-radius:50%;
+      object-fit:cover; flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:8px;
     }
-    .avatar-placeholder {
+    .av-placeholder {
+      width:30px; height:30px; border-radius:50%; flex-shrink:0;
+      background:var(--accent-dim); border:1px solid rgba(232,82,42,.2);
       display:inline-flex; align-items:center; justify-content:center;
-      width:32px; height:32px; border-radius:50%;
-      background:var(--accent); font-weight:800; font-size:13px; color:#fff;
-      vertical-align:middle; margin-right:8px; flex-shrink:0;
+      font-size:12px; font-weight:800; color:var(--accent); vertical-align:middle; margin-right:8px;
     }
-    .badge-pill {
-      display:inline-block; padding:3px 9px; border-radius:99px;
-      font-size:11px; font-weight:800; text-transform:uppercase;
+    .user-cell { display:flex; align-items:center; }
+    .user-cell-name { font-weight:700; }
+    .user-cell-id { font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
+
+    /* Badges */
+    .badge {
+      display:inline-flex; align-items:center; gap:3px;
+      padding:3px 9px; border-radius:99px;
+      font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.3px;
     }
-    .badge-admin { background:rgba(232,82,42,0.15); color:var(--accent); border:1px solid rgba(232,82,42,.3); }
-    .badge-user  { background:rgba(52,152,219,0.12); color:var(--blue);   border:1px solid rgba(52,152,219,.25); }
-    .badge-banned{ background:rgba(231,76,60,0.12);  color:var(--red);    border:1px solid rgba(231,76,60,.25); }
-    .badge-online { background:rgba(39,174,96,0.15); color:var(--green); border:1px solid rgba(39,174,96,.3); }
-    .badge-offline{ background:rgba(255,255,255,0.06); color:var(--text-muted); border:1px solid var(--border); }
+    .badge-admin  { background:rgba(232,82,42,.14); color:var(--accent);  border:1px solid rgba(232,82,42,.25); }
+    .badge-user   { background:rgba(52,152,219,.12); color:var(--blue);   border:1px solid rgba(52,152,219,.22); }
+    .badge-banned { background:rgba(231,76,60,.12);  color:var(--red);    border:1px solid rgba(231,76,60,.22); }
+    .badge-online { background:rgba(46,204,113,.14); color:var(--green);  border:1px solid rgba(46,204,113,.25); }
+    .badge-offline{ background:rgba(255,255,255,.05); color:var(--text-muted); border:1px solid var(--border); }
+    .badge-pin    { background:rgba(245,200,66,.14); color:var(--accent2); border:1px solid rgba(245,200,66,.25); }
+    .badge-ann    { background:var(--accent-dim); color:var(--accent); border:1px solid rgba(232,82,42,.2); }
 
-    .user-name-cell { display:flex; align-items:center; }
-    .loading-row td { text-align:center; padding:32px; color:var(--text-muted); }
-    .empty-row td { text-align:center; padding:32px; color:var(--text-muted); }
+    /* ── EMPTY / LOADING STATE ──────────────────────────────── */
+    .state-row td {
+      text-align:center; padding:36px; color:var(--text-muted);
+      font-size:13px;
+    }
+    .empty-box {
+      text-align:center; padding:40px 20px;
+      color:var(--text-muted); font-size:13px;
+    }
+    .empty-box .ei { font-size:36px; margin-bottom:10px; }
 
-    /* ── CHAT MANAGEMENT ────────────────────────────────────── */
-    .chat-preview {
+    /* ── CHAT CARDS ─────────────────────────────────────────── */
+    .chat-card {
       background:var(--bg-surface); border-radius:10px;
-      padding:12px 14px; margin:4px 0; font-size:13px;
+      border:1px solid var(--border-s);
+      padding:11px 14px; margin-bottom:8px;
+      transition:border-color .15s;
     }
-    .chat-meta { font-size:11px; color:var(--text-muted); margin-bottom:4px; }
-    .pinned-badge {
-      display:inline-flex; align-items:center; gap:4px;
-      background:rgba(245,200,66,0.15); color:var(--accent2);
-      border:1px solid rgba(245,200,66,.3);
-      border-radius:99px; padding:2px 8px; font-size:11px; font-weight:800;
+    .chat-card:hover { border-color:rgba(255,255,255,.1); }
+    .chat-card-meta {
+      display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+      margin-bottom:5px;
     }
-    .chat-actions { margin-top:8px; display:flex; gap:8px; }
+    .chat-meta-name { font-size:12px; font-weight:800; color:var(--text); }
+    .chat-meta-time { font-size:11px; color:var(--text-muted); }
+    .chat-content { font-size:13px; color:var(--text-soft); line-height:1.5; word-break:break-word; }
+    .chat-url { font-size:11px; color:var(--blue); margin-top:4px; }
+    .chat-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+
+    /* ── ANNOUNCE CARD ──────────────────────────────────────── */
+    .ann-card {
+      background:var(--bg-surface); border-radius:12px;
+      border:1px solid var(--border-s); padding:14px;
+      margin-bottom:10px; display:flex; gap:12px;
+      transition:border-color .15s;
+    }
+    .ann-card:hover { border-color:rgba(232,82,42,.2); }
+    .ann-card-icon { font-size:20px; flex-shrink:0; margin-top:1px; }
+    .ann-card-body { flex:1; min-width:0; }
+    .ann-card-title { font-size:14px; font-weight:800; margin-bottom:3px; }
+    .ann-card-msg { font-size:13px; color:var(--text-soft); line-height:1.5; }
+    .ann-card-meta { font-size:11px; color:var(--text-muted); margin-top:5px; font-family:'JetBrains Mono',monospace; }
+    .ann-card-actions { display:flex; gap:6px; margin-top:8px; }
+
+    /* ── FORM ───────────────────────────────────────────────── */
+    .form-group { margin-bottom:14px; }
+    .form-label {
+      display:block; font-size:11px; font-weight:800;
+      text-transform:uppercase; letter-spacing:.6px;
+      color:var(--text-muted); margin-bottom:5px;
+    }
+    .form-input, .form-select, .form-textarea {
+      width:100%; padding:10px 13px;
+      background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:9px; color:var(--text);
+      font-family:'Nunito',sans-serif; font-size:14px;
+      outline:none; transition:border .2s, background .2s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color:var(--accent); background:var(--bg-hover);
+    }
+    .form-textarea { min-height:100px; resize:vertical; line-height:1.5; }
+    .form-select option { background:var(--bg-card); }
 
     /* ── MODAL ──────────────────────────────────────────────── */
     .modal-overlay {
-      display:none; position:fixed; inset:0; z-index:2000;
-      background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
+      display:none; position:fixed; inset:0; z-index:1000;
+      background:rgba(0,0,0,.65); backdrop-filter:blur(8px);
       align-items:center; justify-content:center; padding:20px;
     }
     .modal-overlay.open { display:flex; }
     .modal {
       background:var(--bg-card); border:1px solid var(--border);
-      border-radius:16px; padding:24px 22px;
-      width:100%; max-width:440px;
-      animation:modalIn .2s ease;
+      border-radius:18px; padding:24px 22px;
+      width:100%; max-width:420px;
+      animation:modalIn .22s cubic-bezier(.34,1.56,.64,1);
     }
     @keyframes modalIn {
-      from{opacity:0;transform:scale(.94) translateY(8px)}
+      from{opacity:0;transform:scale(.9) translateY(10px)}
       to  {opacity:1;transform:scale(1)  translateY(0)}
     }
-    .modal h3 { font-size:16px; font-weight:800; margin-bottom:16px; }
-    .form-group { margin-bottom:14px; }
-    .form-label { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:5px; display:block; }
-    .form-input, .form-select, .form-textarea {
-      width:100%; padding:10px 12px;
-      background:var(--bg-surface); border:1px solid var(--border);
-      border-radius:9px; color:var(--text);
-      font-family:'Nunito',sans-serif; font-size:14px; outline:none;
-      transition:border .2s;
-    }
-    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); }
-    .form-textarea { min-height:90px; resize:vertical; }
+    .modal-title { font-size:16px; font-weight:800; margin-bottom:18px; }
     .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
 
     /* ── TOAST ──────────────────────────────────────────────── */
     #adminToast {
-      position:fixed; bottom:24px; right:24px; z-index:9999;
-      display:flex; flex-direction:column; gap:8px;
+      position:fixed; bottom:20px; right:20px; z-index:9999;
+      display:flex; flex-direction:column; gap:8px; pointer-events:none;
     }
     .toast-item {
-      padding:12px 18px; border-radius:10px; font-size:13px; font-weight:700;
-      animation:toastIn .3s ease; pointer-events:none;
+      padding:11px 18px; border-radius:11px;
+      font-size:13px; font-weight:700;
+      animation:toastIn .25s ease;
+      box-shadow:0 4px 20px rgba(0,0,0,.4);
+      max-width:300px;
     }
     .toast-item.success { background:#27ae60; color:#fff; }
     .toast-item.error   { background:var(--red); color:#fff; }
     .toast-item.info    { background:var(--blue); color:#fff; }
-    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
-    /* ── ANNOUNCEMENT ───────────────────────────────────────── */
-    .ann-card {
-      background:var(--bg-surface); border-radius:12px;
-      padding:14px 16px; border:1px solid var(--border); margin-bottom:10px;
-      display:flex; align-items:flex-start; gap:12px;
+    /* ── GRID LAYOUTS ───────────────────────────────────────── */
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .scrollbox { max-height:480px; overflow-y:auto; padding:12px; }
+
+    /* ── REALTIME INDICATOR ─────────────────────────────────── */
+    .live-dot {
+      display:inline-flex; align-items:center; gap:5px;
+      font-size:11px; color:var(--green); font-weight:700;
     }
-    .ann-icon { font-size:20px; flex-shrink:0; margin-top:2px; }
-    .ann-body { flex:1; }
-    .ann-body strong { font-size:14px; display:block; margin-bottom:4px; }
-    .ann-body p { font-size:13px; color:var(--text-muted); line-height:1.5; }
-    .ann-time { font-size:11px; color:var(--text-muted); margin-top:4px; font-family:'JetBrains Mono',monospace; }
-    .ann-actions { display:flex; gap:8px; margin-top:8px; }
+    .live-dot::before {
+      content:''; width:7px; height:7px; border-radius:50%;
+      background:var(--green);
+      animation:gcPulse 2s ease infinite;
+    }
+    @keyframes gcPulse {
+      0%,100%{opacity:1;transform:scale(1)}
+      50%    {opacity:.5;transform:scale(.75)}
+    }
 
+    /* ── MOBILE ─────────────────────────────────────────────── */
     @media(max-width:768px) {
-      .sidebar { display:none; }
-      .topbar h1 { font-size:15px; }
+      :root { --sidebar-w:240px; }
+      .sidebar {
+        transform:translateX(-100%);
+      }
+      .sidebar.open { transform:translateX(0); }
+      .main { margin-left:0; }
+      .topbar-menu { display:flex; }
+      .two-col { grid-template-columns:1fr; }
+      .topbar-actions .btn-text { display:none; }
+      .stats-grid { grid-template-columns:repeat(2,1fr); }
+      .page { padding:14px; }
+      .topbar { padding:0 14px; }
     }
-
-    /* Scrollbar */
-    ::-webkit-scrollbar { width:4px; }
-    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
   </style>
 </head>
 <body>
 
-<!-- ── AUTH GATE ─────────────────────────────────────────────── -->
+<!-- AUTH GATE -->
 <div id="authGate">
   <div class="gate-card">
     <div class="gate-logo">Pankomik</div>
-    <p class="gate-sub">Admin Dashboard</p>
-    <div class="gate-spinner" id="gateSpinner"></div>
+    <p class="gate-sub">Admin Panel</p>
+    <div class="gate-spinner show" id="gateSpinner"></div>
     <div class="gate-err" id="gateErr"></div>
-    <p class="gate-label" id="gateLabel">🔐 Memeriksa akses...</p>
+    <p class="gate-label" id="gateLabel">Memeriksa akses...</p>
   </div>
 </div>
 
-<!-- ── ADMIN APP ──────────────────────────────────────────────── -->
+<!-- ADMIN APP -->
 <div id="adminApp">
+
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div id="sidebarOverlay" onclick="closeSidebar()"></div>
+
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">Pankomik</div>
-    <div class="sidebar-role" id="sidebarRole">Admin Panel</div>
-
-    <div class="sidebar-section">Dashboard</div>
-    <div class="sidebar-item active" data-page="overview" onclick="switchPage('overview')">
-      <span class="icon">📊</span> Overview
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-logo">Pankomik</div>
+      <div class="sidebar-role" id="sidebarRole">Admin Panel</div>
     </div>
 
-    <div class="sidebar-section">Manajemen</div>
-    <div class="sidebar-item" data-page="users" onclick="switchPage('users')">
-      <span class="icon">👥</span> Pengguna
-    </div>
-    <div class="sidebar-item" data-page="chats" onclick="switchPage('chats')">
-      <span class="icon">💬</span> Global Chat
-    </div>
-    <div class="sidebar-item" data-page="announce" onclick="switchPage('announce')">
-      <span class="icon">📢</span> Pengumuman
+    <div class="nav-section">Dashboard</div>
+    <div class="nav-item active" data-page="overview" onclick="switchPage('overview')">
+      <span class="ni">📊</span> Overview
     </div>
 
-    <div class="sidebar-section">Pengaturan</div>
-    <div class="sidebar-item" onclick="handleLogout()">
-      <span class="icon">🚪</span> Keluar
+    <div class="nav-section">Manajemen</div>
+    <div class="nav-item" data-page="users" onclick="switchPage('users')">
+      <span class="ni">👥</span> Pengguna
+    </div>
+    <div class="nav-item" data-page="chats" onclick="switchPage('chats')">
+      <span class="ni">💬</span> Global Chat
+    </div>
+    <div class="nav-item" data-page="announce" onclick="switchPage('announce')">
+      <span class="ni">📢</span> Pengumuman
+    </div>
+
+    <div class="nav-section">Akun</div>
+    <div class="nav-item" onclick="handleLogout()">
+      <span class="ni">🚪</span> Keluar
     </div>
 
     <div class="sidebar-footer">
-      <strong id="adminName">–</strong>
-      <span id="adminEmail" style="font-size:11px;">–</span>
+      <div class="admin-av" id="adminAv">?</div>
+      <div class="admin-info">
+        <div class="admin-name" id="adminName">–</div>
+        <div class="admin-email" id="adminEmail">–</div>
+      </div>
     </div>
   </aside>
 
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
-      <h1 id="pageTitle">📊 Overview</h1>
+      <button class="topbar-menu" onclick="openSidebar()">☰</button>
+      <h1 class="topbar-title" id="pageTitle">📊 Overview</h1>
       <div class="topbar-actions">
-        <button class="btn btn-ghost btn-sm" onclick="refreshPage()">🔄 Refresh</button>
-        <button class="btn btn-primary btn-sm" onclick="openAnnounceModal()">📢 Kirim Pengumuman</button>
+        <span class="live-dot">Live</span>
+        <button class="btn btn-ghost btn-sm" onclick="refreshPage()">🔄 <span class="btn-text">Refresh</span></button>
+        <button class="btn btn-primary btn-sm" onclick="openAnnounceModal()">📢 <span class="btn-text">Pengumuman</span></button>
       </div>
     </div>
 
-    <!-- ── OVERVIEW PAGE ──────────────────────────────────── -->
+    <!-- ── OVERVIEW ────────────────────────────────────────── -->
     <div class="page active" id="page-overview">
       <div class="stats-grid">
         <div class="stat-card green">
           <span class="stat-icon">👥</span>
           <span class="stat-label">Total User</span>
-          <span class="stat-value" id="statUsers">–</span>
+          <span class="stat-value stat-loading" id="statUsers">–</span>
           <span class="stat-sub">Terdaftar</span>
         </div>
         <div class="stat-card blue">
           <span class="stat-icon">🟢</span>
-          <span class="stat-label">Online Sekarang</span>
-          <span class="stat-value" id="statOnline">–</span>
+          <span class="stat-label">Online</span>
+          <span class="stat-value stat-loading" id="statOnline">–</span>
           <span class="stat-sub">5 menit terakhir</span>
         </div>
         <div class="stat-card orange">
           <span class="stat-icon">💬</span>
           <span class="stat-label">Total Chat</span>
-          <span class="stat-value" id="statChats">–</span>
+          <span class="stat-value stat-loading" id="statChats">–</span>
           <span class="stat-sub">Semua pesan</span>
         </div>
         <div class="stat-card yellow">
           <span class="stat-icon">📌</span>
-          <span class="stat-label">Pesan Dipin</span>
-          <span class="stat-value" id="statPinned">–</span>
+          <span class="stat-label">Dipin</span>
+          <span class="stat-value stat-loading" id="statPinned">–</span>
           <span class="stat-sub">Aktif di chat</span>
         </div>
       </div>
 
-      <!-- Recent users -->
-      <div class="card-box">
-        <div class="card-box-header">
-          <h3>👤 Pengguna Terbaru</h3>
-          <button class="btn btn-ghost btn-sm" onclick="switchPage('users')">Lihat Semua →</button>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Bergabung</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="recentUsersTable">
-            <tr class="loading-row"><td colspan="4">⏳ Memuat...</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Recent chats -->
-      <div class="card-box">
-        <div class="card-box-header">
-          <h3>💬 Chat Terbaru</h3>
-          <button class="btn btn-ghost btn-sm" onclick="switchPage('chats')">Kelola →</button>
-        </div>
-        <div id="recentChatsBox" style="padding:12px;">
-          <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── USERS PAGE ──────────────────────────────────────── -->
-    <div class="page" id="page-users">
-      <div class="card-box">
-        <div class="card-box-header">
-          <h3>👥 Semua Pengguna</h3>
-          <input class="search-input" placeholder="🔍 Cari nama / email..." id="userSearch" oninput="filterUsers()">
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Bergabung</th>
-              <th>Aksi</th>
-            </tr>
-          </thead>
-          <tbody id="usersTable">
-            <tr class="loading-row"><td colspan="6">⏳ Memuat data pengguna...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ── CHATS PAGE ──────────────────────────────────────── -->
-    <div class="page" id="page-chats">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <!-- Pinned messages -->
+      <div class="two-col">
         <div class="card-box">
-          <div class="card-box-header"><h3>📌 Pesan Dipin</h3></div>
-          <div id="pinnedChatsBox" style="padding:12px;max-height:500px;overflow-y:auto;">
-            <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
+          <div class="card-head">
+            <h3>👤 Pengguna Terbaru</h3>
+            <button class="btn btn-ghost btn-sm" onclick="switchPage('users')">Lihat Semua →</button>
+          </div>
+          <div class="tbl-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Bergabung</th>
+                </tr>
+              </thead>
+              <tbody id="recentUsersTable">
+                <tr class="state-row"><td colspan="4">⏳ Memuat...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
-        <!-- All recent messages -->
+
         <div class="card-box">
-          <div class="card-box-header">
+          <div class="card-head">
+            <h3>💬 Chat Terbaru</h3>
+            <button class="btn btn-ghost btn-sm" onclick="switchPage('chats')">Kelola →</button>
+          </div>
+          <div class="scrollbox" id="recentChatsBox" style="max-height:320px;">
+            <div class="empty-box"><div class="ei">⏳</div>Memuat...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── USERS ───────────────────────────────────────────── -->
+    <div class="page" id="page-users">
+      <div class="card-box">
+        <div class="card-head">
+          <h3>👥 Semua Pengguna <span id="userCount" style="font-size:12px;color:var(--text-muted);font-weight:700;"></span></h3>
+          <input class="search-input" placeholder="🔍 Cari nama / id..." id="userSearch" oninput="filterUsers()">
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Bergabung</th>
+                <th>Last Seen</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="usersTable">
+              <tr class="state-row"><td colspan="6">⏳ Memuat data...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CHATS ───────────────────────────────────────────── -->
+    <div class="page" id="page-chats">
+      <div class="two-col">
+        <div class="card-box">
+          <div class="card-head"><h3>📌 Pesan Dipin</h3></div>
+          <div class="scrollbox" id="pinnedChatsBox">
+            <div class="empty-box"><div class="ei">⏳</div>Memuat...</div>
+          </div>
+        </div>
+        <div class="card-box">
+          <div class="card-head">
             <h3>💬 Semua Pesan</h3>
             <input class="search-input" style="width:140px;" placeholder="🔍 Cari..." id="chatSearch" oninput="filterChats()">
           </div>
-          <div id="allChatsBox" style="padding:12px;max-height:500px;overflow-y:auto;">
-            <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
+          <div class="scrollbox" id="allChatsBox">
+            <div class="empty-box"><div class="ei">⏳</div>Memuat...</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ── ANNOUNCE PAGE ───────────────────────────────────── -->
+    <!-- ── ANNOUNCE ────────────────────────────────────────── -->
     <div class="page" id="page-announce">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="two-col">
         <div class="card-box">
-          <div class="card-box-header"><h3>📢 Buat Pengumuman</h3></div>
+          <div class="card-head"><h3>📢 Buat Pengumuman</h3></div>
           <div style="padding:18px;">
             <div class="form-group">
               <label class="form-label">Judul</label>
@@ -489,60 +640,71 @@
                 <option value="update">🚀 Update Fitur</option>
               </select>
             </div>
-            <button class="btn btn-primary" onclick="sendAnnouncement()" style="width:100%;">📢 Kirim ke Global Chat</button>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="annPin" checked style="accent-color:var(--accent);width:16px;height:16px;">
+                <span style="font-size:13px;font-weight:700;">📌 Pin di Global Chat</span>
+              </label>
+            </div>
+            <button class="btn btn-primary" id="annSendBtn" onclick="sendAnnouncement()" style="width:100%;">
+              📢 Kirim ke Global Chat
+            </button>
           </div>
         </div>
         <div class="card-box">
-          <div class="card-box-header"><h3>📋 Riwayat Pengumuman</h3></div>
-          <div id="announceHistory" style="padding:12px;max-height:500px;overflow-y:auto;">
-            <div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>
+          <div class="card-head">
+            <h3>📋 Riwayat Pengumuman</h3>
+            <button class="btn btn-ghost btn-sm" onclick="loadAnnouncements()">🔄</button>
+          </div>
+          <div class="scrollbox" id="announceHistory">
+            <div class="empty-box"><div class="ei">⏳</div>Memuat...</div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- ── MODALS ─────────────────────────────────────────────────── -->
+  </div><!-- .main -->
+</div><!-- #adminApp -->
+
+<!-- ── MODALS ────────────────────────────────────────────────── -->
 <div class="modal-overlay" id="userModal">
   <div class="modal">
-    <h3 id="userModalTitle">Edit Pengguna</h3>
+    <p class="modal-title" id="userModalTitle">Edit Pengguna</p>
     <div class="form-group">
       <label class="form-label">Role</label>
       <select class="form-select" id="editRole">
-        <option value="user">user</option>
-        <option value="admin">admin</option>
+        <option value="user">👤 User</option>
+        <option value="admin">⚡ Admin</option>
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Status</label>
+      <label class="form-label">Status Akun</label>
       <select class="form-select" id="editBanned">
-        <option value="false">Aktif</option>
-        <option value="true">Banned</option>
+        <option value="false">✅ Aktif</option>
+        <option value="true">🚫 Banned</option>
       </select>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('userModal')">Batal</button>
-      <button class="btn btn-primary" onclick="saveUserEdit()">Simpan</button>
+      <button class="btn btn-primary" onclick="saveUserEdit()">💾 Simpan</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="announceModal">
   <div class="modal">
-    <h3>📢 Kirim Pengumuman Cepat</h3>
+    <p class="modal-title">📢 Kirim Pengumuman Cepat</p>
     <div class="form-group">
       <label class="form-label">Pesan</label>
       <textarea class="form-textarea" id="quickAnnContent" placeholder="Tulis pengumuman..."></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('announceModal')">Batal</button>
-      <button class="btn btn-primary" onclick="sendQuickAnnouncement()">Kirim</button>
+      <button class="btn btn-primary" onclick="sendQuickAnnouncement()">📢 Kirim</button>
     </div>
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="adminToast"></div>
 
 <script type="module">
@@ -552,66 +714,67 @@ const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ── ADMIN EMAILS yang diizinkan ──────────────────────────── */
-const ADMIN_EMAILS = [
-  "pankomik@gmail.com",
-  "riankampank@pankomik.com",
-  "rian.samuji@gmail.com",
-  /* Tambah email admin lainnya di sini */
-];
+const ADMIN_EMAILS = ["pankomik@gmail.com","riankampank@pankomik.com","rian.samuji@gmail.com"];
 
-let currentAdmin = null;
-let allUsers     = [];
-let allChats     = [];
+let currentAdmin  = null;
+let allUsers      = [];
+let allChats      = [];
 let editingUserId = null;
 
-/* ── TOAST ─────────────────────────────────────────────────── */
-window.showToast = function(msg, type="info") {
+/* ── TOAST ──────────────────────────────────────────────────── */
+window.showToast = (msg, type="info") => {
   const el = document.createElement("div");
   el.className = `toast-item ${type}`;
   el.textContent = msg;
   document.getElementById("adminToast").appendChild(el);
-  setTimeout(() => el.remove(), 3200);
+  setTimeout(() => el.remove(), 3000);
 };
 
-/* ── AUTH CHECK ─────────────────────────────────────────────── */
+/* ── SIDEBAR MOBILE ─────────────────────────────────────────── */
+window.openSidebar = () => {
+  document.getElementById("sidebar").classList.add("open");
+  document.getElementById("sidebarOverlay").classList.add("show");
+};
+window.closeSidebar = () => {
+  document.getElementById("sidebar").classList.remove("open");
+  document.getElementById("sidebarOverlay").classList.remove("show");
+};
+
+/* ── AUTH ───────────────────────────────────────────────────── */
 async function init() {
-  const spinner  = document.getElementById("gateSpinner");
-  const errEl    = document.getElementById("gateErr");
-  const labelEl  = document.getElementById("gateLabel");
+  const spinner = document.getElementById("gateSpinner");
+  const errEl   = document.getElementById("gateErr");
+  const lblEl   = document.getElementById("gateLabel");
 
   spinner.classList.add("show");
-  labelEl.textContent = "🔐 Memeriksa sesi...";
+  lblEl.textContent = "Memeriksa sesi...";
 
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session?.user) {
     spinner.classList.remove("show");
-    errEl.textContent = "❌ Kamu belum login. Silakan login dulu.";
-    errEl.classList.add("show");
-    labelEl.textContent = "";
+    errEl.textContent = "❌ Belum login. Mengarahkan...";
+    errEl.classList.add("show"); lblEl.textContent = "";
     setTimeout(() => window.location.href = "/masuk", 2000);
     return;
   }
 
-  const user = session.user;
+  const user  = session.user;
   const email = user.email || "";
 
-  /* Cek apakah email terdaftar sebagai admin */
-  /* Juga cek dari tabel profiles jika punya kolom role */
+  /* Gunakan maybeSingle() agar tidak error kalau row belum ada */
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role, username, avatar_url, is_banned")
+    .select("role, username, avatar_url")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   const isAdmin = ADMIN_EMAILS.includes(email) || profile?.role === "admin";
 
   if (!isAdmin) {
     spinner.classList.remove("show");
     errEl.textContent = "🚫 Akses ditolak. Hanya admin yang bisa masuk.";
-    errEl.classList.add("show");
-    labelEl.textContent = "";
+    errEl.classList.add("show"); lblEl.textContent = "";
     setTimeout(() => window.location.href = "/", 2500);
     return;
   }
@@ -622,372 +785,466 @@ async function init() {
   document.getElementById("authGate").style.display = "none";
   document.getElementById("adminApp").classList.add("show");
 
-  const name = profile?.username || user.user_metadata?.full_name || email.split("@")[0];
+  const name = profile?.username
+    || user.user_metadata?.full_name
+    || user.user_metadata?.name
+    || email.split("@")[0];
+
   document.getElementById("adminName").textContent  = name;
   document.getElementById("adminEmail").textContent = email;
   document.getElementById("sidebarRole").textContent = "⚡ " + (profile?.role || "admin").toUpperCase();
 
-  /* Load data */
+  /* Avatar */
+  const avEl  = document.getElementById("adminAv");
+  const avUrl = profile?.avatar_url || user.user_metadata?.avatar_url;
+  if (avUrl) {
+    avEl.innerHTML = `<img src="${avUrl}" onerror="this.parentElement.textContent='${name[0].toUpperCase()}'">`;
+  } else {
+    avEl.textContent = name[0].toUpperCase();
+  }
+
   await Promise.all([loadStats(), loadRecentUsers(), loadRecentChats()]);
+
+  /* Auto-refresh stats setiap 30 detik */
+  setInterval(loadStats, 30000);
 }
 
-/* ── NAVIGATION ──────────────────────────────────────────────── */
-const pageTitles = {
+/* ── NAVIGATION ─────────────────────────────────────────────── */
+const PAGE_TITLES = {
   overview: "📊 Overview",
   users:    "👥 Kelola Pengguna",
   chats:    "💬 Kelola Global Chat",
-  announce: "📢 Pengumuman"
+  announce: "📢 Pengumuman",
 };
 
-window.switchPage = function(page) {
+window.switchPage = (page) => {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.querySelectorAll(".sidebar-item").forEach(i => i.classList.remove("active"));
+  document.querySelectorAll(".nav-item[data-page]").forEach(i => i.classList.remove("active"));
   document.getElementById("page-" + page)?.classList.add("active");
   document.querySelector(`[data-page="${page}"]`)?.classList.add("active");
-  document.getElementById("pageTitle").textContent = pageTitles[page] || page;
+  document.getElementById("pageTitle").textContent = PAGE_TITLES[page] || page;
+  closeSidebar();
 
   if (page === "users")    loadUsers();
   if (page === "chats")    loadChats();
   if (page === "announce") loadAnnouncements();
 };
 
-window.refreshPage = async function() {
+window.refreshPage = async () => {
   const active = document.querySelector(".page.active")?.id?.replace("page-","");
-  if (active === "overview") { await Promise.all([loadStats(), loadRecentUsers(), loadRecentChats()]); }
-  if (active === "users")    loadUsers();
-  if (active === "chats")    loadChats();
-  if (active === "announce") loadAnnouncements();
-  showToast("Data diperbarui", "success");
+  if (active === "overview") await Promise.all([loadStats(), loadRecentUsers(), loadRecentChats()]);
+  if (active === "users")    await loadUsers();
+  if (active === "chats")    await loadChats();
+  if (active === "announce") await loadAnnouncements();
+  showToast("Diperbarui ✓", "success");
 };
 
-/* ── STATS ───────────────────────────────────────────────────── */
+/* ── STATS ──────────────────────────────────────────────────── */
 async function loadStats() {
-  /* Total users */
-  const { count: uCount } = await supabase
-    .from("profiles").select("*", { count:"exact", head:true });
-  document.getElementById("statUsers").textContent = uCount || 0;
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = val; el.classList.remove("stat-loading"); }
+  };
 
-  /* Online (presence table atau last_seen < 5 min) */
-  const fiveMin = new Date(Date.now() - 5*60*1000).toISOString();
-  const { count: onlineCount } = await supabase
-    .from("profiles").select("*", { count:"exact", head:true })
-    .gte("last_seen", fiveMin);
-  document.getElementById("statOnline").textContent = onlineCount || 0;
+  const [
+    { count: uCount },
+    { count: onlineCount },
+    { count: chatCount },
+    { count: pinnedCount },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*", { count:"exact", head:true }),
+    supabase.from("profiles").select("*", { count:"exact", head:true })
+      .gte("last_seen", new Date(Date.now() - 5*60*1000).toISOString()),
+    supabase.from("global_chat").select("*", { count:"exact", head:true }),
+    supabase.from("global_chat").select("*", { count:"exact", head:true }).eq("is_pinned", true),
+  ]);
 
-  /* Total chats */
-  const { count: chatCount } = await supabase
-    .from("global_chat").select("*", { count:"exact", head:true });
-  document.getElementById("statChats").textContent = chatCount || 0;
-
-  /* Pinned */
-  const { count: pinnedCount } = await supabase
-    .from("global_chat").select("*", { count:"exact", head:true })
-    .eq("is_pinned", true);
-  document.getElementById("statPinned").textContent = pinnedCount || 0;
+  setVal("statUsers",  uCount    || 0);
+  setVal("statOnline", onlineCount || 0);
+  setVal("statChats",  chatCount  || 0);
+  setVal("statPinned", pinnedCount || 0);
 }
 
-/* ── RECENT USERS ─────────────────────────────────────────────── */
+/* ── RECENT USERS ────────────────────────────────────────────── */
 async function loadRecentUsers() {
   const tbody = document.getElementById("recentUsersTable");
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("id, username, avatar_url, role, is_banned, last_seen, created_at")
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending:false })
     .limit(5);
 
-  if (!data?.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">Belum ada pengguna</td></tr>`;
+  if (error || !data?.length) {
+    tbody.innerHTML = `<tr class="state-row"><td colspan="4">Belum ada pengguna</td></tr>`;
     return;
   }
   tbody.innerHTML = data.map(u => `
     <tr>
-      <td><div class="user-name-cell">${avatarHtml(u)} ${u.username || "–"}</div></td>
-      <td style="color:var(--text-muted);font-size:12px;">${u.id.slice(0,8)}…</td>
-      <td>${fmtDate(u.created_at)}</td>
-      <td>${onlineBadge(u.last_seen)} ${roleBadge(u.role)} ${u.is_banned ? '<span class="badge-pill badge-banned">Banned</span>' : ""}</td>
+      <td><div class="user-cell">${avHtml(u)}<div>
+        <div class="user-cell-name">${esc(u.username || "–")}</div>
+      </div></div></td>
+      <td>${roleBadge(u.role)}</td>
+      <td>${onlineBadge(u.last_seen)} ${u.is_banned ? `<span class="badge badge-banned">Banned</span>` : ""}</td>
+      <td style="font-size:12px;color:var(--text-muted);">${fmtDate(u.created_at)}</td>
     </tr>
   `).join("");
 }
 
-/* ── ALL USERS ────────────────────────────────────────────────── */
+/* ── ALL USERS ───────────────────────────────────────────────── */
 async function loadUsers() {
   const tbody = document.getElementById("usersTable");
-  tbody.innerHTML = `<tr class="loading-row"><td colspan="6">⏳ Memuat...</td></tr>`;
+  tbody.innerHTML = `<tr class="state-row"><td colspan="6">⏳ Memuat...</td></tr>`;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("profiles")
     .select("id, username, avatar_url, role, is_banned, last_seen, created_at")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending:false });
 
-  allUsers = data || [];
-  renderUsersTable(allUsers);
-}
-
-function renderUsersTable(users) {
-  const tbody = document.getElementById("usersTable");
-  if (!users.length) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Tidak ada pengguna</td></tr>`;
+  if (error) {
+    tbody.innerHTML = `<tr class="state-row"><td colspan="6">❌ Gagal: ${esc(error.message)}</td></tr>`;
     return;
   }
-  tbody.innerHTML = users.map(u => `
+
+  allUsers = data || [];
+  document.getElementById("userCount").textContent = `(${allUsers.length})`;
+  renderUsers(allUsers);
+}
+
+function renderUsers(list) {
+  const tbody = document.getElementById("usersTable");
+  if (!list.length) {
+    tbody.innerHTML = `<tr class="state-row"><td colspan="6">Tidak ada pengguna</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(u => `
     <tr>
-      <td><div class="user-name-cell">${avatarHtml(u)} ${u.username || "Anonim"}</div></td>
-      <td style="font-size:12px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;">${u.id.slice(0,12)}…</td>
-      <td>${roleBadge(u.role)}</td>
-      <td>${onlineBadge(u.last_seen)} ${u.is_banned ? '<span class="badge-pill badge-banned">Banned</span>' : '<span style="font-size:12px;color:var(--green);">✓ Aktif</span>'}</td>
-      <td style="font-size:12px;color:var(--text-muted);">${fmtDate(u.created_at)}</td>
       <td>
-        <button class="btn btn-ghost btn-sm" onclick="openUserEdit('${u.id}','${u.role}','${u.is_banned}')">✏️ Edit</button>
-        ${!u.is_banned
-          ? `<button class="btn btn-danger btn-sm" onclick="banUser('${u.id}')">🚫 Ban</button>`
-          : `<button class="btn btn-ghost btn-sm" onclick="unbanUser('${u.id}')">✅ Unban</button>`
-        }
+        <div class="user-cell">
+          ${avHtml(u)}
+          <div>
+            <div class="user-cell-name">${esc(u.username || "–")}</div>
+            <div class="user-cell-id">${u.id.slice(0,14)}…</div>
+          </div>
+        </div>
+      </td>
+      <td>${roleBadge(u.role)}</td>
+      <td>
+        ${onlineBadge(u.last_seen)}
+        ${u.is_banned ? `<span class="badge badge-banned">Banned</span>` : ""}
+      </td>
+      <td style="font-size:12px;color:var(--text-muted);">${fmtDate(u.created_at)}</td>
+      <td style="font-size:12px;color:var(--text-muted);">${fmtAgo(u.last_seen)}</td>
+      <td>
+        <div class="td-actions">
+          <button class="btn btn-ghost btn-xs" onclick="openUserEdit('${u.id}','${u.role || "user"}','${!!u.is_banned}')">✏️</button>
+          ${u.is_banned
+            ? `<button class="btn btn-success btn-xs" onclick="unbanUser('${u.id}')">✅ Unban</button>`
+            : `<button class="btn btn-danger btn-xs" onclick="banUser('${u.id}')">🚫 Ban</button>`
+          }
+        </div>
       </td>
     </tr>
   `).join("");
 }
 
-window.filterUsers = function() {
+window.filterUsers = () => {
   const q = document.getElementById("userSearch").value.toLowerCase();
-  renderUsersTable(allUsers.filter(u =>
-    (u.username||"").toLowerCase().includes(q) || u.id.includes(q)
+  renderUsers(allUsers.filter(u =>
+    (u.username||"").toLowerCase().includes(q) || u.id.toLowerCase().includes(q)
   ));
 };
 
-/* ── USER ACTIONS ─────────────────────────────────────────────── */
-window.openUserEdit = function(id, role, banned) {
+/* ── USER ACTIONS ────────────────────────────────────────────── */
+window.openUserEdit = (id, role, banned) => {
   editingUserId = id;
-  document.getElementById("editRole").value   = role || "user";
+  document.getElementById("editRole").value   = role;
   document.getElementById("editBanned").value = String(banned) === "true" ? "true" : "false";
-  document.getElementById("userModalTitle").textContent = `Edit User: ${id.slice(0,8)}…`;
+  document.getElementById("userModalTitle").textContent = `Edit: ${id.slice(0,10)}…`;
   openModal("userModal");
 };
 
-window.saveUserEdit = async function() {
+window.saveUserEdit = async () => {
   if (!editingUserId) return;
-  const role    = document.getElementById("editRole").value;
-  const banned  = document.getElementById("editBanned").value === "true";
-
+  const role   = document.getElementById("editRole").value;
+  const banned = document.getElementById("editBanned").value === "true";
   const { error } = await supabase.from("profiles")
-    .update({ role, is_banned: banned })
+    .update({ role, is_banned:banned })
     .eq("id", editingUserId);
-
-  if (error) { showToast("Gagal menyimpan: " + error.message, "error"); return; }
-  showToast("Pengguna diperbarui ✓", "success");
+  if (error) { showToast("Gagal: " + error.message, "error"); return; }
+  showToast("Disimpan ✓", "success");
   closeModal("userModal");
   loadUsers();
 };
 
-window.banUser = async function(id) {
+window.banUser = async (id) => {
   if (!confirm("Ban pengguna ini?")) return;
-  await supabase.from("profiles").update({ is_banned: true }).eq("id", id);
+  const { error } = await supabase.from("profiles").update({ is_banned:true }).eq("id", id);
+  if (error) { showToast("Gagal ban", "error"); return; }
   showToast("Pengguna di-ban", "info");
   loadUsers();
 };
-window.unbanUser = async function(id) {
-  await supabase.from("profiles").update({ is_banned: false }).eq("id", id);
+window.unbanUser = async (id) => {
+  const { error } = await supabase.from("profiles").update({ is_banned:false }).eq("id", id);
+  if (error) { showToast("Gagal unban", "error"); return; }
   showToast("Pengguna di-unban ✓", "success");
   loadUsers();
 };
 
-/* ── CHATS ────────────────────────────────────────────────────── */
+/* ── CHATS ───────────────────────────────────────────────────── */
 async function loadRecentChats() {
   const box = document.getElementById("recentChatsBox");
-  const { data } = await supabase
-    .from("global_chat")
-    .select("*, profiles(username,avatar_url)")
-    .order("created_at", { ascending: false })
-    .limit(5);
 
-  allChats = data || [];
-  if (!allChats.length) { box.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada chat</p>`; return; }
-  box.innerHTML = allChats.map(c => chatCard(c, false)).join("");
+  /* Ambil chat, lalu batch fetch profiles */
+  const { data: chatData } = await supabase
+    .from("global_chat")
+    .select("id, user_id, message, is_pinned, is_announcement, page_url, created_at")
+    .order("created_at", { ascending:false })
+    .limit(8);
+
+  if (!chatData?.length) {
+    box.innerHTML = `<div class="empty-box"><div class="ei">💬</div>Belum ada chat</div>`;
+    return;
+  }
+
+  const profileMap = await batchProfiles(chatData.map(c => c.user_id));
+  box.innerHTML = chatData.map(c => chatCardHtml(c, profileMap, false)).join("");
 }
 
 async function loadChats() {
   const pinnedBox = document.getElementById("pinnedChatsBox");
   const allBox    = document.getElementById("allChatsBox");
-
-  pinnedBox.innerHTML = `<div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>`;
-  allBox.innerHTML    = `<div style="color:var(--text-muted);text-align:center;padding:20px;">⏳ Memuat...</div>`;
+  pinnedBox.innerHTML = `<div class="empty-box"><div class="ei">⏳</div>Memuat...</div>`;
+  allBox.innerHTML    = `<div class="empty-box"><div class="ei">⏳</div>Memuat...</div>`;
 
   const [{ data: pinned }, { data: all }] = await Promise.all([
-    supabase.from("global_chat").select("*, profiles(username,avatar_url)").eq("is_pinned", true).order("created_at", { ascending: false }),
-    supabase.from("global_chat").select("*, profiles(username,avatar_url)").order("created_at", { ascending: false }).limit(50),
+    supabase.from("global_chat")
+      .select("id, user_id, message, is_pinned, is_announcement, ann_title, ann_type, page_url, created_at")
+      .eq("is_pinned", true).order("created_at", { ascending:false }),
+    supabase.from("global_chat")
+      .select("id, user_id, message, is_pinned, is_announcement, ann_title, ann_type, page_url, created_at")
+      .order("created_at", { ascending:false }).limit(60),
   ]);
 
   allChats = all || [];
+  const allIds  = [...new Set([...(pinned||[]), ...allChats].map(c => c.user_id))];
+  const profMap = await batchProfiles(allIds);
 
   pinnedBox.innerHTML = (pinned||[]).length
-    ? (pinned||[]).map(c => chatCard(c, true)).join("")
-    : `<p style="color:var(--text-muted);text-align:center;padding:20px;">Tidak ada pesan dipin</p>`;
+    ? (pinned||[]).map(c => chatCardHtml(c, profMap, true)).join("")
+    : `<div class="empty-box"><div class="ei">📌</div>Tidak ada pesan dipin</div>`;
 
   allBox.innerHTML = allChats.length
-    ? allChats.map(c => chatCard(c, true)).join("")
-    : `<p style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada chat</p>`;
+    ? allChats.map(c => chatCardHtml(c, profMap, true)).join("")
+    : `<div class="empty-box"><div class="ei">💬</div>Belum ada pesan</div>`;
 }
 
-function chatCard(c, showActions) {
-  const name = c.profiles?.username || "Anonim";
-  const pinBadge = c.is_pinned ? `<span class="pinned-badge">📌 Dipin</span>` : "";
+function chatCardHtml(c, profMap, showActions) {
+  const name = profMap[c.user_id]?.username || "–";
+  const avatar = profMap[c.user_id]?.avatar_url;
+  const badges = [
+    c.is_pinned       ? `<span class="badge badge-pin">📌 Pin</span>` : "",
+    c.is_announcement ? `<span class="badge badge-ann">📢</span>`     : "",
+  ].filter(Boolean).join(" ");
+
   const actions = showActions ? `
     <div class="chat-actions">
       ${c.is_pinned
-        ? `<button class="btn btn-ghost btn-sm" onclick="unpinChat('${c.id}')">📍 Cabut Pin</button>`
-        : `<button class="btn btn-ghost btn-sm" onclick="pinChat('${c.id}')">📌 Pin</button>`
+        ? `<button class="btn btn-ghost btn-xs" onclick="unpinChat('${c.id}')">📍 Cabut Pin</button>`
+        : `<button class="btn btn-ghost btn-xs" onclick="pinChat('${c.id}')">📌 Pin</button>`
       }
-      <button class="btn btn-danger btn-sm" onclick="deleteChat('${c.id}')">🗑️ Hapus</button>
+      <button class="btn btn-danger btn-xs" onclick="deleteChat('${c.id}')">🗑️ Hapus</button>
     </div>` : "";
+
   return `
-    <div class="chat-preview">
-      <div class="chat-meta">
-        <strong>${name}</strong> · ${fmtTime(c.created_at)} ${pinBadge}
-        ${c.is_announcement ? `<span class="badge-pill badge-admin" style="margin-left:4px;">📢 Pengumuman</span>` : ""}
+    <div class="chat-card">
+      <div class="chat-card-meta">
+        ${avatar
+          ? `<img src="${esc(avatar)}" class="av-sm" style="width:22px;height:22px;margin-right:5px;" onerror="this.style.display='none'">`
+          : `<span style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--accent);flex-shrink:0;margin-right:5px;">${(name[0]||"?").toUpperCase()}</span>`
+        }
+        <span class="chat-meta-name">${esc(name)}</span>
+        <span class="chat-meta-time">${fmtAgo(c.created_at)}</span>
+        ${badges}
       </div>
-      <div>${escHtml(c.message || "")}</div>
-      ${c.page_url ? `<div style="font-size:11px;color:var(--blue);margin-top:4px;">📍 ${c.page_url}</div>` : ""}
+      <div class="chat-content">${esc(c.message || "")}</div>
+      ${c.page_url ? `<div class="chat-url">📍 ${esc(c.page_url)}</div>` : ""}
       ${actions}
     </div>`;
 }
 
-window.filterChats = function() {
+window.filterChats = () => {
   const q = document.getElementById("chatSearch").value.toLowerCase();
   const filtered = allChats.filter(c => (c.message||"").toLowerCase().includes(q));
   document.getElementById("allChatsBox").innerHTML = filtered.length
-    ? filtered.map(c => chatCard(c, true)).join("")
-    : `<p style="color:var(--text-muted);text-align:center;padding:20px;">Tidak ditemukan</p>`;
+    ? filtered.map(c => chatCardHtml(c, {}, true)).join("")
+    : `<div class="empty-box"><div class="ei">🔍</div>Tidak ditemukan</div>`;
 };
 
-window.pinChat = async function(id) {
-  await supabase.from("global_chat").update({ is_pinned: true }).eq("id", id);
-  showToast("Pesan dipin ✓", "success");
-  loadChats();
+window.pinChat = async (id) => {
+  const { error } = await supabase.from("global_chat").update({ is_pinned:true }).eq("id", id);
+  if (error) { showToast("Gagal pin", "error"); return; }
+  showToast("Dipin ✓", "success"); loadChats();
 };
-window.unpinChat = async function(id) {
-  await supabase.from("global_chat").update({ is_pinned: false }).eq("id", id);
-  showToast("Pin dicabut", "info");
-  loadChats();
+window.unpinChat = async (id) => {
+  const { error } = await supabase.from("global_chat").update({ is_pinned:false }).eq("id", id);
+  if (error) { showToast("Gagal", "error"); return; }
+  showToast("Pin dicabut", "info"); loadChats();
 };
-window.deleteChat = async function(id) {
+window.deleteChat = async (id) => {
   if (!confirm("Hapus pesan ini?")) return;
-  await supabase.from("global_chat").delete().eq("id", id);
-  showToast("Pesan dihapus", "info");
-  loadChats();
+  const { error } = await supabase.from("global_chat").delete().eq("id", id);
+  if (error) { showToast("Gagal hapus: " + error.message, "error"); return; }
+  showToast("Dihapus", "info"); loadChats(); loadStats();
 };
 
 /* ── ANNOUNCEMENTS ───────────────────────────────────────────── */
 async function loadAnnouncements() {
   const box = document.getElementById("announceHistory");
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("global_chat")
-    .select("*, profiles(username)")
+    .select("id, user_id, message, ann_title, ann_type, is_pinned, created_at")
     .eq("is_announcement", true)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending:false })
     .limit(20);
 
-  if (!data?.length) { box.innerHTML = `<p style="color:var(--text-muted);text-align:center;padding:20px;">Belum ada pengumuman</p>`; return; }
+  if (error || !data?.length) {
+    box.innerHTML = `<div class="empty-box"><div class="ei">📋</div>Belum ada pengumuman</div>`;
+    return;
+  }
 
-  const typeIcon = { info:"ℹ️", warning:"⚠️", success:"✅", update:"🚀" };
+  const profMap = await batchProfiles(data.map(a => a.user_id));
+  const icons   = { info:"ℹ️", warning:"⚠️", success:"✅", update:"🚀" };
+
   box.innerHTML = data.map(a => `
     <div class="ann-card">
-      <div class="ann-icon">${typeIcon[a.ann_type] || "📢"}</div>
-      <div class="ann-body">
-        <strong>${a.ann_title || "Pengumuman"}</strong>
-        <p>${escHtml(a.message || "")}</p>
-        <div class="ann-time">${fmtTime(a.created_at)} · oleh ${a.profiles?.username || "Admin"}</div>
-        <div class="ann-actions">
-          <button class="btn btn-danger btn-sm" onclick="deleteChat('${a.id}')">🗑️ Hapus</button>
+      <div class="ann-card-icon">${icons[a.ann_type] || "📢"}</div>
+      <div class="ann-card-body">
+        <div class="ann-card-title">${esc(a.ann_title || "Pengumuman")}</div>
+        <div class="ann-card-msg">${esc(a.message || "")}</div>
+        <div class="ann-card-meta">
+          ${fmtAgo(a.created_at)} · ${esc(profMap[a.user_id]?.username || "Admin")}
+          ${a.is_pinned ? "· 📌 Dipin" : ""}
+        </div>
+        <div class="ann-card-actions">
+          <button class="btn btn-danger btn-xs" onclick="deleteChat('${a.id}')">🗑️ Hapus</button>
+          ${a.is_pinned
+            ? `<button class="btn btn-ghost btn-xs" onclick="unpinChat('${a.id}')">📍 Cabut Pin</button>`
+            : `<button class="btn btn-ghost btn-xs" onclick="pinChat('${a.id}')">📌 Pin</button>`
+          }
         </div>
       </div>
     </div>
   `).join("");
 }
 
-window.sendAnnouncement = async function() {
+window.sendAnnouncement = async () => {
   const title   = document.getElementById("annTitle").value.trim();
   const content = document.getElementById("annContent").value.trim();
   const type    = document.getElementById("annType").value;
+  const doPin   = document.getElementById("annPin").checked;
+  const btn     = document.getElementById("annSendBtn");
+
   if (!content) { showToast("Isi pesan tidak boleh kosong", "error"); return; }
+
+  btn.disabled = true; btn.textContent = "Mengirim...";
 
   const { error } = await supabase.from("global_chat").insert({
     user_id:         currentAdmin.id,
     message:         content,
-    is_pinned:       true,
+    is_pinned:       doPin,
     is_announcement: true,
     ann_title:       title || "Pengumuman",
     ann_type:        type,
   });
 
-  if (error) { showToast("Gagal kirim: " + error.message, "error"); return; }
-  showToast("Pengumuman dikirim ke chat! ✓", "success");
-  document.getElementById("annTitle").value   = "";
+  btn.disabled = false; btn.textContent = "📢 Kirim ke Global Chat";
+
+  if (error) { showToast("Gagal: " + error.message, "error"); return; }
+  showToast("Pengumuman terkirim ✓", "success");
+  document.getElementById("annTitle").value = "";
   document.getElementById("annContent").value = "";
-  loadAnnouncements();
+  loadAnnouncements(); loadStats();
 };
 
-window.openAnnounceModal = function() { openModal("announceModal"); };
-window.sendQuickAnnouncement = async function() {
+window.openAnnounceModal = () => openModal("announceModal");
+window.sendQuickAnnouncement = async () => {
   const content = document.getElementById("quickAnnContent").value.trim();
   if (!content) return;
-  await supabase.from("global_chat").insert({
-    user_id: currentAdmin.id, message: content,
-    is_pinned: true, is_announcement: true, ann_type: "info"
+  const { error } = await supabase.from("global_chat").insert({
+    user_id:currentAdmin.id, message:content,
+    is_pinned:true, is_announcement:true, ann_type:"info",
+    ann_title:"Pengumuman",
   });
-  showToast("Pengumuman terkirim ✓", "success");
+  if (error) { showToast("Gagal: " + error.message, "error"); return; }
+  showToast("Terkirim ✓", "success");
   closeModal("announceModal");
   document.getElementById("quickAnnContent").value = "";
+  loadStats();
 };
 
-/* ── MODAL HELPERS ───────────────────────────────────────────── */
-window.openModal  = id => document.getElementById(id).classList.add("open");
-window.closeModal = id => document.getElementById(id).classList.remove("open");
+/* ── MODAL ───────────────────────────────────────────────────── */
+window.openModal  = id => document.getElementById(id)?.classList.add("open");
+window.closeModal = id => document.getElementById(id)?.classList.remove("open");
 document.querySelectorAll(".modal-overlay").forEach(o =>
   o.addEventListener("click", e => { if (e.target === o) o.classList.remove("open"); })
 );
 
 /* ── LOGOUT ──────────────────────────────────────────────────── */
-window.handleLogout = async function() {
+window.handleLogout = async () => {
   if (!confirm("Keluar dari panel admin?")) return;
   await supabase.auth.signOut();
   window.location.href = "/";
 };
 
-/* ── UTILS ───────────────────────────────────────────────────── */
-function avatarHtml(u) {
-  if (u.avatar_url) return `<img src="${u.avatar_url}" class="avatar-sm" onerror="this.style.display='none'">`;
+/* ── HELPERS ─────────────────────────────────────────────────── */
+
+/* Batch fetch profiles — 1 query untuk semua user_id */
+async function batchProfiles(ids) {
+  const unique = [...new Set((ids||[]).filter(Boolean))];
+  if (!unique.length) return {};
+  const { data } = await supabase
+    .from("profiles").select("id, username, avatar_url")
+    .in("id", unique);
+  const map = {};
+  (data||[]).forEach(p => { map[p.id] = p; });
+  return map;
+}
+
+function avHtml(u) {
   const name = u.username || "?";
-  return `<div class="avatar-placeholder">${name[0].toUpperCase()}</div>`;
+  if (u.avatar_url)
+    return `<img src="${esc(u.avatar_url)}" class="av-sm" onerror="this.style.display='none'">`;
+  return `<div class="av-placeholder">${name[0].toUpperCase()}</div>`;
 }
 function roleBadge(role) {
-  if (role === "admin") return `<span class="badge-pill badge-admin">Admin</span>`;
-  return `<span class="badge-pill badge-user">User</span>`;
+  return role === "admin"
+    ? `<span class="badge badge-admin">⚡ Admin</span>`
+    : `<span class="badge badge-user">User</span>`;
 }
 function onlineBadge(lastSeen) {
-  if (!lastSeen) return `<span class="badge-pill badge-offline">Offline</span>`;
-  const diff = Date.now() - new Date(lastSeen).getTime();
-  if (diff < 5*60*1000) return `<span class="badge-pill badge-online">🟢 Online</span>`;
-  return `<span class="badge-pill badge-offline">Offline</span>`;
+  if (!lastSeen) return `<span class="badge badge-offline">Offline</span>`;
+  return Date.now() - new Date(lastSeen).getTime() < 5*60*1000
+    ? `<span class="badge badge-online">🟢 Online</span>`
+    : `<span class="badge badge-offline">Offline</span>`;
 }
 function fmtDate(d) {
   if (!d) return "–";
-  return new Date(d).toLocaleDateString("id-ID", { day:"2-digit", month:"short", year:"numeric" });
+  return new Date(d).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});
 }
-function fmtTime(d) {
+function fmtAgo(d) {
   if (!d) return "–";
-  const dt = new Date(d);
-  const diffMs = Date.now() - dt.getTime();
-  const diffMin = Math.floor(diffMs / 60000);
-  if (diffMin < 1)  return "baru saja";
-  if (diffMin < 60) return diffMin + " mnt lalu";
-  const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24)   return diffH + " jam lalu";
-  return dt.toLocaleDateString("id-ID", { day:"2-digit", month:"short" });
+  const ms = Date.now() - new Date(d).getTime();
+  const m  = Math.floor(ms/60000);
+  if (m < 1)  return "baru saja";
+  if (m < 60) return m + " mnt lalu";
+  const h = Math.floor(m/60);
+  if (h < 24) return h + " jam lalu";
+  return Math.floor(h/24) + " hari lalu";
 }
-function escHtml(s) {
-  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-/* ── BOOT ──────────────────────────────────────────────────── */
 init();
 </script>
 </body>
