@@ -6,12 +6,23 @@
   <title>Reader — Pankomik</title>
   <link rel="stylesheet" href="reader.css">
   <style>
-    /* Dropdown override untuk reader (reader.css tidak include style.css) */
+    /* ── Reading Progress Bar ─────────────────────────────── */
+    #readingProgressBar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, #e8522a, #f5a623);
+      z-index: 1100;
+      transition: width 0.1s linear;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* ── Dropdown override ────────────────────────────────── */
     .dropdown {
       display: none;
       position: fixed;
-      right: 10px;
-      top: 58px;
+      right: 10px; top: 58px;
       z-index: 2000;
       background: rgba(20,20,28,0.96);
       backdrop-filter: blur(14px);
@@ -31,9 +42,126 @@
       transition: background 0.15s;
     }
     .dropdown p:hover { background: rgba(255,255,255,0.08); }
+
+    /* ── Chapter List Panel ───────────────────────────────── */
+    #chapterListPanel.open { left: 0 !important; }
+    .chapter-list-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(232,82,42,0.1);
+      flex-shrink: 0;
+    }
+    .chapter-list-header h3 { font-size: 14px; font-weight: 800; color: #e8522a; margin: 0; }
+    .chapter-list-header .close-btn {
+      background: rgba(255,255,255,0.08); border: none; color: #eaeaf0;
+      width: 28px; height: 28px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; display: flex; align-items: center; justify-content: center;
+    }
+    .chapter-list-content { flex: 1; overflow-y: auto; padding: 6px 0; }
+    .chapter-item-panel {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; cursor: pointer; font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    .chapter-item-panel:hover  { background: rgba(255,255,255,0.06); }
+    .chapter-item-panel.active { background: rgba(232,82,42,0.15); color: #e8522a; font-weight: 700; }
+    .chapter-item-panel.active .chapter-num { color: #e8522a; }
+    .chapter-num  { font-weight: 600; color: #eaeaf0; }
+    .chapter-date { font-size: 11px; color: #666; }
+    .current-badge { font-size: 12px; }
+
+    /* ── Single Page Controls (mode manga) ───────────────── */
+    #singleControls {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 990;
+      background: rgba(14,14,18,0.92);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 10px 16px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    #singleControls button {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #eaeaf0;
+      padding: 8px 18px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 15px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      transition: background 0.2s, transform 0.1s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    #singleControls button:hover    { background: rgba(255,255,255,0.15); }
+    #singleControls button:active   { transform: scale(0.94); }
+    #singleControls button:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+    #singleControls button.primary  { background: #e8522a; border-color: #e8522a; color: #fff; flex: 1; justify-content: center; }
+    #singleControls button.primary:hover { background: #c73f1c; }
+    #pageCounter {
+      font-size: 13px; font-weight: 700;
+      color: var(--text-muted, #888);
+      white-space: nowrap;
+      min-width: 60px; text-align: center;
+    }
+
+    /* ── Reader loading/error states ─────────────────────── */
+    .reader-loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 16px; color: #888;
+    }
+    .reader-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(232,82,42,0.2);
+      border-top-color: #e8522a;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .reader-error {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 12px; color: #888; text-align: center;
+    }
+    .btn-retry, .btn-home {
+      padding: 10px 22px; border: none; border-radius: 8px;
+      cursor: pointer; font-weight: 700; font-size: 13px;
+      font-family: 'Nunito', sans-serif; transition: background 0.2s;
+    }
+    .btn-retry { background: #e8522a; color: #fff; }
+    .btn-retry:hover { background: #c73f1c; }
+    .btn-home  { background: #333; color: #eaeaf0; }
+
+    /* ── Image error placeholder ──────────────────────────── */
+    .image-error {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px; gap: 10px; color: #888;
+    }
+    .image-error button {
+      padding: 8px 18px; background: #e8522a; color: #fff;
+      border: none; border-radius: 8px; cursor: pointer;
+      font-weight: 700; font-family: 'Nunito', sans-serif;
+    }
+
+    /* ── Toast animation ──────────────────────────────────── */
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Share button glow ────────────────────────────────── */
+    .btn-share:hover { background: rgba(232,82,42,0.2) !important; border-color: #e8522a !important; }
   </style>
 </head>
 <body>
+
+<!-- Reading Progress Bar -->
+<div id="readingProgressBar"></div>
 
 <div class="reader-header">
   <button onclick="goHome()">🏠</button>
@@ -41,33 +169,69 @@
   <div class="btn-group">
     <button id="prevBtn" onclick="prevChapter()">⬅️</button>
     <button id="nextBtn" onclick="nextChapter()">➡️</button>
-    <button onclick="toggleSettings()">⚙️</button>
+    <button onclick="toggleChapterList()" title="Daftar Chapter (L)">📚</button>
+    <button onclick="shareKomik()" class="btn-share" title="Bagikan (S)">🔗</button>
+    <button onclick="toggleSettings()" title="Pengaturan">⚙️</button>
     <button onclick="toggleMenu()">👤</button>
   </div>
 </div>
 
-<!-- Dropdown menu (diisi auth-header.js) -->
+<!-- Auth dropdown (diisi auth-header.js) -->
 <div id="menuDropdown" class="dropdown"></div>
 
+<!-- Settings Panel -->
 <div class="settings" id="settings">
   <h3>⚙️ Pengaturan</h3>
+
   <label>Mode Baca</label>
-  <select id="mode">
-    <option value="scroll">Scroll (Webtoon)</option>
-    <option value="single">Per Gambar (Manga)</option>
+  <select id="mode" onchange="changeMode(this.value)">
+    <option value="scroll">📜 Scroll (Webtoon)</option>
+    <option value="single">📖 Per Halaman (Manga)</option>
   </select>
-  <label>Lebar Gambar</label>
-  <input type="range" id="width" min="50" max="100" value="100">
-  <label>Kecepatan Auto Scroll</label>
-  <input type="range" id="speed" min="1" max="10" value="3">
-  <button class="btn-auto" id="autoBtn" onclick="toggleAutoScroll()">▶️ Mulai Auto Scroll</button>
+
+  <!-- Opsi khusus mode scroll -->
+  <div id="scrollSettings">
+    <label>Lebar Gambar</label>
+    <input type="range" id="width" min="50" max="100" value="100">
+    <label>Kecepatan Auto Scroll</label>
+    <input type="range" id="speed" min="1" max="10" value="3">
+    <button class="btn-auto" id="autoBtn" onclick="toggleAutoScroll()">▶️ Mulai Auto Scroll</button>
+  </div>
+
+  <!-- Opsi khusus mode single -->
+  <div id="singleSettings" style="display:none;">
+    <p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6;">
+      Navigasi halaman:<br>
+      ← → atau <kbd style="background:#333;padding:2px 5px;border-radius:4px;">A</kbd>
+      <kbd style="background:#333;padding:2px 5px;border-radius:4px;">D</kbd>
+    </p>
+  </div>
 </div>
 
+<!-- Chapter List Overlay -->
+<div id="chapterListOverlay"
+     style="display:none;position:fixed;inset:0;z-index:1499;background:rgba(0,0,0,0.5);"
+     onclick="toggleChapterList()"></div>
+
+<!-- Chapter List Panel -->
+<div id="chapterListPanel" style="
+  position:fixed;top:0;left:-320px;width:300px;height:100vh;
+  background:rgba(14,14,18,0.98);backdrop-filter:blur(16px);
+  border-right:1px solid rgba(255,255,255,0.08);
+  z-index:1500;overflow:hidden;display:flex;flex-direction:column;
+  transition:left 0.3s ease;box-shadow:4px 0 24px rgba(0,0,0,0.5);
+"></div>
+
+<!-- Konten komik -->
 <div id="reader"></div>
 
-<!--
-  Kedua script pakai type="module" karena pakai import dari supabase.js
--->
+<!-- Single Page Controls (tampil hanya di mode manga) -->
+<div id="singleControls">
+  <button id="prevPageBtn" onclick="prevPage()">← Prev</button>
+  <span id="pageCounter">1 / ?</span>
+  <button id="nextPageBtn" class="primary" onclick="nextPage()">Next →</button>
+</div>
+
 <script type="module">
   import { initAuthHeader } from "./auth-header.js";
   initAuthHeader();
