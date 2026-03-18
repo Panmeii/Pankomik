@@ -439,20 +439,27 @@
 <script>
 
 function proxyImg(url) {
-  /* Skip SVG placeholder kosong */
   if (!url || url === "undefined" || url === "null") return "";
   if (url.startsWith("data:image/svg") && url.includes("viewBox")) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
+  /* Strip query string untuk i0.wp.com agar tidak duplikat params */
   var clean = url.split("?")[0];
+  /* Referer map - i0.wp.com perlu referer maid.my.id */
   var ref = "";
   try {
     var host = new URL(clean.startsWith("http") ? clean : "https://" + clean).hostname;
     var refMap = {
-      "komikindo":"https://komikindo.org","komikcast":"https://komikcast.me",
-      "komiku":"https://komiku.id","bacakomik":"https://bacakomik.me",
-      "mangatale":"https://mangatale.co","westmanga":"https://westmanga.info",
+      "maid.my.id":  "https://www.maid.my.id",
+      "i0.wp.com":   "https://www.maid.my.id",
+      "i1.wp.com":   "https://www.maid.my.id",
+      "i2.wp.com":   "https://www.maid.my.id",
+      "komikindo":   "https://komikindo.org",
+      "komikcast":   "https://komikcast.me",
+      "komiku":      "https://komiku.id",
     };
-    for (var k in refMap) { if (host.indexOf(k)!==-1){ ref=refMap[k]; break; } }
+    for (var k in refMap) {
+      if (host === k || host.indexOf(k) !== -1) { ref = refMap[k]; break; }
+    }
     if (!ref) ref = "https://" + host;
   } catch(e) {}
   var q = "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
@@ -464,8 +471,8 @@ function proxyImg(url) {
    GENRE PAGE — genre.js (inline)
    ============================================================ */
 
-const GENRES_API = "https://www.sankavollerei.com/comic/komikindo/genres";
-const GENRE_API  = "https://www.sankavollerei.com/comic/bacakomik/genre/";
+const GENRES_API = "https://www.sankavollerei.com/comic/komikindo/genres";  /* tetap */
+const GENRE_API  = "https://www.sankavollerei.com/comic/maid/genres/";
 
 /* ---- STATE ---------------------------------------------- */
 let allGenres     = [];
@@ -625,25 +632,26 @@ async function fetchGenreKomik(slug, page) {
   pagination.style.display = "none";
 
   try {
-    /* Endpoint: /comic/bacakomik/genre/:genre?page=N */
+    /* Endpoint: /comic/maid/genres/:genre?page=N */
     const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}?page=${page}`);
     const data = await res.json();
 
-    /* API bacakomik: komikList[] dengan cover, slug, rating, type */
-    const raw  = data.komikList || data.comics || data.data || [];
+    /* API maid: data[] dengan banner, slug, rating, title */
+    const raw  = data.data || [];
     allFetched = raw.map(k => ({
       ...k,
-      cover:   k.cover   || k.image   || k.thumbnail || "",
-      title:   k.title   || k.name    || "Untitled",
-      slug:    k.slug    || k.id      || "",
-      type:    k.type    || k.type_name || "",
-      rating:  k.rating  || k.score   || "–",
+      cover:   k.banner  || k.cover || k.image || k.thumbnail || "",
+      title:   k.title   || k.name  || "Untitled",
+      slug:    k.slug    || k.id    || "",
+      type:    k.type    || "",
+      rating:  k.rating  || "–",
       chapter: k.latestChapter || k.chapter || "",
     }));
 
-    /* Pagination: hasNextPage + currentPage */
-    hasNextPage = !!(data.hasNextPage);
-    currentPage = data.currentPage || page;
+    /* Pagination dari data.pagination */
+    const pag   = data.pagination || {};
+    hasNextPage = !!(pag.hasNext);
+    currentPage = pag.currentPage || page;
 
     document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
 
@@ -694,6 +702,37 @@ function setTypeFilter(type, btn) {
   applyFilterAndSort();
 }
 
+/* ── Generated color cover untuk komik tanpa gambar ─────── */
+function genreColorCover(title, h) {
+  var COLORS = [
+    ["#e8522a","#fad7a0"],["#8e44ad","#d7bde2"],["#2980b9","#aed6f1"],
+    ["#27ae60","#a9dfbf"],["#c0392b","#f1948a"],["#16a085","#a2d9ce"],
+    ["#2c3e50","#85929e"],["#d4ac0d","#fef9e7"],["#1a5276","#aed6f1"],
+    ["#784212","#f0b27a"],["#922b21","#f5b7b1"],["#0e6655","#a2d9ce"],
+  ];
+  var hash = 0;
+  for (var i = 0; i < (title||"").length; i++) hash = ((hash<<5)-hash)+title.charCodeAt(i);
+  var c     = COLORS[Math.abs(hash) % COLORS.length];
+  var words = (title||"?").trim().split(/\s+/);
+  var init  = words.slice(0,2).map(function(w){return (w[0]||"").toUpperCase();}).join("");
+  var short = words.slice(0,3).join(" ");
+  if (short.length > 16) short = short.slice(0,14)+"…";
+  var d = document.createElement("div");
+  d.style.cssText =
+    "width:100%;height:"+(h||160)+"px;" +
+    "background:linear-gradient(145deg,"+c[0]+"dd,"+c[0]+");" +
+    "display:flex;flex-direction:column;align-items:center;justify-content:center;" +
+    "gap:5px;overflow:hidden;flex-shrink:0;";
+  d.innerHTML =
+    "<span style='font-size:26px;line-height:1'>📚</span>" +
+    "<span style='font-size:20px;font-weight:900;color:#fff;letter-spacing:1px;" +
+      "text-shadow:0 2px 6px rgba(0,0,0,.5);line-height:1'>"+init+"</span>" +
+    "<span style='font-size:9px;color:"+c[1]+";font-weight:700;text-align:center;" +
+      "padding:0 5px;line-height:1.3;word-break:break-word;max-width:90%'>" +
+      short.replace(/</g,"&lt;")+"</span>";
+  return d;
+}
+
 /* ============================================================
    RENDER GRID KOMIK
    ============================================================ */
@@ -710,31 +749,73 @@ function renderGenreGrid(list) {
   }
 
   grid.className = "genre-grid";
-  grid.innerHTML = list.map(k => {
-    const cover  = proxyImg(k.cover);
-    const type   = (k.type || "").toLowerCase();
-    const href   = k.slug ? `/komik/${k.slug}` : (k.link || "#");
-    const rating = parseFloat(k.rating);
+  grid.innerHTML = "";
+
+  list.forEach(k => {
+    const origCover = k.cover || "";
+    const cover     = origCover ? proxyImg(origCover) : "";
+    const type      = (k.type || "").toLowerCase();
+    const href      = k.slug ? `/komik/${k.slug}` : (k.link || "#");
+    const rating    = parseFloat(k.rating);
     const ratingStr = !isNaN(rating) ? rating.toFixed(1) : "";
-    /* Placeholder cover jika gambar kosong/SVG dari API */
-    const origUrl = (k.cover || "").split("?")[0];
-    const imgHtml = cover
-      ? `<img src="${cover}" alt="${escHtml(k.title)}" loading="lazy" style="background:var(--bg-surface);" onerror="(function(el){var tried=el.dataset.tried=((el.dataset.tried||0)*1)+1;if(tried===1){el.src='${origUrl.replace(/'/g,"\\'")}'}else{el.style.display='none';el.nextElementSibling.style.display='flex';}})(this)">`
-      : "";
-    const placeholder = `<div class="genre-card-placeholder" style="${cover ? "display:none" : ""}">📚</div>`;
-    return `
-      <div class="genre-card" onclick="window.location.href='${href}'">
-        <div class="genre-card-img-wrap">
-          ${imgHtml}${placeholder}
-          ${k.type ? `<span class="genre-card-type badge ${type}">${k.type}</span>` : ""}
-          ${ratingStr ? `<span class="genre-card-rating-badge">⭐ ${ratingStr}</span>` : ""}
-        </div>
-        <div class="genre-card-info">
-          <div class="genre-card-title">${escHtml(k.title)}</div>
-          ${k.chapter ? `<div class="genre-card-chapter">📖 ${escHtml(k.chapter)}</div>` : ""}
-        </div>
-      </div>`;
-  }).join("");
+
+    const card = document.createElement("div");
+    card.className = "genre-card";
+    card.onclick = () => window.location.href = href;
+
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "genre-card-img-wrap";
+
+    if (cover) {
+      const img = document.createElement("img");
+      img.alt     = escHtml(k.title);
+      img.loading = "lazy";
+      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;background:var(--bg-surface);";
+      img.src = cover;
+
+      let tried = 0;
+      img.onerror = function onErr() {
+        tried++;
+        img.onerror = null;
+        if (tried === 1 && origCover !== cover) {
+          /* Fallback: direct URL */
+          img.onerror = function() {
+            img.onerror = null;
+            imgWrap.replaceChild(genreColorCover(k.title, 160), img);
+          };
+          img.src = origCover;
+        } else {
+          imgWrap.replaceChild(genreColorCover(k.title, 160), img);
+        }
+      };
+      imgWrap.appendChild(img);
+    } else {
+      imgWrap.appendChild(genreColorCover(k.title, 160));
+    }
+
+    if (k.type) {
+      const tb = document.createElement("span");
+      tb.className = `genre-card-type badge ${type}`;
+      tb.textContent = k.type;
+      imgWrap.appendChild(tb);
+    }
+    if (ratingStr) {
+      const rb = document.createElement("span");
+      rb.className = "genre-card-rating-badge";
+      rb.textContent = "⭐ " + ratingStr;
+      imgWrap.appendChild(rb);
+    }
+
+    card.appendChild(imgWrap);
+
+    const info = document.createElement("div");
+    info.className = "genre-card-info";
+    info.innerHTML =
+      `<div class="genre-card-title">${escHtml(k.title)}</div>` +
+      (k.chapter ? `<div class="genre-card-chapter">📖 ${escHtml(k.chapter)}</div>` : "");
+    card.appendChild(info);
+    grid.appendChild(card);
+  });
 }
 
 /* ============================================================
@@ -827,13 +908,9 @@ function liveSearch() {
       resultBox.innerHTML = "";
       if (!list?.length) { resultBox.style.display = "none"; return; }
       list.slice(0, 5).forEach(k => {
-        const item    = document.createElement("div");
-        const origUrl = (k.cover || "").split("?")[0];
-        const cover   = origUrl ? proxyImg(origUrl) : "";
+        const item = document.createElement("div");
         item.className = "search-item";
-        item.innerHTML = cover
-          ? `<img src="${cover}" loading="lazy" style="background:var(--bg-surface);" onerror="this.src='${origUrl.replace(/'/g,"\\'")}';this.onerror=null;"><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`
-          : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">📚</div><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`;
+        item.innerHTML = `<img src="${proxyImg(k.cover)}" loading="lazy"><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`;
         item.onclick = () => window.location.href = '/komik/'+k.slug;
         resultBox.appendChild(item);
       });
