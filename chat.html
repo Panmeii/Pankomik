@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Chat — Pankomik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    :root {
+      --chat-bg:    #09090f;
+      --chat-card:  #0f0f1a;
+      --chat-surf:  #14141f;
+      --border:     rgba(255,255,255,0.07);
+      --accent:     #e8522a;
+      --text:       #eaeaf0;
+      --text-muted: #666;
+      --green:      #27ae60;
+      --blue:       #3498db;
+    }
+    body { background: var(--chat-bg); }
+
+    /* ── LAYOUT ─────────────────────────────────────────────── */
+    .chat-wrapper {
+      max-width: 760px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding-top: 56px; /* header tinggi */
+    }
+
+    /* ── ONLINE BAR ─────────────────────────────────────────── */
+    .online-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--chat-card);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .online-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%,100%{opacity:1; transform:scale(1)}
+      50%{opacity:.6; transform:scale(.85)}
+    }
+    .online-count { color: var(--green); }
+    .online-label { color: var(--text-muted); }
+    .online-avatars {
+      display:flex; margin-left:auto; gap:-4px;
+    }
+    .online-avatar {
+      width:24px; height:24px; border-radius:50%;
+      background:var(--accent); border:2px solid var(--chat-card);
+      display:inline-flex; align-items:center; justify-content:center;
+      font-size:10px; font-weight:800; color:#fff; margin-left:-4px;
+      object-fit:cover;
+    }
+
+    /* ── PINNED MESSAGES ────────────────────────────────────── */
+    #pinnedArea {
+      flex-shrink: 0;
+    }
+    .pinned-msg {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: linear-gradient(90deg, rgba(245,200,66,0.08) 0%, transparent 100%);
+      border-bottom: 1px solid rgba(245,200,66,0.12);
+      font-size: 13px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .pinned-msg:hover { background: rgba(245,200,66,0.12); }
+    .pin-icon { font-size:14px; flex-shrink:0; margin-top:1px; }
+    .pin-content { flex:1; min-width:0; }
+    .pin-label { font-size:10px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:rgba(245,200,66,.6); }
+    .pin-text { color:var(--text); line-height:1.4; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .pin-author { font-size:11px; color:var(--text-muted); }
+    .pin-ann {
+      background: linear-gradient(90deg, rgba(232,82,42,0.1) 0%, transparent 100%);
+      border-bottom-color: rgba(232,82,42,0.2);
+    }
+    .ann-banner {
+      padding: 10px 14px;
+      background: rgba(232,82,42,0.08);
+      border-bottom: 1px solid rgba(232,82,42,0.15);
+      display:flex; align-items:flex-start; gap:10px;
+    }
+    .ann-banner-icon { font-size:18px; flex-shrink:0; }
+    .ann-banner-body { flex:1; }
+    .ann-banner-title { font-size:13px; font-weight:800; color:var(--accent); margin-bottom:2px; }
+    .ann-banner-text { font-size:12px; color:var(--text-muted); line-height:1.5; }
+
+    /* ── MESSAGES AREA ──────────────────────────────────────── */
+    #msgArea {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      scroll-behavior: smooth;
+    }
+    #msgArea::-webkit-scrollbar { width: 4px; }
+    #msgArea::-webkit-scrollbar-thumb { background: var(--border); border-radius:99px; }
+
+    /* Date separator */
+    .date-sep {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-muted);
+      letter-spacing: .5px;
+      margin: 10px 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .date-sep::before, .date-sep::after {
+      content: ""; flex:1; height:1px; background:var(--border);
+    }
+
+    /* Message bubble */
+    .msg {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+      padding: 2px 4px;
+      border-radius: 12px;
+      transition: background .15s;
+      position: relative;
+    }
+    .msg:hover { background: rgba(255,255,255,0.03); }
+    .msg.mine { flex-direction: row-reverse; }
+    .msg.pinned-highlight { background: rgba(245,200,66,0.05); border-left:2px solid rgba(245,200,66,0.3); }
+
+    .msg-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      flex-shrink: 0; object-fit:cover;
+      background: var(--accent);
+      display:flex; align-items:center; justify-content:center;
+      font-size:13px; font-weight:800; color:#fff;
+      overflow:hidden;
+      align-self: flex-end;
+    }
+    .msg-avatar img { width:100%; height:100%; object-fit:cover; }
+
+    .msg-body { max-width: 72%; }
+    .mine .msg-body { align-items: flex-end; display:flex; flex-direction:column; }
+
+    .msg-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .mine .msg-meta { flex-direction: row-reverse; }
+    .msg-name { font-weight: 800; color: var(--text); }
+    .msg-name.admin-name { color: var(--accent); }
+    .msg-time { font-size: 10px; }
+    .admin-badge {
+      font-size: 9px; font-weight: 800; letter-spacing: .5px;
+      padding: 1px 5px; border-radius: 99px;
+      background: rgba(232,82,42,0.15); color: var(--accent);
+      border: 1px solid rgba(232,82,42,.25); text-transform:uppercase;
+    }
+
+    .msg-bubble {
+      background: var(--chat-surf);
+      border: 1px solid var(--border);
+      border-radius: 16px 16px 16px 4px;
+      padding: 9px 13px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+      position: relative;
+    }
+    .mine .msg-bubble {
+      background: rgba(232,82,42,0.15);
+      border-color: rgba(232,82,42,.2);
+      border-radius: 16px 16px 4px 16px;
+    }
+    .msg-bubble.announcement {
+      background: rgba(232,82,42,0.08);
+      border-color: rgba(232,82,42,.2);
+      border-radius: 12px;
+    }
+
+    /* Location link */
+    .location-link {
+      display:inline-flex; align-items:center; gap:5px;
+      color: var(--blue); font-size:13px; text-decoration:none;
+      background: rgba(52,152,219,0.1); border:1px solid rgba(52,152,219,.2);
+      border-radius:8px; padding:4px 10px; margin-top:6px;
+      transition: background .15s;
+    }
+    .location-link:hover { background:rgba(52,152,219,0.2); }
+
+    /* Emoji reaction */
+    .msg-reactions {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .reaction-btn {
+      display:inline-flex; align-items:center; gap:4px;
+      background: rgba(255,255,255,0.06); border:1px solid var(--border);
+      border-radius:99px; padding:2px 8px; font-size:12px;
+      cursor:pointer; transition:all .15s; color:var(--text);
+    }
+    .reaction-btn:hover { background:rgba(255,255,255,0.12); }
+    .reaction-btn.reacted { background:rgba(232,82,42,0.15); border-color:rgba(232,82,42,.3); }
+
+    /* Context menu (right-click / long press) */
+    .ctx-menu {
+      position:fixed; z-index:2000;
+      background:rgba(20,20,28,0.98); backdrop-filter:blur(14px);
+      border:1px solid var(--border); border-radius:12px;
+      padding:6px 0; box-shadow:0 8px 32px rgba(0,0,0,0.5);
+      min-width:160px; display:none;
+    }
+    .ctx-menu.show { display:block; }
+    .ctx-item {
+      padding:9px 16px; font-size:13px; font-weight:700;
+      cursor:pointer; display:flex; align-items:center; gap:8px;
+      transition:background .15s;
+    }
+    .ctx-item:hover { background:rgba(255,255,255,0.08); }
+    .ctx-item.danger { color: #e74c3c; }
+
+    /* Scroll to bottom btn */
+    #scrollBtn {
+      position: fixed;
+      bottom: 86px; right: 14px;
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none; color:#fff; font-size:18px;
+      cursor:pointer; z-index:500;
+      display:none; align-items:center; justify-content:center;
+      box-shadow:0 4px 16px rgba(232,82,42,.4);
+      transition:all .2s;
+    }
+    #scrollBtn.show { display:flex; }
+    #scrollBtn:hover { transform:scale(1.1); }
+    #unreadBadge {
+      position:absolute; top:-4px; right:-4px;
+      background:#e74c3c; color:#fff;
+      font-size:10px; font-weight:800;
+      width:18px; height:18px; border-radius:50%;
+      display:none; align-items:center; justify-content:center;
+    }
+    #unreadBadge.show { display:flex; }
+
+    /* ── INPUT AREA ─────────────────────────────────────────── */
+    .input-area {
+      flex-shrink: 0;
+      border-top: 1px solid var(--border);
+      background: var(--chat-card);
+      padding: 10px 12px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+
+    /* Emoji picker row */
+    .emoji-row {
+      display: none;
+      gap: 6px;
+      padding: 8px 0 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .emoji-row.show { display:flex; }
+    .emoji-row::-webkit-scrollbar { display:none; }
+    .emoji-btn {
+      font-size: 20px; cursor:pointer; padding:4px 6px;
+      border-radius:8px; transition:background .15s; border:none;
+      background:transparent; flex-shrink:0;
+    }
+    .emoji-btn:hover { background:rgba(255,255,255,0.1); }
+
+    /* Input row */
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+    .input-box {
+      flex: 1;
+      background: var(--chat-surf);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+      min-height: 42px;
+      max-height: 120px;
+      overflow-y: auto;
+      line-height: 1.5;
+      transition: border .2s;
+    }
+    .input-box:focus { border-color: var(--accent); }
+    .input-box::placeholder { color:var(--text-muted); }
+
+    .input-actions {
+      display: flex;
+      gap: 6px;
+      align-items: flex-end;
+    }
+    .action-btn {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: var(--chat-surf);
+      border: 1px solid var(--border);
+      color: var(--text); font-size: 17px;
+      cursor:pointer; transition:all .15s;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .action-btn:hover { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,.15); }
+    .action-btn.active { background:rgba(232,82,42,0.15); border-color:rgba(232,82,42,.3); color:var(--accent); }
+    .send-btn {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: var(--accent);
+      border: none; color:#fff; font-size:18px;
+      cursor:pointer; transition:all .2s;
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0;
+    }
+    .send-btn:hover { background:#c73f1c; transform:scale(1.05); }
+    .send-btn:active { transform:scale(.95); }
+    .send-btn:disabled { background:var(--chat-surf); color:var(--text-muted); cursor:not-allowed; transform:none; }
+
+    /* Char counter */
+    .char-counter {
+      font-size: 11px; color: var(--text-muted);
+      text-align: right; margin-top: 4px;
+    }
+    .char-counter.warn { color: #e74c3c; }
+
+    /* Login prompt */
+    .login-prompt {
+      text-align:center; padding:12px;
+      font-size:13px; color:var(--text-muted);
+    }
+    .login-prompt a { color:var(--accent); font-weight:700; text-decoration:none; }
+
+    /* ── LOADING ─────────────────────────────────────────────── */
+    .msg-skeleton {
+      display:flex; gap:8px; padding:4px;
+    }
+    .sk { background:var(--chat-surf); border-radius:99px; animation:shimmer 1.5s infinite; }
+    @keyframes shimmer { 0%{opacity:.4} 50%{opacity:.8} 100%{opacity:.4} }
+
+    /* ── MISC ───────────────────────────────────────────────── */
+    .header-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    .bottom-nav-spacer { height: 70px; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<!-- ── HEADER ─────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="logo" onclick="window.location.href='/'">Pankomik</div>
+  <div style="flex:1;">
+    <div style="font-size:13px;font-weight:800;">💬 Global Chat</div>
+    <div class="header-subtitle" id="headerOnline">– online</div>
+  </div>
+  <div class="header-right">
+    <button onclick="toggleDarkMode()">🌙</button>
+    <button onclick="toggleMenu()">👤</button>
+  </div>
+</header>
+<div id="menuDropdown" class="dropdown"></div>
+
+<!-- ── CHAT WRAPPER ───────────────────────────────────────────── -->
+<div class="chat-wrapper">
+
+  <!-- Online bar -->
+  <div class="online-bar">
+    <div class="online-dot"></div>
+    <span class="online-count" id="onlineCount">0</span>
+    <span class="online-label">pengguna online</span>
+    <div class="online-avatars" id="onlineAvatars"></div>
+  </div>
+
+  <!-- Pinned / Announcement area -->
+  <div id="pinnedArea"></div>
+
+  <!-- Messages -->
+  <div id="msgArea">
+    <!-- Skeleton loading -->
+    <div id="loadingSkeleton">
+      <div class="msg-skeleton">
+        <div class="sk" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div class="sk" style="height:12px;width:80px;border-radius:4px;margin-bottom:6px;"></div>
+          <div class="sk" style="height:40px;width:240px;border-radius:12px;"></div>
+        </div>
+      </div>
+      <div class="msg-skeleton" style="flex-direction:row-reverse;">
+        <div class="sk" style="width:32px;height:32px;border-radius:50%;flex-shrink:0;"></div>
+        <div style="flex:1;display:flex;flex-direction:column;align-items:flex-end;">
+          <div class="sk" style="height:12px;width:60px;border-radius:4px;margin-bottom:6px;"></div>
+          <div class="sk" style="height:32px;width:180px;border-radius:12px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="bottom-nav-spacer"></div>
+</div>
+
+<!-- Scroll to bottom btn -->
+<button id="scrollBtn" onclick="scrollToBottom()">
+  ↓
+  <span id="unreadBadge"></span>
+</button>
+
+<!-- ── INPUT AREA (fixed) ──────────────────────────────────────── -->
+<div class="input-area" id="inputArea" style="position:fixed;bottom:60px;left:0;right:0;z-index:400;">
+  <!-- Emoji row -->
+  <div class="emoji-row" id="emojiRow">
+    <!-- Quick emojis -->
+  </div>
+
+  <!-- Login prompt (jika belum login) -->
+  <div class="login-prompt" id="loginPrompt" style="display:none;">
+    <a href="/masuk">🔑 Login</a> untuk ikut chat!
+  </div>
+
+  <!-- Input row (jika sudah login) -->
+  <div id="inputRow">
+    <div class="input-row">
+      <textarea
+        class="input-box"
+        id="msgInput"
+        placeholder="Tulis pesan..."
+        rows="1"
+        maxlength="500"
+        onkeydown="handleKey(event)"
+        oninput="onInput()"
+      ></textarea>
+      <div class="input-actions">
+        <button class="action-btn" onclick="toggleEmoji()" id="emojiToggle" title="Emoji">😄</button>
+        <button class="action-btn" onclick="sendLocation()" title="Bagikan lokasi halaman">📍</button>
+        <button class="send-btn" id="sendBtn" onclick="sendMsg()" disabled>➤</button>
+      </div>
+    </div>
+    <div class="char-counter" id="charCounter">500</div>
+  </div>
+</div>
+
+<!-- ── CONTEXT MENU ────────────────────────────────────────────── -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxPin()">📌 Pin Pesan</div>
+  <div class="ctx-item" onclick="ctxUnpin()">📍 Cabut Pin</div>
+  <div class="ctx-item" onclick="ctxReply()">↩️ Balas</div>
+  <div class="ctx-item danger" onclick="ctxDelete()">🗑️ Hapus</div>
+</div>
+
+<!-- ── BOTTOM NAV ──────────────────────────────────────────────── -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item active">
+    <span class="nav-icon">💬</span><span class="nav-label">Chat</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/donatur'">
+    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { initAuthHeader } from "/auth-header.js";
+
+initAuthHeader();
+
+const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ── CONSTANTS ───────────────────────────────────────────────── */
+const EMOJIS = ["😂","😍","🔥","💯","👏","😭","🤣","❤️","😎","💪","👀","🙏","😤","🫡","✨","🎉","😱","🤩","💀","😅","🫶","🏆","📖","💬","⭐","🎭","👑","💛"];
+const MAX_CHARS = 500;
+const ADMIN_EMAILS = ["pankomik@gmail.com","admin@pankomik.com"];
+
+/* ── STATE ──────────────────────────────────────────────────── */
+let currentUser   = null;
+let currentProfile = null;
+let isAdmin       = false;
+let messages      = [];
+let ctxTargetId   = null;
+let unreadCount   = 0;
+let isAtBottom    = true;
+let replyingTo    = null;
+let presenceInterval = null;
+
+/* ── INIT ───────────────────────────────────────────────────── */
+async function init() {
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+
+  /* Auth */
+  const { data: { session } } = await supabase.auth.getSession();
+  currentUser = session?.user || null;
+
+  if (currentUser) {
+    /* Load profile */
+    const { data: p } = await supabase.from("profiles")
+      .select("username, avatar_url, role, is_banned")
+      .eq("id", currentUser.id).single();
+    currentProfile = p;
+    isAdmin = ADMIN_EMAILS.includes(currentUser.email) || p?.role === "admin";
+
+    if (p?.is_banned) {
+      document.getElementById("inputRow").innerHTML = `
+        <div style="text-align:center;padding:12px;color:#e74c3c;font-size:13px;font-weight:700;">
+          🚫 Akunmu dibanned dari chat.
+        </div>`;
+    }
+
+    /* Update presence */
+    await updatePresence();
+    presenceInterval = setInterval(updatePresence, 60000); /* setiap 1 menit */
+
+  } else {
+    document.getElementById("inputRow").style.display = "none";
+    document.getElementById("loginPrompt").style.display = "block";
+  }
+
+  /* Build emoji row */
+  buildEmojiRow();
+
+  /* Scroll listener */
+  const area = document.getElementById("msgArea");
+  area.addEventListener("scroll", () => {
+    const dist = area.scrollHeight - area.scrollTop - area.clientHeight;
+    isAtBottom = dist < 80;
+    const btn = document.getElementById("scrollBtn");
+    if (isAtBottom) {
+      btn.classList.remove("show");
+      unreadCount = 0;
+      document.getElementById("unreadBadge").classList.remove("show");
+    } else {
+      btn.classList.toggle("show", dist > 200);
+    }
+  }, { passive:true });
+
+  /* Load initial messages */
+  await loadMessages();
+
+  /* Setup realtime */
+  setupRealtime();
+
+  /* Online presence */
+  await loadOnlineUsers();
+  setInterval(loadOnlineUsers, 30000);
+
+  /* Context menu close */
+  document.addEventListener("click", e => {
+    const menu = document.getElementById("ctxMenu");
+    if (!menu.contains(e.target)) menu.classList.remove("show");
+  });
+
+  /* Input auto resize */
+  const inp = document.getElementById("msgInput");
+  inp.addEventListener("input", () => {
+    inp.style.height = "auto";
+    inp.style.height = Math.min(inp.scrollHeight, 120) + "px";
+  });
+}
+
+/* ── PRESENCE ───────────────────────────────────────────────── */
+async function updatePresence() {
+  if (!currentUser) return;
+  await supabase.from("profiles")
+    .update({ last_seen: new Date().toISOString() })
+    .eq("id", currentUser.id);
+}
+
+async function loadOnlineUsers() {
+  const fiveMin = new Date(Date.now() - 5*60*1000).toISOString();
+  const { data, count } = await supabase
+    .from("profiles")
+    .select("username, avatar_url", { count:"exact" })
+    .gte("last_seen", fiveMin)
+    .limit(8);
+
+  const cnt = count || 0;
+  document.getElementById("onlineCount").textContent = cnt;
+  document.getElementById("headerOnline").textContent = cnt + " online";
+
+  const avBox = document.getElementById("onlineAvatars");
+  avBox.innerHTML = (data||[]).slice(0,6).map(u => {
+    if (u.avatar_url) return `<img src="${u.avatar_url}" class="online-avatar" title="${u.username||''}" onerror="this.style.display='none'">`;
+    const n = (u.username||"?")[0].toUpperCase();
+    return `<div class="online-avatar" title="${u.username||''}">${n}</div>`;
+  }).join("");
+}
+
+/* ── MESSAGES ─────────────────────────────────────────────────── */
+async function loadMessages() {
+  const { data } = await supabase
+    .from("global_chat")
+    .select("*, profiles(username, avatar_url, role)")
+    .order("created_at", { ascending: true })
+    .limit(80);
+
+  document.getElementById("loadingSkeleton").remove();
+  messages = data || [];
+  renderAllMessages();
+  loadPinned();
+  scrollToBottom();
+}
+
+function renderAllMessages() {
+  const area = document.getElementById("msgArea");
+  /* Remove existing msg elements */
+  area.querySelectorAll(".msg, .date-sep").forEach(el => el.remove());
+
+  let lastDate = "";
+  messages.forEach(m => {
+    const d = new Date(m.created_at).toLocaleDateString("id-ID", { day:"2-digit", month:"long", year:"numeric" });
+    if (d !== lastDate) {
+      lastDate = d;
+      const sep = document.createElement("div");
+      sep.className = "date-sep";
+      sep.textContent = d === new Date().toLocaleDateString("id-ID", { day:"2-digit", month:"long", year:"numeric" }) ? "Hari ini" : d;
+      area.appendChild(sep);
+    }
+    area.appendChild(buildMsgEl(m));
+  });
+}
+
+function buildMsgEl(m) {
+  const mine   = currentUser && m.user_id === currentUser.id;
+  const name   = m.profiles?.username || "Anonim";
+  const adminM = m.profiles?.role === "admin" || ADMIN_EMAILS.includes(m.user_email||"");
+  const isAnn  = m.is_announcement;
+
+  const el = document.createElement("div");
+  el.className = "msg" + (mine?" mine":"") + (m.is_pinned?" pinned-highlight":"");
+  el.id = "msg-" + m.id;
+  el.dataset.msgId = m.id;
+  el.dataset.mine  = mine;
+  el.dataset.pinned = m.is_pinned;
+
+  /* Context menu */
+  el.addEventListener("contextmenu", e => { e.preventDefault(); showCtxMenu(e, m); });
+
+  /* Avatar */
+  const avatarEl = document.createElement("div");
+  avatarEl.className = "msg-avatar";
+  if (m.profiles?.avatar_url) {
+    avatarEl.innerHTML = `<img src="${m.profiles.avatar_url}" onerror="this.parentElement.textContent='${name[0].toUpperCase()}'">`;
+  } else {
+    avatarEl.textContent = name[0].toUpperCase();
+    avatarEl.style.background = strToColor(m.user_id);
+  }
+
+  /* Body */
+  const bodyEl = document.createElement("div");
+  bodyEl.className = "msg-body";
+
+  /* Meta */
+  if (!isAnn) {
+    const metaEl = document.createElement("div");
+    metaEl.className = "msg-meta";
+    metaEl.innerHTML = `
+      <span class="msg-name ${adminM?"admin-name":""}">${escHtml(name)}</span>
+      ${adminM ? `<span class="admin-badge">Admin</span>` : ""}
+      <span class="msg-time">${fmtTime(m.created_at)}</span>
+      ${m.is_pinned ? `<span style="font-size:11px;">📌</span>` : ""}
+    `;
+    bodyEl.appendChild(metaEl);
+  }
+
+  /* Bubble */
+  const bubbleEl = document.createElement("div");
+  bubbleEl.className = "msg-bubble" + (isAnn?" announcement":"");
+
+  if (isAnn) {
+    const typeIcon = { info:"ℹ️", warning:"⚠️", success:"✅", update:"🚀" };
+    bubbleEl.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span>${typeIcon[m.ann_type]||"📢"}</span>
+        <strong style="font-size:13px;color:var(--accent);">${escHtml(m.ann_title||"Pengumuman")}</strong>
+      </div>
+      <div style="font-size:13px;">${formatMsg(m.message)}</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:4px;">${fmtTime(m.created_at)} · ${escHtml(name)}</div>
+    `;
+  } else {
+    let content = formatMsg(m.message);
+    if (m.page_url) {
+      content += `<br><a class="location-link" href="${m.page_url}" target="_blank">📍 ${escHtml(m.page_url.replace(/^https?:\/\/[^/]+/, ""))}</a>`;
+    }
+    bubbleEl.innerHTML = content;
+  }
+
+  bodyEl.appendChild(bubbleEl);
+
+  /* Reactions (simplified) */
+  if (m.reactions && Object.keys(m.reactions).length > 0) {
+    const reactEl = document.createElement("div");
+    reactEl.className = "msg-reactions";
+    Object.entries(m.reactions).forEach(([emoji, count]) => {
+      const rb = document.createElement("button");
+      rb.className = "reaction-btn";
+      rb.innerHTML = `${emoji} <span>${count}</span>`;
+      rb.onclick = () => addReaction(m.id, emoji);
+      reactEl.appendChild(rb);
+    });
+    bodyEl.appendChild(reactEl);
+  }
+
+  el.appendChild(avatarEl);
+  el.appendChild(bodyEl);
+  return el;
+}
+
+/* ── PINNED AREA ──────────────────────────────────────────────── */
+async function loadPinned() {
+  const { data } = await supabase
+    .from("global_chat")
+    .select("*, profiles(username)")
+    .eq("is_pinned", true)
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  const area = document.getElementById("pinnedArea");
+  area.innerHTML = "";
+
+  (data||[]).forEach(m => {
+    const isAnn = m.is_announcement;
+    const el    = document.createElement("div");
+    el.className = isAnn ? "ann-banner" : "pinned-msg" + (isAnn?" pin-ann":"");
+
+    if (isAnn) {
+      const typeIcon = { info:"ℹ️", warning:"⚠️", success:"✅", update:"🚀" };
+      el.innerHTML = `
+        <div class="ann-banner-icon">${typeIcon[m.ann_type]||"📢"}</div>
+        <div class="ann-banner-body">
+          <div class="ann-banner-title">${escHtml(m.ann_title||"Pengumuman")}</div>
+          <div class="ann-banner-text">${escHtml(m.message||"")}</div>
+        </div>
+      `;
+    } else {
+      el.innerHTML = `
+        <div class="pin-icon">📌</div>
+        <div class="pin-content">
+          <div class="pin-label">Dipin</div>
+          <div class="pin-text">${escHtml(m.message||"")}</div>
+          <div class="pin-author">${escHtml(m.profiles?.username||"Anonim")}</div>
+        </div>
+      `;
+      el.onclick = () => {
+        const target = document.getElementById("msg-" + m.id);
+        if (target) target.scrollIntoView({ behavior:"smooth", block:"center" });
+      };
+    }
+    area.appendChild(el);
+  });
+}
+
+/* ── REALTIME ─────────────────────────────────────────────────── */
+function setupRealtime() {
+  supabase.channel("global_chat_changes")
+    .on("postgres_changes", { event:"INSERT", schema:"public", table:"global_chat" }, payload => {
+      onNewMessage(payload.new);
+    })
+    .on("postgres_changes", { event:"DELETE", schema:"public", table:"global_chat" }, payload => {
+      const el = document.getElementById("msg-" + payload.old.id);
+      if (el) el.remove();
+      messages = messages.filter(m => m.id !== payload.old.id);
+    })
+    .on("postgres_changes", { event:"UPDATE", schema:"public", table:"global_chat" }, payload => {
+      const m = payload.new;
+      const el = document.getElementById("msg-" + m.id);
+      if (el) {
+        /* Kalau is_pinned berubah, reload pinned area */
+        loadPinned();
+      }
+    })
+    .subscribe();
+}
+
+async function onNewMessage(raw) {
+  /* Ambil data profile user */
+  const { data: prof } = await supabase.from("profiles")
+    .select("username, avatar_url, role").eq("id", raw.user_id).single();
+
+  const m = { ...raw, profiles: prof };
+  messages.push(m);
+
+  const area = document.getElementById("msgArea");
+
+  /* Date separator? */
+  const d = new Date(m.created_at).toLocaleDateString("id-ID", { day:"2-digit", month:"long", year:"numeric" });
+  const lastSep = area.querySelectorAll(".date-sep");
+  const lastSepText = lastSep[lastSep.length-1]?.textContent;
+  const todayStr = new Date().toLocaleDateString("id-ID", { day:"2-digit", month:"long", year:"numeric" });
+  if (d !== lastSepText) {
+    const sep = document.createElement("div");
+    sep.className = "date-sep";
+    sep.textContent = d === todayStr ? "Hari ini" : d;
+    area.appendChild(sep);
+  }
+
+  area.appendChild(buildMsgEl(m));
+
+  if (m.is_pinned || m.is_announcement) loadPinned();
+
+  if (isAtBottom) {
+    scrollToBottom();
+  } else {
+    unreadCount++;
+    const badge = document.getElementById("unreadBadge");
+    badge.textContent = unreadCount > 9 ? "9+" : unreadCount;
+    badge.classList.add("show");
+    document.getElementById("scrollBtn").classList.add("show");
+  }
+}
+
+/* ── SEND MESSAGE ─────────────────────────────────────────────── */
+window.sendMsg = async function() {
+  if (!currentUser) return;
+  const inp  = document.getElementById("msgInput");
+  const text = inp.value.trim();
+  if (!text) return;
+
+  const btn = document.getElementById("sendBtn");
+  btn.disabled = true;
+
+  const payload = {
+    user_id:  currentUser.id,
+    message:  text,
+    is_pinned: false,
+    is_announcement: false,
+    page_url: null,
+  };
+
+  if (replyingTo) {
+    payload.reply_to = replyingTo.id;
+    payload.reply_preview = replyingTo.message?.slice(0,60);
+    cancelReply();
+  }
+
+  const { error } = await supabase.from("global_chat").insert(payload);
+
+  if (!error) {
+    inp.value = "";
+    inp.style.height = "auto";
+    document.getElementById("charCounter").textContent = MAX_CHARS;
+    btn.disabled = true;
+  } else {
+    alert("Gagal kirim: " + error.message);
+  }
+  btn.disabled = false;
+};
+
+window.sendLocation = async function() {
+  if (!currentUser) return;
+  const pageUrl = window.location.origin + window.location.pathname;
+  const { error } = await supabase.from("global_chat").insert({
+    user_id:  currentUser.id,
+    message:  "Sedang di halaman ini 👇",
+    page_url: pageUrl,
+  });
+  if (error) alert("Gagal kirim lokasi: " + error.message);
+};
+
+/* ── EMOJI ────────────────────────────────────────────────────── */
+function buildEmojiRow() {
+  const row = document.getElementById("emojiRow");
+  row.innerHTML = EMOJIS.map(e =>
+    `<button class="emoji-btn" onclick="insertEmoji('${e}')" title="${e}">${e}</button>`
+  ).join("");
+}
+
+window.toggleEmoji = function() {
+  const row = document.getElementById("emojiRow");
+  const btn = document.getElementById("emojiToggle");
+  const show = !row.classList.contains("show");
+  row.classList.toggle("show", show);
+  btn.classList.toggle("active", show);
+};
+
+window.insertEmoji = function(emoji) {
+  const inp = document.getElementById("msgInput");
+  const pos = inp.selectionStart || inp.value.length;
+  inp.value = inp.value.slice(0,pos) + emoji + inp.value.slice(pos);
+  inp.focus();
+  onInput();
+};
+
+/* ── INPUT HANDLERS ───────────────────────────────────────────── */
+window.handleKey = function(e) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    sendMsg();
+  }
+};
+
+window.onInput = function() {
+  const inp = document.getElementById("msgInput");
+  const len = inp.value.length;
+  const remaining = MAX_CHARS - len;
+  const counter = document.getElementById("charCounter");
+  counter.textContent = remaining;
+  counter.classList.toggle("warn", remaining < 50);
+  document.getElementById("sendBtn").disabled = len === 0;
+};
+
+/* ── CONTEXT MENU ─────────────────────────────────────────────── */
+function showCtxMenu(e, m) {
+  ctxTargetId = m.id;
+  const menu = document.getElementById("ctxMenu");
+  const mine = currentUser && m.user_id === currentUser.id;
+
+  /* Show/hide items based on permissions */
+  menu.children[0].style.display = isAdmin ? "flex" : "none"; /* pin */
+  menu.children[1].style.display = isAdmin ? "flex" : "none"; /* unpin */
+  menu.children[2].style.display = "flex"; /* reply */
+  menu.children[3].style.display = (mine || isAdmin) ? "flex" : "none"; /* delete */
+
+  /* Position */
+  const x = Math.min(e.clientX, window.innerWidth - 180);
+  const y = Math.min(e.clientY, window.innerHeight - 150);
+  menu.style.left = x + "px";
+  menu.style.top  = y + "px";
+  menu.classList.add("show");
+}
+
+window.ctxPin = async function() {
+  if (!ctxTargetId || !isAdmin) return;
+  await supabase.from("global_chat").update({ is_pinned: true }).eq("id", ctxTargetId);
+  loadPinned();
+  document.getElementById("ctxMenu").classList.remove("show");
+};
+window.ctxUnpin = async function() {
+  if (!ctxTargetId || !isAdmin) return;
+  await supabase.from("global_chat").update({ is_pinned: false }).eq("id", ctxTargetId);
+  loadPinned();
+  document.getElementById("ctxMenu").classList.remove("show");
+};
+window.ctxReply = function() {
+  const m = messages.find(x => x.id === ctxTargetId);
+  if (!m) return;
+  replyingTo = m;
+  const name = m.profiles?.username || "Anonim";
+  const inp  = document.getElementById("msgInput");
+
+  /* Add reply indicator above input */
+  let replyEl = document.getElementById("replyIndicator");
+  if (!replyEl) {
+    replyEl = document.createElement("div");
+    replyEl.id = "replyIndicator";
+    replyEl.style.cssText = "display:flex;align-items:center;gap:8px;padding:6px 0;font-size:12px;color:var(--text-muted);";
+    document.getElementById("inputRow").prepend(replyEl);
+  }
+  replyEl.innerHTML = `
+    <span>↩️ Membalas <strong style="color:var(--text);">${escHtml(name)}</strong>: "${escHtml((m.message||"").slice(0,40))}"</span>
+    <button onclick="cancelReply()" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:18px;margin-left:auto;">×</button>
+  `;
+  inp.focus();
+  document.getElementById("ctxMenu").classList.remove("show");
+};
+window.cancelReply = function() {
+  replyingTo = null;
+  document.getElementById("replyIndicator")?.remove();
+};
+window.ctxDelete = async function() {
+  if (!ctxTargetId) return;
+  if (!confirm("Hapus pesan ini?")) return;
+  await supabase.from("global_chat").delete().eq("id", ctxTargetId);
+  document.getElementById("ctxMenu").classList.remove("show");
+};
+
+/* ── REACTIONS ─────────────────────────────────────────────────── */
+async function addReaction(msgId, emoji) {
+  /* Simplified: update reactions jsonb field */
+  const m = messages.find(x => x.id === msgId);
+  if (!m) return;
+  const reactions = m.reactions || {};
+  reactions[emoji] = (reactions[emoji]||0) + 1;
+  await supabase.from("global_chat").update({ reactions }).eq("id", msgId);
+}
+
+/* ── SCROLL ───────────────────────────────────────────────────── */
+window.scrollToBottom = function() {
+  const area = document.getElementById("msgArea");
+  area.scrollTop = area.scrollHeight;
+  unreadCount = 0;
+  document.getElementById("unreadBadge").classList.remove("show");
+};
+
+/* ── HELPERS ──────────────────────────────────────────────────── */
+function formatMsg(text) {
+  if (!text) return "";
+  return escHtml(text)
+    .replace(/\*(.*?)\*/g, "<strong>$1</strong>")
+    .replace(/_(.*?)_/g,   "<em>$1</em>")
+    .replace(/\n/g,        "<br>");
+}
+
+function escHtml(s) {
+  if (!s) return "";
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function fmtTime(d) {
+  if (!d) return "";
+  const dt = new Date(d);
+  const diffMs = Date.now() - dt.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1)  return "baru saja";
+  if (diffMin < 60) return diffMin + "m";
+  if (diffMin < 1440) return Math.floor(diffMin/60) + "j";
+  return dt.toLocaleDateString("id-ID", { day:"2-digit", month:"short" });
+}
+
+function strToColor(str) {
+  let hash = 0;
+  for (let i=0; i<(str||"").length; i++) hash = str.charCodeAt(i) + ((hash<<5)-hash);
+  const colors = ["#e8522a","#3498db","#9b59b6","#27ae60","#f39c12","#e74c3c","#1abc9c","#2980b9"];
+  return colors[Math.abs(hash) % colors.length];
+}
+
+/* ── UI GLOBALS ──────────────────────────────────────────────── */
+window.toggleDarkMode = function() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+};
+
+/* ── START ───────────────────────────────────────────────────── */
+init();
+</script>
+</body>
+</html>
