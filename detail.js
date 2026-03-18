@@ -36,38 +36,62 @@ if (!slug) window.location.href = "/";
 const API_DETAIL = `https://www.sankavollerei.com/comic/komikindo/detail/${slug}`;
 
 /* ── IMAGE PROXY ────────────────────────────────────────── */
+const _DOMAIN_REF = {
+  "komikindo":  "https://komikindo.org",
+  "komikcast":  "https://komikcast.me",
+  "komiku":     "https://komiku.id",
+  "manhwaindo": "https://manhwaindo.id",
+  "bacakomik":  "https://bacakomik.me",
+  "mangatale":  "https://mangatale.co",
+  "westmanga":  "https://westmanga.info",
+};
+
+function _getRef(url) {
+  if (!url) return "";
+  try {
+    const host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
+    for (const [k, v] of Object.entries(_DOMAIN_REF)) {
+      if (host.includes(k)) return v;
+    }
+    return `https://${host}`;
+  } catch { return ""; }
+}
+
+function _wsrv(rawUrl, w, withRef) {
+  const clean = rawUrl.split("?")[0];
+  let q = `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=85&n=-1`;
+  if (withRef) {
+    const ref = _getRef(clean);
+    if (ref) q += `&ref=${encodeURIComponent(ref)}`;
+  }
+  return q;
+}
+
 function proxyImg(url, w = 300) {
   if (!url) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
-  const clean = encodeURIComponent(url.split("?")[0]);
-  return `https://wsrv.nl/?url=${clean}&w=${w}&output=webp&q=85&n=-1`;
+  return _wsrv(url, w, true);
 }
 
 function imgFallback(img, originalUrl) {
   if (!originalUrl || img.dataset.fallbackSet) return;
   img.dataset.fallbackSet = "1";
-  let tried = 0;
   const clean = originalUrl.split("?")[0];
-  img.onerror = function () {
-    tried++;
+  let step = 0;
+  function next() {
+    step++;
     img.onerror = null;
-    if (tried === 1) {
-      img.onerror = function () {
-        tried++;
-        img.onerror = null;
-        showImgPlaceholder(img);
-      };
-      img.src = clean;
-    } else {
-      showImgPlaceholder(img);
-    }
-  };
+    if (step === 1) { img.onerror = next; img.src = _wsrv(clean, 300, false); }
+    else if (step === 2) { img.onerror = next; img.src = clean; }
+    else { showImgPlaceholder(img); }
+  }
+  img.onerror = next;
 }
 
 function showImgPlaceholder(img) {
   img.onerror = null;
   const ph = document.createElement("div");
-  ph.style.cssText = `width:100%;height:${img.height||img.offsetHeight||155}px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;`;
+  ph.style.cssText = `width:100%;height:${img.offsetHeight||155}px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;`;
   ph.textContent = "📚";
   if (img.parentNode) img.parentNode.replaceChild(ph, img);
 }
