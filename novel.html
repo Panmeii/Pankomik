@@ -325,46 +325,47 @@ let searchTimer   = null;
 let isSearchMode  = false;
 
 /* ============================================================
-   IMAGE PROXY — Multi-layer fallback bypass Cloudflare
-   sakuranovel.id dilindungi Cloudflare Bot Protection
-   Coba: images.weserv.nl → wsrv.nl → direct (last resort)
+   IMAGE PROXY — Multi-layer fallback
+   wsrv.nl sebagai proxy utama (lebih stabil)
    ============================================================ */
 function proxyImg(url, width) {
   if (!url) return "";
-  if (url.includes("weserv.nl") || url.includes("wsrv.nl") ||
+  if (url.includes("wsrv.nl") || url.includes("weserv.nl") ||
       url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
   var w = width || 300;
-  var clean = url.replace(/^https?:\/\//, "");
-  return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + "&w=" + w + "&output=webp&q=80";
+  var clean = url.split("?")[0];
+  return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=" + w + "&output=webp&q=85&n=-1";
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
   var img = document.createElement("img");
   img.alt = altText || "";
   if (cssText) img.style.cssText = cssText;
+  img.style.background = "var(--bg-surface)";
 
   var tried = 0;
-  function getProxy(n, u) {
-    if (n === 0) {
-      var c = u.replace(/^https?:\/\//, "");
-      return "https://images.weserv.nl/?url=" + encodeURIComponent(c) + "&w=300&output=webp&q=80";
-    }
-    if (n === 1) return "https://wsrv.nl/?url=" + encodeURIComponent(u) + "&w=300";
-    return u; /* direct as last resort */
+  var clean = (originalUrl || "").split("?")[0];
+
+  function getProxy(n) {
+    if (n === 0) return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
+    return clean; /* direct sebagai last resort */
   }
 
   img.onerror = function() {
     tried++;
-    if (tried <= 2) {
-      img.src = getProxy(tried, originalUrl);
+    if (tried === 1) {
+      img.src = getProxy(1); // direct URL
     } else {
-      img.style.display = "none";
-      var sib = img.nextElementSibling;
-      if (sib) sib.style.display = "flex";
+      // Tampilkan placeholder, bukan img.display=none (agar tidak blank)
+      img.onerror = null;
+      var ph = document.createElement("div");
+      ph.style.cssText = "display:flex;align-items:center;justify-content:center;background:var(--bg-surface);font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;width:" + (img.width||80) + "px;height:" + (img.height||110) + "px;";
+      ph.textContent = "📖";
+      if (img.parentNode) img.parentNode.replaceChild(ph, img);
     }
   };
 
-  img.src = getProxy(0, originalUrl);
+  img.src = getProxy(0);
   return img;
 }
 
