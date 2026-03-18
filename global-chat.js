@@ -58,6 +58,7 @@ style.textContent = `
   }
   #gc-toggle:hover  { transform: scale(1.08); box-shadow: 0 6px 24px rgba(232,82,42,0.7); }
   #gc-toggle:active { transform: scale(0.94); }
+  .gc-toggle-icon { pointer-events: none; line-height: 1; }
 
   /* Unread badge on toggle */
   #gc-badge {
@@ -92,36 +93,27 @@ style.textContent = `
     50%    { opacity:.6; transform:scale(.85); }
   }
 
-  /* ── PANEL ─────────────────────────────────────────────── */
+  /* ── PANEL — FULLSCREEN ────────────────────────────────── */
   #gc-panel {
     position: fixed;
-    right: 16px;
-    bottom: 136px; /* di atas tombol toggle */
+    inset: 0;
     z-index: 1199;
-    width: 340px;
-    max-width: calc(100vw - 32px);
-    height: 480px;
-    max-height: calc(100vh - 160px);
-    background: rgba(10,10,18,0.97);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    background: #0a0a12;
     display: flex;
     flex-direction: column;
-    box-shadow:
-      0 24px 60px rgba(0,0,0,0.6),
-      0 0 0 1px rgba(232,82,42,0.12),
-      inset 0 1px 0 rgba(255,255,255,0.06);
     overflow: hidden;
-    transform: scale(0.88) translateY(20px);
-    transform-origin: bottom right;
+    transform: translateY(100%);
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1), opacity 0.2s ease;
+    transition: transform 0.3s cubic-bezier(.4,0,.2,1), opacity 0.25s ease;
+    border-radius: 0;
   }
   #gc-panel.open {
-    transform: scale(1) translateY(0);
+    transform: translateY(0);
     opacity: 1;
     pointer-events: all;
   }
@@ -131,10 +123,11 @@ style.textContent = `
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 14px 10px;
-    background: rgba(232,82,42,0.08);
+    padding: 14px 16px 12px;
+    background: rgba(232,82,42,0.06);
     border-bottom: 1px solid rgba(255,255,255,0.07);
     flex-shrink: 0;
+    padding-top: max(14px, env(safe-area-inset-top));
   }
   .gc-header-icon { font-size: 18px; }
   .gc-header-text { flex: 1; }
@@ -213,13 +206,13 @@ style.textContent = `
   #gc-msgs {
     flex: 1;
     overflow-y: auto;
-    padding: 10px 10px 6px;
+    padding: 12px 14px 8px;
     display: flex;
     flex-direction: column;
     gap: 1px;
     scroll-behavior: smooth;
   }
-  #gc-msgs::-webkit-scrollbar { width: 3px; }
+  #gc-msgs::-webkit-scrollbar { width: 4px; }
   #gc-msgs::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
 
   /* Date separator */
@@ -258,13 +251,13 @@ style.textContent = `
   }
   .gc-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-  .gc-body { max-width: 80%; display: flex; flex-direction: column; }
+  .gc-body { max-width: 72%; display: flex; flex-direction: column; }
   .mine .gc-body { align-items: flex-end; }
 
   .gc-meta {
     font-family: 'Nunito', sans-serif;
-    font-size: 10px; color: #555;
-    margin-bottom: 2px;
+    font-size: 11px; color: #555;
+    margin-bottom: 3px;
     display: flex; align-items: center; gap: 4px;
   }
   .mine .gc-meta { flex-direction: row-reverse; }
@@ -281,9 +274,9 @@ style.textContent = `
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.07);
     border-radius: 14px 14px 14px 3px;
-    padding: 7px 11px;
+    padding: 9px 13px;
     font-family: 'Nunito', sans-serif;
-    font-size: 13px; line-height: 1.5;
+    font-size: 14px; line-height: 1.55;
     color: #dde;
     word-break: break-word;
     position: relative;
@@ -339,13 +332,13 @@ style.textContent = `
 
   /* ── SCROLL TO BOTTOM MINI ─────────────────────────────── */
   #gc-scroll-btn {
-    position: absolute;
-    bottom: 92px; right: 10px;
-    width: 32px; height: 32px; border-radius: 50%;
-    background: #e8522a; border: none; color: #fff; font-size: 14px;
-    cursor: pointer; z-index: 10;
+    position: fixed;
+    bottom: 100px; right: 16px;
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #e8522a; border: none; color: #fff; font-size: 16px;
+    cursor: pointer; z-index: 1210;
     display: none; align-items: center; justify-content: center;
-    box-shadow: 0 2px 10px rgba(232,82,42,0.5);
+    box-shadow: 0 2px 14px rgba(232,82,42,0.5);
   }
   #gc-scroll-btn.show { display: flex; }
 
@@ -353,9 +346,9 @@ style.textContent = `
   #gc-input-area {
     flex-shrink: 0;
     border-top: 1px solid rgba(255,255,255,0.07);
-    background: rgba(8,8,14,0.9);
-    padding: 8px 10px;
-    padding-bottom: max(8px, env(safe-area-inset-bottom));
+    background: rgba(8,8,14,0.98);
+    padding: 10px 14px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
   }
 
   /* Emoji row */
@@ -488,17 +481,8 @@ style.textContent = `
   body.light .gc-date-sep::after { background: rgba(0,0,0,0.08); }
   body.light .gc-action-btn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #555; }
 
-  /* ── MOBILE ────────────────────────────────────────────── */
-  @media (max-width: 480px) {
-    #gc-panel {
-      right: 8px;
-      width: calc(100vw - 16px);
-      bottom: 132px;
-      height: 420px;
-    }
-    #gc-toggle { right: 12px; bottom: 72px; }
-  }
 `;
+
 document.head.appendChild(style);
 
 /* ============================================================
@@ -534,7 +518,7 @@ container.innerHTML = `
     <div id="gc-pinned"></div>
 
     <!-- Messages -->
-    <div id="gc-msgs" style="position:relative;">
+    <div id="gc-msgs">
       <div id="gc-skeleton">
         <div class="gcs" style="height:40px;width:70%;border-radius:12px;"></div>
         <div class="gcs" style="height:32px;width:55%;align-self:flex-end;border-radius:12px;margin-left:auto;"></div>
@@ -594,7 +578,6 @@ const gcClose    = $("gc-close");
 const gcMsgs     = $("gc-msgs");
 const gcInput    = $("gc-input");
 const gcSend     = $("gc-send");
-const gcBadge    = $("gc-badge");
 const gcScrollBtn= $("gc-scroll-btn");
 const gcEmojiRow = $("gc-emoji-row");
 const gcEmojiBtn = $("gc-emoji-btn");
@@ -707,12 +690,10 @@ function bindEvents() {
 function togglePanel() {
   isOpen = !isOpen;
   gcPanel.classList.toggle("open", isOpen);
-  /* Perbarui ikon toggle tanpa menghancurkan span badge/dot yang sudah ada */
   const iconSpan = gcToggle.querySelector(".gc-toggle-icon");
   if (iconSpan) iconSpan.textContent = isOpen ? "✕" : "💬";
   if (isOpen) {
     unreadCount = 0;
-    /* Re-query karena badge span tidak di-replace */
     const badge = document.getElementById("gc-badge");
     if (badge) badge.classList.remove("show");
     scrollBottom();
@@ -950,7 +931,7 @@ function setupRealtime() {
       const m = { ...p.new, profiles: prof || null };
       messages.push(m);
 
-      /* Date sep jika perlu — cek tanggal pesan vs separator terakhir */
+      /* Date sep jika perlu */
       const msgDateLabel = dateLabel(m.created_at);
       const todayStr     = todayLabel();
       const displayLabel = (msgDateLabel === todayStr) ? "Hari ini" : msgDateLabel;
