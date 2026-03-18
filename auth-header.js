@@ -7,12 +7,12 @@
 
    Cara pakai di HTML:
    <script type="module">
-     import { initAuthHeader } from "./auth-header.js";
+     import { initAuthHeader } from "/auth-header.js";
      initAuthHeader();
    </script>
    ============================================================ */
 
-import { getCurrentUser, logout, onAuthChange } from "./supabase.js";
+import { getCurrentUser, logout, onAuthChange } from "/supabase.js";
 
 /* ============================================================
    INIT — panggil ini satu kali di setiap halaman
