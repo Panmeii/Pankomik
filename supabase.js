@@ -931,3 +931,50 @@ export async function getTotalNovelChaptersRead(userId) {
     .eq("user_id", userId);
   return { total: count || 0, error };
 }
+/* ============================================================
+   NOVEL PROGRESS
+   ============================================================ */
+
+/**
+ * Update progress baca novel.
+ * Dipanggil tiap kali user baca chapter novel baru.
+ */
+export async function updateNovelProgress(userId, novel, chapterTitle) {
+  /* Hitung chapter novel unik yang sudah dibaca */
+  const { count: readCount } = await supabase
+    .from("novel_chapter_reads")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("novel_slug", novel.slug);
+
+  const readChapters = readCount || 1;
+
+  const { data, error } = await supabase
+    .from("novel_reading_progress")
+    .upsert({
+      user_id:            userId,
+      novel_slug:         novel.slug,
+      novel_title:        novel.title,
+      novel_cover:        novel.cover || "",
+      read_chapters:      readChapters,
+      last_chapter_slug:  novel.lastChapterSlug || "",
+      last_chapter_title: chapterTitle || "",
+      updated_at:         new Date().toISOString()
+    }, { onConflict: "user_id,novel_slug" })
+    .select().single();
+
+  return { progress: data, error };
+}
+
+/**
+ * Ambil semua progress novel user.
+ */
+export async function getNovelProgress(userId) {
+  const { data, error } = await supabase
+    .from("novel_reading_progress")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(50);
+  return { progress: data || [], error };
+}
