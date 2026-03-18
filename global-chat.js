@@ -36,22 +36,29 @@ style.textContent = `
     right: 18px;
     bottom: 80px;
     z-index: 9100;
-    width: 54px; height: 54px;
+    width: 52px; height: 52px;
     border-radius: 50%;
     background: linear-gradient(145deg,#f05a30,#c73f1c);
     border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 24px;
+    font-size: 22px;
     box-shadow:
       0 4px 20px rgba(232,82,42,.5),
       0 2px 8px rgba(0,0,0,.35),
       inset 0 1px 0 rgba(255,255,255,.15);
-    transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+    transition: transform .2s cubic-bezier(.34,1.56,.64,1), box-shadow .2s, bottom .3s ease;
     -webkit-tap-highlight-color: transparent;
+    /* Tampilkan di atas bottom nav */
+    bottom: calc(80px + env(safe-area-inset-bottom));
   }
   #gc-toggle:hover  { transform: scale(1.08); box-shadow: 0 6px 28px rgba(232,82,42,.65); }
   #gc-toggle:active { transform: scale(.9); }
-  .gc-toggle-icon { pointer-events:none; line-height:1; transition: transform .25s cubic-bezier(.34,1.56,.64,1); display:block; }
+  /* Saat panel open, toggle tetap terlihat tapi lebih kecil */
+  #gc-panel.open ~ #gc-toggle,
+  #gc-root.panel-open #gc-toggle {
+    transform: scale(1);
+  }
+  .gc-toggle-icon { pointer-events:none; line-height:1; display:block; }
 
   /* Badge */
   #gc-badge {
@@ -103,7 +110,6 @@ style.textContent = `
   #gc-header {
     display: flex; align-items: center; gap: 12px;
     padding: 0 16px;
-    height: 58px;
     padding-top: env(safe-area-inset-top);
     min-height: calc(58px + env(safe-area-inset-top));
     background: #13131e;
@@ -165,8 +171,8 @@ style.textContent = `
 
   /* ── MESSAGES AREA ───────────────────────────────────────── */
   #gc-msgs {
-    flex:1; overflow-y:auto;
-    padding:10px 12px 12px;
+    flex:1; overflow-y:auto; overflow-x:hidden;
+    padding:10px 10px 12px;
     display:flex; flex-direction:column; gap:0;
     overscroll-behavior:contain;
   }
@@ -208,7 +214,7 @@ style.textContent = `
   .gc-av.hidden { opacity:0; pointer-events:none; }
 
   /* Body */
-  .gc-body { max-width:78%; display:flex; flex-direction:column; }
+  .gc-body { max-width:76%; display:flex; flex-direction:column; min-width:0; }
   .mine .gc-body { align-items:flex-end; }
 
   /* Meta (nama + waktu) */
@@ -316,7 +322,9 @@ style.textContent = `
 
   /* ── SCROLL BTN ──────────────────────────────────────────── */
   #gc-scroll-btn {
-    position:fixed; bottom:100px; right:16px;
+    position:fixed;
+    bottom: calc(100px + env(safe-area-inset-bottom));
+    right:16px;
     width:38px; height:38px; border-radius:50%;
     background:#e8522a; border:none; color:#fff; font-size:16px;
     cursor:pointer; z-index:9110;
@@ -333,7 +341,8 @@ style.textContent = `
     border-top:1px solid rgba(255,255,255,.05);
     background:#10101a;
     padding:10px 12px;
-    padding-bottom:max(12px, calc(env(safe-area-inset-bottom) + 6px));
+    padding-bottom:max(14px, calc(env(safe-area-inset-bottom) + 10px));
+    /* Pastikan input area tidak hilang di belakang gesture bar Android */
   }
 
   /* Emoji row */
@@ -649,11 +658,15 @@ function buildMsg(m) {
   /* Context menu */
   el.addEventListener("contextmenu", e => { e.preventDefault(); showCtx(e, m); });
   let longTimer;
-  el.addEventListener("touchstart", () => {
+  el.addEventListener("touchstart", (ev) => {
+    const touch = ev.touches?.[0];
     longTimer = setTimeout(() => {
-      const r = el.getBoundingClientRect();
-      showCtx({ clientX: r.right - 160, clientY: r.top }, m);
-    }, 600);
+      /* Gunakan koordinat sentuhan asli, bukan estimasi */
+      showCtx({
+        clientX: touch?.clientX || el.getBoundingClientRect().left + 40,
+        clientY: touch?.clientY || el.getBoundingClientRect().top,
+      }, m);
+    }, 500);
   }, { passive: true });
   el.addEventListener("touchend", () => clearTimeout(longTimer), { passive: true });
 
@@ -1044,19 +1057,34 @@ function onInput() {
 function showCtx(e, m) {
   ctxTarget = m;
   const mine = currentUser && m.user_id === currentUser.id;
-  gcCtxPin.style.display   = isAdmin   ? "flex" : "none";
-  gcCtxUnpin.style.display = isAdmin   ? "flex" : "none";
+  gcCtxPin.style.display   = isAdmin    ? "flex" : "none";
+  gcCtxUnpin.style.display = isAdmin    ? "flex" : "none";
   gcCtxReply.style.display = currentUser ? "flex" : "none";
   gcCtxDel.style.display   = (mine || isAdmin) ? "flex" : "none";
 
   const any = [gcCtxPin,gcCtxUnpin,gcCtxReply,gcCtxDel].some(el => el.style.display !== "none");
   if (!any) return;
 
-  const x = Math.min(e.clientX || window.innerWidth-170, window.innerWidth-170);
-  const y = Math.min(e.clientY || 200, window.innerHeight-160);
-  gcCtx.style.left = x + "px";
-  gcCtx.style.top  = y + "px";
   gcCtx.classList.add("show");
+
+  /* Hitung posisi SETELAH show agar bisa baca ukurannya */
+  requestAnimationFrame(() => {
+    const menuW = gcCtx.offsetWidth  || 160;
+    const menuH = gcCtx.offsetHeight || 140;
+    const vw    = window.innerWidth;
+    const vh    = window.innerHeight;
+
+    /* Koordinat sentuhan/klik — fallback ke tengah layar kalau 0 */
+    let cx = e.clientX || (e.touches?.[0]?.clientX) || vw / 2;
+    let cy = e.clientY || (e.touches?.[0]?.clientY) || vh / 2;
+
+    /* Jangan sampai keluar layar */
+    const x = Math.max(8, Math.min(cx, vw - menuW - 8));
+    const y = Math.max(8, Math.min(cy, vh - menuH - 8));
+
+    gcCtx.style.left = x + "px";
+    gcCtx.style.top  = y + "px";
+  });
 }
 async function ctxPin()    { if (!ctxTarget||!isAdmin) return; await supabase.from("global_chat").update({is_pinned:true}).eq("id",ctxTarget.id);  gcCtx.classList.remove("show"); }
 async function ctxUnpin()  { if (!ctxTarget||!isAdmin) return; await supabase.from("global_chat").update({is_pinned:false}).eq("id",ctxTarget.id); gcCtx.classList.remove("show"); }
