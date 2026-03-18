@@ -449,13 +449,15 @@ function proxyImg(url) {
   try {
     var host = new URL(clean.startsWith("http") ? clean : "https://" + clean).hostname;
     var refMap = {
-      "maid.my.id":  "https://www.maid.my.id",
-      "i0.wp.com":   "https://www.maid.my.id",
-      "i1.wp.com":   "https://www.maid.my.id",
-      "i2.wp.com":   "https://www.maid.my.id",
-      "komikindo":   "https://komikindo.org",
-      "komikcast":   "https://komikcast.me",
-      "komiku":      "https://komiku.id",
+      "mangakita.me":  "https://mangakita.me",
+      "maid.my.id":    "https://www.maid.my.id",
+      "i0.wp.com":     "https://mangakita.me",
+      "i1.wp.com":     "https://mangakita.me",
+      "i2.wp.com":     "https://mangakita.me",
+      "i3.wp.com":     "https://mangakita.me",
+      "komikindo":     "https://komikindo.org",
+      "komikcast":     "https://komikcast.me",
+      "komiku":        "https://komiku.id",
     };
     for (var k in refMap) {
       if (host === k || host.indexOf(k) !== -1) { ref = refMap[k]; break; }
@@ -472,7 +474,7 @@ function proxyImg(url) {
    ============================================================ */
 
 const GENRES_API = "https://www.sankavollerei.com/comic/komikindo/genres";  /* tetap */
-const GENRE_API  = "https://www.sankavollerei.com/comic/maid/genres/";
+const GENRE_API  = "https://www.sankavollerei.com/comic/mangakita/genres/";
 
 /* ---- STATE ---------------------------------------------- */
 let allGenres     = [];
@@ -632,25 +634,28 @@ async function fetchGenreKomik(slug, page) {
   pagination.style.display = "none";
 
   try {
-    /* Endpoint: /comic/maid/genres/:genre?page=N */
-    const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}?page=${page}`);
+    /* Endpoint: /comic/mangakita/genres/:genre/page:N */
+    const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}/page${page}`);
     const data = await res.json();
 
-    /* API maid: data[] dengan banner, slug, rating, title */
-    const raw  = data.data || [];
-    allFetched = raw.map(k => ({
-      ...k,
-      cover:   k.banner  || k.cover || k.image || k.thumbnail || "",
-      title:   k.title   || k.name  || "Untitled",
-      slug:    k.slug    || k.id    || "",
-      type:    k.type    || "",
-      rating:  k.rating  || "–",
-      chapter: k.latestChapter || k.chapter || "",
-    }));
+    /* API mangakita: mangaList[] dengan image, slug, rating, latestChapter, link */
+    const raw  = data.mangaList || data.data || [];
+    allFetched = raw.map(k => {
+      const rawImg = k.image || k.banner || k.cover || k.thumbnail || "";
+      return {
+        ...k,
+        cover:   rawImg,
+        title:   k.title   || k.name  || "Untitled",
+        slug:    k.slug    || k.id    || "",
+        type:    k.type    || "",
+        rating:  k.rating  || "–",
+        chapter: k.latestChapter || k.chapter || "",
+      };
+    });
 
     /* Pagination dari data.pagination */
     const pag   = data.pagination || {};
-    hasNextPage = !!(pag.hasNext);
+    hasNextPage = !!(pag.hasNextPage ?? pag.hasNext);
     currentPage = pag.currentPage || page;
 
     document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
