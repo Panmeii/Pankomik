@@ -313,6 +313,35 @@
       font-size: 13px; color: var(--text-muted); text-align: center;
     }
 
+    /* ── Leaderboard sub-tab toggle ──────────────────────── */
+    .lb-toggle {
+      display: flex; gap: 6px;
+      padding: 12px 0 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .lb-toggle-btn {
+      flex: 1; padding: 9px 12px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .lb-toggle-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(232,82,42,0.3);
+    }
+    .lb-toggle-btn:not(.active):hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
     /* Skeleton for leaderboard */
     .lb-skeleton {
       height: 64px; border-radius: 12px; margin-bottom: 6px;
@@ -346,7 +375,7 @@ import {
   isOAuthUser, uploadAvatar,
   getBookmarks, removeBookmark, addBookmark,
   getHistory, getProgress, syncProfileProgress, getTotalChaptersRead,
-  getLeaderboard,
+  getLeaderboard, getNovelLeaderboard,
   getNovelBookmarks, removeNovelBookmark,
   getNovelHistory
 } from "/supabase.js";
@@ -405,18 +434,8 @@ async function loadProfile() {
     .map(b => `<div class="badge-chip">${b.icon} ${b.name}</div>`)
     .join("");
 
-  /* Nama: prioritas username → Google full_name → Google name → email prefix */
-  const googleName = currentUser.user_metadata?.full_name
-    || currentUser.user_metadata?.name
-    || currentUser.email?.split("@")[0]
-    || "User";
-  const displayName = profile?.username || googleName;
-
-  /* Avatar: prioritas profile → Google photo → generated */
-  const googleAvatar = currentUser.user_metadata?.avatar_url || null;
-  const avatarSrc = profile?.avatar_url
-    || googleAvatar
-    || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e8522a&color=fff&bold=true`;
+  const avatarSrc  = profile?.avatar_url
+    || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.username || 'U')}&background=e8522a&color=fff&bold=true`;
 
   document.getElementById("profileContent").innerHTML = `
     <!-- ── Header Profil ── -->
@@ -430,7 +449,7 @@ async function loadProfile() {
       </div>
       <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleAvatarUpload(event)">
 
-      <div class="profile-name" id="profileNameDisplay">${displayName}</div>
+      <div class="profile-name" id="profileNameDisplay">${profile?.username || 'User'}</div>
       <div class="profile-level">Level ${liveLevel} — ${levelTitle}</div>
       <div class="profile-stats">
         <div class="stat-item"><p id="statChapters">${liveTotal}</p><p>Chapter Dibaca</p></div>
@@ -743,77 +762,88 @@ async function loadBadgeTab() {
 /* ============================================================
    LEADERBOARD
    ============================================================ */
-async function loadLeaderboard(forceRefresh = false) {
-  const el = document.getElementById("leaderboardContent");
+/* ── Leaderboard helpers ──────────────────────────────── */
+const rankEmoji = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`;
+const rankClass = i => i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "";
 
-  // Skeleton loading
-  el.innerHTML = Array(8).fill(`<div class="lb-skeleton"></div>`).join("");
-
-  const { leaderboard, error } = await getLeaderboard(20);
-
-  if (error || !leaderboard.length) {
-    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat leaderboard. Coba lagi.</p>
-      <button onclick="loadLeaderboard(true)" style="margin-top:12px;padding:7px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700;">Coba Lagi</button>
-    </div>`;
-    return;
-  }
-
-  // Cari rank user sendiri
-  const myRankIndex = leaderboard.findIndex(u => u.id === currentUser.id);
-  const myRank      = myRankIndex >= 0 ? myRankIndex + 1 : null;
-
-  const rankEmoji = (i) => {
-    if (i === 0) return "🥇";
-    if (i === 1) return "🥈";
-    if (i === 2) return "🥉";
-    return `#${i + 1}`;
-  };
-
-  const rankClass = (i) => {
-    if (i === 0) return "rank-1";
-    if (i === 1) return "rank-2";
-    if (i === 2) return "rank-3";
-    return "";
-  };
-
-  const rows = leaderboard.map((u, i) => {
-    const isMe    = u.id === currentUser.id;
-    const name    = u.username || "Anonim";
-    const avatar  = u.avatar_url
+function buildLbRows(list, scoreField, scoreLabel, userId) {
+  if (!list.length) return `<div class="empty-state"><p>📭</p><p>Belum ada data. Jadilah yang pertama!</p></div>`;
+  const myRankIndex = list.findIndex(u => u.id === userId);
+  const myRankCard  = myRankIndex < 0
+    ? `<div class="lb-my-rank">Kamu belum masuk top 20. Terus baca untuk naik peringkat! 🚀</div>`
+    : "";
+  const rows = list.map((u, i) => {
+    const isMe   = u.id === userId;
+    const name   = u.username || "Anonim";
+    const avatar = u.avatar_url
       || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e8522a&color=fff&bold=true&size=80`;
-    const level   = u.level || 1;
-    const chaps   = u.total_chapters_read || 0;
-
+    const level  = u.level || 1;
+    const score  = (u[scoreField] || 0).toLocaleString("id-ID");
     return `
       <div class="lb-row ${rankClass(i)} ${isMe ? "me" : ""}">
         <div class="lb-rank">${rankEmoji(i)}</div>
-        <img class="lb-avatar" src="${avatar}" alt="${name}" loading="lazy">
+        <img class="lb-avatar" src="${avatar}" alt="${name}" loading="lazy"
+             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e8522a&color=fff&bold=true&size=80'">
         <div class="lb-info">
-          <div class="lb-name">
-            ${name}${isMe ? `<span class="lb-me-badge">Kamu</span>` : ""}
-          </div>
+          <div class="lb-name">${name}${isMe ? `<span class="lb-me-badge">Kamu</span>` : ""}</div>
           <div class="lb-meta">Level ${level} · ${getLevelTitle(level)}</div>
         </div>
         <div class="lb-score">
-          <span class="lb-score-num">${chaps.toLocaleString("id-ID")}</span>
-          <span class="lb-score-label">chapter</span>
+          <span class="lb-score-num">${score}</span>
+          <span class="lb-score-label">${scoreLabel}</span>
         </div>
       </div>`;
   }).join("");
+  return rows + myRankCard;
+}
 
-  // Tampilkan rank user jika tidak ada di top 20
-  const myRankCard = (!myRank) ? `
-    <div class="lb-my-rank">
-      Kamu belum masuk top 20. Terus baca komik untuk naik peringkat! 📚
-    </div>` : "";
+let _lbTab = "komik"; /* active leaderboard sub-tab */
+
+async function loadLeaderboard(forceRefresh = false) {
+  const el = document.getElementById("leaderboardContent");
 
   el.innerHTML = `
-    <div class="lb-header">
-      <h3>🏆 Top 20 Pembaca</h3>
-      <button class="lb-refresh-btn" onclick="loadLeaderboard(true)">🔄 Refresh</button>
+    <!-- Sub-tab toggle -->
+    <div class="lb-toggle" id="lbToggle">
+      <button class="lb-toggle-btn active" id="lbBtnKomik" onclick="switchLbTab('komik')">📚 Komik</button>
+      <button class="lb-toggle-btn"        id="lbBtnNovel" onclick="switchLbTab('novel')">📖 Novel</button>
     </div>
-    ${rows}
-    ${myRankCard}`;
+    <div id="lbBody">${Array(8).fill('<div class="lb-skeleton"></div>').join("")}</div>
+    <button class="lb-refresh-btn" onclick="loadLeaderboard(true)" style="margin:10px auto;display:flex;">🔄 Refresh</button>
+  `;
+
+  /* Fetch keduanya paralel */
+  const [{ leaderboard: komikLb }, { leaderboard: novelLb }] = await Promise.all([
+    getLeaderboard(20),
+    getNovelLeaderboard(20)
+  ]);
+
+  window._lbKomik = komikLb;
+  window._lbNovel = novelLb;
+
+  /* Render tab yang aktif */
+  renderLbTab(_lbTab);
+
+  /* Restore active tab button */
+  document.getElementById("lbBtnKomik")?.classList.toggle("active", _lbTab === "komik");
+  document.getElementById("lbBtnNovel")?.classList.toggle("active", _lbTab === "novel");
+}
+
+window.switchLbTab = function(tab) {
+  _lbTab = tab;
+  document.getElementById("lbBtnKomik")?.classList.toggle("active", tab === "komik");
+  document.getElementById("lbBtnNovel")?.classList.toggle("active", tab === "novel");
+  renderLbTab(tab);
+};
+
+function renderLbTab(tab) {
+  const body = document.getElementById("lbBody");
+  if (!body) return;
+  if (tab === "komik") {
+    body.innerHTML = buildLbRows(window._lbKomik || [], "total_chapters_read", "chapter komik", currentUser.id);
+  } else {
+    body.innerHTML = buildLbRows(window._lbNovel || [], "total_novel_chapters_read", "chapter novel", currentUser.id);
+  }
 }
 
 window.loadLeaderboard = loadLeaderboard;
@@ -866,7 +896,7 @@ window.handleAvatarUpload = async function (event) {
     showUploadMsg(`❌ Gagal upload: ${error.message || "Coba lagi."}`, "error");
     // Kembalikan avatar lama
     const oldSrc = currentProfile?.avatar_url
-      || currentUser?.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentProfile?.username || currentUser?.user_metadata?.full_name || 'U')}&background=e8522a&color=fff`;
+      || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentProfile?.username || 'U')}&background=e8522a&color=fff`;
     ["avatarImg", "avatarImgSettings"].forEach(id => {
       const img = document.getElementById(id); if (img) img.src = oldSrc;
     });
