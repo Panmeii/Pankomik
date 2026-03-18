@@ -340,15 +340,49 @@ async function getGenreChips() {
   const container = document.getElementById("genreChipsIndex");
   if (!container) return;
   try {
-    const res    = await fetch("https://www.sankavollerei.com/comic/bacakomik/genres");
-    const data   = await res.json();
-    const genres = (data.genres || []).filter(g => g.title && g.title.length >= 3);
-    container.innerHTML = genres.slice(0, 20).map(g => `
-      <button class="genre-chip-index" onclick="window.location.href='/genre/${encodeURIComponent(g.slug)}'">
-        ${g.title}
-      </button>`).join("") + `
-      <button class="genre-chip-index" style="border-color:var(--accent);color:var(--accent);"
-        onclick="window.location.href='/genre/'">Lainnya →</button>`;
+    /* Pakai API baru komikindo — field: name + value (slug) */
+    const res  = await fetch("https://www.sankavollerei.com/comic/komikindo/genres");
+    const data = await res.json();
+
+    const TYPOS = new Set(["actio","traged"]);
+    const seen  = new Set();
+
+    const genres = (data.genres || [])
+      .filter(g => {
+        const val  = (g.value || g.slug || "").toLowerCase();
+        const name = (g.name  || g.title || "");
+        if (!val || !name || name.length < 3) return false;
+        if (TYPOS.has(val)) return false;
+        if (seen.has(val)) return false;
+        seen.add(val);
+        return true;
+      })
+      .sort((a, b) => {
+        const na = a.name || a.title;
+        const nb = b.name || b.title;
+        return na.localeCompare(nb, "id");
+      });
+
+    /* Tampilkan 16 genre populer di home */
+    const popular = ["action","romance","fantasy","comedy","drama",
+                     "adventure","horror","thriller","shounen","isekai",
+                     "supernatural","school-life","martial-arts","mystery",
+                     "sports","psychological"];
+    const sorted = [
+      ...genres.filter(g => popular.includes(g.value || g.slug)),
+      ...genres.filter(g => !popular.includes(g.value || g.slug)),
+    ];
+
+    container.innerHTML = sorted.slice(0, 16).map(g => {
+      const slug = g.value || g.slug;
+      const name = g.name  || g.title;
+      return `<button class="genre-chip-index" onclick="window.location.href='/genre/${encodeURIComponent(slug)}'">
+        ${name}
+      </button>`;
+    }).join("") + `
+      <button class="genre-chip-index" style="border-color:var(--accent);color:var(--accent);font-weight:800;"
+        onclick="window.location.href='/genre/'">Semua →</button>`;
+
   } catch (err) {
     console.error("Gagal fetch genre chips:", err);
     if (container) container.innerHTML = "";
