@@ -238,6 +238,53 @@
       font-family: 'Nunito', sans-serif;
     }
     @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── Chapter List Panel ──────────────────────────────── */
+    .ch-panel-overlay {
+      display: none; position: fixed; inset: 0;
+      z-index: 1499; background: rgba(0,0,0,0.55);
+    }
+    .ch-panel-overlay.open { display: block; }
+
+    .ch-panel {
+      position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+      z-index: 1500; display: flex; flex-direction: column;
+      background: rgba(14,14,20,0.98); backdrop-filter: blur(16px);
+      border-right: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 4px 0 28px rgba(0,0,0,0.6);
+      transition: left 0.3s ease;
+    }
+    .ch-panel.open { left: 0; }
+    body.light .ch-panel { background: rgba(248,248,252,0.98); }
+
+    .ch-panel-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px; flex-shrink: 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: rgba(142,68,173,0.12);
+    }
+    .ch-panel-head h3 { font-size: 14px; font-weight: 800; color: #8e44ad; margin: 0; }
+    .ch-panel-close {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: rgba(255,255,255,0.08); border: none;
+      color: var(--text, #eaeaf0); font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .ch-panel-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+
+    .ch-panel-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 16px; cursor: pointer; font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background 0.15s;
+    }
+    .ch-panel-item:hover  { background: rgba(255,255,255,0.05); }
+    .ch-panel-item.active { background: rgba(142,68,173,0.18); color: #8e44ad; font-weight: 700; }
+    .ch-panel-item-title  { flex: 1; font-weight: 600; color: var(--text, #eaeaf0); }
+    .ch-panel-item.active .ch-panel-item-title { color: #8e44ad; }
+    .ch-panel-item-date   { font-size: 11px; color: #666; flex-shrink: 0; margin-left: 8px; }
+    .ch-panel-badge       { font-size: 12px; flex-shrink: 0; margin-left: 4px; }
   </style>
 </head>
 <body>
@@ -250,6 +297,7 @@
   <button class="header-back" onclick="goBack()">←</button>
   <span class="header-title" id="headerTitle">Memuat...</span>
   <div class="header-btns">
+    <button class="hbtn" onclick="toggleChapterPanel()" title="Daftar Chapter">📚</button>
     <button class="hbtn" onclick="toggleSettings()" title="Pengaturan">⚙️</button>
     <button class="hbtn" onclick="goToDetail()" title="Detail Novel">📋</button>
   </div>
@@ -285,6 +333,21 @@
 </div>
 
 <!-- Reader wrap -->
+
+<!-- Chapter List Overlay -->
+<div class="ch-panel-overlay" id="chPanelOverlay" onclick="toggleChapterPanel()"></div>
+
+<!-- Chapter List Panel -->
+<div class="ch-panel" id="chPanel">
+  <div class="ch-panel-head">
+    <h3>📚 Daftar Chapter</h3>
+    <button class="ch-panel-close" onclick="toggleChapterPanel()">✕</button>
+  </div>
+  <div class="ch-panel-list" id="chPanelList">
+    <div style="padding:20px;text-align:center;color:#888;font-size:13px;">Memuat...</div>
+  </div>
+</div>
+
 <div id="readerWrap">
   <div class="reader-loading">
     <div class="reader-spinner"></div>
@@ -424,7 +487,7 @@ function renderChapter(d) {
       <div class="novel-label">📖 Novel</div>
       <h2>${escHtml(d.title || "")}</h2>
       <div class="nav-pills">
-        ${parentSlug ? `<a class="nav-pill" href="novel-detail.html?slug=${parentSlug}">← Detail Novel</a>` : ""}
+        ${parentSlug ? `<a class="nav-pill" href="/novel/${parentSlug}">← Detail Novel</a>` : ""}
         ${prevSlug   ? `<span class="nav-pill" onclick="goToChapter('${prevSlug}')">⬅ Sebelumnya</span>` : ""}
         ${nextSlug   ? `<span class="nav-pill accent" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</span>` : ""}
       </div>
@@ -440,7 +503,7 @@ function renderChapter(d) {
       ${nextSlug
         ? `<button class="cnav-btn primary" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</button>`
         : parentSlug
-          ? `<button class="cnav-btn primary" onclick="window.location.href='novel-detail.html?slug=${parentSlug}'">📋 Kembali ke Detail</button>`
+          ? `<button class="cnav-btn primary" onclick="window.location.href='/novel/${parentSlug}'">📋 Kembali ke Detail</button>`
           : `<button class="cnav-btn" disabled>✅ Selesai</button>`
       }
     </div>
@@ -470,18 +533,101 @@ window.goToChapter = function (slug) {
   currentSlug  = slug;
   historySaved = false;
   loadChapter(slug);
+  /* Update active state di panel */
+  setTimeout(renderChapterPanel, 600);
+};
+
+
+/* ============================================================
+   CHAPTER LIST PANEL
+   ============================================================ */
+let _chapterList = [];
+let _chPanelLoaded = false;
+
+window.toggleChapterPanel = function () {
+  const panel   = document.getElementById("chPanel");
+  const overlay = document.getElementById("chPanelOverlay");
+  if (!panel) return;
+
+  const isOpen = panel.classList.contains("open");
+  panel.classList.toggle("open");
+  overlay.classList.toggle("open");
+
+  /* Load chapter list pertama kali dibuka */
+  if (!isOpen && !_chPanelLoaded && parentSlug) {
+    loadChapterList(parentSlug);
+  }
+
+  /* Scroll ke chapter aktif */
+  if (!isOpen) {
+    setTimeout(() => {
+      document.querySelector(".ch-panel-item.active")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 200);
+  }
+};
+
+async function loadChapterList(novelSlug) {
+  const listEl = document.getElementById("chPanelList");
+  if (!listEl) return;
+
+  try {
+    const BASE_DETAIL = "https://www.sankavollerei.com/novel/sakuranovel";
+    const res  = await fetch(`${BASE_DETAIL}/detail/${novelSlug}`);
+    const json = await res.json();
+
+    if (!json.data?.chapters?.length) {
+      listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:13px;">Tidak ada daftar chapter.</div>';
+      return;
+    }
+
+    _chapterList = json.data.chapters;
+    _chPanelLoaded = true;
+    renderChapterPanel();
+  } catch (e) {
+    console.error("Gagal load chapter list:", e);
+    const listEl = document.getElementById("chPanelList");
+    if (listEl) listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:13px;">Gagal memuat. Coba lagi.</div>';
+  }
+}
+
+function renderChapterPanel() {
+  const listEl = document.getElementById("chPanelList");
+  if (!listEl || !_chapterList.length) return;
+
+  listEl.innerHTML = _chapterList.map((ch, i) => {
+    const isActive = ch.slug === currentSlug;
+    const title    = ch.title || `Chapter ${i + 1}`;
+    const date     = ch.date  || "";
+    const shortTitle = title.length > 45 ? title.slice(0, 42) + "…" : title;
+    return `
+      <div class="ch-panel-item ${isActive ? "active" : ""}"
+           onclick="goToChapterFromPanel('${ch.slug}')">
+        <span class="ch-panel-item-title">${shortTitle}</span>
+        ${date ? `<span class="ch-panel-item-date">${date}</span>` : ""}
+        ${isActive ? `<span class="ch-panel-badge">📖</span>` : ""}
+      </div>`;
+  }).join("");
+}
+
+window.goToChapterFromPanel = function (slug) {
+  if (slug === currentSlug) { toggleChapterPanel(); return; }
+  toggleChapterPanel();
+  goToChapter(slug);
+  /* Re-render panel setelah chapter baru load untuk update active */
+  setTimeout(renderChapterPanel, 800);
 };
 
 window.goBack = function () {
   if (parentSlug) {
-    window.location.href = `novel-detail.html?slug=${parentSlug}`;
+    window.location.href = `/novel/${parentSlug}`;
   } else {
     history.back();
   }
 };
 
 window.goToDetail = function () {
-  if (parentSlug) window.location.href = `novel-detail.html?slug=${parentSlug}`;
+  if (parentSlug) window.location.href = `/novel/${parentSlug}`;
   else history.back();
 };
 
