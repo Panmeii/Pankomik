@@ -29,12 +29,45 @@ function readerURL(chSlug, komikSlug) { return komikSlug ? `/komik/${komikSlug}/
  * weserv.nl dihapus karena sering rate-limit & blokir.
  */
 
-/* Buat URL proxy wsrv.nl (lebih stabil dari weserv) */
+/* ── Domain → Referer map untuk bypass hotlink protection ── */
+const DOMAIN_REF_MAP = {
+  "komikindo":  "https://komikindo.org",
+  "komikcast":  "https://komikcast.me",
+  "komiku":     "https://komiku.id",
+  "manhwaindo": "https://manhwaindo.id",
+  "bacakomik":  "https://bacakomik.me",
+  "mangatale":  "https://mangatale.co",
+  "westmanga":  "https://westmanga.info",
+  "shinigami":  "https://shinigami.id",
+  "kiryuu":     "https://kiryuu.id",
+  "mgkomik":    "https://mgkomik.id",
+};
+
+function getReferer(url) {
+  if (!url) return "";
+  try {
+    const host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
+    for (const [key, ref] of Object.entries(DOMAIN_REF_MAP)) {
+      if (host.includes(key)) return ref;
+    }
+    return "https://" + host; // fallback: domain itu sendiri
+  } catch { return ""; }
+}
+
+function buildWsrv(rawUrl, w, withRef) {
+  const clean = rawUrl.split("?")[0];
+  let q = `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=85&n=-1`;
+  if (withRef) {
+    const ref = getReferer(clean);
+    if (ref) q += `&ref=${encodeURIComponent(ref)}`;
+  }
+  return q;
+}
+
 function proxyImg(url, w = 300) {
   if (!url) return "";
-  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("images.weserv.nl")) return url;
-  const clean = encodeURIComponent(url.split("?")[0]);
-  return `https://wsrv.nl/?url=${clean}&w=${w}&output=webp&q=85&n=-1`;
+  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
+  return buildWsrv(url, w, true);
 }
 
 function safeCover(komik, w = 300) {
@@ -43,47 +76,32 @@ function safeCover(komik, w = 300) {
 }
 
 /**
- * imgFallback: pasang onerror chain ke img element.
- * Urutan: wsrv.nl → direct URL → placeholder emoji
+ * imgFallback — chain: wsrv+ref → wsrv tanpa ref → direct URL → placeholder
  */
 function imgFallback(img, originalUrl) {
   if (!originalUrl || img.dataset.fallbackSet) return;
   img.dataset.fallbackSet = "1";
-  let tried = 0;
   const clean = originalUrl.split("?")[0];
+  let step = 0;
 
-  img.onerror = function () {
-    tried++;
-    img.onerror = null; // reset dulu
-    if (tried === 1) {
-      // Fallback ke direct URL (tanpa proxy)
-      img.onerror = function () {
-        tried++;
-        img.onerror = null;
-        if (tried === 2) {
-          // Fallback ke placeholder visual
-          showImgPlaceholder(img);
-        }
-      };
-      img.src = clean;
-    } else {
-      showImgPlaceholder(img);
+  function tryNext() {
+    step++;
+    img.onerror = null;
+    switch (step) {
+      case 1: img.onerror = tryNext; img.src = buildWsrv(clean, 300, false); break;
+      case 2: img.onerror = tryNext; img.src = clean; break;
+      default: showImgPlaceholder(img);
     }
-  };
+  }
+
+  img.onerror = tryNext;
 }
 
 function showImgPlaceholder(img) {
   img.onerror = null;
-  // Ganti img dengan div placeholder agar tidak blank hitam
+  const h  = img.offsetHeight || 155;
   const ph = document.createElement("div");
-  ph.style.cssText = `
-    width:100%; height:${img.height || img.offsetHeight || 155}px;
-    background:var(--bg-surface);
-    display:flex; align-items:center; justify-content:center;
-    font-size:32px; color:var(--text-muted);
-    border-radius:inherit;
-    flex-shrink:0;
-  `;
+  ph.style.cssText = `width:100%;height:${h}px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;`;
   ph.textContent = "📚";
   if (img.parentNode) img.parentNode.replaceChild(ph, img);
 }
@@ -91,7 +109,9 @@ function showImgPlaceholder(img) {
 /* ── ANIMASI MASUK ──────────────────────────────────────── */
 /** Tambahkan style animasi fade-in ke sebuah elemen */
 function animateIn(el, delay = 0) {
-  el.style.cssText += `opacity:0;transform:translateY(12px);transition:opacity 0.35s ${delay}ms ease,transform 0.35s ${delay}ms ease;`;
+  el.style.opacity = "0";
+  el.style.transform = "translateY(12px)";
+  el.style.transition = `opacity 0.35s ${delay}ms ease, transform 0.35s ${delay}ms ease`;
   requestAnimationFrame(() => requestAnimationFrame(() => {
     el.style.opacity = "1";
     el.style.transform = "translateY(0)";
