@@ -473,7 +473,7 @@ function proxyImg(url) {
    GENRE PAGE — genre.js (inline)
    ============================================================ */
 
-const GENRES_API = "https://www.sankavollerei.com/comic/komikindo/genres";  /* tetap */
+const GENRES_API = "https://www.sankavollerei.com/comic/mangakita/genres";
 const GENRE_API  = "https://www.sankavollerei.com/comic/mangakita/genres/";
 
 /* ---- STATE ---------------------------------------------- */
@@ -532,25 +532,31 @@ async function loadGenreList() {
 
     /* API baru pakai field: name (display) + value (slug untuk URL)
        Deduplicate pakai value sebagai key, filter min 3 karakter & hapus typo */
-    const rawGenres = data.genres || [];
-    const seen  = new Set();
-    const TYPOS = new Set(["actio","traged"]); /* typo dari API lama */
+    const rawGenres = data.genres || data.data || data.genreList || [];
 
-    allGenres = rawGenres
-      .filter(g => {
-        const val  = (g.value || g.slug || "").toLowerCase();
-        const name = (g.name  || g.title || "");
-        if (!val || !name || name.length < 3) return false;
-        if (TYPOS.has(val)) return false;
-        if (seen.has(val)) return false;
-        seen.add(val);
-        return true;
-      })
+    /* Fallback: genre populer mangakita kalau API tidak return list */
+    const FALLBACK_GENRES = [
+      {slug:"action",title:"Action"},{slug:"adventure",title:"Adventure"},
+      {slug:"comedy",title:"Comedy"},{slug:"drama",title:"Drama"},
+      {slug:"fantasy",title:"Fantasy"},{slug:"horror",title:"Horror"},
+      {slug:"romance",title:"Romance"},{slug:"school-life",title:"School Life"},
+      {slug:"sci-fi",title:"Sci-Fi"},{slug:"seinen",title:"Seinen"},
+      {slug:"shounen",title:"Shounen"},{slug:"slice-of-life",title:"Slice of Life"},
+      {slug:"supernatural",title:"Supernatural"},{slug:"thriller",title:"Thriller"},
+      {slug:"isekai",title:"Isekai"},{slug:"martial-arts",title:"Martial Arts"},
+      {slug:"harem",title:"Harem"},{slug:"ecchi",title:"Ecchi"},
+      {slug:"adult",title:"Adult"},{slug:"mystery",title:"Mystery"},
+    ];
+
+    const seen = new Set();
+    const parsed = rawGenres
       .map(g => ({
-        /* Normalize ke format slug+title agar kode selanjutnya tetap jalan */
-        slug:  g.value || g.slug,
-        title: g.name  || g.title,
+        slug:  (g.value || g.slug  || g.id   || "").toLowerCase().trim(),
+        title: (g.name  || g.title || g.label || "").trim(),
       }))
+      .filter(g => g.slug && g.title && g.title.length >= 2 && !seen.has(g.slug) && seen.add(g.slug));
+
+    allGenres = (parsed.length > 3 ? parsed : FALLBACK_GENRES)
       .sort((a, b) => a.title.localeCompare(b.title, "id"));
 
     renderGenreChips();
@@ -635,8 +641,12 @@ async function fetchGenreKomik(slug, page) {
 
   try {
     /* Endpoint: /comic/mangakita/genres/:genre/page:N */
-    const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}/page${page}`);
+    const url  = `${GENRE_API}${encodeURIComponent(slug)}/page${page}`;
+    console.log("[Genre] Fetching:", url);
+    const res  = await fetch(url);
+    console.log("[Genre] Status:", res.status);
     const data = await res.json();
+    console.log("[Genre] Keys:", Object.keys(data), "mangaList:", data.mangaList?.length, "success:", data.success);
 
     /* API mangakita: mangaList[] dengan image, slug, rating, latestChapter, link */
     const raw  = data.mangaList || data.data || [];
@@ -658,17 +668,26 @@ async function fetchGenreKomik(slug, page) {
     hasNextPage = !!(pag.hasNextPage ?? pag.hasNext);
     currentPage = pag.currentPage || page;
 
+    if (!data.success && !raw.length) {
+      throw new Error(`API error: success=${data.success}, keys=${Object.keys(data).join(",")}`);
+    }
+
     document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
 
     applyFilterAndSort();
     renderPagination();
 
   } catch (err) {
-    console.error("Gagal fetch genre komik:", err);
+    console.error("[Genre] Gagal fetch:", err);
     grid.innerHTML = `
       <div style="grid-column:1/-1" class="genre-empty">
         <p>😕</p>
-        <p>Gagal memuat. Cek koneksi internet.</p>
+        <p>Gagal memuat genre <strong>${slug}</strong>.</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">${err.message}</p>
+        <button onclick="fetchGenreKomik('${slug}',${page})"
+          style="margin-top:10px;padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;">
+          🔄 Coba Lagi
+        </button>
       </div>`;
     pagination.style.display = "none";
   }
