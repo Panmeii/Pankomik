@@ -146,7 +146,16 @@
       display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
       overflow:hidden;line-height:1.35;margin-bottom:4px;
     }
-    .novel-chapter {
+    .novel-update-date {
+    font-size: 10px;
+    color: var(--text-muted, #888);
+    margin-top: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0.85;
+  }
+  .novel-chapter {
       font-size:10px;color:var(--text-muted);
       display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
       overflow:hidden;line-height:1.3;
@@ -347,14 +356,11 @@ function _getNovelRef(url) {
 
 function proxyImg(url, width) {
   if (!url) return "";
-  if (url.includes("wsrv.nl") || url.includes("weserv.nl") ||
-      url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
-  var w = width || 300;
+  if (url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
+  if (url.includes("/api/img")) return url;
   var clean = url.split("?")[0];
-  var ref = _getNovelRef(clean);
-  var q = "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=" + w + "&output=webp&q=85&n=-1";
-  if (ref) q += "&ref=" + encodeURIComponent(ref);
-  return q;
+  // Gunakan Vercel Edge proxy /api/img - bypass hotlink + Cloudflare
+  return "/api/img?url=" + encodeURIComponent(clean);
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
@@ -367,10 +373,11 @@ function createProxiedImg(originalUrl, altText, cssText) {
   var step  = 0;
 
   function getUrl(n) {
-    if (n === 0) return proxyImg(clean, 300);
+    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
     if (n === 1) {
-      // wsrv tanpa ref
-      return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
+      var ref = "";
+      try { var h = new URL(clean).hostname; for (var k in _NOVEL_REF_MAP) { if (h.indexOf(k)!==-1){ref=_NOVEL_REF_MAP[k];break;} } if(!ref)ref="https://"+h; } catch(e){}
+      return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1" + (ref?"&ref="+encodeURIComponent(ref):"");
     }
     return clean; // direct
   }
@@ -751,11 +758,12 @@ function appendNovelCard(novel) {
   if (!novel?.slug) return;
   const originalUrl = novel.poster || novel.image || novel.cover || "";
   const title   = novel.title || "Untitled";
-  const chapter = novel.latest_chapter || novel.chapter || "";
-  const short   = chapter.length > 60 ? chapter.slice(0, 57) + "…" : chapter;
-  const rating  = novel.rating || "";
-  const type    = novel.type || "Novel";
-  const status  = novel.status && novel.status !== "Unknown" ? novel.status : "";
+  const chapter    = novel.latest_chapter || novel.chapter || "";
+  const short      = chapter.length > 60 ? chapter.slice(0, 57) + "…" : chapter;
+  const rating     = novel.rating || "";
+  const type       = novel.type || "Novel";
+  const status     = novel.status && novel.status !== "Unknown" ? novel.status : "";
+  const lastUpdate = novel.last_update || novel.updated_at || novel.update_date || novel.date || novel.time || "";
 
   const card = document.createElement("div");
   card.className = "novel-card";
@@ -798,7 +806,8 @@ function appendNovelCard(novel) {
   info.className = "novel-info";
   info.innerHTML =
     '<p class="novel-title">' + title + '</p>' +
-    '<p class="novel-chapter">' + (short || "–") + '</p>';
+    '<p class="novel-chapter">' + (short || "–") + '</p>' +
+    (lastUpdate ? '<p class="novel-update-date">🕐 ' + lastUpdate + '</p>' : "");
   card.appendChild(info);
 
   card.onclick = () => {
