@@ -259,12 +259,13 @@
 
     .lb-row {
       display: flex; align-items: center; gap: 12px;
-      padding: 10px 12px; border-radius: 12px;
-      margin-bottom: 6px; border: 1px solid var(--border);
-      background: var(--bg-card); transition: background 0.2s;
+      padding: 11px 14px; border-radius: 14px;
+      margin-bottom: 8px; border: 1px solid var(--border);
+      background: var(--bg-card);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
       position: relative; overflow: hidden;
     }
-    .lb-row:hover { background: var(--bg-surface); }
+    .lb-row:hover { background: var(--bg-surface); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
     .lb-row.me    { border-color: var(--accent); background: rgba(232,82,42,0.07); }
 
     /* Shimmer untuk baris top 3 */
@@ -273,18 +274,19 @@
     .lb-row.rank-3 { border-color: #cd7f32; background: rgba(205,127,50,0.06); }
 
     .lb-rank {
-      font-size: 15px; font-weight: 800; min-width: 28px; text-align: center;
-      color: var(--text-muted); flex-shrink: 0;
+      font-size: 13px; font-weight: 800; min-width: 30px; text-align: center;
+      color: var(--text-muted); flex-shrink: 0; line-height: 1;
     }
-    .lb-row.rank-1 .lb-rank { color: #f5a623; font-size: 20px; }
-    .lb-row.rank-2 .lb-rank { color: #b0b0c0; font-size: 18px; }
-    .lb-row.rank-3 .lb-rank { color: #cd7f32; font-size: 16px; }
+    .lb-row.rank-1 .lb-rank { font-size: 22px; }
+    .lb-row.rank-2 .lb-rank { font-size: 20px; }
+    .lb-row.rank-3 .lb-rank { font-size: 18px; }
 
     .lb-avatar {
-      width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+      width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
       border: 2px solid var(--border); flex-shrink: 0;
+      font-family: 'Nunito', sans-serif;
     }
-    .lb-row.rank-1 .lb-avatar { border-color: #f5a623; }
+    .lb-row.rank-1 .lb-avatar { border-color: #f5a623; box-shadow: 0 0 10px rgba(245,166,35,.3); }
     .lb-row.rank-2 .lb-avatar { border-color: #b0b0c0; }
     .lb-row.rank-3 .lb-avatar { border-color: #cd7f32; }
 
@@ -295,10 +297,10 @@
     }
     .lb-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
     .lb-score {
-      text-align: right; flex-shrink: 0;
+      text-align: right; flex-shrink: 0; min-width: 60px;
     }
-    .lb-score-num { font-size: 18px; font-weight: 800; color: var(--accent); display: block; line-height: 1; }
-    .lb-score-label { font-size: 10px; color: var(--text-muted); }
+    .lb-score-num { font-size: 20px; font-weight: 900; color: var(--accent); display: block; line-height: 1; font-family: 'Nunito', sans-serif; }
+    .lb-score-label { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
 
     .lb-me-badge {
       font-size: 10px; font-weight: 800; color: var(--accent);
@@ -415,6 +417,14 @@ async function loadProfile() {
     getProfile(currentUser.id),
     getTotalChaptersRead(currentUser.id)
   ]);
+
+  /* Fallback nama & avatar dari Google user_metadata kalau profile belum ada */
+  if (profile && !profile.username) {
+    const meta = currentUser.user_metadata || {};
+    profile.username   = meta.full_name || meta.name || meta.preferred_username
+                         || currentUser.email?.split("@")[0] || "User";
+    profile.avatar_url = profile.avatar_url || meta.avatar_url || meta.picture || null;
+  }
   currentProfile = profile;
 
   const BADGE_DEFS = [
@@ -434,14 +444,17 @@ async function loadProfile() {
     .map(b => `<div class="badge-chip">${b.icon} ${b.name}</div>`)
     .join("");
 
-  const avatarSrc  = profile?.avatar_url
-    || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.username || 'U')}&background=e8522a&color=fff&bold=true`;
+  const displayName = profile?.username || currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email?.split("@")[0] || "User";
+  const avatarSrc   = profile?.avatar_url
+    || currentUser.user_metadata?.avatar_url
+    || currentUser.user_metadata?.picture
+    || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e8522a&color=fff&bold=true`;
 
   document.getElementById("profileContent").innerHTML = `
     <!-- ── Header Profil ── -->
     <div class="profile-header">
       <div class="avatar-wrap" id="avatarWrap" onclick="document.getElementById('avatarInput').click()" title="Klik untuk ganti foto">
-        <img id="avatarImg" src="${avatarSrc}" alt="Avatar">
+        <img id="avatarImg" src="${avatarSrc}" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=U&background=e8522a&color=fff&bold=true'">
         <div class="avatar-overlay">
           <span>📷</span>
           <p>Ganti Foto</p>
@@ -449,7 +462,7 @@ async function loadProfile() {
       </div>
       <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleAvatarUpload(event)">
 
-      <div class="profile-name" id="profileNameDisplay">${profile?.username || 'User'}</div>
+      <div class="profile-name" id="profileNameDisplay">${displayName}</div>
       <div class="profile-level">Level ${liveLevel} — ${levelTitle}</div>
       <div class="profile-stats">
         <div class="stat-item"><p id="statChapters">${liveTotal}</p><p>Chapter Dibaca</p></div>
@@ -524,7 +537,7 @@ async function loadProfile() {
         <div class="edit-form-row">
           <p class="edit-section-title">📷 Foto Profil</p>
           <div class="avatar-upload-area" onclick="document.getElementById('avatarInput').click()">
-            <img id="avatarImgSettings" src="${avatarSrc}" alt="Avatar">
+            <img id="avatarImgSettings" src="${avatarSrc}" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=U&background=e8522a&color=fff&bold=true'">
             <div class="avatar-upload-text">
               <p>Klik untuk ganti foto</p>
               <p>JPG, PNG, atau WebP · Maks 2MB</p>
@@ -542,11 +555,11 @@ async function loadProfile() {
             type="text"
             id="usernameInput"
             placeholder="Masukkan username baru"
-            value="${profile?.username || ''}"
+            value="${displayName !== 'User' ? displayName : (profile?.username || '')}"
             maxlength="30"
             oninput="document.getElementById('usernameCounter').textContent = this.value.length + '/30'"
           >
-          <div class="char-counter"><span id="usernameCounter">${(profile?.username || '').length}/30</span></div>
+          <div class="char-counter"><span id="usernameCounter">${(displayName !== "User" ? displayName : (profile?.username || "")).length}/30</span></div>
           <p class="input-hint">3–30 karakter. Huruf, angka, underscore, dan strip saja.</p>
           <button class="edit-btn" onclick="saveProfile()" id="saveUsernameBtn">💾 Simpan Username</button>
           <div id="saveMsg" class="form-msg"></div>
@@ -775,15 +788,22 @@ function buildLbRows(list, scoreField, scoreLabel, userId) {
   const rows = list.map((u, i) => {
     const isMe   = u.id === userId;
     const name   = u.username || "Anonim";
-    const avatar = u.avatar_url
-      || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e8522a&color=fff&bold=true&size=80`;
+    const avatar = u.avatar_url || null;
+    const avatarHtml = avatar
+      ? `<img class="lb-avatar" src="${avatar}" alt="${name}" loading="lazy"
+             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      + `<div class="lb-avatar" style="display:none;align-items:center;justify-content:center;
+             background:linear-gradient(135deg,#e8522a,#c73f1c);font-weight:800;font-size:14px;color:#fff;">
+             ${name[0]?.toUpperCase() || "?"}</div>`
+      : `<div class="lb-avatar" style="display:flex;align-items:center;justify-content:center;
+             background:linear-gradient(135deg,#e8522a,#c73f1c);font-weight:800;font-size:14px;color:#fff;">
+             ${name[0]?.toUpperCase() || "?"}</div>`;
     const level  = u.level || 1;
     const score  = (u[scoreField] || 0).toLocaleString("id-ID");
     return `
       <div class="lb-row ${rankClass(i)} ${isMe ? "me" : ""}">
         <div class="lb-rank">${rankEmoji(i)}</div>
-        <img class="lb-avatar" src="${avatar}" alt="${name}" loading="lazy"
-             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=e8522a&color=fff&bold=true&size=80'">
+        ${avatarHtml}
         <div class="lb-info">
           <div class="lb-name">${name}${isMe ? `<span class="lb-me-badge">Kamu</span>` : ""}</div>
           <div class="lb-meta">Level ${level} · ${getLevelTitle(level)}</div>
