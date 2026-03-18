@@ -439,12 +439,12 @@
 <script>
 
 function proxyImg(url) {
-  /* Skip SVG placeholder kosong dari API komikstation */
+  /* Skip SVG placeholder kosong */
   if (!url || url === "undefined" || url === "null") return "";
   if (url.startsWith("data:image/svg") && url.includes("viewBox")) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
-  const clean = url.split("?")[0];
-  return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=75&n=-1";
+  /* Jangan strip query string — WordPress ?resize= wajib dipertahankan */
+  return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=300&output=webp&q=80&n=-1";
 }
 
 /* ============================================================
