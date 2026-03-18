@@ -27,6 +27,8 @@ const API_CHAPTER   = "https://www.sankavollerei.com/comic/komikindo/chapter/";
 const API_DETAIL    = "https://www.sankavollerei.com/comic/komikindo/detail/";
 const API_CHAPTER_2 = "https://www.sankavollerei.com/comic/mangakita/chapter/";
 const API_DETAIL_2  = "https://www.sankavollerei.com/comic/mangakita/detail/";
+const API_CHAPTER_3 = "https://www.sankavollerei.com/comic/bacakomik/chapter/";
+const API_DETAIL_3  = "https://www.sankavollerei.com/comic/bacakomik/detail/";
 
 /* ── SLUG dari URL ───────────────────────────────────────── */
 const slug = getSlug();
@@ -131,6 +133,26 @@ function initKeyboard() {
 /* ============================================================
    FETCH & RENDER CHAPTER
    ============================================================ */
+/* ── Normalize chapter response dari mangakita/bacakomik → format komikindo ── */
+function _normalizeChapter(json, source) {
+  /* Kedua API: images[] array string, navigation {prev, next}, title string */
+  const nav = json.navigation || {};
+  return {
+    title:  json.title || "",
+    images: (json.images || []).map((url, i) => ({ id: i, url: String(url) })),
+    navigation: {
+      prev:           (nav.prev && nav.prev !== "#prev" && nav.prev !== null) ? nav.prev : null,
+      next:           (nav.next && nav.next !== "#next" && nav.next !== null) ? nav.next : null,
+      allChapterSlug: json.comicSlug || null,
+    },
+    komikInfo: {
+      title: (json.title || "").replace(/\s*chapter\s*[\d.]+.*/i, "").trim(),
+    },
+    thumbnail: { url: "", title: "" },
+    _source: source,
+  };
+}
+
 async function loadChapter() {
   try {
     showLoading();
@@ -155,26 +177,24 @@ async function loadChapter() {
       d = json.data;
     } catch (err1) {
       console.warn("[Reader] API 1 gagal, coba API 2:", err1.message);
-
-      /* ── Fallback ke API 2: mangakita ── */
-      const res2 = await fetch(API_CHAPTER_2 + currentChapterSlug);
-      if (!res2.ok) throw new Error(`API 2 HTTP ${res2.status}`);
-      const json2 = await res2.json();
-      if (!json2.success) throw new Error("API 2 error: " + (json2.message || ""));
-
-      /* Normalize mangakita response ke format komikindo */
-      d = {
-        title:     json2.title || currentChapterSlug,
-        images:    (json2.images || []).map((url, i) => ({ id: i, url })),
-        navigation: {
-          prev:           json2.navigation?.prev !== "#prev" ? json2.navigation?.prev : null,
-          next:           json2.navigation?.next !== "#next" ? json2.navigation?.next : null,
-          allChapterSlug: json2.comicSlug || null,
-        },
-        komikInfo: { title: json2.title?.replace(/\s*chapter\s*[\d.]+.*/i, "").trim() || "" },
-        thumbnail: { url: "", title: "" },
-      };
-      _apiSource = "mangakita";
+      try {
+        /* ── Fallback ke API 2: mangakita ── */
+        const res2  = await fetch(API_CHAPTER_2 + currentChapterSlug);
+        if (!res2.ok) throw new Error(`API 2 HTTP ${res2.status}`);
+        const json2 = await res2.json();
+        if (!json2.success) throw new Error("API 2 error");
+        d = _normalizeChapter(json2, "mangakita");
+        _apiSource = "mangakita";
+      } catch (err2) {
+        console.warn("[Reader] API 2 gagal, coba API 3:", err2.message);
+        /* ── Fallback ke API 3: bacakomik ── */
+        const res3  = await fetch(API_CHAPTER_3 + currentChapterSlug);
+        if (!res3.ok) throw new Error(`API 3 HTTP ${res3.status}`);
+        const json3 = await res3.json();
+        if (!json3.success) throw new Error("API 3 error");
+        d = _normalizeChapter(json3, "bacakomik");
+        _apiSource = "bacakomik";
+      }
     }
     console.log("[Reader] Loaded from:", _apiSource);
 
@@ -299,16 +319,29 @@ async function loadChapterListFromAPI() {
       } else throw new Error("API 1 no chapters");
     } catch (e1) {
       console.warn("[Reader] Chapter list API 1 gagal, coba API 2:", e1.message);
-      /* Fallback ke API 2: mangakita */
-      const res2  = await fetch(API_DETAIL_2 + komikSlug);
-      const json2 = await res2.json();
-      if (json2.success && json2.details?.chapters?.length) {
-        /* Normalize mangakita chapter slug dari URL ke slug bersih */
-        chapters = json2.details.chapters.map(ch => ({
-          title:       ch.title || "",
-          slug:        (ch.slug || "").replace(/^https?:\/?\/?[^/]+\//, "").replace(/\/$/, ""),
-          releaseTime: ch.date  || "",
-        }));
+      try {
+        /* Fallback ke API 2: mangakita */
+        const res2  = await fetch(API_DETAIL_2 + komikSlug);
+        const json2 = await res2.json();
+        if (json2.success && json2.details?.chapters?.length) {
+          chapters = json2.details.chapters.map(ch => ({
+            title:       ch.title || "",
+            slug:        (ch.slug || "").replace(/^https?:\/?\/?[^/]+\//, "").replace(/\/$/, ""),
+            releaseTime: ch.date  || "",
+          }));
+        } else throw new Error("API 2 no chapters");
+      } catch (e2) {
+        console.warn("[Reader] Chapter list API 2 gagal, coba API 3:", e2.message);
+        /* Fallback ke API 3: bacakomik */
+        const res3  = await fetch(API_DETAIL_3 + komikSlug);
+        const json3 = await res3.json();
+        if (json3.success && json3.detail?.chapters?.length) {
+          chapters = json3.detail.chapters.map(ch => ({
+            title:       ch.title || ch.slug || "",
+            slug:        ch.slug  || "",
+            releaseTime: ch.date  || "",
+          }));
+        }
       }
     }
 
