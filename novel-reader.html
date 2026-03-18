@@ -296,7 +296,7 @@
 <div id="toastWrap"></div>
 
 <script type="module">
-  import { getCurrentUser, saveNovelHistory } from "./supabase.js";
+  import { getCurrentUser, saveNovelHistory } from "/supabase.js";
   window._novelAuth = { getCurrentUser, saveNovelHistory };
 </script>
 
@@ -307,8 +307,15 @@
    JSON: { data: { title, content (HTML), navigation: { prev_slug, next_slug, parent_slug } } }
    ============================================================ */
 
-const BASE        = "https://www.sankavollerei.com/novel/sakuranovel/read";
-const chapterSlug = new URLSearchParams(window.location.search).get("slug");
+const BASE = "https://www.sankavollerei.com/novel/sakuranovel/read";
+
+/* Baca slug dari pretty URL (/baca-novel/slug) atau query param (?slug=) */
+function getChapterSlug() {
+  const pathMatch = window.location.pathname.match(/^\/baca-novel\/([^/]+)\/?$/);
+  if (pathMatch) return pathMatch[1];
+  return new URLSearchParams(window.location.search).get("slug");
+}
+const chapterSlug = getChapterSlug();
 if (!chapterSlug) window.location.href = "/novel/";
 
 /* ── State ─────────────────────────────────────────────────── */
