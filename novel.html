@@ -325,16 +325,36 @@ let searchTimer   = null;
 let isSearchMode  = false;
 
 /* ============================================================
-   IMAGE PROXY — Multi-layer fallback
-   wsrv.nl sebagai proxy utama (lebih stabil)
+   IMAGE PROXY — Hotlink bypass via wsrv.nl referrer spoofing
    ============================================================ */
+var _NOVEL_REF_MAP = {
+  "sakuranovel": "https://sakuranovel.id",
+  "novelringan": "https://novelringan.com",
+  "gramedia":    "https://gramedia.com",
+  "wattpad":     "https://wattpad.com",
+};
+
+function _getNovelRef(url) {
+  if (!url) return "";
+  try {
+    var host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
+    for (var k in _NOVEL_REF_MAP) {
+      if (host.indexOf(k) !== -1) return _NOVEL_REF_MAP[k];
+    }
+    return "https://" + host;
+  } catch(e) { return ""; }
+}
+
 function proxyImg(url, width) {
   if (!url) return "";
   if (url.includes("wsrv.nl") || url.includes("weserv.nl") ||
       url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
   var w = width || 300;
   var clean = url.split("?")[0];
-  return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=" + w + "&output=webp&q=85&n=-1";
+  var ref = _getNovelRef(clean);
+  var q = "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=" + w + "&output=webp&q=85&n=-1";
+  if (ref) q += "&ref=" + encodeURIComponent(ref);
+  return q;
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
@@ -343,29 +363,33 @@ function createProxiedImg(originalUrl, altText, cssText) {
   if (cssText) img.style.cssText = cssText;
   img.style.background = "var(--bg-surface)";
 
-  var tried = 0;
   var clean = (originalUrl || "").split("?")[0];
+  var step  = 0;
 
-  function getProxy(n) {
-    if (n === 0) return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
-    return clean; /* direct sebagai last resort */
+  function getUrl(n) {
+    if (n === 0) return proxyImg(clean, 300);
+    if (n === 1) {
+      // wsrv tanpa ref
+      return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
+    }
+    return clean; // direct
   }
 
   img.onerror = function() {
-    tried++;
-    if (tried === 1) {
-      img.src = getProxy(1); // direct URL
+    step++;
+    img.onerror = null;
+    if (step <= 2) {
+      img.onerror = arguments.callee; // reattach
+      img.src = getUrl(step);
     } else {
-      // Tampilkan placeholder, bukan img.display=none (agar tidak blank)
-      img.onerror = null;
       var ph = document.createElement("div");
-      ph.style.cssText = "display:flex;align-items:center;justify-content:center;background:var(--bg-surface);font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;width:" + (img.width||80) + "px;height:" + (img.height||110) + "px;";
+      ph.style.cssText = "display:flex;align-items:center;justify-content:center;background:var(--bg-surface);font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;width:" + (img.width||80) + "px;height:" + (img.offsetHeight||110) + "px;";
       ph.textContent = "📖";
       if (img.parentNode) img.parentNode.replaceChild(ph, img);
     }
   };
 
-  img.src = getProxy(0);
+  img.src = getUrl(0);
   return img;
 }
 
