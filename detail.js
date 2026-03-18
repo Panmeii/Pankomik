@@ -35,6 +35,7 @@ const slug       = getKomikSlug();
 if (!slug) window.location.href = "/";
 const API_DETAIL   = `https://www.sankavollerei.com/comic/komikindo/detail/${slug}`;
 const API_DETAIL_2 = `https://www.sankavollerei.com/comic/mangakita/detail/${slug}`;
+const API_DETAIL_3 = `https://www.sankavollerei.com/comic/bacakomik/detail/${slug}`;
 
 /* ── IMAGE PROXY ────────────────────────────────────────── */
 function proxyImg(url, w = 300) {
@@ -240,6 +241,42 @@ function normalizeFromMangakita(det) {
   };
 }
 
+
+/* Normalize data dari API bacakomik ke format internal */
+function normalizeFromBacakomik(det) {
+  /* bacakomik genres: [{title, slug}] — sudah format object, tinggal map */
+  const genres = (det.genres || []).map(g => ({
+    name: g.title || g.name || "",
+    slug: g.slug  || (g.title || "").toLowerCase().replace(/\s+/g, "-"),
+  }));
+
+  const chapters = (det.chapters || []).map(ch => ({
+    title:       ch.title || "",
+    slug:        ch.slug  || "",
+    releaseTime: ch.date  || "",
+  }));
+
+  return {
+    title:          cleanTitle(det.title),
+    cover:          det.cover  || "",
+    rating:         det.rating || "–",
+    votes:          det.reader || "",
+    status:         det.status || "–",
+    type:           det.type   || "–",
+    author:         det.author || "–",
+    illustrator:    det.artist || "",
+    theme:          "",
+    altTitle:       det.otherTitle || "",
+    synopsis:       det.synopsis  || "",
+    genres:         genres,
+    chapters:       chapters,
+    firstChapter:   chapters.length ? chapters[chapters.length - 1] : null,
+    latestChapter:  chapters.length ? chapters[0] : null,
+    allChapterSlug: slug,
+    _source:        "bacakomik",
+  };
+}
+
 async function getDetail() {
   const container = document.getElementById("detailKomik");
   try {
@@ -255,14 +292,24 @@ async function getDetail() {
       komikDataRaw = normalizeFromKomikindo(json.data);
     } catch (err1) {
       console.warn("[Detail] API 1 gagal, coba API 2:", err1.message);
-
-      /* ── Fallback ke API 2: mangakita ── */
-      const res2  = await fetch(API_DETAIL_2);
-      if (!res2.ok) throw new Error(`API 2 HTTP ${res2.status}`);
-      const json2 = await res2.json();
-      if (!json2.success || !json2.details) throw new Error("API 2 error");
-      komikDataRaw = normalizeFromMangakita(json2.details);
-      source = "mangakita";
+      try {
+        /* ── Fallback ke API 2: mangakita ── */
+        const res2  = await fetch(API_DETAIL_2);
+        if (!res2.ok) throw new Error(`API 2 HTTP ${res2.status}`);
+        const json2 = await res2.json();
+        if (!json2.success || !json2.details) throw new Error("API 2 error");
+        komikDataRaw = normalizeFromMangakita(json2.details);
+        source = "mangakita";
+      } catch (err2) {
+        console.warn("[Detail] API 2 gagal, coba API 3:", err2.message);
+        /* ── Fallback ke API 3: bacakomik ── */
+        const res3  = await fetch(API_DETAIL_3);
+        if (!res3.ok) throw new Error(`API 3 HTTP ${res3.status}`);
+        const json3 = await res3.json();
+        if (!json3.success || !json3.detail) throw new Error("API 3 error");
+        komikDataRaw = normalizeFromBacakomik(json3.detail);
+        source = "bacakomik";
+      }
     }
 
     komikData = komikDataRaw;
