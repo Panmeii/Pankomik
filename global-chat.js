@@ -20,7 +20,7 @@ const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";
 const supabase     = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const ADMIN_EMAILS  = ["pankomik@gmail.com", "admin@pankomik.com"];
+const ADMIN_EMAILS  = ["pankomik@gmail.com", "rian.samuji@gmail.com"];
 const MAX_CHARS     = 500;
 const SEND_COOLDOWN = 2500; /* ms antar kirim pesan */
 const EMOJIS = ["😂","😍","🔥","💯","👏","😭","❤️","😎","💪","🙏","😤","✨","🎉","😱","🤩","💀","😅","🫶","🏆","👑","💛","🫡","🤣","👀","⭐","🎭"];
