@@ -11,7 +11,7 @@
    }
    ============================================================ */
 
-import { getCurrentUser, saveHistory, updateProgress } from "./supabase.js";
+import { getCurrentUser, saveHistory, updateProgress } from "/supabase.js";
 
 /* ── IMAGE PROXY ─────────────────────────────────────────── */
 function proxyImg(url, width) {
@@ -59,7 +59,7 @@ function cleanText(str) {
 const API_CHAPTER = "https://www.sankavollerei.com/comic/komikindo/chapter/";
 const API_DETAIL  = "https://www.sankavollerei.com/comic/komikindo/detail/";
 
-import { getSlug, getKomikSlug, readerURL, komikURL, pushURL } from "./router.js";
+import { getSlug, getKomikSlug, readerURL, komikURL, pushURL } from "/router.js";
 const slug = getSlug();
 if (!slug) window.location.href = "/";
 
