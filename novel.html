@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Novel — Pankomik</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ─────────────────────────────────────────────────────────
+       NOVEL PAGE STYLES
+    ───────────────────────────────────────────────────────── */
+    :root { --purple: #8e44ad; --purple-light: rgba(142,68,173,0.12); }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .novel-hero {
+      background: linear-gradient(135deg,#1a0a2e 0%,#2d1b4e 50%,#1a0a2e 100%);
+      padding: 20px 16px 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .novel-hero::before {
+      content:'';position:absolute;inset:0;pointer-events:none;
+      background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%239C92AC' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+    }
+    .novel-hero h1 {
+      font-family:'Bangers',cursive;font-size:28px;letter-spacing:2px;
+      color:#d4a0ff;margin-bottom:4px;
+      text-shadow:0 2px 8px rgba(138,43,226,0.4);
+    }
+    .novel-hero p { font-size:12px;color:rgba(255,255,255,0.5); }
+
+    /* ── Search bar ──────────────────────────────────────── */
+    .search-bar-wrap {
+      padding: 12px 14px 6px;
+      position: relative;
+    }
+    .search-bar-wrap input {
+      width:100%;padding:10px 14px 10px 38px;border-radius:10px;
+      border:1.5px solid var(--border);background:var(--bg-card);
+      color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;
+      outline:none;transition:border-color 0.2s;box-sizing:border-box;
+    }
+    .search-bar-wrap input:focus { border-color:var(--purple); box-shadow:0 0 0 3px rgba(142,68,173,0.12); }
+    .search-icon {
+      position:absolute;left:24px;top:50%;transform:translateY(-50%);
+      font-size:15px;pointer-events:none;color:var(--text-muted);
+    }
+    .search-clear {
+      position:absolute;right:22px;top:50%;transform:translateY(-50%);
+      background:none;border:none;cursor:pointer;font-size:16px;
+      color:var(--text-muted);display:none;padding:4px;line-height:1;
+    }
+    .search-clear.visible { display:block; }
+
+    /* ── Tabs (Home / Search / Genre / Tag) ──────────────── */
+    .novel-tabs {
+      display:flex;gap:6px;padding:8px 14px 0;
+      overflow-x:auto;scrollbar-width:none;
+    }
+    .novel-tabs::-webkit-scrollbar { display:none; }
+    .ntab {
+      flex-shrink:0;padding:6px 14px;border-radius:99px;
+      border:1.5px solid var(--border);background:var(--bg-card);
+      color:var(--text-muted);font-family:'Nunito',sans-serif;
+      font-size:12px;font-weight:700;cursor:pointer;
+      transition:background 0.2s,color 0.2s,border-color 0.2s;
+      white-space:nowrap;
+    }
+    .ntab:hover   { border-color:var(--purple);color:var(--purple); }
+    .ntab.active  { background:var(--purple);border-color:var(--purple);color:#fff; }
+
+    /* ── Genre/Tag chips panel ───────────────────────────── */
+    .chips-panel {
+      display:none;padding:8px 14px 4px;
+      overflow-x:auto;scrollbar-width:none;
+      gap:6px;white-space:nowrap;
+    }
+    .chips-panel::-webkit-scrollbar { display:none; }
+    .chips-panel.open { display:flex; }
+    .chip {
+      flex-shrink:0;padding:5px 12px;border-radius:99px;
+      border:1px solid var(--border);background:var(--bg-surface);
+      color:var(--text-muted);font-family:'Nunito',sans-serif;
+      font-size:11px;font-weight:700;cursor:pointer;
+      transition:background 0.15s,color 0.15s,border-color 0.15s;
+    }
+    .chip:hover  { border-color:var(--purple);color:var(--purple); }
+    .chip.active { background:var(--purple);border-color:var(--purple);color:#fff; }
+
+    /* ── Toolbar ─────────────────────────────────────────── */
+    .novel-toolbar {
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 14px 6px;
+    }
+    .novel-toolbar-title { font-size:14px;font-weight:800;color:var(--text); }
+    .novel-count { font-size:12px;color:var(--text-muted);font-weight:600; }
+
+    /* ── Grid ────────────────────────────────────────────── */
+    .novel-grid {
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:10px;padding:6px 14px 12px;
+    }
+    .novel-card {
+      background:var(--bg-card);border-radius:10px;overflow:hidden;
+      border:1px solid var(--border);cursor:pointer;position:relative;
+      transition:transform 0.2s,box-shadow 0.2s;
+    }
+    .novel-card:hover  { transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,0.3); }
+    .novel-card:active { transform:scale(0.97); }
+    .novel-card img    { width:100%;aspect-ratio:2/3;object-fit:cover;display:block; }
+    .novel-card-fallback {
+      width:100%;aspect-ratio:2/3;background:var(--bg-surface);
+      display:flex;align-items:center;justify-content:center;
+      font-size:28px;color:var(--text-muted);
+    }
+    .novel-badge {
+      position:absolute;top:5px;left:5px;background:var(--purple);
+      color:#fff;font-size:9px;font-weight:800;padding:2px 6px;
+      border-radius:5px;text-transform:uppercase;letter-spacing:0.5px;
+      z-index:2;pointer-events:none;
+    }
+    .novel-rating {
+      position:absolute;top:5px;right:5px;
+      background:rgba(0,0,0,0.7);color:#f5a623;
+      font-size:9px;font-weight:800;padding:2px 5px;border-radius:5px;
+      z-index:2;pointer-events:none;
+    }
+    .novel-status {
+      position:absolute;bottom:0;left:0;right:0;
+      background:linear-gradient(transparent,rgba(0,0,0,0.75));
+      padding:16px 6px 5px;font-size:9px;font-weight:700;
+      color:rgba(255,255,255,0.7);text-transform:uppercase;letter-spacing:0.5px;
+      z-index:2;pointer-events:none;
+    }
+    .novel-img-area {
+      position:relative;width:100%;aspect-ratio:2/3;background:var(--bg-surface);
+      overflow:hidden;
+    }
+    .novel-img-area img {
+      width:100%;height:100%;object-fit:cover;display:block;
+    }
+    .novel-info { padding:7px 7px 9px; }
+    .novel-title {
+      font-weight:700;font-size:11px;color:var(--text);
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+      overflow:hidden;line-height:1.35;margin-bottom:4px;
+    }
+    .novel-chapter {
+      font-size:10px;color:var(--text-muted);
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+      overflow:hidden;line-height:1.3;
+    }
+    /* Search result card (tampil 1 kolom, lebih besar) */
+    .novel-card.search-card {
+      display:flex;gap:10px;flex-direction:row;
+      padding:10px;border-radius:12px;align-items:flex-start;
+    }
+    .novel-card.search-card img {
+      width:60px;height:85px;aspect-ratio:unset;flex-shrink:0;border-radius:7px;
+    }
+    .novel-card.search-card .novel-card-fallback {
+      width:60px;height:85px;aspect-ratio:unset;flex-shrink:0;border-radius:7px;font-size:20px;
+    }
+    .novel-card.search-card .novel-badge { position:static;display:inline-block;margin-bottom:4px; }
+    .novel-card.search-card .novel-rating { position:static;display:inline-block;margin-left:4px;border-radius:5px; }
+    .novel-card.search-card .novel-title  { font-size:13px;-webkit-line-clamp:3; }
+    .novel-card.search-card .novel-status { position:static;background:none;padding:0;color:var(--text-muted); }
+    .novel-card.search-card .novel-info   { padding:0;flex:1; }
+    /* Search grid: 1 kolom */
+    .novel-grid.search-mode { grid-template-columns:1fr; }
+
+    /* ── Skeleton ────────────────────────────────────────── */
+    .novel-skeleton {
+      background:linear-gradient(90deg,var(--bg-surface) 0%,var(--bg-card) 50%,var(--bg-surface) 100%);
+      background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:10px;
+    }
+    .novel-skeleton-img  { aspect-ratio:2/3;border-radius:10px 10px 0 0; }
+    .novel-skeleton-info { height:55px;border-radius:0 0 10px 10px;margin-top:2px; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Load more ───────────────────────────────────────── */
+    #novelLoadMoreWrap {
+      display:none;flex-direction:column;align-items:center;
+      gap:10px;padding:16px 14px 28px;
+    }
+    #novelLoadMoreSpinner {
+      display:none;grid-template-columns:repeat(3,1fr);
+      gap:10px;padding:0 14px;width:100%;
+    }
+    #novelPageInfo { font-size:12px;color:var(--text-muted);font-weight:700; }
+    #novelLoadMoreBtn {
+      width:100%;max-width:360px;padding:13px 20px;border-radius:12px;
+      border:1.5px solid var(--border);background:var(--bg-card);color:var(--text);
+      font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+      transition:background 0.2s,border-color 0.2s,color 0.2s,transform 0.1s;
+    }
+    #novelLoadMoreBtn:hover:not(:disabled) {
+      background:var(--purple);border-color:var(--purple);color:#fff;transform:translateY(-2px);
+    }
+    #novelLoadMoreBtn:active:not(:disabled) { transform:scale(0.97); }
+    #novelLoadMoreBtn:disabled { cursor:not-allowed;opacity:0.5; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="header">
+  <div class="logo" onclick="window.location.href='/'">Pankomik</div>
+  <div class="header-right">
+    <button onclick="toggleDarkMode()" title="Ganti Tema">🌙</button>
+    <button onclick="toggleMenu()" title="Menu">👤</button>
+  </div>
+</header>
+<div id="menuDropdown" class="dropdown"></div>
+
+<!-- Hero -->
+<div class="novel-hero">
+  <div style="font-size:32px;margin-bottom:4px;">📖</div>
+  <h1>Novel</h1>
+  <p>Light novel & web novel terlengkap</p>
+</div>
+
+<!-- Search bar -->
+<div class="search-bar-wrap">
+  <span class="search-icon">🔍</span>
+  <input
+    type="text" id="novelSearchInput"
+    placeholder="Cari judul novel..."
+    oninput="onSearchInput(this.value)"
+    autocomplete="off"
+  >
+  <button class="search-clear" id="searchClearBtn" onclick="clearSearch()">✕</button>
+</div>
+
+<!-- Tabs -->
+<div class="novel-tabs">
+  <button class="ntab active" id="tab-home"   onclick="switchTab('home')">🆕 Terbaru</button>
+  <button class="ntab"        id="tab-genre"  onclick="switchTab('genre')">🏷️ Genre</button>
+  <button class="ntab"        id="tab-tag"    onclick="switchTab('tag')">🔖 Tag</button>
+</div>
+
+<!-- Genre chips (tampil saat tab Genre aktif) -->
+<div class="chips-panel" id="genreChipsPanel">
+  <div class="chip" style="min-width:60px;justify-content:center;">⏳ Memuat...</div>
+</div>
+
+<!-- Tag chips (tampil saat tab Tag aktif) -->
+<div class="chips-panel" id="tagChipsPanel">
+  <div class="chip" style="min-width:60px;">⏳ Memuat...</div>
+</div>
+
+<!-- Toolbar -->
+<div class="novel-toolbar">
+  <span class="novel-toolbar-title" id="toolbarTitle">🆕 Update Terbaru</span>
+  <span class="novel-count" id="novelCount"></span>
+</div>
+
+<!-- Grid -->
+<div id="novelGrid" class="novel-grid"></div>
+
+<!-- Skeleton load more -->
+<div id="novelLoadMoreSpinner">
+  <div><div class="novel-skeleton novel-skeleton-img"></div><div class="novel-skeleton novel-skeleton-info"></div></div>
+  <div><div class="novel-skeleton novel-skeleton-img"></div><div class="novel-skeleton novel-skeleton-info"></div></div>
+  <div><div class="novel-skeleton novel-skeleton-img"></div><div class="novel-skeleton novel-skeleton-info"></div></div>
+</div>
+
+<!-- Load more -->
+<div id="novelLoadMoreWrap">
+  <span id="novelPageInfo"></span>
+  <button id="novelLoadMoreBtn" onclick="novelLoadMore()">Muat Lebih Banyak ↓</button>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item active">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/donatur'">
+    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
+<script type="module">
+  import { initAuthHeader } from "./auth-header.js";
+  initAuthHeader();
+</script>
+
+<script>
+/* ============================================================
+   novel.html — JavaScript
+   APIs:
+   - Home    : GET /novel/sakuranovel/home?page=N
+   - Search  : GET /novel/sakuranovel/search?q=QUERY
+   - Genres  : GET /novel/sakuranovel/genres
+   - By genre: GET /novel/sakuranovel/genre/SLUG?page=N
+   - Tags    : GET /novel/sakuranovel/tags
+   - By tag  : GET /novel/sakuranovel/tag/SLUG?page=N
+   ============================================================ */
+
+const BASE = "https://www.sankavollerei.com/novel/sakuranovel";
+
+/* ── State ─────────────────────────────────────────────────── */
+let currentTab    = "home";
+let activeGenre   = null;
+let activeTag     = null;
+let novelPage     = 1;
+let novelHasNext  = false;
+let novelLoading  = false;
+let novelAllData  = [];
+let totalLoaded   = 0;
+let genreList     = [];
+let tagList       = [];
+let searchTimer   = null;
+let isSearchMode  = false;
+
+/* ============================================================
+   IMAGE PROXY — Multi-layer fallback bypass Cloudflare
+   sakuranovel.id dilindungi Cloudflare Bot Protection
+   Coba: images.weserv.nl → wsrv.nl → direct (last resort)
+   ============================================================ */
+function proxyImg(url, width) {
+  if (!url) return "";
+  if (url.includes("weserv.nl") || url.includes("wsrv.nl") ||
+      url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
+  var w = width || 300;
+  var clean = url.replace(/^https?:\/\//, "");
+  return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + "&w=" + w + "&output=webp&q=80";
+}
+
+function createProxiedImg(originalUrl, altText, cssText) {
+  var img = document.createElement("img");
+  img.alt = altText || "";
+  if (cssText) img.style.cssText = cssText;
+
+  var tried = 0;
+  function getProxy(n, u) {
+    if (n === 0) {
+      var c = u.replace(/^https?:\/\//, "");
+      return "https://images.weserv.nl/?url=" + encodeURIComponent(c) + "&w=300&output=webp&q=80";
+    }
+    if (n === 1) return "https://wsrv.nl/?url=" + encodeURIComponent(u) + "&w=300";
+    return u; /* direct as last resort */
+  }
+
+  img.onerror = function() {
+    tried++;
+    if (tried <= 2) {
+      img.src = getProxy(tried, originalUrl);
+    } else {
+      img.style.display = "none";
+      var sib = img.nextElementSibling;
+      if (sib) sib.style.display = "flex";
+    }
+  };
+
+  img.src = getProxy(0, originalUrl);
+  return img;
+}
+
+/* ── INIT ─────────────────────────────────────────────────── */
+window.onload = async function () {
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+
+  /* Cek filter redirect dari novel-detail.html */
+  const filterType = sessionStorage.getItem("novelFilterType");
+  const filterSlug = sessionStorage.getItem("novelFilterSlug");
+  const filterName = sessionStorage.getItem("novelFilterName");
+  sessionStorage.removeItem("novelFilterType");
+  sessionStorage.removeItem("novelFilterSlug");
+  sessionStorage.removeItem("novelFilterName");
+
+  loadGenres();
+  loadTags();
+
+  if (filterType === "genre" && filterSlug) {
+    currentTab  = "genre";
+    activeGenre = filterSlug;
+    document.querySelectorAll(".ntab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab-genre").classList.add("active");
+    document.getElementById("genreChipsPanel").classList.add("open");
+    document.getElementById("toolbarTitle").textContent = "🏷️ " + (filterName || filterSlug);
+    await fetchByGenre(filterSlug, 1, true);
+    setTimeout(() => {
+      document.querySelectorAll("#genreChipsPanel .chip").forEach(c => {
+        c.classList.toggle("active", c.dataset.slug === filterSlug);
+      });
+    }, 600);
+    return;
+  }
+
+  if (filterType === "tag" && filterSlug) {
+    currentTab = "tag";
+    activeTag  = filterSlug;
+    document.querySelectorAll(".ntab").forEach(t => t.classList.remove("active"));
+    document.getElementById("tab-tag").classList.add("active");
+    document.getElementById("tagChipsPanel").classList.add("open");
+    document.getElementById("toolbarTitle").textContent = "🔖 " + (filterName || filterSlug);
+    await fetchByTag(filterSlug, 1, true);
+    setTimeout(() => {
+      document.querySelectorAll("#tagChipsPanel .chip").forEach(c => {
+        c.classList.toggle("active", c.dataset.slug === filterSlug);
+      });
+    }, 600);
+    return;
+  }
+
+  await novelFetch(1, true);
+
+  window.addEventListener("scroll", () => {
+    if (isSearchMode) return;
+    const scrollBottom = window.scrollY + window.innerHeight;
+    if (scrollBottom >= document.body.offsetHeight - 400 && novelHasNext && !novelLoading) {
+      novelLoadMore();
+    }
+  }, { passive: true });
+};
+
+/* ============================================================
+   TAB SWITCHING
+   ============================================================ */
+window.switchTab = function (tab) {
+  if (isSearchMode) clearSearch();
+
+  currentTab = tab;
+  document.querySelectorAll(".ntab").forEach(t => t.classList.remove("active"));
+  document.getElementById("tab-" + tab).classList.add("active");
+
+  const inp = document.getElementById("novelSearchInput");
+  if (inp) {
+    if (tab === "genre") inp.placeholder = "Cari genre...";
+    else if (tab === "tag") inp.placeholder = "Cari tag...";
+    else inp.placeholder = "Cari judul novel...";
+  }
+
+  document.getElementById("genreChipsPanel").classList.remove("open");
+  document.getElementById("tagChipsPanel").classList.remove("open");
+
+  if (tab === "home") {
+    activeGenre = null; activeTag = null;
+    document.getElementById("toolbarTitle").textContent = "🆕 Update Terbaru";
+    novelFetch(1, true);
+  } else if (tab === "genre") {
+    document.getElementById("genreChipsPanel").classList.add("open");
+    if (!activeGenre && genreList.length > 0) selectGenre(genreList[0].slug, genreList[0].name);
+    else if (activeGenre) fetchByGenre(activeGenre, 1, true);
+  } else if (tab === "tag") {
+    document.getElementById("tagChipsPanel").classList.add("open");
+    if (!activeTag && tagList.length > 0) selectTag(tagList[0].slug, tagList[0].name);
+    else if (activeTag) fetchByTag(activeTag, 1, true);
+  }
+};
+
+/* ============================================================
+   SEARCH
+   ============================================================ */
+window.onSearchInput = function (val) {
+  const clearBtn = document.getElementById("searchClearBtn");
+  clearBtn.classList.toggle("visible", val.length > 0);
+  clearTimeout(searchTimer);
+
+  if (!val.trim()) {
+    if (currentTab === "genre") { filterChips("genreChipsPanel", ""); return; }
+    if (currentTab === "tag")   { filterChips("tagChipsPanel",   ""); return; }
+    if (isSearchMode) clearSearch();
+    return;
+  }
+
+  if (currentTab === "genre") { filterChips("genreChipsPanel", val.trim()); return; }
+  if (currentTab === "tag")   { filterChips("tagChipsPanel",   val.trim()); return; }
+
+  searchTimer = setTimeout(() => doSearch(val.trim()), 500);
+};
+
+function filterChips(panelId, query) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const q = query.toLowerCase();
+  panel.querySelectorAll(".chip").forEach(chip => {
+    chip.style.display = (!q || chip.textContent.toLowerCase().includes(q)) ? "" : "none";
+  });
+}
+
+window.clearSearch = function () {
+  const input = document.getElementById("novelSearchInput");
+  const clearBtn = document.getElementById("searchClearBtn");
+  input.value = "";
+  clearBtn.classList.remove("visible");
+  isSearchMode = false;
+  document.getElementById("novelGrid").classList.remove("search-mode");
+  switchTab(currentTab);
+};
+
+async function doSearch(query) {
+  isSearchMode = true;
+  const grid = document.getElementById("novelGrid");
+  grid.innerHTML = makeSkeleton(6);
+  grid.classList.add("search-mode");
+  document.getElementById("novelLoadMoreWrap").style.display = "none";
+  document.getElementById("novelCount").textContent = "";
+  document.getElementById("toolbarTitle").textContent = '🔍 "' + query + '"';
+
+  try {
+    const res  = await fetch(BASE + "/search?q=" + encodeURIComponent(query));
+    const json = await res.json();
+    const list = json.data?.results || [];
+    grid.innerHTML = "";
+    if (list.length === 0) {
+      grid.innerHTML = emptyState('Tidak ada hasil untuk "<strong>' + query + '</strong>"');
+    } else {
+      list.forEach(n => appendSearchCard(n));
+      document.getElementById("novelCount").textContent = list.length + " hasil";
+    }
+  } catch (err) {
+    console.error("Search error:", err);
+    grid.innerHTML = emptyState("Gagal mencari. Cek koneksimu.");
+  }
+}
+
+function appendSearchCard(novel) {
+  if (!novel?.slug) return;
+  const originalUrl = novel.poster || novel.image || "";
+  const title   = novel.title || "Untitled";
+  const rating  = novel.rating ? "⭐ " + novel.rating : "";
+  const type    = novel.type || "Novel";
+  const status  = novel.status && novel.status !== "Unknown" ? novel.status : "";
+  const initials = (title||"N").slice(0,2).toUpperCase();
+
+  const card = document.createElement("div");
+  card.className = "novel-card search-card";
+
+  const fallback = document.createElement("div");
+  fallback.style.cssText = "width:60px;height:85px;border-radius:7px;flex-shrink:0;background:var(--bg-surface);display:none;align-items:center;justify-content:center;font-size:18px;color:var(--text-muted);";
+  fallback.textContent = "📖";
+
+  if (originalUrl) {
+    const img = createProxiedImg(originalUrl, title, "width:60px;height:85px;aspect-ratio:unset;flex-shrink:0;border-radius:7px;object-fit:cover;");
+    card.appendChild(img);
+    card.appendChild(fallback);
+  } else {
+    fallback.style.display = "flex";
+    card.appendChild(fallback);
+  }
+
+  const info = document.createElement("div");
+  info.className = "novel-info";
+  info.innerHTML =
+    '<div style="display:flex;align-items:center;gap:4px;margin-bottom:5px;flex-wrap:wrap;">' +
+      '<span class="novel-badge">' + type + '</span>' +
+      (rating ? '<span class="novel-rating">' + rating + '</span>' : '') +
+    '</div>' +
+    '<p class="novel-title">' + title + '</p>' +
+    (status ? '<p class="novel-status">' + status + '</p>' : '');
+  card.appendChild(info);
+
+  card.onclick = () => {
+    sessionStorage.setItem("novelData", JSON.stringify(novel));
+    window.location.href = "/novel/" + novel.slug;
+  };
+  document.getElementById("novelGrid").appendChild(card);
+}
+
+/* ============================================================
+   GENRE & TAG
+   ============================================================ */
+async function loadGenres() {
+  try {
+    const res  = await fetch(BASE + "/genres");
+    const json = await res.json();
+    genreList  = json.data || [];
+    renderChips("genreChipsPanel", genreList, "genre");
+    if (currentTab === "genre" && !activeGenre && genreList.length > 0) {
+      selectGenre(genreList[0].slug, genreList[0].name);
+    }
+  } catch (err) { console.error("Gagal load genres:", err); }
+}
+
+async function loadTags() {
+  try {
+    const res  = await fetch(BASE + "/tags");
+    const json = await res.json();
+    tagList    = json.data || [];
+    renderChips("tagChipsPanel", tagList, "tag");
+    if (currentTab === "tag" && !activeTag && tagList.length > 0) {
+      selectTag(tagList[0].slug, tagList[0].name);
+    }
+  } catch (err) { console.error("Gagal load tags:", err); }
+}
+
+window.selectGenre = function (slug, name) {
+  if (isSearchMode) return;
+  activeGenre = slug;
+  document.querySelectorAll("#genreChipsPanel .chip").forEach(c => {
+    c.classList.toggle("active", c.dataset.slug === slug);
+  });
+  document.getElementById("toolbarTitle").textContent = "🏷️ " + name;
+  fetchByGenre(slug, 1, true);
+};
+
+window.selectTag = function (slug, name) {
+  if (isSearchMode) return;
+  activeTag = slug;
+  document.querySelectorAll("#tagChipsPanel .chip").forEach(c => {
+    c.classList.toggle("active", c.dataset.slug === slug);
+  });
+  document.getElementById("toolbarTitle").textContent = "🔖 " + name;
+  fetchByTag(slug, 1, true);
+};
+
+async function fetchByGenre(slug, page, reset) {
+  await fetchFiltered(BASE + "/genre/" + slug, page, reset);
+}
+async function fetchByTag(slug, page, reset) {
+  await fetchFiltered(BASE + "/tag/" + slug, page, reset);
+}
+
+/* ============================================================
+   FETCH FILTERED (genre/tag)
+   ============================================================ */
+async function fetchFiltered(url, page, reset) {
+  novelLoading = true;
+  if (reset) {
+    novelPage = 1; novelHasNext = false; totalLoaded = 0;
+    document.getElementById("novelGrid").innerHTML = makeSkeleton(6);
+    document.getElementById("novelGrid").classList.remove("search-mode");
+    document.getElementById("novelCount").textContent = "";
+    document.getElementById("novelLoadMoreWrap").style.display = "none";
+  }
+  try {
+    const fetchUrl = page > 1 ? url + (url.includes("?") ? "&" : "?") + "page=" + page : url;
+    const res  = await fetch(fetchUrl);
+    const json = await res.json();
+    const list = json.data?.results || [];
+    const pag  = json.data?.pagination || {};
+    novelHasNext = pag.hasNext ?? false;
+    novelPage    = page;
+    if (reset) document.getElementById("novelGrid").innerHTML = "";
+    list.forEach(n => appendNovelCard(n));
+    totalLoaded += list.length;
+    document.getElementById("novelCount").textContent = totalLoaded + " novel";
+    updateNovelBtn();
+  } catch (err) {
+    console.error("Fetch filtered error:", err);
+    if (reset) document.getElementById("novelGrid").innerHTML = emptyState("Gagal memuat. Coba lagi.");
+  } finally {
+    novelLoading = false;
+    document.getElementById("novelLoadMoreSpinner").style.display = "none";
+  }
+}
+
+/* ============================================================
+   HOME FETCH
+   ============================================================ */
+async function novelFetch(page, reset) {
+  novelLoading = true;
+  if (reset) {
+    novelPage = 1; novelHasNext = false; novelAllData = []; totalLoaded = 0;
+    document.getElementById("novelGrid").innerHTML = makeSkeleton(6);
+    document.getElementById("novelGrid").classList.remove("search-mode");
+    document.getElementById("novelCount").textContent = "";
+    document.getElementById("novelLoadMoreWrap").style.display = "none";
+  }
+  try {
+    const res  = await fetch(BASE + "/home?page=" + page);
+    const json = await res.json();
+    if (json.status !== "success") throw new Error("API error");
+    const list = json.data?.results || [];
+    const pag  = json.data?.pagination || {};
+    novelHasNext = pag.hasNext ?? false;
+    novelPage    = page;
+    if (reset) document.getElementById("novelGrid").innerHTML = "";
+    list.forEach(n => appendNovelCard(n));
+    novelAllData = novelAllData.concat(list);
+    totalLoaded += list.length;
+    document.getElementById("novelCount").textContent = totalLoaded + " novel dimuat";
+    updateNovelBtn();
+  } catch (err) {
+    console.error("Gagal fetch novel:", err);
+    if (reset) document.getElementById("novelGrid").innerHTML = emptyState("Gagal memuat novel. Cek koneksimu.");
+  } finally {
+    novelLoading = false;
+    document.getElementById("novelLoadMoreSpinner").style.display = "none";
+  }
+}
+
+/* ============================================================
+   LOAD MORE
+   ============================================================ */
+window.novelLoadMore = async function () {
+  if (novelLoading || !novelHasNext) return;
+  novelLoading = true;
+  const btn     = document.getElementById("novelLoadMoreBtn");
+  const spinner = document.getElementById("novelLoadMoreSpinner");
+  if (btn)     { btn.disabled = true; btn.textContent = "Memuat..."; }
+  if (spinner) spinner.style.display = "grid";
+
+  try {
+    const nextPage = novelPage + 1;
+    if (currentTab === "home")                  await novelFetch(nextPage, false);
+    else if (currentTab === "genre" && activeGenre) await fetchFiltered(BASE + "/genre/" + activeGenre, nextPage, false);
+    else if (currentTab === "tag"   && activeTag)   await fetchFiltered(BASE + "/tag/"   + activeTag,   nextPage, false);
+  } catch (err) {
+    console.error("Load more error:", err);
+    if (btn) { btn.textContent = "⚠️ Coba Lagi"; btn.style.borderColor = "var(--purple)"; btn.style.color = "var(--purple)"; }
+  } finally {
+    novelLoading = false;
+    if (btn) btn.disabled = false;
+    if (spinner) spinner.style.display = "none";
+  }
+};
+
+/* ============================================================
+   RENDER HELPERS
+   ============================================================ */
+function appendNovelCard(novel) {
+  if (!novel?.slug) return;
+  const originalUrl = novel.poster || novel.image || novel.cover || "";
+  const title   = novel.title || "Untitled";
+  const chapter = novel.latest_chapter || novel.chapter || "";
+  const short   = chapter.length > 60 ? chapter.slice(0, 57) + "…" : chapter;
+  const rating  = novel.rating || "";
+  const type    = novel.type || "Novel";
+  const status  = novel.status && novel.status !== "Unknown" ? novel.status : "";
+
+  const card = document.createElement("div");
+  card.className = "novel-card";
+
+  /* Badge & rating overlay (position absolute, dirender via innerHTML) */
+  card.insertAdjacentHTML("afterbegin",
+    '<span class="novel-badge">' + type + '</span>' +
+    (rating ? '<span class="novel-rating">⭐' + rating + '</span>' : "")
+  );
+
+  /* Image area */
+  const imgArea = document.createElement("div");
+  imgArea.className = "novel-img-area";
+
+  const fallback = document.createElement("div");
+  fallback.className = "novel-card-fallback";
+  fallback.style.display = "none";
+  fallback.textContent = "📖";
+
+  if (originalUrl) {
+    const img = createProxiedImg(originalUrl, title, "width:100%;height:100%;object-fit:cover;display:block;");
+    imgArea.appendChild(img);
+    imgArea.appendChild(fallback);
+  } else {
+    fallback.style.display = "flex";
+    imgArea.appendChild(fallback);
+  }
+
+  if (status) {
+    const statusEl = document.createElement("div");
+    statusEl.className = "novel-status";
+    statusEl.textContent = status;
+    imgArea.appendChild(statusEl);
+  }
+
+  card.appendChild(imgArea);
+
+  /* Info */
+  const info = document.createElement("div");
+  info.className = "novel-info";
+  info.innerHTML =
+    '<p class="novel-title">' + title + '</p>' +
+    '<p class="novel-chapter">' + (short || "–") + '</p>';
+  card.appendChild(info);
+
+  card.onclick = () => {
+    sessionStorage.setItem("novelData", JSON.stringify(novel));
+    window.location.href = "/novel/" + novel.slug;
+  };
+  document.getElementById("novelGrid").appendChild(card);
+}
+
+function renderChips(panelId, list, type) {
+  const panel = document.getElementById(panelId);
+  if (!panel || !list.length) return;
+  panel.innerHTML = list.map(item =>
+    '<button class="chip" data-slug="' + item.slug + '" onclick="' +
+      (type === "genre" ? "selectGenre" : "selectTag") +
+      "('" + item.slug + "','" + item.name.replace(/'/g, "\\'") + "')" +
+    '">' + item.name +
+      '<span style="font-size:9px;opacity:0.6;margin-left:3px;">' + item.count + '</span>' +
+    '</button>'
+  ).join("");
+}
+
+function updateNovelBtn() {
+  const wrap = document.getElementById("novelLoadMoreWrap");
+  const btn  = document.getElementById("novelLoadMoreBtn");
+  const info = document.getElementById("novelPageInfo");
+  if (info) info.textContent = "Halaman " + novelPage;
+  wrap.style.display = "flex";
+  if (novelHasNext) {
+    btn.disabled = false; btn.textContent = "Muat Lebih Banyak ↓";
+    btn.style.opacity = "1"; btn.style.borderColor = ""; btn.style.color = "";
+  } else {
+    btn.disabled = true; btn.textContent = "✅ Semua Sudah Dimuat";
+  }
+}
+
+function makeSkeleton(n) {
+  return Array(n).fill(
+    "<div><div class='novel-skeleton novel-skeleton-img'></div>" +
+    "<div class='novel-skeleton novel-skeleton-info'></div></div>"
+  ).join("");
+}
+
+function emptyState(msg) {
+  return '<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-muted);">' +
+    '<p style="font-size:32px;margin-bottom:8px;">😕</p><p>' + msg + '</p></div>';
+}
+
+/* ── Utils ─────────────────────────────────────────────────── */
+function toggleDarkMode() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+}
+function toggleMenu() {
+  const m = document.getElementById("menuDropdown");
+  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
+}
+document.addEventListener("click", e => {
+  const m   = document.getElementById("menuDropdown");
+  const btn = document.querySelector('button[onclick="toggleMenu()"]');
+  if (m && !m.contains(e.target) && !btn?.contains(e.target)) m.style.display = "none";
+});
+</script>
+</body>
+</html>

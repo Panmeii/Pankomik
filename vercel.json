@@ -1,0 +1,15 @@
+{
+  "rewrites": [
+    { "source": "/komik/:komikSlug/:chapterSlug", "destination": "/reader.html?slug=:chapterSlug&komik=:komikSlug" },
+    { "source": "/komik/:slug",                   "destination": "/detail.html?slug=:slug" },
+    { "source": "/baca/:slug",                    "destination": "/reader.html?slug=:slug" },
+    { "source": "/novel/:slug",                   "destination": "/novel-detail.html?slug=:slug" },
+    { "source": "/novel",                         "destination": "/novel.html" },
+    { "source": "/baca-novel/:slug",              "destination": "/novel-reader.html?slug=:slug" },
+    { "source": "/genre/:slug",                   "destination": "/genre.html?genre=:slug" },
+    { "source": "/genre",                         "destination": "/genre.html" },
+    { "source": "/donatur",                       "destination": "/donatur.html" },
+    { "source": "/profil",                        "destination": "/profile.html" },
+    { "source": "/masuk",                         "destination": "/auth.html" }
+  ]
+}

@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Baca Novel — Pankomik</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
+
+    /* ── CSS Variables ────────────────────────────────────── */
+    :root {
+      --bg: #0e0e12; --surface: #18181f; --surface2: #1f1f28;
+      --text: #e8e8f0; --muted: #888899; --border: #2a2a36;
+      --accent: #8e44ad; --accent2: rgba(142,68,173,0.12);
+      --radius: 10px; --header-h: 54px;
+    }
+    body.light {
+      --bg: #f7f5f0; --surface: #ffffff; --surface2: #eeede8;
+      --text: #1a1a1a; --muted: #666; --border: #ddd;
+    }
+    body.sepia {
+      --bg: #f4ece0; --surface: #fdf6ec; --surface2: #ede5d4;
+      --text: #3b2a1a; --muted: #8a6a4a; --border: #d4c4a8;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      transition: background 0.3s, color 0.3s;
+      overscroll-behavior: none;
+    }
+
+    /* ── Progress bar ─────────────────────────────────────── */
+    #readingProgressBar {
+      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+      background: linear-gradient(90deg, #8e44ad, #d4a0ff);
+      z-index: 1100; transition: width 0.15s linear;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .reader-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      height: var(--header-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px; gap: 8px;
+      background: rgba(14,14,18,0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      transition: transform 0.3s ease, opacity 0.3s ease;
+    }
+    body.light .reader-header {
+      background: rgba(247,245,240,0.92);
+      border-bottom-color: var(--border);
+    }
+    body.sepia .reader-header {
+      background: rgba(244,236,224,0.92);
+      border-bottom-color: var(--border);
+    }
+    .reader-header.hide { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+
+    .header-back {
+      background: none; border: none; color: var(--text);
+      font-size: 20px; cursor: pointer; padding: 4px; line-height: 1;
+      flex-shrink: 0;
+    }
+    .header-title {
+      flex: 1; font-size: 12px; font-weight: 700; color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      text-align: center;
+    }
+    .header-btns { display: flex; gap: 4px; flex-shrink: 0; }
+    .hbtn {
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text); padding: 6px 9px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; font-family: 'Nunito', sans-serif;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .hbtn:hover  { background: rgba(255,255,255,0.15); }
+    .hbtn:active { transform: scale(0.9); }
+
+    /* ── Settings Panel ───────────────────────────────────── */
+    .settings-panel {
+      position: fixed; right: 10px; top: 62px; z-index: 1000;
+      width: 230px; padding: 16px;
+      background: rgba(20,20,28,0.97); backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      display: none; animation: popIn 0.15s ease;
+    }
+    body.light .settings-panel { background: rgba(255,255,255,0.97); border-color: var(--border); }
+    body.sepia .settings-panel { background: rgba(253,246,236,0.97); border-color: var(--border); }
+    .settings-panel.open { display: block; }
+    @keyframes popIn { from{opacity:0;transform:scale(0.94) translateY(-6px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+    .settings-title { font-size: 13px; font-weight: 800; color: var(--accent); margin-bottom: 14px; }
+    .settings-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 6px; }
+
+    /* Font size control */
+    .font-size-row { display: flex; align-items: center; gap: 8px; }
+    .font-size-row button {
+      width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--text); font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .font-size-row button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .font-size-num { flex: 1; text-align: center; font-size: 14px; font-weight: 800; }
+
+    /* Font family toggle */
+    .font-btns { display: flex; gap: 6px; }
+    .font-btn {
+      flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--muted);
+      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+      cursor: pointer; text-align: center; transition: all 0.15s;
+    }
+    .font-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* Theme buttons */
+    .theme-btns { display: flex; gap: 6px; }
+    .theme-btn {
+      flex: 1; padding: 7px; border-radius: 8px; border: 2px solid var(--border);
+      font-size: 11px; font-weight: 800; cursor: pointer; text-align: center;
+      transition: border-color 0.15s;
+    }
+    .theme-btn.dark   { background: #0e0e12; color: #eaeaf0; }
+    .theme-btn.light  { background: #f7f5f0; color: #1a1a1a; }
+    .theme-btn.sepia  { background: #f4ece0; color: #3b2a1a; }
+    .theme-btn.active { border-color: var(--accent); }
+
+    /* Line height */
+    .lh-slider { width: 100%; accent-color: var(--accent); }
+
+    /* ── Reader content area ──────────────────────────────── */
+    #readerWrap {
+      margin-top: var(--header-h);
+      min-height: calc(100vh - var(--header-h));
+      padding-bottom: 80px;
+    }
+
+    .chapter-head {
+      padding: 24px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .chapter-head .novel-label {
+      font-size: 11px; font-weight: 800; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
+    }
+    .chapter-head h2 {
+      font-size: 16px; font-weight: 800; line-height: 1.4; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .chapter-head .nav-pills {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;
+    }
+    .nav-pill {
+      padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border);
+      background: var(--surface2); color: var(--muted);
+      font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: none;
+      display: inline-block;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .nav-pill:hover, .nav-pill.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── Novel text content ───────────────────────────────── */
+    #novelContent {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 24px 20px 32px;
+    }
+
+    #novelContent p {
+      margin-bottom: 1em;
+      color: var(--text);
+      line-height: var(--lh, 1.9);
+      font-size: var(--fs, 16px);
+      font-family: var(--ff, 'Nunito', sans-serif);
+      transition: font-size 0.2s, line-height 0.2s;
+    }
+
+    #novelContent p:empty { margin-bottom: 0.4em; }
+
+    #novelContent b, #novelContent strong { font-weight: 800; }
+    #novelContent i, #novelContent em     { font-style: italic; }
+
+    /* ── Bottom navigation bar (prev/next chapter) ────────── */
+    .chapter-nav-bar {
+      display: flex; gap: 8px; padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .cnav-btn {
+      flex: 1; padding: 12px; border-radius: 10px; border: 1.5px solid var(--border);
+      background: var(--surface2); color: var(--text);
+      font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
+      cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .cnav-btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .cnav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .cnav-btn.primary  { background: var(--accent); border-color: var(--accent); color: #fff; flex: 2; }
+    .cnav-btn.primary:hover { background: #7d3c98; }
+
+    /* ── Loading & Error states ───────────────────────────── */
+    .reader-loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 16px; color: var(--muted);
+    }
+    .reader-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(142,68,173,0.2);
+      border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .reader-error {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 12px;
+      color: var(--muted); text-align: center; padding: 20px;
+    }
+
+    /* ── Toast ────────────────────────────────────────────── */
+    #toastWrap {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%); z-index: 3000;
+      pointer-events: none;
+    }
+    .toast-item {
+      padding: 10px 20px; border-radius: 99px; font-size: 13px;
+      font-weight: 700; color: #fff; white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      animation: toastIn 0.25s ease; margin-top: 6px;
+      font-family: 'Nunito', sans-serif;
+    }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+
+<!-- Progress bar -->
+<div id="readingProgressBar"></div>
+
+<!-- Header -->
+<div class="reader-header" id="readerHeader">
+  <button class="header-back" onclick="goBack()">←</button>
+  <span class="header-title" id="headerTitle">Memuat...</span>
+  <div class="header-btns">
+    <button class="hbtn" onclick="toggleSettings()" title="Pengaturan">⚙️</button>
+    <button class="hbtn" onclick="goToDetail()" title="Detail Novel">📋</button>
+  </div>
+</div>
+
+<!-- Settings Panel -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-title">⚙️ Pengaturan Baca</div>
+
+  <div class="settings-label">Ukuran Teks</div>
+  <div class="font-size-row">
+    <button onclick="changeFontSize(-1)">−</button>
+    <span class="font-size-num" id="fontSizeNum">16px</span>
+    <button onclick="changeFontSize(1)">＋</button>
+  </div>
+
+  <div class="settings-label">Font</div>
+  <div class="font-btns">
+    <button class="font-btn active" id="fb-nunito"     onclick="setFont('Nunito')">Sans</button>
+    <button class="font-btn"        id="fb-merriweather" onclick="setFont('Merriweather')">Serif</button>
+  </div>
+
+  <div class="settings-label">Jarak Baris</div>
+  <input class="lh-slider" type="range" id="lhSlider" min="1.4" max="3.0" step="0.1" value="1.9"
+    oninput="setLineHeight(this.value)">
+
+  <div class="settings-label">Tema</div>
+  <div class="theme-btns">
+    <button class="theme-btn dark  active" id="theme-dark"  onclick="setTheme('dark')">🌙 Gelap</button>
+    <button class="theme-btn light"        id="theme-light" onclick="setTheme('light')">☀️ Terang</button>
+    <button class="theme-btn sepia"        id="theme-sepia" onclick="setTheme('sepia')">📜 Sepia</button>
+  </div>
+</div>
+
+<!-- Reader wrap -->
+<div id="readerWrap">
+  <div class="reader-loading">
+    <div class="reader-spinner"></div>
+    <p>Memuat chapter...</p>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toastWrap"></div>
+
+<script type="module">
+  import { getCurrentUser, saveNovelHistory } from "./supabase.js";
+  window._novelAuth = { getCurrentUser, saveNovelHistory };
+</script>
+
+<script>
+/* ============================================================
+   novel-reader.html
+   API: GET /novel/sakuranovel/read/{chapter-slug}
+   JSON: { data: { title, content (HTML), navigation: { prev_slug, next_slug, parent_slug } } }
+   ============================================================ */
+
+const BASE        = "https://www.sankavollerei.com/novel/sakuranovel/read";
+const chapterSlug = new URLSearchParams(window.location.search).get("slug");
+if (!chapterSlug) window.location.href = "novel.html";
+
+/* ── State ─────────────────────────────────────────────────── */
+let currentSlug   = chapterSlug;
+let navigation    = {};
+let currentUser   = null;
+let historySaved  = false;
+let parentSlug    = null;
+
+/* ── Settings state ─────────────────────────────────────────── */
+let fontSize   = parseInt(localStorage.getItem("nv_fs")   || "16");
+let fontFamily = localStorage.getItem("nv_ff")             || "Nunito";
+let lineHeight = parseFloat(localStorage.getItem("nv_lh") || "1.9");
+let theme      = localStorage.getItem("nv_theme")          || "dark";
+
+/* ── INIT ─────────────────────────────────────────────────── */
+window.addEventListener("DOMContentLoaded", async () => {
+  applySettings(false);
+  initProgressBar();
+  initHeaderHide();
+
+  await new Promise(r => setTimeout(r, 80));
+  if (window._novelAuth) currentUser = await window._novelAuth.getCurrentUser();
+
+  await loadChapter(currentSlug);
+});
+
+/* ── FETCH & RENDER ────────────────────────────────────────── */
+async function loadChapter(slug, append = false) {
+  if (!append) {
+    document.getElementById("readerWrap").innerHTML = `
+      <div class="reader-loading">
+        <div class="reader-spinner"></div>
+        <p>Memuat chapter...</p>
+      </div>`;
+    historySaved = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    const bar = document.getElementById("readingProgressBar");
+    if (bar) { bar.style.width = "0%"; bar.style.background = "linear-gradient(90deg,#8e44ad,#d4a0ff)"; }
+  }
+
+  try {
+    const res  = await fetch(`${BASE}/${slug}`);
+    const json = await res.json();
+    if (!json.data) throw new Error("No data");
+
+    const d  = json.data;
+    navigation  = d.navigation || {};
+    parentSlug  = navigation.parent_slug || null;
+    currentSlug = slug;
+
+    document.title = (d.title || "Baca Novel") + " — Pankomik";
+    document.getElementById("headerTitle").textContent = d.title || "Novel";
+
+    renderChapter(d);
+
+    /* Auto-save riwayat */
+    if (currentUser && !historySaved && window._novelAuth) {
+      historySaved = true;
+      window._novelAuth.saveNovelHistory(currentUser.id, {
+        slug:  parentSlug || slug,
+        title: extractNovelTitle(d.title || ""),
+        cover: ""
+      }, {
+        slug:  slug,
+        title: d.title || slug
+      }).catch(console.error);
+    }
+
+  } catch (err) {
+    console.error("Gagal load chapter:", err);
+    document.getElementById("readerWrap").innerHTML = `
+      <div class="reader-error">
+        <p style="font-size:40px">😕</p>
+        <p>Gagal memuat chapter. Cek koneksimu.</p>
+        <button onclick="loadChapter('${slug}')" style="
+          margin-top:12px;padding:9px 22px;background:#8e44ad;
+          color:#fff;border:none;border-radius:9px;cursor:pointer;
+          font-weight:700;font-family:'Nunito',sans-serif;font-size:14px;">
+          🔄 Coba Lagi
+        </button>
+      </div>`;
+  }
+}
+
+function renderChapter(d) {
+  const prevSlug = navigation.prev_slug;
+  const nextSlug = navigation.next_slug;
+
+  /* Bersihkan konten HTML dari link eksternal & elemen berbahaya */
+  const cleanContent = sanitizeNovelHtml(d.content || "<p>Tidak ada konten.</p>");
+
+  document.getElementById("readerWrap").innerHTML = `
+    <!-- Chapter header -->
+    <div class="chapter-head">
+      <div class="novel-label">📖 Novel</div>
+      <h2>${escHtml(d.title || "")}</h2>
+      <div class="nav-pills">
+        ${parentSlug ? `<a class="nav-pill" href="novel-detail.html?slug=${parentSlug}">← Detail Novel</a>` : ""}
+        ${prevSlug   ? `<span class="nav-pill" onclick="goToChapter('${prevSlug}')">⬅ Sebelumnya</span>` : ""}
+        ${nextSlug   ? `<span class="nav-pill accent" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</span>` : ""}
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div id="novelContent">${cleanContent}</div>
+
+    <!-- Bottom chapter nav -->
+    <div class="chapter-nav-bar">
+      <button class="cnav-btn" id="prevChBtn" onclick="goToChapter('${prevSlug}')"
+        ${!prevSlug ? "disabled" : ""}>⬅ Sebelumnya</button>
+      ${nextSlug
+        ? `<button class="cnav-btn primary" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</button>`
+        : parentSlug
+          ? `<button class="cnav-btn primary" onclick="window.location.href='novel-detail.html?slug=${parentSlug}'">📋 Kembali ke Detail</button>`
+          : `<button class="cnav-btn" disabled>✅ Selesai</button>`
+      }
+    </div>
+  `;
+
+  applySettings(false);
+}
+
+/* Bersihkan HTML konten novel (hapus script, iframe, link eksternal tidak perlu) */
+function sanitizeNovelHtml(html) {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "")
+    .replace(/href="https?:\/\/(?!pankomik)[^"]*"/gi, 'href="#"')
+    /* Proxy semua gambar inline dalam konten novel */
+    .replace(/src="(https?:\/\/[^"]+)"/gi, (match, url) => {
+      const proxied = "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=680&output=webp&q=85";
+      return `src="${proxied}"`;
+    })
+    /* Hapus baris promo dari translator */
+    .replace(/<p[^>]*>.*?(Ko-fi|sakuranovel|Baca novel lain).*?<\/p>/gi, "");
+}
+
+/* ── NAVIGASI ────────────────────────────────────────────── */
+window.goToChapter = function (slug) {
+  if (!slug) return;
+  currentSlug  = slug;
+  historySaved = false;
+  loadChapter(slug);
+};
+
+window.goBack = function () {
+  if (parentSlug) {
+    window.location.href = `novel-detail.html?slug=${parentSlug}`;
+  } else {
+    history.back();
+  }
+};
+
+window.goToDetail = function () {
+  if (parentSlug) window.location.href = `novel-detail.html?slug=${parentSlug}`;
+  else history.back();
+};
+
+/* Ekstrak judul novel dari judul chapter (hapus nama chapter di akhir) */
+function extractNovelTitle(chapterTitle) {
+  return chapterTitle.replace(/\s*(volume\s*\d+)?\s*chapter\s*[\d.]+.*$/i, "")
+                     .replace(/\s*(short story|afterword|prologue|epilogue).*$/i, "")
+                     .replace(/\s*bahasa indonesia\s*/i, "")
+                     .trim() || chapterTitle;
+}
+
+/* ── SETTINGS ────────────────────────────────────────────── */
+window.toggleSettings = function () {
+  document.getElementById("settingsPanel").classList.toggle("open");
+};
+
+function applySettings(save = true) {
+  const content = document.getElementById("novelContent");
+  if (content) {
+    content.style.setProperty("--fs", fontSize + "px");
+    content.style.setProperty("--lh", lineHeight);
+    content.style.setProperty("--ff",
+      fontFamily === "Merriweather" ? "'Merriweather', serif" : "'Nunito', sans-serif");
+  }
+
+  /* Sync slider & display */
+  const fsNum = document.getElementById("fontSizeNum");
+  const lhSlider = document.getElementById("lhSlider");
+  if (fsNum) fsNum.textContent = fontSize + "px";
+  if (lhSlider) lhSlider.value = lineHeight;
+
+  /* Font buttons */
+  document.querySelectorAll(".font-btn").forEach(b => b.classList.remove("active"));
+  const ffBtn = document.getElementById("fb-" + fontFamily.toLowerCase());
+  if (ffBtn) ffBtn.classList.add("active");
+
+  /* Theme */
+  document.body.className = theme;
+  document.querySelectorAll(".theme-btn").forEach(b => b.classList.remove("active"));
+  const themeBtn = document.getElementById("theme-" + theme);
+  if (themeBtn) themeBtn.classList.add("active");
+
+  if (save) {
+    localStorage.setItem("nv_fs", fontSize);
+    localStorage.setItem("nv_ff", fontFamily);
+    localStorage.setItem("nv_lh", lineHeight);
+    localStorage.setItem("nv_theme", theme);
+  }
+}
+
+window.changeFontSize = function (delta) {
+  fontSize = Math.min(24, Math.max(12, fontSize + delta));
+  applySettings();
+};
+window.setFont = function (ff) {
+  fontFamily = ff; applySettings();
+};
+window.setLineHeight = function (val) {
+  lineHeight = parseFloat(val); applySettings();
+};
+window.setTheme = function (t) {
+  theme = t; applySettings();
+};
+
+/* ── READING PROGRESS BAR ────────────────────────────────── */
+function initProgressBar() {
+  const bar = document.getElementById("readingProgressBar");
+  window.addEventListener("scroll", () => {
+    const scrollTop = window.scrollY;
+    const docH = document.body.scrollHeight - window.innerHeight;
+    const pct  = docH > 0 ? (scrollTop / docH) * 100 : 0;
+    if (bar) {
+      bar.style.width = Math.min(pct, 100) + "%";
+      if (pct >= 95) bar.style.background = "linear-gradient(90deg,#27ae60,#2ecc71)";
+    }
+  }, { passive: true });
+}
+
+/* ── HEADER AUTO-HIDE ────────────────────────────────────── */
+function initHeaderHide() {
+  const header = document.getElementById("readerHeader");
+  let timer = null;
+  window.addEventListener("scroll", () => {
+    header?.classList.add("hide");
+    clearTimeout(timer);
+    timer = setTimeout(() => header?.classList.remove("hide"), 1800);
+  }, { passive: true });
+
+  /* Tap on content = toggle header */
+  document.getElementById("readerWrap")?.addEventListener("click", e => {
+    if (e.target.closest("button") || e.target.closest("a")) return;
+    header?.classList.toggle("hide");
+  });
+}
+
+/* ── CLOSE SETTINGS ON OUTSIDE CLICK ───────────────────────── */
+document.addEventListener("click", e => {
+  const panel = document.getElementById("settingsPanel");
+  const btn   = document.querySelector('.hbtn[onclick="toggleSettings()"]');
+  if (panel?.classList.contains("open") && !panel.contains(e.target) && !btn?.contains(e.target)) {
+    panel.classList.remove("open");
+  }
+});
+
+/* ── KEYBOARD ─────────────────────────────────────────────── */
+document.addEventListener("keydown", e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if ((e.key === "ArrowRight" || e.key === "d") && navigation.next_slug) goToChapter(navigation.next_slug);
+  if ((e.key === "ArrowLeft"  || e.key === "a") && navigation.prev_slug) goToChapter(navigation.prev_slug);
+});
+
+/* ── HELPERS ─────────────────────────────────────────────── */
+function escHtml(str) {
+  return String(str || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function showToast(msg, type = "info") {
+  const wrap = document.getElementById("toastWrap");
+  if (!wrap) return;
+  const t  = document.createElement("div");
+  const bg = type === "success" ? "#27ae60" : type === "error" ? "#e8522a" : "#333";
+  t.className = "toast-item";
+  t.style.background = bg;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+</script>
+</body>
+</html>

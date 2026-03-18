@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detail Novel — Pankomik</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    :root { --purple: #8e44ad; --purple-light: rgba(142,68,173,0.12); }
+
+    /* ── Hero poster blur background ─────────────────────── */
+    .novel-hero-bg {
+      position: relative;
+      overflow: hidden;
+      min-height: 200px;
+    }
+    .novel-hero-blur {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      filter: blur(22px) brightness(0.35);
+      transform: scale(1.1);
+    }
+    .novel-hero-content {
+      position: relative; z-index: 1;
+      display: flex; gap: 14px;
+      padding: 20px 16px 16px;
+      align-items: flex-end;
+    }
+    .novel-poster {
+      width: 110px; height: 156px;
+      object-fit: cover; border-radius: 10px; flex-shrink: 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      border: 2px solid rgba(255,255,255,0.12);
+    }
+    .novel-hero-info { flex: 1; min-width: 0; padding-bottom: 4px; }
+    .novel-hero-info h1 {
+      font-size: 17px; font-weight: 800; line-height: 1.3;
+      color: #fff; margin-bottom: 4px;
+    }
+    .novel-hero-info .alt-title {
+      font-size: 11px; color: rgba(255,255,255,0.55);
+      font-style: italic; margin-bottom: 8px;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .novel-hero-meta {
+      display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
+    }
+    .meta-chip {
+      padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.08);
+    }
+    .meta-chip.purple { background: var(--purple); border-color: var(--purple); }
+    .meta-chip.green  { background: #27ae60; border-color: #27ae60; }
+    .meta-chip.orange { background: var(--accent); border-color: var(--accent); }
+
+    .rating-row {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .stars { color: #f5a623; font-size: 13px; letter-spacing: 1px; }
+    .rating-num { font-size: 13px; font-weight: 800; color: #f5a623; }
+
+    /* ── Action buttons ───────────────────────────────────── */
+    .action-bar {
+      display: flex; gap: 8px; padding: 12px 16px 4px;
+    }
+    .btn-read {
+      flex: 1; padding: 12px 0; border-radius: 10px;
+      background: var(--purple); border: none; color: #fff;
+      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+      cursor: pointer; transition: background 0.2s, transform 0.1s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-read:hover  { background: #7d3c98; }
+    .btn-read:active { transform: scale(0.97); }
+    .btn-share {
+      padding: 12px 16px; border-radius: 10px;
+      background: var(--bg-surface); border: 1.5px solid var(--border);
+      color: var(--text); font-family: 'Nunito', sans-serif;
+      font-size: 14px; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .btn-share:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-light); }
+
+    /* ── Info table ───────────────────────────────────────── */
+    .info-section {
+      padding: 4px 16px 0;
+    }
+    .info-table {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+    }
+    .info-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 14px; border-bottom: 1px solid var(--border);
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label {
+      font-size: 11px; font-weight: 800; color: var(--text-muted);
+      min-width: 88px; flex-shrink: 0; padding-top: 1px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .info-value {
+      font-size: 12px; color: var(--text); font-weight: 600; line-height: 1.5;
+      flex: 1;
+    }
+
+    /* ── Section title ────────────────────────────────────── */
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 16px 8px;
+    }
+    .section-head h3 {
+      font-size: 14px; font-weight: 800; color: var(--text);
+    }
+    .section-head span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
+
+    /* ── Synopsis ─────────────────────────────────────────── */
+    .synopsis-box {
+      padding: 0 16px 4px;
+    }
+    .synopsis-text {
+      font-size: 13px; color: var(--text-muted); line-height: 1.75;
+      max-height: 80px; overflow: hidden;
+      transition: max-height 0.4s ease;
+      white-space: pre-line;
+    }
+    .synopsis-text.expanded { max-height: 2000px; }
+    .synopsis-toggle {
+      margin-top: 6px; padding: 5px 14px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; font-size: 12px;
+      font-family: 'Nunito', sans-serif; color: var(--text);
+      transition: background 0.2s;
+    }
+    .synopsis-toggle:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
+
+    /* ── Genre & tag chips ────────────────────────────────── */
+    .chips-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 0 16px 4px;
+    }
+    .chip-genre {
+      padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      color: var(--text-muted); cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      text-decoration: none; display: inline-block;
+    }
+    .chip-genre:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .chip-tag {
+      padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      border: 1px solid rgba(142,68,173,0.3); background: var(--purple-light);
+      color: var(--purple); cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .chip-tag:hover { background: var(--purple); color: #fff; }
+
+    /* ── Chapter list ─────────────────────────────────────── */
+    .novel-chapter-list {
+      margin: 0 16px; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border); background: var(--bg-card);
+      max-height: 420px; overflow-y: auto;
+    }
+    .novel-chapter-item {
+      display: flex; align-items: center;
+      padding: 11px 14px; border-bottom: 1px solid var(--border);
+      cursor: pointer; text-decoration: none;
+      transition: background 0.15s;
+      gap: 10px;
+    }
+    .novel-chapter-item:last-child { border-bottom: none; }
+    .novel-chapter-item:hover { background: var(--bg-surface); }
+    .novel-chapter-item:hover .ch-title { color: var(--purple); }
+    .ch-num {
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      background: var(--purple-light); display: flex; align-items: center;
+      justify-content: center; font-size: 10px; font-weight: 800;
+      color: var(--purple);
+    }
+    .ch-info { flex: 1; min-width: 0; }
+    .ch-title {
+      font-size: 12px; font-weight: 700; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: color 0.15s;
+    }
+    .ch-date { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .ch-read-btn {
+      padding: 4px 10px; border-radius: 6px; border: none;
+      background: var(--purple); color: #fff; font-size: 10px;
+      font-weight: 800; font-family: 'Nunito', sans-serif;
+      cursor: pointer; flex-shrink: 0; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .ch-read-btn:hover { background: #7d3c98; }
+
+    /* Sort toggle */
+    .ch-sort-btn {
+      padding: 4px 10px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      color: var(--text-muted); font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .ch-sort-btn:hover { border-color: var(--purple); color: var(--purple); }
+
+    /* ── Loading skeleton ─────────────────────────────────── */
+    .skel {
+      background: linear-gradient(90deg,var(--bg-surface) 0%,var(--bg-card) 50%,var(--bg-surface) 100%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Bookmark button ─────────────────────────────────── */
+    .btn-bookmark-novel {
+      padding: 12px 14px; border-radius: 10px;
+      background: var(--bg-surface); border: 1.5px solid var(--border);
+      font-size: 16px; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+    .btn-bookmark-novel:hover     { border-color: var(--purple); background: var(--purple-light); }
+    .btn-bookmark-novel.saved     { background: var(--purple-light); border-color: var(--purple); }
+    .btn-bookmark-novel:active    { transform: scale(0.93); }
+
+    /* Kategori buttons */
+    .kbtn-novel {
+      padding: 5px 12px; border-radius: 99px;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      color: var(--text-muted); font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .kbtn-novel.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+
+    /* Lanjut baca bar */
+    .last-read-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 10px;
+      background: var(--purple-light); border: 1px solid rgba(142,68,173,0.25);
+      gap: 10px;
+    }
+    .last-read-bar p { font-size: 12px; color: var(--text-muted); margin: 0; flex: 1; }
+    .last-read-bar p strong { color: var(--text); }
+    .btn-lanjut-novel {
+      padding: 7px 14px; border-radius: 8px; border: none;
+      background: var(--purple); color: #fff; font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn-lanjut-novel:hover { background: #7d3c98; }
+
+    /* ── Bottom padding for nav ───────────────────────────── */
+    .page-bottom { height: 24px; }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="header">
+  <button onclick="history.back()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:0 4px 0 0;">←</button>
+  <div class="logo" onclick="window.location.href='/novel/'" style="font-size:18px;">Novel</div>
+  <div class="header-right">
+    <button onclick="toggleDarkMode()">🌙</button>
+    <button onclick="toggleMenu()">👤</button>
+  </div>
+</header>
+<div id="menuDropdown" class="dropdown"></div>
+
+<!-- Konten detail diisi JS -->
+<div id="detailContent">
+  <!-- Skeleton loading -->
+  <div style="padding:16px;">
+    <div style="display:flex;gap:14px;margin-bottom:16px;">
+      <div class="skel" style="width:110px;height:156px;border-radius:10px;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:8px;padding-top:8px;">
+        <div class="skel" style="height:18px;border-radius:6px;"></div>
+        <div class="skel" style="height:12px;width:80%;border-radius:6px;"></div>
+        <div class="skel" style="height:12px;width:60%;border-radius:6px;"></div>
+        <div class="skel" style="height:24px;width:50%;border-radius:99px;"></div>
+      </div>
+    </div>
+    <div class="skel" style="height:46px;border-radius:10px;margin-bottom:12px;"></div>
+    <div class="skel" style="height:120px;border-radius:12px;margin-bottom:12px;"></div>
+    <div class="skel" style="height:200px;border-radius:12px;"></div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item active">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/donatur'">
+    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
+<script type="module">
+  import { initAuthHeader } from "./auth-header.js";
+  import {
+    getCurrentUser,
+    checkNovelBookmark, addNovelBookmark, removeNovelBookmark,
+    getLastNovelRead, saveNovelHistory
+  } from "./supabase.js";
+
+  initAuthHeader();
+
+  /* Simpan ke window agar script biasa bisa akses */
+  window._supabase = {
+    getCurrentUser,
+    checkNovelBookmark, addNovelBookmark, removeNovelBookmark,
+    getLastNovelRead, saveNovelHistory
+  };
+</script>
+
+<script>
+/* ============================================================
+   novel-detail.html
+   API: GET /novel/sakuranovel/detail/{slug}
+   ============================================================ */
+
+const BASE   = "https://www.sankavollerei.com/novel/sakuranovel";
+const slug   = new URLSearchParams(window.location.search).get("slug");
+if (!slug) window.location.href = "/novel/";
+
+let chaptersAsc    = false;
+let allChapters    = [];
+let currentUser    = null;
+let isBookmarked   = false;
+let currentKategori = "favorit";
+let novelDataCache = null;  /* simpan data novel untuk bookmark */
+
+/* ── INIT ─────────────────────────────────────────────────── */
+window.onload = async function () {
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+
+  /* Tunggu supabase module siap */
+  await new Promise(r => setTimeout(r, 80));
+  if (window._supabase) currentUser = await window._supabase.getCurrentUser();
+
+  await loadDetail();
+};
+
+/* ── FETCH DETAIL ─────────────────────────────────────────── */
+async function loadDetail() {
+  try {
+    const res  = await fetch(`${BASE}/detail/${slug}`);
+    const json = await res.json();
+
+    if (!json.data) throw new Error("No data");
+    novelDataCache = json.data;
+    renderDetail(json.data);
+
+    /* Setelah render, cek bookmark & last read secara paralel */
+    if (currentUser && window._supabase) {
+      const [bmStatus, lastRead] = await Promise.all([
+        window._supabase.checkNovelBookmark(currentUser.id, slug),
+        window._supabase.getLastNovelRead(currentUser.id, slug)
+      ]);
+      isBookmarked    = bmStatus.isBookmarked;
+      currentKategori = bmStatus.kategori || "favorit";
+      updateBookmarkUI();
+      if (lastRead) updateLastReadUI(lastRead);
+    }
+  } catch (err) {
+    console.error("Gagal load detail:", err);
+    document.getElementById("detailContent").innerHTML = `
+      <div style="padding:40px 20px;text-align:center;color:var(--text-muted);">
+        <p style="font-size:40px;margin-bottom:10px;">😕</p>
+        <p style="margin-bottom:16px;">Gagal memuat detail novel.</p>
+        <button onclick="loadDetail()" style="padding:9px 20px;background:#8e44ad;color:#fff;
+          border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:'Nunito',sans-serif;">
+          Coba Lagi
+        </button>
+      </div>`;
+  }
+}
+
+
+/* ── Placeholder saat gambar tidak muncul ─────────────── */
+function posterFallback(el, title) {
+  const initials = (title || "N").slice(0, 2).toUpperCase();
+  el.outerHTML = `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;
+    background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:4px;">
+    <span style="font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;letter-spacing:2px;">${initials}</span>
+    <span style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Novel</span>
+  </div>`;
+}
+
+/* ============================================================
+   IMAGE PROXY — Multi-layer fallback bypass Cloudflare
+   sakuranovel.id dilindungi Cloudflare Bot Protection
+   Strategi: coba images.weserv.nl → wsrv.nl → langsung (fallback)
+   ============================================================ */
+function proxyImg(url, width) {
+  if (!url) return "";
+  if (url.includes("weserv.nl") || url.includes("wsrv.nl") ||
+      url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
+  var w = width || 300;
+  var clean = url.replace(/^https?:\/\//, "");
+  return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + "&w=" + w + "&output=webp&q=80";
+}
+
+function createProxiedImg(originalUrl, altText, cssText) {
+  var img = document.createElement("img");
+  img.alt = altText || "";
+  if (cssText) img.style.cssText = cssText;
+  
+  var tried = 0;
+  var getProxy = function(n, u) {
+    if (n === 0) {
+      var c = u.replace(/^https?:\/\//, "");
+      return "https://images.weserv.nl/?url=" + encodeURIComponent(c) + "&w=300&output=webp&q=80";
+    }
+    if (n === 1) return "https://wsrv.nl/?url=" + encodeURIComponent(u) + "&w=300";
+    return u;
+  };
+  
+  img.onerror = function() {
+    tried++;
+    if (tried <= 2) {
+      img.src = getProxy(tried, originalUrl);
+    } else {
+      img.style.display = "none";
+      var sib = img.nextElementSibling;
+      if (sib) sib.style.display = "flex";
+    }
+  };
+  
+  img.src = getProxy(0, originalUrl);
+  return img;
+}
+
+/* ── RENDER ───────────────────────────────────────────────── */
+function renderDetail(d) {
+  document.title = `${d.title} — Pankomik`;
+  allChapters    = d.chapters || [];
+  const info     = d.info || {};
+  const poster   = proxyImg(d.poster || "", 420);
+
+  /* Status chip color */
+  const statusClass = (d.status || "").toLowerCase() === "completed"
+    ? "green" : (d.status || "").toLowerCase() === "ongoing" ? "orange" : "";
+
+  /* Stars dari rating */
+  const ratingNum = parseFloat(d.rating) || 0;
+  const stars = renderStars(ratingNum);
+
+  /* Genre chips */
+  const genreHtml = (d.genres || []).map(g =>
+    `<span class="chip-genre" onclick="goToGenre('${g.slug}','${escHtml(g.name)}')">${escHtml(g.name)}</span>`
+  ).join("");
+
+  /* Tag chips */
+  const tagStr  = info.tags || "";
+  const tagHtml = tagStr
+    ? tagStr.split(",").map(t => t.trim()).filter(Boolean).map(t => {
+        const tagSlug = t.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        return `<span class="chip-tag" onclick="goToTag('${tagSlug}','${escHtml(t)}')">${escHtml(t)}</span>`;
+      }).join("")
+    : "";
+
+  document.getElementById("detailContent").innerHTML = `
+
+    <!-- ── Hero poster bg ── -->
+    <div class="novel-hero-bg">
+      <div class="novel-hero-blur" id="heroBg"></div>
+      <div class="novel-hero-content">
+        ${d.poster
+          ? `<img class="novel-poster" src="${d.poster}" alt="${escHtml(d.title)}"
+               onerror="posterFallback(this, '${escHtml(d.title)}')">`
+          : `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;">
+              ${(d.title||"N").slice(0,2).toUpperCase()}
+             </div>`
+        }
+        <div class="novel-hero-info">
+          <h1>${escHtml(d.title)}</h1>
+          ${d.alt_title ? `<p class="alt-title">${escHtml(d.alt_title)}</p>` : ""}
+          <div class="novel-hero-meta">
+            <span class="meta-chip purple">${escHtml(d.type || "Novel")}</span>
+            ${d.status ? `<span class="meta-chip ${statusClass}">${escHtml(d.status)}</span>` : ""}
+            ${info.country ? `<span class="meta-chip">🌏 ${escHtml(info.country)}</span>` : ""}
+          </div>
+          ${ratingNum > 0 ? `
+            <div class="rating-row">
+              <span class="stars">${stars}</span>
+              <span class="rating-num">${d.rating}</span>
+            </div>` : ""
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Action buttons ── -->
+    <div class="action-bar">
+      <button class="btn-read" id="btnReadMain" onclick="readMain()">
+        📖 ${allChapters.length > 0 ? "Mulai Baca" : "Belum Ada Chapter"}
+      </button>
+      <button class="btn-bookmark-novel" id="btnBookmark" onclick="toggleNovelBookmark()" title="Bookmark">
+        🔖
+      </button>
+      <button class="btn-share" onclick="shareNovel()" title="Bagikan">🔗</button>
+    </div>
+
+    <!-- Kategori bookmark (muncul kalau sudah dibookmark) -->
+    <div class="kategori-picker" id="kategoriPicker" style="display:none;padding:0 16px 4px;gap:6px;flex-wrap:wrap;">
+      <button class="kbtn-novel" id="kbtn-favorit"     onclick="setNovelKategori('favorit',this)">❤️ Favorit</button>
+      <button class="kbtn-novel" id="kbtn-lagi_dibaca" onclick="setNovelKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
+      <button class="kbtn-novel" id="kbtn-tamat"       onclick="setNovelKategori('tamat',this)">✅ Tamat</button>
+    </div>
+
+    <!-- Lanjut baca (muncul kalau ada progress) -->
+    <div id="lastReadBar" style="display:none;padding:0 16px 4px;"></div>
+
+    <!-- ── Info table ── -->
+    <div class="info-section">
+      <div class="info-table">
+        ${info.author    ? infoRow("✍️ Penulis",    escHtml(info.author))    : ""}
+        ${info.published ? infoRow("📅 Terbit",     escHtml(info.published)) : ""}
+        ${info.country   ? infoRow("🌏 Negara",     escHtml(info.country))   : ""}
+        ${info.volume    ? infoRow("📦 Volume",     escHtml(info.volume))    : ""}
+        ${info.total_chapter ? infoRow("📖 Total Chapter", escHtml(info.total_chapter)) : ""}
+        ${infoRow("⭐ Rating", ratingNum > 0 ? `${d.rating} / 5` : "–")}
+      </div>
+    </div>
+
+    <!-- ── Synopsis ── -->
+    <div class="section-head"><h3>📝 Sinopsis</h3></div>
+    <div class="synopsis-box">
+      <p class="synopsis-text" id="synopsisText">${escHtml(d.synopsis || "Tidak ada sinopsis.")}</p>
+      <button class="synopsis-toggle" id="synopsisBtn" onclick="toggleSynopsis()">Baca Selengkapnya ▼</button>
+    </div>
+
+    <!-- ── Genre ── -->
+    ${genreHtml ? `
+      <div class="section-head"><h3>🏷️ Genre</h3></div>
+      <div class="chips-row">${genreHtml}</div>` : ""
+    }
+
+    <!-- ── Tags ── -->
+    ${tagHtml ? `
+      <div class="section-head"><h3>🔖 Tags</h3></div>
+      <div class="chips-row">${tagHtml}</div>` : ""
+    }
+
+    <!-- ── Chapter list ── -->
+    <div class="section-head">
+      <h3>📚 Daftar Chapter
+        <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:4px;">(${allChapters.length})</span>
+      </h3>
+      ${allChapters.length > 1
+        ? `<button class="ch-sort-btn" id="sortBtn" onclick="toggleSort()">↑↓ Terlama dulu</button>`
+        : ""
+      }
+    </div>
+    ${allChapters.length > 0
+      ? `<div class="novel-chapter-list" id="chapterList"></div>`
+      : `<p style="padding:0 16px 12px;font-size:13px;color:var(--text-muted);">Belum ada chapter tersedia.</p>`
+    }
+
+    <div class="page-bottom"></div>
+  `;
+
+  /* Set blur background */
+  if (d.poster) {
+    const bg = document.getElementById("heroBg");
+    if (bg) bg.style.backgroundImage = `url(${d.poster})`;
+  }
+
+  /* Render chapter list */
+  if (allChapters.length > 0) renderChapterList();
+}
+
+/* ── RENDER CHAPTER LIST ──────────────────────────────────── */
+function renderChapterList() {
+  const list = document.getElementById("chapterList");
+  if (!list) return;
+
+  const ordered = chaptersAsc ? [...allChapters].reverse() : [...allChapters];
+
+  list.innerHTML = ordered.map((ch, i) => {
+    const num    = chaptersAsc ? allChapters.length - ordered.length + i + 1 : allChapters.length - i;
+    const title  = ch.title || `Chapter ${num}`;
+    const date   = ch.date  || "";
+    const cSlug  = ch.slug  || "";
+
+    /* Potong judul panjang untuk nomor chapter */
+    const shortTitle = title.length > 55 ? title.slice(0, 52) + "…" : title;
+
+    return `
+      <div class="novel-chapter-item" onclick="readChapter('${escHtml(cSlug)}')">
+        <div class="ch-num">${num}</div>
+        <div class="ch-info">
+          <div class="ch-title">${escHtml(shortTitle)}</div>
+          ${date ? `<div class="ch-date">📅 ${escHtml(date)}</div>` : ""}
+        </div>
+        <button class="ch-read-btn" onclick="event.stopPropagation();readChapter('${escHtml(cSlug)}')">Baca</button>
+      </div>`;
+  }).join("");
+}
+
+/* ── TOGGLE SORT ─────────────────────────────────────────── */
+window.toggleSort = function () {
+  chaptersAsc = !chaptersAsc;
+  const btn   = document.getElementById("sortBtn");
+  if (btn) btn.textContent = chaptersAsc ? "↑↓ Terbaru dulu" : "↑↓ Terlama dulu";
+  renderChapterList();
+};
+
+/* ── TOGGLE SYNOPSIS ─────────────────────────────────────── */
+window.toggleSynopsis = function () {
+  const text = document.getElementById("synopsisText");
+  const btn  = document.getElementById("synopsisBtn");
+  const open = text.classList.toggle("expanded");
+  if (btn) btn.textContent = open ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
+};
+
+/* ── READ CHAPTER ─────────────────────────────────────────── */
+window.readChapter = function (chapterSlug) {
+  if (!chapterSlug) return;
+  window.location.href = "/baca-novel/"+chapterSlug;
+};
+
+/* ── BOOKMARK FUNCTIONS ────────────────────────────────────── */
+function updateBookmarkUI() {
+  const btn = document.getElementById("btnBookmark");
+  const picker = document.getElementById("kategoriPicker");
+  if (!btn) return;
+  if (isBookmarked) {
+    btn.classList.add("saved");
+    btn.title = "Hapus Bookmark";
+    if (picker) picker.style.display = "flex";
+    /* Highlight kategori aktif */
+    document.querySelectorAll(".kbtn-novel").forEach(b => {
+      b.classList.toggle("active", b.id === "kbtn-" + currentKategori);
+    });
+  } else {
+    btn.classList.remove("saved");
+    btn.title = "Tambah Bookmark";
+    if (picker) picker.style.display = "none";
+  }
+}
+
+function updateLastReadUI(lastRead) {
+  const bar = document.getElementById("lastReadBar");
+  if (!bar || !lastRead) return;
+  const title = lastRead.chapter_title || lastRead.chapter_slug || "Chapter";
+  const short = title.length > 45 ? title.slice(0, 42) + "…" : title;
+  bar.innerHTML = `
+    <div class="last-read-bar">
+      <p>📍 Terakhir baca: <strong>${escHtml(short)}</strong></p>
+      <button class="btn-lanjut-novel" onclick="readChapter('${escHtml(lastRead.chapter_slug)}')">
+        ▶ Lanjut
+      </button>
+    </div>`;
+  bar.style.display = "block";
+  /* Update tombol utama ke "Lanjut Baca" */
+  const btnMain = document.getElementById("btnReadMain");
+  if (btnMain) btnMain.textContent = "▶ Lanjut Baca";
+}
+
+window.toggleNovelBookmark = async function () {
+  if (!currentUser) { window.location.href = "/masuk"; return; }
+  if (!window._supabase) return;
+
+  const btn = document.getElementById("btnBookmark");
+  btn.disabled = true;
+
+  if (isBookmarked) {
+    await window._supabase.removeNovelBookmark(currentUser.id, slug);
+    isBookmarked = false;
+    showToast("Bookmark dihapus", "info");
+  } else {
+    const d = novelDataCache;
+    await window._supabase.addNovelBookmark(currentUser.id, {
+      slug,
+      title:    d?.title   || slug,
+      cover:    d?.poster  || "",
+      kategori: currentKategori
+    });
+    isBookmarked = true;
+    showToast("📚 Disimpan ke bookmark!", "success");
+  }
+  btn.disabled = false;
+  updateBookmarkUI();
+};
+
+window.setNovelKategori = async function (kategori, btnEl) {
+  if (!currentUser || !isBookmarked || !window._supabase) return;
+  currentKategori = kategori;
+  const d = novelDataCache;
+  await window._supabase.addNovelBookmark(currentUser.id, {
+    slug, title: d?.title || slug, cover: d?.poster || "", kategori
+  });
+  document.querySelectorAll(".kbtn-novel").forEach(b => b.classList.remove("active"));
+  btnEl.classList.add("active");
+};
+
+/* readMain: cek apakah ada lastRead, kalau ada lanjut dari sana, kalau tidak mulai dari awal */
+window.readMain = function () {
+  const lastReadBar = document.getElementById("lastReadBar");
+  const lanjutBtn   = lastReadBar?.querySelector(".btn-lanjut-novel");
+  if (lanjutBtn) { lanjutBtn.click(); return; }
+  if (allChapters.length > 0) {
+    readChapter(allChapters[allChapters.length - 1].slug);
+  }
+};
+
+/* ── SHARE ────────────────────────────────────────────────── */
+window.shareNovel = async function () {
+  const url   = window.location.href;
+  const title = document.title;
+  if (navigator.share) {
+    try { await navigator.share({ title, url }); return; }
+    catch (e) { if (e.name === "AbortError") return; }
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    showToast("🔗 Link disalin!", "success");
+  } catch (_) {
+    const ta = document.createElement("textarea");
+    ta.value = url; ta.style.cssText = "position:fixed;left:-9999px;";
+    document.body.appendChild(ta); ta.select();
+    document.execCommand("copy"); ta.remove();
+    showToast("🔗 Link disalin!", "success");
+  }
+};
+
+/* ── NAVIGATE TO GENRE/TAG di novel.html ─────────────────── */
+window.goToGenre = function (slug, name) {
+  sessionStorage.setItem("novelFilterType", "genre");
+  sessionStorage.setItem("novelFilterSlug", slug);
+  sessionStorage.setItem("novelFilterName", name);
+  window.location.href = "/novel/";
+};
+window.goToTag = function (slug, name) {
+  sessionStorage.setItem("novelFilterType", "tag");
+  sessionStorage.setItem("novelFilterSlug", slug);
+  sessionStorage.setItem("novelFilterName", name);
+  window.location.href = "/novel/";
+};
+
+/* ── HELPERS ──────────────────────────────────────────────── */
+function infoRow(label, value) {
+  return `<div class="info-row">
+    <span class="info-label">${label}</span>
+    <span class="info-value">${value}</span>
+  </div>`;
+}
+
+function renderStars(rating) {
+  const full  = Math.floor(rating);
+  const half  = rating - full >= 0.5 ? 1 : 0;
+  const empty = 5 - full - half;
+  return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(empty);
+}
+
+function escHtml(str) {
+  if (typeof str !== "string") return "";
+  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+            .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function showToast(msg, type = "info") {
+  let wrap = document.getElementById("toastWrap");
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "toastWrap";
+    wrap.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:3000;pointer-events:none;";
+    document.body.appendChild(wrap);
+  }
+  const t = document.createElement("div");
+  const bg = type === "success" ? "#27ae60" : type === "error" ? "#e8522a" : "#333";
+  t.style.cssText = `padding:10px 20px;border-radius:99px;font-size:13px;font-weight:700;color:#fff;
+    white-space:nowrap;background:${bg};box-shadow:0 4px 20px rgba(0,0,0,0.4);`;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+
+function toggleDarkMode() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+}
+function toggleMenu() {
+  const m = document.getElementById("menuDropdown");
+  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
+}
+document.addEventListener("click", e => {
+  const m   = document.getElementById("menuDropdown");
+  const btn = document.querySelector('button[onclick="toggleMenu()"]');
+  if (m && !m.contains(e.target) && !btn?.contains(e.target)) m.style.display = "none";
+});
+</script>
+</body>
+</html>
