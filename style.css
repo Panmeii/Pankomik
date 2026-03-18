@@ -64,18 +64,22 @@ body {
    HEADER
    ============================================================ */
 .header {
-  position: sticky;     /* nempel di atas saat scroll */
+  position: sticky;
   top: 0;
-  z-index: 1000;        /* pastikan di atas semua elemen */
+  z-index: 1000;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 14px;
+  gap: 8px;
+  padding: 0 12px;
   height: var(--header-h);
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(12px);  /* efek blur kaca */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: background var(--transition), border var(--transition);
+  /* Penting: cegah overflow keluar layar */
+  overflow: hidden;
+  min-width: 0;
 }
 
 /* Logo bertema komik */
@@ -87,11 +91,13 @@ body {
   cursor: pointer;
   white-space: nowrap;
   text-shadow: 1px 2px 0 rgba(0,0,0,0.4);
+  flex-shrink: 0;
 }
 
 /* Input pencarian */
 #searchInput {
-  flex: 1;          /* isi sisa ruang */
+  flex: 1;
+  min-width: 0;     /* penting: biar bisa menyusut di flex container */
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border);
@@ -110,19 +116,28 @@ body {
 
 .header-right {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   flex-shrink: 0;
+  align-items: center;
 }
 
 .header-right button {
-  padding: 6px 10px;
+  padding: 6px 9px;
   background: var(--bg-card);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 8px;
   cursor: pointer;
   font-size: 16px;
+  line-height: 1;
   transition: background var(--transition), transform 0.1s;
+  /* Ukuran tetap agar tidak terpotong */
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .header-right button:active {
@@ -1331,9 +1346,9 @@ body.light .chapter-item.last-read {
   -webkit-backdrop-filter: blur(18px);
   border-top: 1px solid rgba(255,255,255,0.08);
   box-shadow: 0 -4px 24px rgba(0,0,0,0.4);
-  height: 60px;
+  height: calc(60px + env(safe-area-inset-bottom));
   padding: 0 8px;
-  padding-bottom: env(safe-area-inset-bottom); /* iPhone notch support */
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 body.light .bottom-nav {
@@ -1402,5 +1417,5 @@ body.light .bottom-nav {
 
 /* Padding bawah halaman agar konten tidak tertutup bottom nav */
 .has-bottom-nav {
-  padding-bottom: 72px;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
 }
