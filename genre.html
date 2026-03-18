@@ -452,7 +452,7 @@ function proxyImg(url) {
    ============================================================ */
 
 const GENRES_API = "https://www.sankavollerei.com/comic/komikindo/genres";
-const GENRE_API  = "https://www.sankavollerei.com/comic/komikstation/genre/";
+const GENRE_API  = "https://www.sankavollerei.com/comic/bacakomik/genre/";
 
 /* ---- STATE ---------------------------------------------- */
 let allGenres     = [];
@@ -612,15 +612,15 @@ async function fetchGenreKomik(slug, page) {
   pagination.style.display = "none";
 
   try {
-    /* Endpoint: /comic/komikstation/genre/:slug/:page */
-    const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}/${page}`);
+    /* Endpoint: /comic/bacakomik/genre/:genre?page=N */
+    const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}?page=${page}`);
     const data = await res.json();
 
-    /* API komikstation: seriesList[] + nextPage string */
-    const raw  = data.seriesList || data.comics || data.data || [];
+    /* API bacakomik: komikList[] dengan cover, slug, rating, type */
+    const raw  = data.komikList || data.comics || data.data || [];
     allFetched = raw.map(k => ({
       ...k,
-      cover:   k.image   || k.cover   || k.thumbnail || "",
+      cover:   k.cover   || k.image   || k.thumbnail || "",
       title:   k.title   || k.name    || "Untitled",
       slug:    k.slug    || k.id      || "",
       type:    k.type    || k.type_name || "",
@@ -628,9 +628,9 @@ async function fetchGenreKomik(slug, page) {
       chapter: k.latestChapter || k.chapter || "",
     }));
 
-    /* Pagination: API pakai nextPage (URL string), null jika tidak ada */
-    hasNextPage = !!(data.nextPage);
-    currentPage = page;
+    /* Pagination: hasNextPage + currentPage */
+    hasNextPage = !!(data.hasNextPage);
+    currentPage = data.currentPage || page;
 
     document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
 
