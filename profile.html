@@ -3,833 +3,372 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profil — Pankomik</title>
+  <title>Top Donatur — Pankomik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <style>
-    /* ---- PROFIL HEADER ----------------------------------- */
-    .profile-header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 28px 20px 20px;
-      gap: 10px;
-      text-align: center;
+    :root {
+      --gold:      #f5c842;
+      --gold-soft: rgba(245,200,66,0.1);
+      --gold-glow: rgba(245,200,66,0.25);
     }
 
-    .avatar-wrap {
+    body { background: #08080f; }
+    body.light { background: #f0f0f5; }
+
+    /* ── Header override ──────────────────────────────── */
+    .header {
+      background: rgba(8,8,15,0.95) !important;
+      border-bottom-color: rgba(245,200,66,0.12) !important;
+    }
+    body.light .header { background: rgba(240,240,245,0.95) !important; }
+
+    /* ── Hero ─────────────────────────────────────────── */
+    .hero {
       position: relative;
-      width: 80px;
-      height: 80px;
-    }
-
-    .avatar-wrap img {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid var(--accent);
-    }
-
-    /* Tombol ganti foto (muncul saat hover) */
-    .avatar-edit {
-      position: absolute;
-      bottom: 0; right: 0;
-      width: 26px; height: 26px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 50%;
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .profile-name {
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .profile-level {
-      font-size: 12px;
-      color: var(--accent);
-      font-weight: 700;
-      background: rgba(232,82,42,0.12);
-      padding: 3px 10px;
-      border-radius: 99px;
-    }
-
-    .profile-stats {
-      display: flex;
-      gap: 20px;
-      margin-top: 4px;
-    }
-
-    .stat-item {
-      text-align: center;
-    }
-
-    .stat-item p:first-child {
-      font-size: 18px;
-      font-weight: 800;
-    }
-
-    .stat-item p:last-child {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
-
-    /* ---- BADGE LIST -------------------------------------- */
-    .badge-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      padding: 0 16px 16px;
-      justify-content: center;
-    }
-
-    .badge-chip {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    /* ---- TAB NAVIGASI ------------------------------------ */
-    .profile-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      padding: 0 14px;
-      gap: 4px;
-      overflow-x: auto;
-    }
-
-    .profile-tab {
-      padding: 10px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      background: none;
-      border-top: none;
-      border-left: none;
-      border-right: none;
-      transition: color 0.2s, border-color 0.2s;
-    }
-
-    .profile-tab.active {
-      color: var(--accent);
-      border-bottom-color: var(--accent);
-    }
-
-    /* ---- TAB CONTENT ------------------------------------- */
-    .tab-content {
-      display: none;
-      padding: 14px;
-    }
-
-    .tab-content.active { display: block; }
-
-    /* ---- KATEGORI BOOKMARK ------------------------------- */
-    .kategori-tabs {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-
-    .kategori-btn {
-      padding: 5px 12px;
-      border-radius: 99px;
-      border: 1px solid var(--border);
-      background: var(--bg-surface);
-      color: var(--text-muted);
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-
-    .kategori-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    /* ---- KARTU KOMIK (bookmark & history) ---------------- */
-    .komik-list-item {
-      display: flex;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      align-items: center;
-    }
-
-    .komik-list-item:last-child { border-bottom: none; }
-
-    .komik-list-item img {
-      width: 50px;
-      height: 68px;
-      object-fit: cover;
-      border-radius: 6px;
-      flex-shrink: 0;
-    }
-
-    .komik-list-info { flex: 1; }
-
-    .komik-list-info .title {
-      font-weight: 700;
-      font-size: 13px;
-      margin-bottom: 3px;
-    }
-
-    .komik-list-info p {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin: 2px 0;
-    }
-
-    .komik-list-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      flex-shrink: 0;
-    }
-
-    .btn-sm {
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: var(--bg-surface);
-      color: var(--text);
-      font-size: 11px;
-      font-weight: 700;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .btn-sm.primary {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    .btn-sm:hover { filter: brightness(1.15); }
-
-    /* Progress bar */
-    .progress-bar-wrap {
-      height: 4px;
-      background: var(--bg-surface);
-      border-radius: 99px;
-      margin-top: 5px;
       overflow: hidden;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      border-radius: 99px;
-      transition: width 0.5s ease;
-    }
-
-    /* ---- EMPTY STATE ------------------------------------- */
-    .empty-state {
+      padding: 30px 20px 22px;
       text-align: center;
-      padding: 40px 20px;
-      color: var(--text-muted);
-      font-size: 13px;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 90% 60% at 50% 0%,
+          rgba(245,200,66,0.13) 0%, transparent 70%),
+        radial-gradient(circle at 80% 15%,
+          rgba(232,82,42,0.07) 0%, transparent 50%);
+    }
+    .hero::after {
+      content: '✦  ✧  ✦  ✧  ✦  ✧  ✦';
+      position: absolute; top: 8px; left: 0; right: 0;
+      font-size: 9px; letter-spacing: 10px;
+      color: rgba(245,200,66,0.15);
+      text-align: center;
+      animation: twinkle 4s ease-in-out infinite;
+    }
+    @keyframes twinkle { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+    .hero-crown {
+      font-size: 46px; display: block;
+      position: relative; z-index: 1;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 0 18px rgba(245,200,66,0.7));
+      animation: crownFloat 3s ease-in-out infinite;
+    }
+    @keyframes crownFloat {
+      0%,100%{transform:translateY(0) rotate(-5deg)}
+      50%{transform:translateY(-8px) rotate(5deg)}
     }
 
-    .empty-state p:first-child { font-size: 32px; margin-bottom: 8px; }
+    .hero-title {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 44px; letter-spacing: 4px;
+      color: var(--gold); line-height: 1;
+      text-shadow: 0 0 28px var(--gold-glow), 0 2px 0 rgba(0,0,0,0.7);
+      position: relative; z-index: 1;
+      animation: titlePulse 4s ease-in-out infinite;
+    }
+    @keyframes titlePulse {
+      0%,100%{text-shadow:0 0 18px rgba(245,200,66,0.35),0 2px 0 #000}
+      50%{text-shadow:0 0 38px rgba(245,200,66,0.7),0 2px 0 #000}
+    }
 
-    /* ---- EDIT PROFIL FORM -------------------------------- */
-    .edit-form input {
+    .hero-sub {
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(245,200,66,0.5);
+      position: relative; z-index: 1;
+      margin: 6px 0 10px;
+    }
+
+    .hero-desc {
+      font-size: 12px; color: rgba(255,255,255,0.35);
+      max-width: 260px; margin: 0 auto; line-height: 1.7;
+      position: relative; z-index: 1;
+    }
+    body.light .hero-desc { color: rgba(0,0,0,0.45); }
+
+    /* ── Widget section ───────────────────────────────── */
+    .widget-section { padding: 14px 16px 0; }
+
+    .section-label {
+      font-size: 11px; font-weight: 800;
+      color: rgba(245,200,66,0.45);
+      letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, rgba(245,200,66,0.2), transparent);
+    }
+
+    /* Iframe card */
+    .iframe-card {
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(245,200,66,0.18);
+      background: #0d0d18;
+      box-shadow:
+        0 0 0 1px rgba(245,200,66,0.05),
+        0 16px 48px rgba(0,0,0,0.55),
+        inset 0 1px 0 rgba(245,200,66,0.07);
+      position: relative;
+    }
+    body.light .iframe-card {
+      background: #fff;
+      border-color: rgba(245,200,66,0.25);
+    }
+
+    /* Gold shimmer line top */
+    .iframe-card::before {
+      content: '';
+      position: absolute; top: 0; left: 10%; right: 10%;
+      height: 2px; z-index: 3; pointer-events: none;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      animation: scanTop 3s linear infinite;
+    }
+    @keyframes scanTop {
+      0%{transform:translateX(-100%)} 100%{transform:translateX(100%)}
+    }
+
+    /* Loading overlay */
+    .iframe-loader {
+      position: absolute; inset: 0; z-index: 2;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 14px; background: #0d0d18;
+      transition: opacity 0.5s ease;
+    }
+    body.light .iframe-loader { background: #fff; }
+    .iframe-loader.gone { opacity: 0; pointer-events: none; }
+
+    .spin-ring {
+      width: 42px; height: 42px;
+      border: 3px solid rgba(245,200,66,0.1);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .iframe-loader p {
+      font-size: 12px; font-weight: 700;
+      color: rgba(245,200,66,0.5);
+      font-family: 'Nunito', sans-serif;
+    }
+
+    /* The iframe itself */
+    #donaturFrame {
       width: 100%;
-      padding: 10px 12px;
-      margin-bottom: 10px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      font-family: 'Nunito', sans-serif;
-      font-size: 14px;
-      outline: none;
-      box-sizing: border-box;
-    }
-
-    .edit-form input:focus {
-      border-color: var(--accent);
-    }
-
-    .edit-form button {
-      padding: 10px 20px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    /* ---- LEVEL CARD -------------------------------------- */
-    .level-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 16px;
-      background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(232,82,42,0.06) 100%);
-    }
-
-    .level-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-    }
-
-    .level-number {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--accent);
-      line-height: 1;
-    }
-
-    .level-title {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 3px;
-    }
-
-    .level-total {
-      text-align: right;
-    }
-
-    .level-total span {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--text);
+      min-height: 460px;
       display: block;
-      line-height: 1;
+      border: none;
+      background: transparent;
     }
 
-    .level-total small {
-      font-size: 10px;
-      color: var(--text-muted);
-    }
-
-    /* ---- BADGE GRID -------------------------------------- */
-    .badge-grid {
+    /* ── Support cards ────────────────────────────────── */
+    .support-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
+      padding: 14px 16px 0;
     }
 
-    .badge-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
+    .support-card {
+      border-radius: 14px;
       padding: 14px 12px;
       text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      border: 1px solid rgba(245,200,66,0.15);
+      background: rgba(245,200,66,0.05);
+      transition: transform 0.2s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
     }
-
-    .badge-card.owned {
-      border-color: var(--accent);
-      background: rgba(232,82,42,0.06);
+    .support-card:hover {
+      background: rgba(245,200,66,0.1);
+      border-color: rgba(245,200,66,0.35);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(245,200,66,0.15);
     }
+    .support-card:active { transform: scale(0.97); }
 
-    .badge-card.locked {
-      opacity: 0.6;
+    .support-card .icon { font-size: 26px; line-height: 1; }
+    .support-card .s-title {
+      font-size: 12px; font-weight: 800;
+      color: var(--gold);
     }
-
-    .badge-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-    }
-
-    .badge-icon {
-      font-size: 28px;
-      margin-bottom: 6px;
-    }
-
-    .badge-name {
-      font-size: 13px;
-      font-weight: 800;
-      margin-bottom: 3px;
-    }
-
-    .badge-desc {
-      font-size: 10px;
-      color: var(--text-muted);
+    .support-card .s-desc {
+      font-size: 10px; color: rgba(255,255,255,0.35);
       line-height: 1.4;
     }
+    body.light .support-card .s-desc { color: rgba(0,0,0,0.4); }
 
-    .badge-status-owned {
-      margin-top: 6px;
-      font-size: 11px;
-      color: #27ae60;
-      font-weight: 700;
+    /* Primary CTA — full width */
+    .cta-primary {
+      margin: 10px 16px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 20px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold) 0%, #e8a000 100%);
+      color: #08080f;
+      font-family: 'Nunito', sans-serif;
+      font-size: 15px; font-weight: 900;
+      text-decoration: none;
+      box-shadow: 0 6px 24px rgba(245,200,66,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
+    .cta-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(245,200,66,0.55);
+    }
+    .cta-primary:active { transform: scale(0.97); }
 
-    .badge-status-locked {
-      margin-top: 6px;
-      font-size: 11px;
-      color: var(--text-muted);
-    }
+    .page-bottom { height: 20px; }
   </style>
 </head>
-<body>
+<body class="has-bottom-nav">
 
-<!-- Header (sama seperti halaman lain) -->
+<!-- Header -->
 <header class="header">
-  <div class="logo" onclick="goHome()">Pankomik</div>
-  <input type="text" id="searchInput" placeholder="Cari komik..." oninput="liveSearch()" autocomplete="off">
+  <div class="logo" onclick="window.location.href='/'"
+       style="font-family:'Bebas Neue',cursive;letter-spacing:2px;color:var(--gold);">
+    Pankomik
+  </div>
+  <div style="flex:1;"></div>
   <div class="header-right">
     <button onclick="toggleDarkMode()">🌙</button>
     <button onclick="toggleMenu()">👤</button>
   </div>
 </header>
-<div id="searchResult" class="search-result"></div>
 <div id="menuDropdown" class="dropdown"></div>
 
-<!-- ============================================================
-     KONTEN PROFIL
-     ============================================================ -->
-<div id="profileContent">
-  <!-- Diisi oleh JS -->
-  <div class="empty-state"><p>⏳</p><p>Memuat profil...</p></div>
+<!-- Hero -->
+<div class="hero">
+  <span class="hero-crown">👑</span>
+  <div class="hero-title">SULTAN LIST</div>
+  <div class="hero-sub">Top Donatur Pankomik</div>
+  <p class="hero-desc">Para pahlawan yang membuat Pankomik tetap hidup. Terima kasih! 🙏</p>
 </div>
 
+<!-- Widget Trakteer -->
+<div class="widget-section">
+  <div class="section-label">🏆 Live Leaderboard</div>
+  <div class="iframe-card">
+    <div class="iframe-loader" id="iframeLoader">
+      <div class="spin-ring"></div>
+      <p>Memuat data donatur...</p>
+    </div>
+    <iframe
+      id="donaturFrame"
+      src="https://stream.trakteer.id/top-supporter/index.html?ts_count=7&ts_theme=custom&ts_1_clr1=rgba%2863%2C+81%2C+181%2C+1%29&ts_1_clr2=rgba%28243%2C+150%2C+33%2C+1%29&ts_1_clr3=rgba%283%2C+169%2C+244%2C+1%29&ts_1_clr4=rgba%28243%2C+221%2C+202%2C+1%29&ts_1_clr5=rgba%28255%2C+255%2C+255%2C+1%29&ts_1_clr6=rgba%280%2C+0%2C+0%2C+1%29&ts_sortby=unit&ts_interval=90&ts_customtitle=Sultan&key=trstream-1ZxhQqj8hDuOc8qqJlyW&page_url=trakteer.id%2FPankomik%2Fgift&mod=3&hash=zb8r4zvgwyq369an"
+      scrolling="no"
+      frameborder="0"
+      allowtransparency="true"
+      title="Top Donatur Pankomik"
+    ></iframe>
+  </div>
+</div>
+
+<!-- Support links grid -->
+<div class="support-grid">
+  <a href="https://trakteer.id/Pankomik" target="_blank" rel="noopener" class="support-card">
+    <span class="icon">🎁</span>
+    <span class="s-title">Trakteer</span>
+    <span class="s-desc">Halaman utama kreator</span>
+  </a>
+  <a href="https://trakteer.id/Pankomik/gift" target="_blank" rel="noopener" class="support-card">
+    <span class="icon">🎀</span>
+    <span class="s-title">Gift</span>
+    <span class="s-desc">Kirim gift ke streamer</span>
+  </a>
+  <a href="https://trakteer.id/Pankomik/tip" target="_blank" rel="noopener" class="support-card">
+    <span class="icon">☕</span>
+    <span class="s-title">Tip</span>
+    <span class="s-desc">Beri tip langsung</span>
+  </a>
+  <a href="https://teer.id/Pankomik" target="_blank" rel="noopener" class="support-card">
+    <span class="icon">🔗</span>
+    <span class="s-title">Linkteer</span>
+    <span class="s-desc">Semua link dalam satu</span>
+  </a>
+</div>
+
+<!-- CTA utama -->
+<a href="https://trakteer.id/Pankomik/tip" target="_blank" rel="noopener" class="cta-primary">
+  ☕ Dukung Pankomik Sekarang
+</a>
+
+<div class="page-bottom"></div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/novel/'">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  </button>
+  <button class="nav-item active">
+    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
 <script type="module">
-  import { getCurrentUser, getProfile, updateProfile, uploadAvatar, getBookmarks, removeBookmark, addBookmark, getHistory, getProgress } from "./supabase.js";
   import { initAuthHeader } from "./auth-header.js";
+  initAuthHeader();
+</script>
 
-  let currentUser = null;
-  let currentProfile = null;
-  let bookmarkData = {};
-  let activeKategori = "favorit";
+<script>
+window.onload = function () {
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
 
-  /* ---- INIT -------------------------------------------- */
-  window.onload = async function() {
-    /* Tema */
-    if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+  const frame  = document.getElementById("donaturFrame");
+  const loader = document.getElementById("iframeLoader");
 
-    /* Init header */
-    await initAuthHeader();
+  /* Hide loader saat iframe selesai load */
+  frame.addEventListener("load", function () {
+    loader.classList.add("gone");
 
-    currentUser = await getCurrentUser();
-
-    /* Kalau belum login → redirect ke auth */
-    if (!currentUser) {
-      window.location.href = "auth.html";
-      return;
+    /* Auto-resize (works jika same-origin, fallback ke estimasi) */
+    try {
+      const h = frame.contentDocument?.documentElement?.scrollHeight
+             || frame.contentWindow?.document?.documentElement?.scrollHeight;
+      if (h && h > 100) frame.style.minHeight = (h + 20) + "px";
+    } catch {
+      /* Cross-origin: estimasi tinggi 7 item × ~66px + header ~100px */
+      frame.style.minHeight = "570px";
     }
+  });
 
-    await loadProfile();
+  /* Fallback: sembunyikan loader setelah 5 detik */
+  setTimeout(() => loader.classList.add("gone"), 5000);
+};
 
-    /* Cek tab aktif dari URL: profile.html?tab=bookmark */
-    const urlTab = new URLSearchParams(window.location.search).get("tab");
-    if (urlTab) switchTab(urlTab);
-  };
-
-  /* ---- LOAD PROFIL ------------------------------------- */
-  async function loadProfile() {
-    const { profile } = await getProfile(currentUser.id);
-    currentProfile = profile;
-
-    const badges = profile?.user_badges || [];
-    const levelTitle = getLevelTitle(profile?.level || 1);
-
-    document.getElementById("profileContent").innerHTML = `
-      <!-- Header profil -->
-      <div class="profile-header">
-        <div class="avatar-wrap">
-          <img id="avatarImg" src="${profile?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile?.username || 'U') + '&background=e8522a&color=fff'}" alt="Avatar">
-          <button class="avatar-edit" onclick="document.getElementById('avatarInput').click()" title="Ganti foto">✏️</button>
-          <input type="file" id="avatarInput" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
-        </div>
-
-        <div class="profile-name">${profile?.username || 'User'}</div>
-        <div class="profile-level">Level ${profile?.level || 1} — ${levelTitle}</div>
-
-        <div class="profile-stats">
-          <div class="stat-item">
-            <p>${profile?.total_chapters_read || 0}</p>
-            <p>Chapter Dibaca</p>
-          </div>
-          <div class="stat-item">
-            <p>${badges.length}</p>
-            <p>Badge</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Badge yang dimiliki -->
-      ${badges.length > 0 ? `
-        <div class="badge-list">
-          ${badges.map(ub => `
-            <div class="badge-chip" title="${ub.badges?.description || ''}">
-              ${ub.badges?.icon || '🏅'} ${ub.badges?.name || ''}
-            </div>
-          `).join("")}
-        </div>
-      ` : ""}
-
-      <!-- Tab navigasi -->
-      <div class="profile-tabs">
-        <button class="profile-tab active" id="tab-bookmark" onclick="switchTab('bookmark')">🔖 Bookmark</button>
-        <button class="profile-tab" id="tab-history" onclick="switchTab('history')">📖 Riwayat</button>
-        <button class="profile-tab" id="tab-progress" onclick="switchTab('progress')">📊 Progress</button>
-        <button class="profile-tab" id="tab-badge" onclick="switchTab('badge')">🏅 Badge</button>
-        <button class="profile-tab" id="tab-settings" onclick="switchTab('settings')">⚙️ Edit Profil</button>
-      </div>
-
-      <!-- Tab: Bookmark -->
-      <div class="tab-content active" id="content-bookmark">
-        <div class="kategori-tabs">
-          <button class="kategori-btn active" onclick="filterKategori('favorit', this)">❤️ Favorit</button>
-          <button class="kategori-btn" onclick="filterKategori('lagi_dibaca', this)">📖 Lagi Dibaca</button>
-          <button class="kategori-btn" onclick="filterKategori('tamat', this)">✅ Tamat</button>
-        </div>
-        <div id="bookmarkList">
-          <div class="empty-state"><p>⏳</p><p>Memuat...</p></div>
-        </div>
-      </div>
-
-      <!-- Tab: Riwayat -->
-      <div class="tab-content" id="content-history">
-        <div id="historyList">
-          <div class="empty-state"><p>⏳</p><p>Memuat...</p></div>
-        </div>
-      </div>
-
-      <!-- Tab: Progress -->
-      <div class="tab-content" id="content-progress">
-        <div id="progressList">
-          <div class="empty-state"><p>⏳</p><p>Memuat...</p></div>
-        </div>
-      </div>
-
-      <!-- Tab: Badge & Level -->
-      <div class="tab-content" id="content-badge">
-        <div id="badgeContent">
-          <div class="empty-state"><p>⏳</p><p>Memuat...</p></div>
-        </div>
-      </div>
-
-      <!-- Tab: Edit Profil -->
-      <div class="tab-content" id="content-settings">
-        <div class="edit-form">
-          <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Email: ${currentUser.email}</p>
-          <input type="text" id="usernameInput" placeholder="Username" value="${profile?.username || ''}">
-          <button onclick="saveProfile()">Simpan Perubahan</button>
-          <p id="saveMsg" style="font-size:12px;margin-top:8px;color:#27ae60;display:none">✅ Profil diperbarui!</p>
-        </div>
-      </div>
-    `;
-
-    /* Load data tab default (bookmark) */
-    await loadBookmarks();
-  }
-
-  /* ---- SWITCH TAB -------------------------------------- */
-  window.switchTab = function(tab) {
-    document.querySelectorAll(".profile-tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-
-    document.getElementById(`tab-${tab}`)?.classList.add("active");
-    document.getElementById(`content-${tab}`)?.classList.add("active");
-
-    if (tab === "history")  loadHistory();
-    if (tab === "progress") loadProgressTab();
-    if (tab === "badge")    loadBadgeTab();
-  };
-
-  /* ---- BOOKMARK ---------------------------------------- */
-  async function loadBookmarks() {
-    const { bookmarks } = await getBookmarks(currentUser.id);
-    bookmarkData = bookmarks;
-    renderBookmarks(activeKategori);
-  }
-
-  function renderBookmarks(kategori) {
-    const list = bookmarkData[kategori] || [];
-    const el   = document.getElementById("bookmarkList");
-
-    if (!list.length) {
-      el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada komik di kategori ini.</p></div>`;
-      return;
-    }
-
-    el.innerHTML = list.map(bm => `
-      <div class="komik-list-item">
-        <img src="${bm.komik_cover || ''}" alt="${bm.komik_title}" onclick="gotoDetail('${bm.komik_slug}')" style="cursor:pointer">
-        <div class="komik-list-info" onclick="gotoDetail('${bm.komik_slug}')" style="cursor:pointer">
-          <div class="title">${bm.komik_title}</div>
-          <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
-        </div>
-        <div class="komik-list-actions">
-          <button class="btn-sm primary" onclick="gotoDetail('${bm.komik_slug}')">Buka</button>
-          <button class="btn-sm" onclick="hapusBookmark('${bm.komik_slug}', this)">Hapus</button>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  window.filterKategori = function(kategori, btn) {
-    activeKategori = kategori;
-    document.querySelectorAll(".kategori-btn").forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-    renderBookmarks(kategori);
-  };
-
-  window.hapusBookmark = async function(slug, btn) {
-    btn.textContent = "...";
-    btn.disabled    = true;
-    await removeBookmark(currentUser.id, slug);
-    await loadBookmarks();
-  };
-
-  /* ---- RIWAYAT BACA ------------------------------------ */
-  async function loadHistory() {
-    const { history } = await getHistory(currentUser.id);
-    const el          = document.getElementById("historyList");
-
-    if (!history.length) {
-      el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p></div>`;
-      return;
-    }
-
-    el.innerHTML = history.map(h => `
-      <div class="komik-list-item">
-        <img src="${h.komik_cover || ''}" alt="${h.komik_title}" onclick="gotoDetail('${h.komik_slug}')" style="cursor:pointer">
-        <div class="komik-list-info">
-          <div class="title">${h.komik_title}</div>
-          <p>📖 Chapter ${h.chapter_number || '?'}</p>
-          <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
-        </div>
-        <div class="komik-list-actions">
-          <button class="btn-sm primary" onclick="window.location.href='reader.html?slug=${h.chapter_slug}'">Lanjut</button>
-          <button class="btn-sm" onclick="gotoDetail('${h.komik_slug}')">Detail</button>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  /* ---- AVATAR UPLOAD ----------------------------------- */
-  window.handleAvatarUpload = async function(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    /* Validasi ukuran max 2MB */
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 2MB.");
-      return;
-    }
-
-    const { url, error } = await uploadAvatar(currentUser.id, file);
-    if (error) { alert("Gagal upload foto."); return; }
-
-    /* Update avatar_url di profil */
-    await updateProfile(currentUser.id, { avatar_url: url });
-    document.getElementById("avatarImg").src = url;
-  };
-
-  /* ---- PROGRESS TRACKING --------------------------------- */
-  async function loadProgressTab() {
-    const el = document.getElementById("progressList");
-    el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
-
-    const { progress } = await getProgress(currentUser.id);
-
-    if (!progress.length) {
-      el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`;
-      return;
-    }
-
-    el.innerHTML = progress.map(p => {
-      const pct = p.total_chapters > 0
-        ? Math.min(100, Math.round((p.read_chapters / p.total_chapters) * 100))
-        : 0;
-      const pctLabel = p.total_chapters > 0 ? `${pct}%` : "—";
-      const chapLabel = p.total_chapters > 0
-        ? `${p.read_chapters} / ${p.total_chapters} chapter`
-        : `${p.read_chapters} chapter dibaca`;
-      const updated = new Date(p.updated_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
-
-      return `
-        <div class="komik-list-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
-          <div style="display:flex;gap:12px;align-items:center;width:100%;">
-            <div style="flex:1;min-width:0;">
-              <div class="title" style="cursor:pointer;font-size:13px;font-weight:700;margin-bottom:3px;
-                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"
-                onclick="gotoDetail('${p.komik_slug}')">
-                ${p.komik_title}
-              </div>
-              <p style="font-size:11px;color:var(--text-muted);margin:0;">
-                📖 ${chapLabel} &nbsp;·&nbsp; 🕒 ${updated}
-              </p>
-            </div>
-            <div style="text-align:right;flex-shrink:0;">
-              <span style="font-size:16px;font-weight:800;color:var(--accent);">${pctLabel}</span>
-            </div>
-          </div>
-          ${p.total_chapters > 0 ? `
-            <div class="progress-bar-wrap" style="width:100%;">
-              <div class="progress-bar-fill" style="width:${pct}%"></div>
-            </div>
-          ` : ""}
-          <div style="display:flex;gap:6px;width:100%;">
-            ${p.last_chapter_slug ? `
-              <button class="btn-sm primary"
-                onclick="window.location.href='reader.html?slug=${p.last_chapter_slug}'">
-                ▶️ Lanjut Baca
-              </button>
-            ` : ""}
-            <button class="btn-sm" onclick="gotoDetail('${p.komik_slug}')">Detail</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-  }
-
-  /* ---- BADGE & LEVEL TAB --------------------------------- */
-  async function loadBadgeTab() {
-    const el = document.getElementById("badgeContent");
-    const totalChapters = currentProfile?.total_chapters_read || 0;
-    const level         = currentProfile?.level || 1;
-    const title         = getLevelTitle(level);
-
-    /* XP dalam level saat ini (setiap 50 chapter = 1 level) */
-    const xpInLevel     = totalChapters % 50;
-    const xpPct         = Math.round((xpInLevel / 50) * 100);
-    const chapToNextLvl = 50 - xpInLevel;
-
-    /* Ambil semua badge dari profile (sudah di-fetch sebelumnya) */
-    const ownedBadges   = currentProfile?.user_badges || [];
-    const ownedIds      = new Set(ownedBadges.map(b => b.badge_id));
-
-    /* Definisi semua badge (sama seperti di SQL) */
-    const allBadges = [
-      { name:"Pemula",        icon:"📖", desc:"Baca 1 chapter pertama",     min_chapters:1,    min_comments:0  },
-      { name:"Pembaca Aktif", icon:"🔥", desc:"Sudah baca 50 chapter",      min_chapters:50,   min_comments:0  },
-      { name:"Otaku",         icon:"⭐", desc:"Sudah baca 200 chapter",     min_chapters:200,  min_comments:0  },
-      { name:"Legenda",       icon:"👑", desc:"Sudah baca 500 chapter",     min_chapters:500,  min_comments:0  },
-      { name:"Top Reader",    icon:"🏆", desc:"Sudah baca 1000 chapter",    min_chapters:1000, min_comments:0  },
-      { name:"Komentator",    icon:"💬", desc:"Sudah buat 10 komentar",     min_chapters:0,    min_comments:10 },
-    ];
-
-    el.innerHTML = `
-      <!-- Level card -->
-      <div class="level-card">
-        <div class="level-top">
-          <div>
-            <div class="level-number">Level ${level}</div>
-            <div class="level-title">${title}</div>
-          </div>
-          <div class="level-total">
-            <span>${totalChapters}</span>
-            <small>Chapter Dibaca</small>
-          </div>
-        </div>
-        <div style="margin-top:10px;">
-          <div style="display:flex;justify-content:space-between;font-size:11px;
-            color:var(--text-muted);margin-bottom:5px;">
-            <span>XP Level ${level}</span>
-            <span>${xpInLevel}/50 — ${chapToNextLvl} lagi ke Level ${level+1}</span>
-          </div>
-          <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" style="width:${xpPct}%;background:linear-gradient(90deg,var(--accent),#f5a623);"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Badge grid -->
-      <div style="margin-top:16px;">
-        <p style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--text);">
-          🏅 Koleksi Badge
-          <span style="font-weight:400;font-size:12px;color:var(--text-muted)">
-            (${ownedBadges.length}/${allBadges.length} didapat)
-          </span>
-        </p>
-        <div class="badge-grid">
-          ${allBadges.map(b => {
-            const owned   = ownedBadges.some(ob => ob.badges?.name === b.name);
-            const progress = b.min_chapters > 0
-              ? Math.min(100, Math.round((totalChapters / b.min_chapters) * 100))
-              : 0;
-            return `
-              <div class="badge-card ${owned ? "owned" : "locked"}">
-                <div class="badge-icon">${b.icon}</div>
-                <div class="badge-name">${b.name}</div>
-                <div class="badge-desc">${b.desc}</div>
-                ${owned ? `
-                  <div class="badge-status-owned">✅ Didapat</div>
-                ` : b.min_chapters > 0 ? `
-                  <div style="margin-top:6px;">
-                    <div class="progress-bar-wrap">
-                      <div class="progress-bar-fill" style="width:${progress}%"></div>
-                    </div>
-                    <div style="font-size:10px;color:var(--text-muted);margin-top:3px;text-align:center;">
-                      ${totalChapters}/${b.min_chapters} chapter
-                    </div>
-                  </div>
-                ` : `<div class="badge-status-locked">🔒 Terkunci</div>`}
-              </div>
-            `;
-          }).join("")}
-        </div>
-      </div>
-    `;
-  }
-
-  /* ---- SIMPAN PROFIL ------------------------------------- */
-  window.saveProfile = async function() {
-    const username = document.getElementById("usernameInput").value.trim();
-    if (!username) { alert("Username tidak boleh kosong."); return; }
-
-    const { error } = await updateProfile(currentUser.id, { username });
-    const msg = document.getElementById("saveMsg");
-
-    if (!error) {
-      msg.style.display = "block";
-      setTimeout(() => msg.style.display = "none", 3000);
-    } else {
-      alert("Gagal menyimpan. Username mungkin sudah dipakai.");
-    }
-  };
-
-  /* ---- HELPER ------------------------------------------ */
-  window.gotoDetail = slug => window.location.href = `detail.html?slug=${slug}`;
-
-  function getLevelTitle(level) {
-    if (level >= 20) return "Legenda Komik 👑";
-    if (level >= 10) return "Otaku Sejati ⭐";
-    if (level >= 5)  return "Pembaca Aktif 🔥";
-    if (level >= 2)  return "Pecinta Komik 📚";
-    return "Pemula 🌱";
-  }
-
-  /* Header utils */
-  window.goHome    = () => window.location.href = "index.html";
-  window.toggleMenu = () => {
-    const m = document.getElementById("menuDropdown");
-    m.style.display = m.style.display === "block" ? "none" : "block";
-  };
-  window.toggleDarkMode = () => {
-    document.body.classList.toggle("light");
-    localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
-  };
-  window.liveSearch = () => {}; /* bisa diisi nanti */
+function toggleDarkMode() {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+}
+function toggleMenu() {
+  const m = document.getElementById("menuDropdown");
+  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
+}
+document.addEventListener("click", e => {
+  const m = document.getElementById("menuDropdown");
+  const b = document.querySelector('button[onclick="toggleMenu()"]');
+  if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
+});
 </script>
 </body>
 </html>
