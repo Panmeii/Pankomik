@@ -1467,16 +1467,10 @@ body.light .bottom-nav {
   gap: 6px;
 }
 
-/* ── Grid image lazy load fade ─────────────────────────── */
+/* ── Grid image fade (tidak sembunyikan gambar lazy) ───── */
 .grid-card img, .card img, .rekom-card img {
   transition: opacity 0.3s ease;
-}
-.grid-card img[loading="lazy"], .card img[loading="lazy"], .rekom-card img[loading="lazy"] {
-  opacity: 0;
-}
-.grid-card img.loaded, .card img.loaded, .rekom-card img.loaded,
-.grid-card img:not([loading="lazy"]), .card img:not([loading="lazy"]) {
-  opacity: 1;
+  opacity: 1; /* selalu visible — jangan sembunyikan gambar lazy */
 }
 
 /* ── Chip genre active state ───────────────────────────── */
@@ -1629,47 +1623,19 @@ body.light .dropdown p:hover {
 }
 
 /* ============================================================
-   COVER IMAGE FIX — anti blank/hitam
-   Semua img di dalam card/grid-card/rekom-card otomatis dapat
-   background placeholder saat gambar belum/gagal load.
+   COVER IMAGE FIX v2 — anti blank/hitam (aman, tanpa ::before)
    ============================================================ */
 
-/* Background abu saat gambar loading atau gagal */
+/* Tambahkan background abu-abu saat gambar belum/gagal load.
+   TIDAK pakai ::before karena konflik dengan overflow:hidden dan z-index */
 .card img,
 .grid-card img,
 .rekom-card img,
-.search-item img,
-.detail-header img {
-  background: var(--bg-surface);
+.search-item img {
+  background-color: var(--bg-surface);
 }
 
-/* Pastikan gambar tidak stretch/distort */
-.grid-card img {
-  width: 100%;
-  height: 155px;
-  object-fit: cover;
-  display: block;
-  /* Cegah blank hitam: tampilkan bg-surface saat src belum load */
-  min-height: 155px;
-}
-
-.rekom-card img {
-  width: 80px;
-  height: 110px;
-  object-fit: cover;
-  flex-shrink: 0;
-  min-height: 110px;
-}
-
-.card img {
-  width: 100%;
-  height: 175px;
-  object-fit: cover;
-  display: block;
-  min-height: 175px;
-}
-
-/* Placeholder fallback (diisi JS lewat showImgPlaceholder) */
+/* Placeholder div yang dirender JS (showImgPlaceholder) */
 .img-placeholder {
   display: flex;
   align-items: center;
@@ -1681,33 +1647,7 @@ body.light .dropdown p:hover {
   flex-shrink: 0;
 }
 
-/* Smooth fade in saat gambar berhasil load */
-.card img,
-.grid-card img,
-.rekom-card img {
-  transition: opacity 0.3s ease;
-}
-
-/* Animasi loading pulse pada container gambar sebelum load */
-.grid-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 155px;
-  background: var(--bg-surface);
-  border-radius: var(--radius) var(--radius) 0 0;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.grid-card img,
-.grid-card .badge,
-.grid-card .card-img-fallback {
-  position: relative;
-  z-index: 1;
-}
-
-/* Cegah rekom-card kosong */
+/* Cegah rekom-card kosong collapse layout */
 .rekom-card:empty { display: none; }
 
 /* Genre chip tidak overflow */
