@@ -443,8 +443,8 @@ function proxyImg(url) {
   if (!url || url === "undefined" || url === "null") return "";
   if (url.startsWith("data:image/svg") && url.includes("viewBox")) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
-  /* Jangan strip query string — WordPress ?resize= wajib dipertahankan */
-  return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=300&output=webp&q=80&n=-1";
+  const clean = url.split("?")[0];
+  return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
 }
 
 /* ============================================================
@@ -704,8 +704,9 @@ function renderGenreGrid(list) {
     const rating = parseFloat(k.rating);
     const ratingStr = !isNaN(rating) ? rating.toFixed(1) : "";
     /* Placeholder cover jika gambar kosong/SVG dari API */
+    const origUrl = (k.cover || "").split("?")[0];
     const imgHtml = cover
-      ? `<img src="${cover}" alt="${escHtml(k.title)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+      ? `<img src="${cover}" alt="${escHtml(k.title)}" loading="lazy" style="background:var(--bg-surface);" onerror="(function(el){var tried=el.dataset.tried=((el.dataset.tried||0)*1)+1;if(tried===1){el.src='${origUrl.replace(/'/g,"\\'")}'}else{el.style.display='none';el.nextElementSibling.style.display='flex';}})(this)">`
       : "";
     const placeholder = `<div class="genre-card-placeholder" style="${cover ? "display:none" : ""}">📚</div>`;
     return `
@@ -813,9 +814,13 @@ function liveSearch() {
       resultBox.innerHTML = "";
       if (!list?.length) { resultBox.style.display = "none"; return; }
       list.slice(0, 5).forEach(k => {
-        const item = document.createElement("div");
+        const item    = document.createElement("div");
+        const origUrl = (k.cover || "").split("?")[0];
+        const cover   = origUrl ? proxyImg(origUrl) : "";
         item.className = "search-item";
-        item.innerHTML = `<img src="${proxyImg(k.cover)}" loading="lazy"><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`;
+        item.innerHTML = cover
+          ? `<img src="${cover}" loading="lazy" style="background:var(--bg-surface);" onerror="this.src='${origUrl.replace(/'/g,"\\'")}';this.onerror=null;"><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`
+          : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">📚</div><div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating}</p></div>`;
         item.onclick = () => window.location.href = '/komik/'+k.slug;
         resultBox.appendChild(item);
       });
