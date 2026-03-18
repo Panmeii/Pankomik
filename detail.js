@@ -33,69 +33,15 @@ import { getKomikSlug, readerURL } from "/router.js";
 const API_SEARCH = "https://www.sankavollerei.com/comic/bacakomik/search/";
 const slug       = getKomikSlug();
 if (!slug) window.location.href = "/";
-const API_DETAIL = `https://www.sankavollerei.com/comic/komikindo/detail/${slug}`;
+const API_DETAIL   = `https://www.sankavollerei.com/comic/komikindo/detail/${slug}`;
+const API_DETAIL_2 = `https://www.sankavollerei.com/comic/mangakita/detail/${slug}`;
 
 /* ── IMAGE PROXY ────────────────────────────────────────── */
-const _DOMAIN_REF = {
-  "komikindo":  "https://komikindo.org",
-  "komikcast":  "https://komikcast.me",
-  "komiku":     "https://komiku.id",
-  "manhwaindo": "https://manhwaindo.id",
-  "bacakomik":  "https://bacakomik.me",
-  "mangatale":  "https://mangatale.co",
-  "westmanga":  "https://westmanga.info",
-  "sakuranovel":"https://sakuranovel.id",
-  "novelringan":"https://novelringan.com",
-};
-
-function _getRef(url) {
-  if (!url) return "";
-  try {
-    const host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
-    for (const [k, v] of Object.entries(_DOMAIN_REF)) {
-      if (host.includes(k)) return v;
-    }
-    return `https://${host}`;
-  } catch { return ""; }
-}
-
-function _wsrv(rawUrl, w, withRef) {
-  const clean = rawUrl.split("?")[0];
-  let q = `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=85&n=-1`;
-  if (withRef) {
-    const ref = _getRef(clean);
-    if (ref) q += `&ref=${encodeURIComponent(ref)}`;
-  }
-  return q;
-}
-
 function proxyImg(url, w = 300) {
   if (!url) return "";
-  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
-  return _wsrv(url, w, true);
-}
-
-function imgFallback(img, originalUrl) {
-  if (!originalUrl || img.dataset.fallbackSet) return;
-  img.dataset.fallbackSet = "1";
-  const clean = originalUrl.split("?")[0];
-  let step = 0;
-  function next() {
-    step++;
-    img.onerror = null;
-    if (step === 1) { img.onerror = next; img.src = _wsrv(clean, 300, false); }
-    else if (step === 2) { img.onerror = next; img.src = clean; }
-    else { showImgPlaceholder(img); }
-  }
-  img.onerror = next;
-}
-
-function showImgPlaceholder(img) {
-  img.onerror = null;
-  const ph = document.createElement("div");
-  ph.style.cssText = `width:100%;height:${img.offsetHeight||155}px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--text-muted);border-radius:inherit;flex-shrink:0;`;
-  ph.textContent = "📚";
-  if (img.parentNode) img.parentNode.replaceChild(ph, img);
+  if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("wsrv.nl")) return url;
+  const clean = url.split("?")[0];
+  return `https://images.weserv.nl/?url=${encodeURIComponent(clean.replace(/^https?:\/\//, ""))}&w=${w}&output=webp&q=82`;
 }
 
 function escHtml(str) {
@@ -231,40 +177,97 @@ function showDetailSkeleton() {
 /* ============================================================
    FETCH DETAIL
    ============================================================ */
-async function getDetail() {
-  try {
-    const res  = await fetch(API_DETAIL);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (!json.success || !json.data) throw new Error("API error");
+/* Normalize data dari API komikindo ke format internal */
+function normalizeFromKomikindo(raw) {
+  return {
+    title:          cleanTitle(raw.title),
+    cover:          raw.image || "",
+    rating:         raw.rating || "–",
+    votes:          raw.votes  || "",
+    status:         raw.detail?.status            || "–",
+    type:           raw.detail?.type              || "–",
+    author:         raw.detail?.author            || "–",
+    illustrator:    raw.detail?.illustrator       || "",
+    theme:          raw.detail?.theme             || "",
+    altTitle:       raw.detail?.alternativeTitle  || "",
+    synopsis:       raw.description || "",
+    genres:         raw.genres   || [],
+    chapters:       raw.chapters || [],
+    firstChapter:   raw.firstChapter   || null,
+    latestChapter:  raw.latestChapter  || null,
+    allChapterSlug: raw.allChapterSlug || slug,
+  };
+}
 
-    const raw = json.data;
-    komikData = {
-      title:       cleanTitle(raw.title),
-      cover:       raw.image || "",
-      rating:      raw.rating || "–",
-      votes:       raw.votes  || "",
-      status:      raw.detail?.status      || "–",
-      type:        raw.detail?.type        || "–",
-      author:      raw.detail?.author      || "–",
-      illustrator: raw.detail?.illustrator || "",
-      theme:       raw.detail?.theme       || "",
-      altTitle:    raw.detail?.alternativeTitle || "",
-      synopsis:    raw.description || "",
-      genres:      raw.genres  || [],
-      chapters:    raw.chapters || [],
-      firstChapter:   raw.firstChapter  || null,
-      latestChapter:  raw.latestChapter || null,
-      allChapterSlug: raw.allChapterSlug || slug,
+/* Normalize data dari API mangakita ke format internal */
+function normalizeFromMangakita(det) {
+  /* chapters dari mangakita: [{title, slug, date}]
+     slug berisi URL penuh misal "https:/mangakita.me/one-piece-chapter-1176..."
+     Ekstrak slug chapter dari URL */
+  const chapters = (det.chapters || []).map(ch => {
+    const urlSlug = (ch.slug || "").replace(/^https?:\/?\/?[^/]+\//, "").replace(/\/$/, "");
+    return {
+      title:       ch.title || "",
+      slug:        urlSlug  || ch.slug || "",
+      releaseTime: ch.date  || "",
     };
+  });
 
+  const info = det.info || {};
+  return {
+    title:          cleanTitle(det.title),
+    cover:          det.image || "",
+    rating:         det.rating || "–",
+    votes:          "",
+    status:         info.status      || "–",
+    type:           info.type        || "–",
+    author:         info.author      || "–",
+    illustrator:    info.artist      || "",
+    theme:          "",
+    altTitle:       det.alternative  || "",
+    synopsis:       det.synopsis     || "",
+    genres:         det.genres       || [],
+    chapters:       chapters,
+    firstChapter:   chapters.length ? chapters[chapters.length - 1] : null,
+    latestChapter:  chapters.length ? chapters[0] : null,
+    allChapterSlug: slug,
+    _source:        "mangakita",
+  };
+}
+
+async function getDetail() {
+  const container = document.getElementById("detailKomik");
+  try {
+    /* ── Coba API 1: komikindo ── */
+    let komikDataRaw = null;
+    let source = "komikindo";
+
+    try {
+      const res  = await fetch(API_DETAIL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      if (!json.success || !json.data) throw new Error("API 1 error");
+      komikDataRaw = normalizeFromKomikindo(json.data);
+    } catch (err1) {
+      console.warn("[Detail] API 1 gagal, coba API 2:", err1.message);
+
+      /* ── Fallback ke API 2: mangakita ── */
+      const res2  = await fetch(API_DETAIL_2);
+      if (!res2.ok) throw new Error(`API 2 HTTP ${res2.status}`);
+      const json2 = await res2.json();
+      if (!json2.success || !json2.details) throw new Error("API 2 error");
+      komikDataRaw = normalizeFromMangakita(json2.details);
+      source = "mangakita";
+    }
+
+    komikData = komikDataRaw;
+    console.log(`[Detail] Loaded from: ${source}`);
     document.title = `${komikData.title} — Pankomik`;
     await tampilkanDetail(komikData);
     await loadComments();
 
   } catch (err) {
-    console.error("Error detail:", err);
-    const container = document.getElementById("detailKomik");
+    console.error("[Detail] Semua API gagal:", err);
     if (container) container.innerHTML = `
       <div style="padding:40px 20px;text-align:center;color:var(--text-muted);">
         <p style="font-size:36px;margin-bottom:10px;">😕</p>
@@ -402,7 +405,18 @@ async function tampilkanDetail(d) {
   /* Pasang fallback pada cover img */
   const coverImg = document.getElementById("detailCoverImg");
   if (coverImg && d.cover) {
-    imgFallback(coverImg, d.cover.split("?")[0]);
+    let cTried = 0;
+    const origCover = d.cover;
+    coverImg.onerror = function () {
+      cTried++;
+      if (cTried === 1) {
+        coverImg.src = `https://wsrv.nl/?url=${encodeURIComponent(origCover.split("?")[0])}&w=280`;
+      } else if (cTried === 2) {
+        coverImg.src = origCover.split("?")[0];
+      } else {
+        coverImg.style.display = "none";
+      }
+    };
   }
 
   renderChapterList(d.chapters, lastReadData);
@@ -584,19 +598,11 @@ window.liveSearch = async function () {
       resultBox.innerHTML = "";
       if (!list.length) { resultBox.style.display = "none"; return; }
       list.slice(0, 6).forEach(k => {
-        const item    = document.createElement("div");
-        const origUrl = (k.cover || k.image || "").split("?")[0];
-        const cover   = origUrl ? proxyImg(origUrl, 80) : "";
+        const item = document.createElement("div");
         item.className = "search-item";
         item.innerHTML = `
-          ${cover
-            ? `<img src="${cover}" loading="lazy" style="background:var(--bg-surface);">`
-            : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">📚</div>`}
+          ${k.cover || k.image ? `<img src="${proxyImg(k.cover || k.image, 80)}" loading="lazy">` : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">📚</div>`}
           <div><p>${escHtml(k.title)}</p><p>⭐ ${k.rating || "–"}</p></div>`;
-        if (cover && origUrl) {
-          const img = item.querySelector("img");
-          if (img) imgFallback(img, origUrl);
-        }
         item.onclick = () => { window.location.href = "/komik/" + k.slug; };
         resultBox.appendChild(item);
       });
