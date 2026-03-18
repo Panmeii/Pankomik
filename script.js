@@ -1,315 +1,582 @@
 /* ============================================================
-   PANKOMIK - script.js
-   Update Terbaru pakai API komikindo dengan pagination:
-   https://www.sankavollerei.com/comic/komikindo/latest/{page}
+   PANKOMIK — script.js  (Enhanced)
+   Halaman utama: Top Komik, Update Terbaru, Rekomendasi, Genre
+
+   PERUBAHAN:
+   - Image proxy konsisten (weserv → wsrv fallback → direct)
+   - Kartu komik punya transisi & animasi masuk (fade-in bertahap)
+   - Live search: debounce 350ms, highlight query, loading state
+   - Genre chips: animasi masuk bertahap
+   - Load-more: intersection observer (infinite scroll halus)
+   - Toast lebih informatif
+   - Tidak ada lebih dari satu window.onload — pakai DOMContentLoaded
    ============================================================ */
 
-/* ---- URL API ---------------------------------------------- */
-const apiURL    = "https://www.sankavollerei.com/comic/bacakomik/top";
-const latestURL = "https://www.sankavollerei.com/comic/komikindo/latest";
-const rekomURL  = "https://www.sankavollerei.com/comic/bacakomik/recomen";
+/* ── API ENDPOINTS ──────────────────────────────────────── */
+const API_TOP    = "https://www.sankavollerei.com/comic/bacakomik/top";
+const API_LATEST = "https://www.sankavollerei.com/comic/komikindo/latest";
+const API_REKOM  = "https://www.sankavollerei.com/comic/bacakomik/recomen";
+const API_SEARCH = "https://www.sankavollerei.com/comic/bacakomik/search/";
+const API_GENRES = "https://www.sankavollerei.com/comic/komikindo/genres";
 
-/* ---- Pretty URL helpers ----------------------------------- */
-function komikURL(slug)              { return `/komik/${slug}`; }
+/* ── URL BUILDERS ───────────────────────────────────────── */
+function komikURL(slug)               { return `/komik/${slug}`; }
 function readerURL(chSlug, komikSlug) { return komikSlug ? `/komik/${komikSlug}/${chSlug}` : `/baca/${chSlug}`; }
 
-/* ---- Helper: ambil cover URL dengan aman ------------------ */
-function safeCover(komik) {
-  /* komikindo API pakai field 'image', bacakomik pakai 'cover' */
-  const raw = komik?.image || komik?.cover || komik?.thumbnail || "";
-  return raw ? raw.split("?")[0] : "";
+/* ── IMAGE PROXY ────────────────────────────────────────── */
+/**
+ * Ambil URL cover dengan fallback proxy.
+ * Urutan: weserv.nl → wsrv.nl → direct
+ */
+function proxyImg(url, w = 300) {
+  if (!url) return "";
+  // Jangan proxy kalau sudah lewat proxy atau data URI
+  if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("wsrv.nl")) return url;
+  const clean = url.split("?")[0];
+  return `https://images.weserv.nl/?url=${encodeURIComponent(clean.replace(/^https?:\/\//, ""))}&w=${w}&output=webp&q=82`;
 }
 
-/* ---- STATE PAGINATION ------------------------------------- */
+function safeCover(komik, w = 300) {
+  const raw = komik?.image || komik?.cover || komik?.thumbnail || "";
+  return raw ? proxyImg(raw.split("?")[0], w) : "";
+}
+
+/* Fungsi untuk pasang onerror fallback pada elemen img */
+function imgFallback(img, originalUrl) {
+  let tried = 0;
+  img.onerror = function () {
+    tried++;
+    const clean = originalUrl.split("?")[0];
+    if (tried === 1) {
+      img.src = `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=300`;
+    } else if (tried === 2) {
+      img.src = clean;
+    } else {
+      img.style.display = "none";
+      img.onerror = null;
+    }
+  };
+}
+
+/* ── ANIMASI MASUK ──────────────────────────────────────── */
+/** Tambahkan style animasi fade-in ke sebuah elemen */
+function animateIn(el, delay = 0) {
+  el.style.cssText += `opacity:0;transform:translateY(12px);transition:opacity 0.35s ${delay}ms ease,transform 0.35s ${delay}ms ease;`;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.opacity = "1";
+    el.style.transform = "translateY(0)";
+  }));
+}
+
+/* ── PAGINATION STATE ───────────────────────────────────── */
 let latestPage    = 1;
 let hasNextPage   = false;
 let isLoadingMore = false;
+let ioObserver    = null; /* IntersectionObserver untuk infinite scroll sentinel */
 
 /* ============================================================
-   FETCH: TOP KOMIK
+   TOP KOMIK
    ============================================================ */
 async function getTopKomik() {
   const container = document.getElementById("topKomik");
-  container.innerHTML = Array(5).fill(`<div class="card skeleton skeleton-card"></div>`).join("");
+  if (!container) return;
+
+  /* Skeleton */
+  container.innerHTML = Array(6).fill(`<div class="card skeleton skeleton-card"></div>`).join("");
+
   try {
-    const res  = await fetch(apiURL);
+    const res  = await fetch(API_TOP);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     container.innerHTML = "";
-    tampilkanKomik(data.komikList || []);
+    renderTopKomik(data.komikList || [], container);
   } catch (err) {
-    console.error("Gagal fetch Top Komik:", err);
-    container.innerHTML = `<p style="padding:14px;color:var(--text-muted);font-size:13px;">Gagal memuat. Cek koneksi internet.</p>`;
+    console.error("[Top] Gagal:", err);
+    container.innerHTML = `
+      <div style="padding:20px 14px;color:var(--text-muted);font-size:13px;display:flex;flex-direction:column;gap:8px;">
+        <p>😕 Gagal memuat Top Komik</p>
+        <button onclick="getTopKomik()" style="align-self:flex-start;padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;">Coba Lagi</button>
+      </div>`;
   }
 }
 
+function renderTopKomik(list, container) {
+  list.slice(0, 10).forEach((komik, i) => {
+    if (!komik?.slug) return;
+    const cover = safeCover(komik, 260);
+    const card  = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <div class="rank">#${i + 1}</div>
+      ${cover
+        ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="${i < 3 ? "eager" : "lazy"}">`
+        : `<div class="card-img-fallback">📚</div>`}
+      <div class="info">
+        <p class="card-title">${escHtml(komik.title || "Untitled")}</p>
+        <p>⭐ ${komik.rating || "–"}</p>
+      </div>`;
+
+    if (cover) {
+      const img = card.querySelector("img");
+      imgFallback(img, komik.image || komik.cover || "");
+    }
+
+    card.onclick = () => { window.location.href = komikURL(komik.slug); };
+    container.appendChild(card);
+    animateIn(card, i * 40);
+  });
+}
+
 /* ============================================================
-   FETCH: LATEST (halaman pertama — reset grid)
+   LATEST UPDATE
    ============================================================ */
 async function getKomikLatest() {
   const container = document.getElementById("komikLatest");
-  latestPage    = 1;
-  hasNextPage   = false;
+  if (!container) return;
+
+  latestPage  = 1;
+  hasNextPage = false;
   container.innerHTML = Array(4).fill(`<div class="grid-card skeleton skeleton-grid"></div>`).join("");
 
   try {
-    const res  = await fetch(`${latestURL}/${latestPage}`);
+    const res  = await fetch(`${API_LATEST}/${latestPage}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const list = data.komikList || data.data || data.comics || [];
 
     container.innerHTML = "";
-    tampilkanLatest(list);
+    renderLatest(list, container);
 
     hasNextPage = data.pagination?.hasNextPage ?? data.hasNextPage ?? (list.length >= 10);
-    updateLoadMoreBtn();
+    updateLoadMoreUI();
+    setupInfiniteScroll();
   } catch (err) {
-    console.error("Gagal fetch Latest:", err);
-    container.innerHTML = `<p style="padding:14px;color:var(--text-muted);font-size:13px;">Gagal memuat konten terbaru.</p>`;
+    console.error("[Latest] Gagal:", err);
+    container.innerHTML = `<p style="grid-column:1/-1;padding:20px;color:var(--text-muted);text-align:center;font-size:13px;">😕 Gagal memuat konten terbaru.</p>`;
   }
 }
 
+/* ── Render & append kartu latest ── */
+function renderLatest(list, container) {
+  const baseDelay = container.children.length * 20;
+  list.forEach((komik, i) => {
+    if (!komik?.slug) return;
+
+    const cover = safeCover(komik, 260);
+    const type  = (komik.type || "manhwa").toLowerCase();
+    const title = komik.title || "Untitled";
+
+    const latestCh    = (komik.chapters && komik.chapters[0]) || {};
+    const chTitle     = latestCh.title || komik.chapter || komik.ch || "";
+    const chDate      = latestCh.date  || komik.date || komik.time || "";
+    const chSlug      = latestCh.slug  || komik.slug;
+
+    const card = document.createElement("div");
+    card.className = "grid-card";
+
+    card.innerHTML = `
+      <div class="badge ${type}">${komik.type || "Manhwa"}</div>
+      ${cover
+        ? `<img src="${cover}" alt="${escHtml(title)}" loading="lazy">`
+        : `<div class="card-img-fallback" style="height:155px;">📚</div>`}
+      <div class="grid-info">
+        <p class="title">${escHtml(title)}</p>
+        <div class="grid-meta">
+          <div class="grid-ch-row">
+            <span class="grid-chapter" title="${escHtml(chTitle)}">📖 ${escHtml(chTitle) || "–"}</span>
+            ${chSlug ? `<a class="grid-ch-link" href="${readerURL(chSlug, komik.slug)}" onclick="event.stopPropagation()">Baca ▶</a>` : ""}
+          </div>
+          <span class="grid-date">🕐 ${escHtml(chDate) || "–"}</span>
+        </div>
+      </div>`;
+
+    if (cover) {
+      const img = card.querySelector("img");
+      imgFallback(img, komik.image || komik.cover || "");
+    }
+
+    card.onclick = () => { window.location.href = komikURL(komik.slug); };
+    container.appendChild(card);
+    animateIn(card, baseDelay + i * 30);
+  });
+}
+
 /* ============================================================
-   FETCH: LOAD MORE (append ke grid)
+   LOAD MORE
    ============================================================ */
 window.loadMore = async function () {
   if (isLoadingMore || !hasNextPage) return;
   isLoadingMore = true;
 
-  const btn     = document.getElementById("loadMoreBtn");
-  const spinner = document.getElementById("loadMoreSpinner");
+  const spinner  = document.getElementById("loadMoreSpinner");
+  const btn      = document.getElementById("loadMoreBtn");
 
-  if (btn)     { btn.disabled = true; btn.textContent = "Memuat..."; }
+  if (btn)     { btn.disabled = true; btn.innerHTML = `<span class="btn-spinner"></span> Memuat...`; }
   if (spinner) spinner.style.display = "grid";
 
   latestPage++;
 
   try {
-    const res  = await fetch(`${latestURL}/${latestPage}`);
+    const res  = await fetch(`${API_LATEST}/${latestPage}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const list = data.komikList || data.data || data.comics || [];
 
-    tampilkanLatest(list);
+    renderLatest(list, document.getElementById("komikLatest"));
 
     hasNextPage = data.pagination?.hasNextPage ?? data.hasNextPage ?? (list.length >= 10);
-    updateLoadMoreBtn();
-
-    /* Scroll ke kartu baru pertama */
-    const allCards = document.querySelectorAll(".grid-card");
-    const firstNew = allCards[allCards.length - list.length];
-    if (firstNew) {
-      setTimeout(() => firstNew.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
-    }
+    updateLoadMoreUI();
   } catch (err) {
-    console.error("Gagal load more:", err);
+    console.error("[LoadMore] Gagal:", err);
     latestPage--;
     if (btn) {
-      btn.textContent    = "⚠️ Coba Lagi";
-      btn.style.borderColor = "var(--accent)";
-      btn.style.color       = "var(--accent)";
+      btn.innerHTML   = "⚠️ Gagal — Tap untuk coba lagi";
+      btn.style.color = "var(--accent)";
     }
+    showToast("Gagal memuat lebih banyak. Coba lagi.", "error");
   } finally {
     isLoadingMore = false;
-    if (btn)     btn.disabled = false;
+    if (btn)     { btn.disabled = false; }
     if (spinner) spinner.style.display = "none";
   }
 };
 
-/* ---- Update tombol load-more ------------------------------ */
-function updateLoadMoreBtn() {
-  const wrap      = document.getElementById("loadMoreWrap");
-  const btn       = document.getElementById("loadMoreBtn");
-  const pageInfo  = document.getElementById("pageInfo");
+function updateLoadMoreUI() {
+  const wrap     = document.getElementById("loadMoreWrap");
+  const btn      = document.getElementById("loadMoreBtn");
+  const pageInfo = document.getElementById("pageInfo");
   if (!wrap) return;
 
   if (pageInfo) pageInfo.textContent = `Halaman ${latestPage}`;
-
   wrap.style.display = "flex";
+
   if (hasNextPage) {
     if (btn) {
-      btn.disabled       = false;
-      btn.textContent    = "Muat Lebih Banyak ↓";
-      btn.style.opacity  = "1";
-      btn.style.borderColor = "";
-      btn.style.color       = "";
+      btn.disabled      = false;
+      btn.innerHTML     = "Muat Lebih Banyak ↓";
+      btn.style.color   = "";
+      btn.style.opacity = "1";
     }
   } else {
     if (btn) {
       btn.disabled      = true;
-      btn.textContent   = "✅ Semua Sudah Dimuat";
-      btn.style.opacity = "0.5";
+      btn.innerHTML     = "✅ Semua Sudah Dimuat";
+      btn.style.opacity = "0.55";
     }
+    /* Hapus observer kalau sudah habis */
+    ioObserver?.disconnect();
   }
 }
 
+/* Infinite scroll pakai IntersectionObserver — lebih hemat dari scroll event */
+function setupInfiniteScroll() {
+  ioObserver?.disconnect();
+
+  /* Sentinel = tombol load-more, saat terlihat → auto load */
+  const sentinel = document.getElementById("loadMoreBtn");
+  if (!sentinel) return;
+
+  ioObserver = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && hasNextPage && !isLoadingMore) {
+      window.loadMore();
+    }
+  }, { rootMargin: "200px" });
+
+  ioObserver.observe(sentinel);
+}
+
 /* ============================================================
-   FETCH: REKOMENDASI
+   REKOMENDASI
    ============================================================ */
 async function getKomikRekomen() {
   try {
-    const res  = await fetch(rekomURL);
+    const res  = await fetch(API_REKOM);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    tampilkanRekomen(data.komikList || []);
+    renderRekomen(data.komikList || []);
   } catch (err) {
-    console.error("Gagal fetch Rekomendasi:", err);
+    console.error("[Rekom] Gagal:", err);
+    const container = document.getElementById("komikRekomen");
+    if (container) container.innerHTML = `<p style="padding:14px;color:var(--text-muted);font-size:13px;">Gagal memuat rekomendasi.</p>`;
+  }
+}
+
+function renderRekomen(list) {
+  const container = document.getElementById("komikRekomen");
+  if (!container) return;
+
+  list.forEach((komik, i) => {
+    if (!komik?.slug) return;
+    const cover = safeCover(komik, 160);
+    const card  = document.createElement("div");
+    card.className = "rekom-card";
+
+    card.innerHTML = `
+      ${cover ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="lazy">` : ""}
+      <div class="rekom-info">
+        <p class="title">${escHtml(komik.title || "Untitled")}</p>
+        <p>⭐ ${komik.rating || "–"}</p>
+        <p>🎭 ${escHtml(komik.genre || "")}</p>
+      </div>`;
+
+    if (cover) {
+      const img = card.querySelector("img");
+      imgFallback(img, komik.image || komik.cover || "");
+    }
+
+    card.onclick = () => { window.location.href = komikURL(komik.slug); };
+    container.appendChild(card);
+    animateIn(card, i * 45);
+  });
+}
+
+/* ============================================================
+   GENRE CHIPS
+   ============================================================ */
+async function getGenreChips() {
+  const container = document.getElementById("genreChipsIndex");
+  if (!container) return;
+
+  try {
+    const res  = await fetch(API_GENRES);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    const TYPOS = new Set(["actio", "traged"]);
+    const seen  = new Set();
+
+    const genres = (data.genres || [])
+      .filter(g => {
+        const val  = (g.value || g.slug || "").toLowerCase();
+        const name = (g.name  || g.title || "");
+        if (!val || !name || name.length < 3) return false;
+        if (TYPOS.has(val)) return false;
+        if (seen.has(val))  return false;
+        seen.add(val);
+        return true;
+      })
+      .sort((a, b) => (a.name || a.title || "").localeCompare(b.name || b.title || "", "id"));
+
+    const POPULAR = new Set([
+      "action","romance","fantasy","comedy","drama","adventure",
+      "horror","thriller","shounen","isekai","supernatural",
+      "school-life","martial-arts","mystery","sports","psychological"
+    ]);
+
+    const sorted = [
+      ...genres.filter(g => POPULAR.has(g.value || g.slug)),
+      ...genres.filter(g => !POPULAR.has(g.value || g.slug)),
+    ];
+
+    container.innerHTML = sorted.slice(0, 16).map(g => {
+      const s = g.value || g.slug;
+      const n = g.name  || g.title;
+      return `<button class="genre-chip-index" onclick="window.location.href='/genre/${encodeURIComponent(s)}'">${escHtml(n)}</button>`;
+    }).join("") + `
+      <button class="genre-chip-index" style="border-color:var(--accent);color:var(--accent);font-weight:800;"
+        onclick="window.location.href='/genre/'">Semua →</button>`;
+
+    /* Animasi masuk bertahap */
+    container.querySelectorAll(".genre-chip-index").forEach((el, i) => animateIn(el, i * 25));
+
+  } catch (err) {
+    console.error("[Genre] Gagal:", err);
+    if (container) container.innerHTML = "";
   }
 }
 
 /* ============================================================
-   RENDER: TOP KOMIK (slider, maks 10)
+   LIVE SEARCH
    ============================================================ */
-function tampilkanKomik(komikList) {
-  const container = document.getElementById("topKomik");
-  komikList.slice(0, 10).forEach((komik, index) => {
-    if (!komik || !komik.slug) return;
-    const coverHD = safeCover(komik);
-    const card    = document.createElement("div");
-    card.classList.add("card");
-    card.innerHTML = `
-      <div class="rank">#${index + 1}</div>
-      ${coverHD ? `<img src="${coverHD}" alt="${komik.title || ''}" loading="lazy" onerror="this.style.display='none'">` : `<div style="width:100%;height:160px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px;">🖼️</div>`}
-      <div class="info">
-        <p>${komik.title || "Untitled"}</p>
-        <p>⭐ ${komik.rating || "?"}</p>
-      </div>`;
-    card.onclick = () => { window.location.href = komikURL(komik.slug); };
-    container.appendChild(card);
-  });
-}
+let searchDebounce = null;
+let lastQuery      = "";
 
-/* ============================================================
-   RENDER: LATEST — append ke grid
-   ============================================================ */
-function tampilkanLatest(komikList) {
-  const container = document.getElementById("komikLatest");
-
-  komikList.forEach(komik => {
-    if (!komik || !komik.slug) return;
-
-    const coverHD = safeCover(komik);
-    const type    = (komik.type || "manhwa").toLowerCase();
-    const title   = komik.title || "Untitled";
-
-    /* API komikindo: chapter & date ada di dalam array chapters[0] */
-    const latestChapter = (komik.chapters && komik.chapters[0]) || {};
-    const chapter = latestChapter.title || komik.chapter || komik.ch || "";
-    const date    = latestChapter.date  || komik.date   || komik.time || "";
-    const chapterSlug = latestChapter.slug || komik.slug;
-
-    const card = document.createElement("div");
-    card.classList.add("grid-card");
-
-    const imgHtml = coverHD
-      ? `<img src="${coverHD}" alt="${title}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-      : "";
-    const fallbackDisplay = coverHD ? "none" : "flex";
-    const chLink = chapterSlug
-      ? `<a class="grid-ch-link" href="${readerURL(chapterSlug, komik.slug)}" onclick="event.stopPropagation()">Baca ▶</a>`
-      : "";
-
-    card.innerHTML =
-      `<div class="badge ${type}">${komik.type || "manhwa"}</div>` +
-      imgHtml +
-      `<div style="display:${fallbackDisplay};width:100%;height:155px;background:var(--bg-surface);align-items:center;justify-content:center;font-size:32px;color:var(--text-muted);">🖼️</div>` +
-      `<div class="grid-info">` +
-        `<p class="title">${title}</p>` +
-        `<div class="grid-meta">` +
-          `<div class="grid-ch-row">` +
-            `<span class="grid-chapter">📖 ${chapter || "–"}</span>` +
-            chLink +
-          `</div>` +
-          `<span class="grid-date">🕐 ${date || "–"}</span>` +
-        `</div>` +
-      `</div>`;
-
-    /* Klik judul/cover → detail, klik chapter → langsung baca */
-    card.onclick = () => { window.location.href = komikURL(komik.slug); };
-    container.appendChild(card);
-  });
-}
-
-/* ============================================================
-   RENDER: REKOMENDASI
-   ============================================================ */
-function tampilkanRekomen(komikList) {
-  const container = document.getElementById("komikRekomen");
-  komikList.forEach(komik => {
-    if (!komik || !komik.slug) return;
-    const coverHD = safeCover(komik);
-    const card    = document.createElement("div");
-    card.classList.add("rekom-card");
-    card.innerHTML = `
-      ${coverHD ? `<img src="${coverHD}" alt="${komik.title || ''}" loading="lazy" onerror="this.style.display='none'">` : ""}
-      <div class="rekom-info">
-        <p class="title">${komik.title || "Untitled"}</p>
-        <p>⭐ ${komik.rating || "?"}</p>
-        <p>🎭 ${komik.genre || ""}</p>
-      </div>`;
-    card.onclick = () => { window.location.href = komikURL(komik.slug); };
-    container.appendChild(card);
-  });
-}
-
-/* ============================================================
-   NAVIGASI & UI
-   ============================================================ */
-function goHome()         { window.location.href = "/"; }
-function toggleDarkMode() {
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
-}
-
-document.addEventListener("click", function (e) {
-  const searchBox = document.getElementById("searchInput");
+window.liveSearch = async function () {
+  const input     = document.getElementById("searchInput");
   const resultBox = document.getElementById("searchResult");
-  if (searchBox && resultBox && !searchBox.contains(e.target) && !resultBox.contains(e.target)) {
-    resultBox.style.display = "none";
+  if (!input || !resultBox) return;
+
+  const query = input.value.trim();
+  if (!query) { resultBox.style.display = "none"; lastQuery = ""; return; }
+  if (query === lastQuery) return;
+  lastQuery = query;
+
+  clearTimeout(searchDebounce);
+
+  /* Loading placeholder */
+  resultBox.innerHTML = `<div style="padding:12px 14px;color:var(--text-muted);font-size:13px;display:flex;align-items:center;gap:8px;"><div class="search-spinner"></div> Mencari...</div>`;
+  resultBox.style.display = "block";
+
+  searchDebounce = setTimeout(async () => {
+    try {
+      const res  = await fetch(API_SEARCH + encodeURIComponent(query));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      renderSearch(data.komikList || [], query);
+    } catch (err) {
+      console.error("[Search] Gagal:", err);
+      resultBox.innerHTML = `<div style="padding:12px;color:var(--text-muted);font-size:13px;">😕 Pencarian gagal. Coba lagi.</div>`;
+    }
+  }, 350);
+};
+
+function renderSearch(list, query) {
+  const resultBox = document.getElementById("searchResult");
+  if (!resultBox) return;
+
+  if (!list?.length) {
+    resultBox.innerHTML = `<div style="padding:12px 14px;color:var(--text-muted);font-size:13px;">Tidak ada hasil untuk "<strong>${escHtml(query)}</strong>"</div>`;
+    resultBox.style.display = "block";
+    return;
+  }
+
+  resultBox.innerHTML = "";
+  list.slice(0, 6).forEach(komik => {
+    if (!komik?.slug) return;
+    const cover = safeCover(komik, 80);
+    const item  = document.createElement("div");
+    item.className = "search-item";
+
+    /* Highlight kata kunci dalam judul */
+    const hl = highlightText(komik.title || "Untitled", query);
+
+    item.innerHTML = `
+      ${cover ? `<img src="${cover}" alt="" loading="lazy">` : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">📚</div>`}
+      <div>
+        <p>${hl}</p>
+        <p style="color:var(--accent2);">⭐ ${komik.rating || "–"} &nbsp;·&nbsp; ${escHtml(komik.type || "")}</p>
+      </div>`;
+
+    if (cover) {
+      const img = item.querySelector("img");
+      if (img) imgFallback(img, komik.image || komik.cover || "");
+    }
+
+    item.onclick = () => { window.location.href = komikURL(komik.slug); };
+    resultBox.appendChild(item);
+  });
+
+  resultBox.style.display = "block";
+}
+
+/** Highlight teks yang cocok dengan query */
+function highlightText(text, query) {
+  if (!query) return escHtml(text);
+  const safe   = escHtml(text);
+  const safeQ  = escHtml(query).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return safe.replace(new RegExp(`(${safeQ})`, "gi"), `<mark style="background:rgba(232,82,42,0.25);color:var(--text);border-radius:2px;padding:0 2px;">$1</mark>`);
+}
+
+/* Tutup search result saat klik di luar */
+document.addEventListener("click", e => {
+  const input = document.getElementById("searchInput");
+  const box   = document.getElementById("searchResult");
+  if (box && input && !input.contains(e.target) && !box.contains(e.target)) {
+    box.style.display = "none";
   }
 });
 
 /* ============================================================
-   LIVE SEARCH (debounce 400ms)
+   UI HELPERS
    ============================================================ */
-let searchTimeout = null;
+window.goHome = function () { window.location.href = "/"; };
 
-async function liveSearch() {
-  const query     = document.getElementById("searchInput").value.trim();
-  const resultBox = document.getElementById("searchResult");
-  if (!query) { resultBox.style.display = "none"; return; }
+window.toggleDarkMode = function () {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+  const btn = document.querySelector('button[onclick="toggleDarkMode()"]');
+  if (btn) btn.textContent = document.body.classList.contains("light") ? "🌙" : "☀️";
+};
 
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(async () => {
-    try {
-      const res  = await fetch(`https://www.sankavollerei.com/comic/bacakomik/search/${encodeURIComponent(query)}`);
-      const data = await res.json();
-      tampilkanSearch(data.komikList || []);
-    } catch (err) { console.error("Search error:", err); }
-  }, 400);
+window.toggleMenu = function () {
+  const m = document.getElementById("menuDropdown");
+  if (!m) return;
+  m.style.display = m.style.display === "block" ? "none" : "block";
+};
+
+/* Toast */
+window.showToast = function (msg, type = "info") {
+  let container = document.getElementById("toastContainer");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className   = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 3200);
+};
+
+/* HTML escape */
+function escHtml(str) {
+  return String(str || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 }
 
-function tampilkanSearch(list) {
-  const resultBox = document.getElementById("searchResult");
-  resultBox.innerHTML = "";
-  if (!list || list.length === 0) { resultBox.style.display = "none"; return; }
+/* ============================================================
+   INJECT CSS TAMBAHAN (spinner, card-img-fallback, dll)
+   ============================================================ */
+(function injectExtraStyles() {
+  const id = "pkScriptExtraStyle";
+  if (document.getElementById(id)) return;
+  const s = document.createElement("style");
+  s.id = id;
+  s.textContent = `
+    /* Spinner kecil di dalam tombol/search */
+    .btn-spinner, .search-spinner {
+      display:inline-block;
+      width:13px;height:13px;
+      border:2px solid rgba(255,255,255,0.3);
+      border-top-color:currentColor;
+      border-radius:50%;
+      animation:pkSpin 0.6s linear infinite;
+      vertical-align:middle;
+      flex-shrink:0;
+    }
+    .search-spinner { border-top-color:var(--text-muted); }
+    @keyframes pkSpin { to{transform:rotate(360deg)} }
 
-  list.slice(0, 5).forEach(komik => {
-    if (!komik || !komik.slug) return;
-    const coverHD = safeCover(komik);
-    const item    = document.createElement("div");
-    item.classList.add("search-item");
-    item.innerHTML = `
-      ${coverHD ? `<img src="${coverHD}" alt="${komik.title || ''}" loading="lazy">` : `<div style="width:40px;height:40px;background:var(--bg-surface);border-radius:6px;flex-shrink:0;"></div>`}
-      <div><p>${komik.title || "Untitled"}</p><p>⭐ ${komik.rating || "?"}</p></div>`;
-    item.onclick = () => { window.location.href = komikURL(komik.slug); };
-    resultBox.appendChild(item);
-  });
-  resultBox.style.display = "block";
-}
+    /* Fallback image placeholder */
+    .card-img-fallback {
+      width:100%;height:175px;
+      background:var(--bg-surface);
+      display:flex;align-items:center;justify-content:center;
+      font-size:32px;color:var(--text-muted);
+    }
+
+    /* Back to top — tambah z-index agar tidak tertutup bottom nav */
+    #backToTop {
+      z-index:1100;
+      bottom:calc(70px + env(safe-area-inset-bottom));
+    }
+
+    /* Card title truncate */
+    .card .card-title {
+      display:-webkit-box;
+      -webkit-line-clamp:2;
+      -webkit-box-orient:vertical;
+      overflow:hidden;
+      white-space:normal !important;
+    }
+  `;
+  document.head.appendChild(s);
+})();
 
 /* ============================================================
    INIT
    ============================================================ */
-window.onload = function () {
-  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+document.addEventListener("DOMContentLoaded", () => {
+  /* Terapkan tema */
+  if (localStorage.getItem("theme") === "light") {
+    document.body.classList.add("light");
+  }
 
+  /* Fetch semua konten */
   getTopKomik();
   getKomikLatest();
   getKomikRekomen();
@@ -319,85 +586,7 @@ window.onload = function () {
   const btn = document.getElementById("backToTop");
   if (btn) {
     window.addEventListener("scroll", () => {
-      btn.classList.toggle("visible", window.scrollY > 300);
+      btn.classList.toggle("visible", window.scrollY > 400);
     }, { passive: true });
   }
-
-  /* Infinite scroll */
-  window.addEventListener("scroll", () => {
-    const scrollBottom = window.scrollY + window.innerHeight;
-    const docHeight    = document.body.offsetHeight;
-    if (scrollBottom >= docHeight - 400 && hasNextPage && !isLoadingMore) {
-      window.loadMore();
-    }
-  }, { passive: true });
-};
-
-/* ============================================================
-   GENRE CHIPS
-   ============================================================ */
-async function getGenreChips() {
-  const container = document.getElementById("genreChipsIndex");
-  if (!container) return;
-  try {
-    /* Pakai API baru komikindo — field: name + value (slug) */
-    const res  = await fetch("https://www.sankavollerei.com/comic/komikindo/genres");
-    const data = await res.json();
-
-    const TYPOS = new Set(["actio","traged"]);
-    const seen  = new Set();
-
-    const genres = (data.genres || [])
-      .filter(g => {
-        const val  = (g.value || g.slug || "").toLowerCase();
-        const name = (g.name  || g.title || "");
-        if (!val || !name || name.length < 3) return false;
-        if (TYPOS.has(val)) return false;
-        if (seen.has(val)) return false;
-        seen.add(val);
-        return true;
-      })
-      .sort((a, b) => {
-        const na = a.name || a.title;
-        const nb = b.name || b.title;
-        return na.localeCompare(nb, "id");
-      });
-
-    /* Tampilkan 16 genre populer di home */
-    const popular = ["action","romance","fantasy","comedy","drama",
-                     "adventure","horror","thriller","shounen","isekai",
-                     "supernatural","school-life","martial-arts","mystery",
-                     "sports","psychological"];
-    const sorted = [
-      ...genres.filter(g => popular.includes(g.value || g.slug)),
-      ...genres.filter(g => !popular.includes(g.value || g.slug)),
-    ];
-
-    container.innerHTML = sorted.slice(0, 16).map(g => {
-      const slug = g.value || g.slug;
-      const name = g.name  || g.title;
-      return `<button class="genre-chip-index" onclick="window.location.href='/genre/${encodeURIComponent(slug)}'">
-        ${name}
-      </button>`;
-    }).join("") + `
-      <button class="genre-chip-index" style="border-color:var(--accent);color:var(--accent);font-weight:800;"
-        onclick="window.location.href='/genre/'">Semua →</button>`;
-
-  } catch (err) {
-    console.error("Gagal fetch genre chips:", err);
-    if (container) container.innerHTML = "";
-  }
-}
-
-/* ============================================================
-   TOAST UTILITY
-   ============================================================ */
-window.showToast = function (msg, type = "info") {
-  const container = document.getElementById("toastContainer");
-  if (!container) return;
-  const toast = document.createElement("div");
-  toast.className   = `toast ${type}`;
-  toast.textContent = msg;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-};
+});
