@@ -331,7 +331,7 @@ async function loadEpisode() {
     episodeData = json.data;
 
     const d     = episodeData;
-    const rawTitle = d.title || "";
+    rawTitle = d.title || "";
     /* Bersihkan judul: hapus "- Episode N" atau "Episode N Sub Indo" di akhir */
     const title = rawTitle
       .replace(/\s*[-–]?\s*episode\s*\d+.*/i, "")
