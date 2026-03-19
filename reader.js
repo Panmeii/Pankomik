@@ -859,14 +859,36 @@ async function autoSaveHistory() {
    NAVIGASI CHAPTER
    ============================================================ */
 
-/* ── Cari prev/next dari allChapters (lebih reliable dari API response) ── */
+/* ── Cari prev/next dari allChapters ────────────────────── */
+function _extractChNum(slug) {
+  /* Ekstrak nomor chapter dari slug, contoh:
+     "gyaru-chapter-05-2" → "05.2"
+     "one-piece-chapter-1176-bahasa-indonesia" → "1176" */
+  if (!slug) return "";
+  const m = slug.match(/chapter[_-]?([\d]+(?:[_.-][\d]+)?)/i);
+  if (!m) return "";
+  return m[1].replace(/[_-]/g, ".");
+}
+
 function getNavFromChapterList(currentSlug) {
   if (!allChapters || !allChapters.length) return { prev: null, next: null };
-  const idx = allChapters.findIndex(ch => ch.slug === currentSlug);
+
+  /* Coba exact match dulu */
+  let idx = allChapters.findIndex(ch => ch.slug === currentSlug);
+
+  /* Fallback: fuzzy match by chapter number */
+  if (idx < 0) {
+    const curNum = _extractChNum(currentSlug);
+    if (curNum) {
+      idx = allChapters.findIndex(ch => _extractChNum(ch.slug) === curNum);
+    }
+  }
+
   if (idx < 0) return { prev: null, next: null };
-  /* allChapters urutan: [terbaru, ..., terlama] */
-  const next = idx > 0 ? allChapters[idx - 1]?.slug : null;
-  const prev = idx < allChapters.length - 1 ? allChapters[idx + 1]?.slug : null;
+
+  /* allChapters urutan: [terbaru (idx=0), ..., terlama (idx=last)] */
+  const next = idx > 0                        ? allChapters[idx - 1]?.slug : null;
+  const prev = idx < allChapters.length - 1  ? allChapters[idx + 1]?.slug : null;
   return { prev, next };
 }
 
