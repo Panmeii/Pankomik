@@ -518,7 +518,14 @@
   initAuthHeader();
 </script>
 
-<script>
+<script type="module">
+import { animeURL, animeGenreURL, animeWatchURL } from "/router.js";
+
+/* Expose ke window agar bisa dipakai di onclick template string */
+window._animeURL      = animeURL;
+window._animeGenreURL = animeGenreURL;
+window._animeWatchURL = animeWatchURL;
+
 const API = "https://www.sankavollerei.com";
 let ongoingPage = 1, completePage = 1;
 let ongoingDone = false, completeDone = false;
@@ -551,7 +558,7 @@ function pImg(url, w=300) {
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ── Navigate ─────────────────────────────────────────────── */
-function gotoAnime(id) { window.location.href = `/anime/${id}`; }
+window.gotoAnime = function(id) { window.location.href = animeURL(id); };
 
 /* ── Render card ──────────────────────────────────────────── */
 function renderCard(a, badge="") {
@@ -683,7 +690,7 @@ async function loadGenres() {
     const json = await res.json();
     const list = json.data?.genreList || [];
     el.innerHTML = list.map(g =>
-      `<div class="genre-chip-anime" onclick="window.location.href='/anime-genre/${esc(g.genreId)}'">
+      `<div class="genre-chip-anime" onclick="window.location.href=window._animeGenreURL(g.genreId)">
         ${esc(g.title)}
       </div>`
     ).join('');
