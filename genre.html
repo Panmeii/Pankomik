@@ -118,22 +118,14 @@
     /* ---- SORT & FILTER BAR ---------------------------------- */
     .genre-toolbar {
       display: flex;
-      flex-direction: column;
+      align-items: center;
       gap: 8px;
       padding: 10px 14px;
       border-bottom: 1px solid var(--border);
     }
 
-    .genre-toolbar-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-    }
-
     .sort-select {
       flex: 1;
-      min-width: 0;
       padding: 7px 10px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
@@ -151,35 +143,36 @@
 
     .type-filter-btns {
       display: flex;
-      gap: 6px;
+      gap: 5px;
       overflow-x: auto;
       scrollbar-width: none;
       -ms-overflow-style: none;
-      padding-bottom: 2px;
+      flex-shrink: 1;
+      min-width: 0;
     }
-
     .type-filter-btns::-webkit-scrollbar { display: none; }
 
     .type-btn {
-      flex-shrink: 0;
-      padding: 6px 14px;
-      border-radius: 99px;
+      padding: 6px 10px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--bg-surface);
       color: var(--text-muted);
       font-family: 'Nunito', sans-serif;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
       cursor: pointer;
       transition: background 0.2s, color 0.2s, border-color 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .type-btn.active {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
-      box-shadow: 0 2px 8px rgba(232,82,42,0.3);
     }
 
     .type-btn:hover:not(.active) {
@@ -385,45 +378,24 @@
       color: transparent;
     }
 
-    /* ---- GENRE BROWSE CARDS (mode browse semua genre) --- */
+    /* ---- GENRE BROWSE CARDS --------------------------------- */
     .genre-browse-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 16px 8px 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px; padding: 16px 8px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); cursor: pointer; min-height: 90px; text-align: center;
       transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-      text-align: center;
-      min-height: 90px;
     }
-
-    .genre-browse-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 18px rgba(232,82,42,0.18);
-      border-color: rgba(232,82,42,0.3);
-    }
-
+    .genre-browse-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(232,82,42,0.18); border-color: rgba(232,82,42,0.3); }
     .genre-browse-card:active { transform: scale(0.95); }
-
-    .genre-browse-emoji {
-      font-size: 28px;
-      line-height: 1;
-      display: block;
-    }
-
+    .genre-browse-emoji { font-size: 28px; line-height: 1; display: block; }
     .genre-browse-name {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--text);
-      line-height: 1.3;
-      word-break: break-word;
-      display: block;
+      font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700;
+      color: var(--text); line-height: 1.3; word-break: break-word; max-width: 100%;
+      overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
+
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -463,13 +435,11 @@
 
 <!-- Toolbar sort + type filter -->
 <div class="genre-toolbar">
-  <div class="genre-toolbar-row">
-    <select class="sort-select" id="sortSelect" onchange="onSortChange()">
-      <option value="">📊 Default</option>
-      <option value="rating">⭐ Rating Tertinggi</option>
-      <option value="az">🔤 A → Z</option>
-    </select>
-  </div>
+  <select class="sort-select" id="sortSelect" onchange="onSortChange()">
+    <option value="">📊 Default</option>
+    <option value="rating">⭐ Rating Tertinggi</option>
+    <option value="az">🔤 A → Z</option>
+  </select>
   <div class="type-filter-btns" id="typeFilterBtns">
     <button class="type-btn active" onclick="setTypeFilter('', this)">Semua</button>
     <button class="type-btn" onclick="setTypeFilter('manga', this)">Manga</button>
@@ -496,12 +466,26 @@
 <script>
 
 function proxyImg(url) {
-  /* Skip SVG placeholder kosong */
   if (!url || url === "undefined" || url === "null") return "";
   if (url.startsWith("data:image/svg") && url.includes("viewBox")) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
-  /* Jangan strip query string — WordPress ?resize= wajib dipertahankan */
-  return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=300&output=webp&q=80&n=-1";
+  /* Strip query agar tidak duplikat params WordPress ?resize= */
+  var clean = url.split("?")[0];
+  /* Referer spoofing — bypass hotlink protection tiap domain */
+  var ref = "";
+  try {
+    var host = new URL(clean.startsWith("http") ? clean : "https://" + clean).hostname;
+    if (host.indexOf("mangakita") !== -1) ref = "https://mangakita.me";
+    else if (host === "i0.wp.com" || host === "i1.wp.com" || host === "i2.wp.com" || host === "i3.wp.com") ref = "https://mangakita.me";
+    else if (host.indexOf("bacakomik") !== -1) ref = "https://bacakomik.my";
+    else if (host.indexOf("komikindo") !== -1) ref = "https://komikindo.org";
+    else if (host.indexOf("komikcast") !== -1) ref = "https://komikcast.me";
+    else if (host.indexOf("maid.my.id") !== -1) ref = "https://www.maid.my.id";
+    else ref = "https://" + host;
+  } catch(e) {}
+  var q = "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
+  if (ref) q += "&ref=" + encodeURIComponent(ref);
+  return q;
 }
 
 /* ============================================================
@@ -701,7 +685,7 @@ async function fetchGenreKomik(slug, page) {
       chapter: k.latestChapter || k.chapter || "",
     }));
 
-    /* Merge deduplicate by slug: mangakita dulu, bacakomik tambal yg tidak ada */
+    /* Merge: mangakita dulu, bacakomik tambal yang tidak ada */
     const seen = new Set();
     allFetched = [...list1, ...list2].filter(k => {
       if (!k.slug || seen.has(k.slug)) return false;
@@ -709,33 +693,23 @@ async function fetchGenreKomik(slug, page) {
       return true;
     });
 
-    if (!allFetched.length) {
-      throw new Error(`Tidak ada komik untuk genre "${slug}"`);
-    }
+    if (!allFetched.length) throw new Error(`Genre "${slug}" tidak ada`);
 
-    /* Pagination: prioritaskan mangakita, fallback bacakomik */
     const pag   = d1?.pagination || {};
     hasNextPage = !!(pag.hasNextPage ?? pag.hasNext ?? d2?.hasNextPage ?? false);
     currentPage = pag.currentPage || d2?.currentPage || page;
 
-    document.getElementById("activeGenreCount").textContent = `(${allFetched.length}+)`;
+    document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
 
     applyFilterAndSort();
     renderPagination();
 
   } catch (err) {
-    console.error("[Genre] Gagal fetch:", err);
-    const errMsg = err.message || "Gagal memuat";
+    console.error("Gagal fetch genre komik:", err);
     grid.innerHTML = `
       <div style="grid-column:1/-1" class="genre-empty">
         <p>😕</p>
-        <p>Gagal memuat genre <strong>${currentGenre||""}</strong>.</p>
-        <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">${errMsg}</p>
-        <button onclick="fetchGenreKomik('${currentGenre||""}',${page})"
-          style="margin-top:12px;padding:8px 20px;background:var(--accent);color:#fff;border:none;
-          border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;">
-          🔄 Coba Lagi
-        </button>
+        <p>Gagal memuat. Cek koneksi internet.</p>
       </div>`;
     pagination.style.display = "none";
   }
@@ -876,24 +850,16 @@ function showGenreBrowse() {
     return key ? emojiMap[key] : "📚";
   };
 
-  /* Pakai class khusus browse */
-  grid.removeAttribute("style");
-  grid.className = "genre-grid genre-browse-grid";
-  grid.innerHTML = "";
-  cleaned.forEach(function(g) {
-    var card = document.createElement("div");
-    card.className = "genre-browse-card";
-    card.onclick = function() { selectGenre(g.slug, g.title); };
-    var emoji = document.createElement("span");
-    emoji.className = "genre-browse-emoji";
-    emoji.textContent = getEmoji(g.slug);
-    var name = document.createElement("span");
-    name.className = "genre-browse-name";
-    name.textContent = g.title;
-    card.appendChild(emoji);
-    card.appendChild(name);
-    grid.appendChild(card);
-  });
+  /* Gunakan style genre browse (beda dari grid komik) */
+  grid.style.gridTemplateColumns = "repeat(3, 1fr)";
+  grid.innerHTML = cleaned.map(g => `
+    <div
+      class="genre-browse-card"
+      onclick="selectGenre('${g.slug}', '${g.title.replace(/'/g,"\\'")}')">
+      <span class="genre-browse-emoji">${getEmoji(g.slug)}</span>
+      <span class="genre-browse-name">${g.title}</span>
+    </div>
+  `).join("");
 }
 
 /* ============================================================
