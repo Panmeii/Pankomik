@@ -225,6 +225,10 @@
 <!-- Konten komik -->
 <div id="reader"></div>
 
+<!-- ── Komentar Chapter ─────────────────────────────────── -->
+<div id="readerCommentSection"
+  style="max-width:720px;margin:0 auto;background:var(--bg,#0e0e12);"></div>
+
 <!-- Single Page Controls (tampil hanya di mode manga) -->
 <div id="singleControls">
   <button id="prevPageBtn" onclick="prevPage()">← Prev</button>
@@ -237,5 +241,46 @@
   initAuthHeader();
 </script>
 <script type="module" src="/reader.js"></script>
+<script type="module">
+  /* ── Komentar reader — init/re-init setiap ganti chapter ── */
+  import { getCurrentUser } from "/supabase.js";
+  import { initComments }   from "/comment-system.js";
+
+  let _commentSlug = null; /* track slug terakhir agar tidak double-init */
+
+  async function initReaderComments(chapterSlug) {
+    if (!chapterSlug || _commentSlug === chapterSlug) return;
+    _commentSlug = chapterSlug;
+
+    const user        = await getCurrentUser();
+    const contentSlug = `chapter:${chapterSlug}`;
+    await initComments({
+      containerId : "readerCommentSection",
+      contentSlug,
+      accentColor : "#e8522a",
+      user,
+    });
+
+    /* Pastikan section terlihat */
+    const section = document.getElementById("readerCommentSection");
+    if (section) {
+      section.style.borderTop    = "1px solid rgba(255,255,255,0.07)";
+      section.style.paddingBottom = "80px"; /* ruang untuk bottom control */
+    }
+  }
+
+  /* Dengarkan event dari reader.js */
+  window.addEventListener("readerChapterLoaded", e => {
+    initReaderComments(e.detail?.slug);
+  });
+
+  /* Fallback: init 3 detik setelah halaman dimuat */
+  setTimeout(async () => {
+    const params = new URLSearchParams(window.location.search);
+    const slug   = params.get("slug")
+      || window.location.pathname.split("/").filter(Boolean).pop();
+    if (slug && !_commentSlug) initReaderComments(slug);
+  }, 3000);
+</script>
 </body>
 </html>
