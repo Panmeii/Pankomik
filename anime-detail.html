@@ -43,6 +43,10 @@
       font-size: 17px; font-weight: 900;
       color: #fff; line-height: 1.3; margin-bottom: 6px;
     }
+    .hero-japanese {
+      font-size: 11px; color: rgba(255,255,255,0.5);
+      margin-bottom: 6px; font-style: italic;
+    }
     .hero-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
     .hero-chip {
       padding: 3px 8px; border-radius: 99px;
@@ -54,6 +58,7 @@
     .hero-chip.purple { background: var(--anime-accent); border-color: var(--anime-accent); }
     .hero-chip.orange { background: #e8522a; border-color: #e8522a; }
     .hero-chip.green  { background: #27ae60; border-color: #27ae60; }
+    .hero-chip.red    { background: #e74c3c; border-color: #e74c3c; }
     .hero-score {
       font-size: 13px; font-weight: 800; color: #f5a623;
       display: flex; align-items: center; gap: 4px;
@@ -76,6 +81,20 @@
     }
     .btn-watch-first:hover { filter: brightness(1.12); }
     .btn-watch-first:active { transform: scale(0.97); }
+    .btn-watch-last {
+      flex: 1; padding: 11px 0;
+      background: rgba(108,99,255,0.12);
+      color: var(--anime-accent2);
+      border: 1.5px solid rgba(108,99,255,0.3);
+      border-radius: 10px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 900;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-watch-last:hover { background: var(--anime-accent); color: #fff; border-color: var(--anime-accent); }
+    .btn-watch-last:active { transform: scale(0.97); }
     .btn-share-anime {
       padding: 11px 14px;
       background: var(--bg-card);
@@ -157,7 +176,6 @@
       padding: 3px 9px; border-radius: 99px;
       border: 1px solid rgba(108,99,255,0.2);
     }
-
     .ep-item {
       display: flex; align-items: center; gap: 10px;
       padding: 10px 12px;
@@ -190,6 +208,37 @@
       flex-shrink: 0; opacity: 0.7;
     }
 
+    /* ── Recommended ─────────────────────────────────────── */
+    .rec-section { padding: 0 14px 14px; }
+    .rec-title {
+      font-family: 'Bangers', cursive;
+      font-size: 18px; letter-spacing: 1px; margin-bottom: 10px;
+    }
+    .rec-scroll {
+      display: flex; gap: 10px;
+      overflow-x: auto; padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .rec-scroll::-webkit-scrollbar { display: none; }
+    .rec-card {
+      flex-shrink: 0; width: 90px; cursor: pointer;
+      transition: transform 0.18s;
+    }
+    .rec-card:hover { transform: translateY(-3px); }
+    .rec-card img {
+      width: 90px; height: 126px; object-fit: cover;
+      border-radius: 8px; display: block;
+      border: 1px solid rgba(108,99,255,0.2);
+      background: var(--bg-surface);
+    }
+    .rec-card-title {
+      font-size: 10px; font-weight: 700;
+      color: var(--text); margin-top: 5px;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+      line-height: 1.4;
+    }
+
     /* ── Skeleton ─────────────────────────────────────────── */
     .skel {
       background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-surface) 50%, var(--bg-card) 75%);
@@ -214,6 +263,18 @@
       height: 1px; background: var(--border);
       margin: 4px 14px 14px;
     }
+    /* ── Batch badge ──────────────────────────────────────── */
+    .batch-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 12px;
+      background: rgba(39,174,96,0.12);
+      border: 1px solid rgba(39,174,96,0.3);
+      border-radius: 9px;
+      font-size: 12px; font-weight: 800;
+      color: #27ae60; margin: 0 14px 14px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .batch-badge:hover { background: rgba(39,174,96,0.22); }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -245,12 +306,7 @@
     </div>
     <div class="skel" style="height:44px;border-radius:10px;margin-bottom:12px;"></div>
     <div class="skel" style="height:80px;border-radius:10px;margin-bottom:12px;"></div>
-    <div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>
+    ${Array(5).fill('<div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>').join("")}
   </div>
 </div>
 
@@ -271,123 +327,72 @@ import { getAnimeId, animeWatchURL, animeGenreURL, animeURL } from "/router.js";
 
 const API = "https://www.sankavollerei.com";
 
-/* Expose ke window agar onclick inline di template string bisa mengaksesnya */
-window._animeWatchURL  = animeWatchURL;
-window._animeGenreURL  = animeGenreURL;
-window._animeURL       = animeURL;
+window._animeWatchURL = animeWatchURL;
+window._animeGenreURL = animeGenreURL;
+window._animeURL      = animeURL;
 
-function pImg(url, w=300) {
-  return url || "";
-}
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 async function loadDetail() {
-  const animeId = getAnimeId();
-  if (!animeId) { window.location.href = "/anime/"; return; }
+  const animeSlug = getAnimeId();
+  if (!animeSlug) { window.location.href = "/anime/"; return; }
 
   const container = document.getElementById("detailContent");
 
-  /* Tampilkan skeleton lebih cepat */
-  container.innerHTML = `<div style="padding:16px;">
-    <div style="display:flex;gap:14px;margin-bottom:16px;">
-      <div class="skel" style="width:110px;height:156px;flex-shrink:0;border-radius:10px;"></div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:10px;padding-top:8px;">
-        <div class="skel" style="height:18px;border-radius:6px;"></div>
-        <div class="skel" style="height:13px;width:80%;border-radius:6px;"></div>
-        <div class="skel" style="height:13px;width:60%;border-radius:6px;"></div>
-      </div>
-    </div>
-    ${Array(5).fill('<div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>').join("")}
-  </div>`;
-
   try {
-    /* ── Fetch PARALEL: info anime + episode pertama sekaligus ── */
-    const base = animeId.replace(/-sub-indo$/, "");
+    /* ── Fetch detail lengkap via /anime/anime/:slug ── */
+    const res  = await fetch(`${API}/anime/anime/${animeSlug}`);
+    const json = await res.json();
 
-    /* Buat semua kandidat episode slug */
-    const ep1Slugs = [
-      `${base}-episode-1-sub-indo`,
-      `${base}-ep-1-sub-indo`,
-      `${base}-episode-01-sub-indo`,
-      `${base}-1-sub-indo`,
-    ];
+    if (!json.data) throw new Error("Data tidak ditemukan untuk: " + animeSlug);
 
-    /* Fetch semua sekaligus secara paralel */
-    const [ongoingRes, completeRes, ...ep1Results] = await Promise.allSettled([
-      fetch(`${API}/anime/ongoing-anime?page=1`).then(r=>r.json()).catch(()=>null),
-      fetch(`${API}/anime/complete-anime?page=1`).then(r=>r.json()).catch(()=>null),
-      ...ep1Slugs.map(slug =>
-        fetch(`${API}/anime/episode/${slug}`).then(r=>r.json()).catch(()=>null)
-      ),
-    ]);
+    const d = json.data;
 
-    /* ── Cari info anime dari list ── */
-    let anime = null;
-    for (const r of [ongoingRes, completeRes]) {
-      if (r.status !== "fulfilled" || !r.value) continue;
-      const found = (r.value.data?.animeList || []).find(a => a.animeId === animeId);
-      if (found) { anime = found; break; }
-    }
+    /* ── Parsing data ── */
+    const title       = d.title  || animeSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
+    const poster      = d.poster || "";
+    const japanese    = d.japanese || "";
+    const score       = d.score  || "";
+    const type        = d.type   || "";
+    const status      = d.status || "";
+    const episodes    = d.episodes || "";
+    const duration    = d.duration || "";
+    const aired       = d.aired  || "";
+    const studios     = d.studios || "";
+    const producers   = d.producers || "";
+    const batch       = d.batch;
+    const genreList   = d.genreList  || [];
+    const episodeList = d.episodeList || [];
+    const recList     = d.recommendedAnimeList || [];
+    const synopsis    = (d.synopsis?.paragraphs || []).join(" ");
 
-    /* ── Ambil episode data dari kandidat yang berhasil ── */
-    let ep1Res    = null;
-    let usedEpSlug = ep1Slugs[0];
-    for (let i = 0; i < ep1Results.length; i++) {
-      const r = ep1Results[i];
-      if (r.status === "fulfilled" && r.value?.data) {
-        ep1Res    = r.value;
-        usedEpSlug = ep1Slugs[i];
-        break;
-      }
-    }
-
-    /* ── Susun data ── */
-    let epList    = [];
-    let title     = anime?.title
-      || animeId.replace(/-sub-indo$/,"").replace(/-/g," ")
-                 .replace(/\b./g, c => c.toUpperCase()).trim();
-    let poster    = anime?.poster || "";
-    let score     = anime?.score  || "";
-    let season    = anime?.season || "";
-    let studios   = "";
-    let genreList = [];
-    let infoData  = {};
-
-    if (ep1Res?.data) {
-      const d       = ep1Res.data;
-      infoData      = d.info || {};
-      const clean   = (d.title || "").replace(/\s*episode\s*\d+.*/i,"").trim();
-      if (clean) title = clean;
-      epList    = infoData.episodeList || [];
-      studios   = infoData.credit || infoData.encoder || "";
-      genreList = infoData.genreList || [];
-      if (!poster) poster = ""; /* no poster from episode API */
-    }
-
-    /* Ep 1 untuk tombol Watch — item terakhir di list = episode terlama */
-    const ep1ForWatch = epList.length
-      ? (epList[epList.length - 1]?.episodeId || usedEpSlug)
-      : usedEpSlug;
-
-    const synopsis_text = (ep1Res?.data?.info?.synopsis?.paragraphs || []).join(" ");
+    /* ── Episode pertama & terakhir untuk tombol ── */
+    /* episodeList urut dari terbaru ke terlama, jadi [last] = ep 1 */
+    const ep1  = episodeList.length ? episodeList[episodeList.length - 1] : null;
+    const epNew = episodeList.length ? episodeList[0] : null;
 
     document.title = `${title} — Anime Pankomik`;
     document.getElementById("headerTitle").textContent = title;
 
+    /* ── Status chip color ── */
+    const statusClass = status?.toLowerCase() === "ongoing" ? "orange" : "green";
+
     container.innerHTML = `
       <!-- Hero -->
       <div class="detail-hero">
-        ${poster ? `<div class="hero-blur-bg" style="background-image:url('${poster}')"></div>` : ""}
+        ${poster ? `<div class="hero-blur-bg" style="background-image:url('${esc(poster)}')"></div>` : ""}
         <div class="hero-content">
           ${poster
-            ? `<img class="hero-poster" src="${poster}" alt="${esc(title)}"
-                onerror="this.outerHTML='<div class=\"hero-poster\" style=\"display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg-surface)\">⚡</div>'">`
+            ? `<img class="hero-poster" src="${esc(poster)}" alt="${esc(title)}"
+                onerror="this.outerHTML='<div class=\\"hero-poster\\" style=\\"display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg-surface)\\">⚡</div>'">`
             : `<div class="hero-poster" style="display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg-surface);">⚡</div>`}
           <div class="hero-info">
             <div class="hero-title">${esc(title)}</div>
+            ${japanese ? `<div class="hero-japanese">${esc(japanese)}</div>` : ""}
             <div class="hero-meta">
-              ${season  ? `<span class="hero-chip purple">${esc(season)}</span>`  : ""}
-              ${studios ? `<span class="hero-chip">${esc(studios)}</span>`        : ""}
+              ${type   ? `<span class="hero-chip purple">${esc(type)}</span>`   : ""}
+              ${status ? `<span class="hero-chip ${statusClass}">${esc(status)}</span>` : ""}
+              ${episodes ? `<span class="hero-chip">${esc(String(episodes))} Ep</span>` : ""}
             </div>
             ${score ? `<div class="hero-score">⭐ ${esc(score)}</div>` : ""}
           </div>
@@ -396,11 +401,16 @@ async function loadDetail() {
 
       <!-- Action buttons -->
       <div class="action-row">
-        <button class="btn-watch-first" onclick="watchEpisode('${esc(ep1ForWatch)}')">
-          ▶ Tonton Episode 1
-        </button>
+        ${ep1 ? `<button class="btn-watch-first" onclick="watchEpisode('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
+        ${epNew && epNew !== ep1 ? `<button class="btn-watch-last" onclick="watchEpisode('${esc(epNew.episodeId)}')">⚡ Ep Terbaru</button>` : ""}
         <button class="btn-share-anime" onclick="shareAnime('${esc(title)}')">🔗</button>
       </div>
+
+      <!-- Batch download jika ada -->
+      ${batch ? `
+        <a href="${esc(batch.otakudesuUrl||"#")}" target="_blank" rel="noopener" class="batch-badge">
+          📦 Download Batch Tersedia
+        </a>` : ""}
 
       <!-- Genre chips -->
       ${genreList.length ? `
@@ -413,96 +423,66 @@ async function loadDetail() {
         </div>` : ""}
 
       <!-- Synopsis -->
-      ${synopsis_text ? `
+      ${synopsis ? `
         <div class="synopsis-box">
           <div class="synopsis-title">📖 Sinopsis</div>
-          <p class="synopsis-text" id="synText">${esc(synopsis_text)}</p>
+          <p class="synopsis-text" id="synText">${esc(synopsis)}</p>
           <button class="synopsis-toggle" onclick="toggleSyn()">Baca Selengkapnya ▼</button>
         </div>
         <div class="section-divider"></div>` : ""}
 
       <!-- Info rows -->
-      ${(studios || infoData.type || infoData.duration) ? `
-        <div class="info-section">
-          ${studios           ? `<div class="info-row"><span class="info-label">Studio</span><span class="info-value">${esc(studios)}</span></div>` : ""}
-          ${infoData.type     ? `<div class="info-row"><span class="info-label">Tipe</span><span class="info-value">${esc(infoData.type)}</span></div>` : ""}
-          ${infoData.duration ? `<div class="info-row"><span class="info-label">Durasi</span><span class="info-value">${esc(infoData.duration)}</span></div>` : ""}
-        </div>
-        <div class="section-divider"></div>` : ""}
+      <div class="info-section">
+        ${aired    ? `<div class="info-row"><span class="info-label">Tayang</span><span class="info-value">${esc(aired)}</span></div>` : ""}
+        ${studios  ? `<div class="info-row"><span class="info-label">Studio</span><span class="info-value">${esc(studios)}</span></div>` : ""}
+        ${producers? `<div class="info-row"><span class="info-label">Produser</span><span class="info-value">${esc(producers)}</span></div>` : ""}
+        ${duration ? `<div class="info-row"><span class="info-label">Durasi</span><span class="info-value">${esc(duration)}</span></div>` : ""}
+        ${type     ? `<div class="info-row"><span class="info-label">Tipe</span><span class="info-value">${esc(type)}</span></div>` : ""}
+        ${episodes ? `<div class="info-row"><span class="info-label">Total Episode</span><span class="info-value">${esc(String(episodes))}</span></div>` : ""}
+      </div>
+      <div class="section-divider"></div>
 
       <!-- Episode list -->
       <div class="episode-section">
         <div class="ep-header">
           <div class="ep-title">📺 Daftar Episode</div>
-          <span class="ep-count">${epList.length ? epList.length + " episode" : "?"}</span>
+          <span class="ep-count">${episodeList.length ? episodeList.length + " episode" : "?"}</span>
         </div>
-        ${epList.length === 0 ? `
-          <div style="padding:20px 0;">
-            <div style="text-align:center;padding:0 0 16px;">
-              <div style="font-size:36px;margin-bottom:8px;">📡</div>
-              <p style="font-size:13px;margin-bottom:4px;color:var(--text-muted);">
-                Episode tidak terdeteksi otomatis.
-              </p>
-              <p style="font-size:10px;color:#444;margin-bottom:14px;">
-                Coba tonton langsung atau cari secara manual di bawah.
-              </p>
-              <button onclick="watchEpisode('${esc(ep1ForWatch)}')"
-                style="padding:9px 18px;background:var(--anime-accent);color:#fff;border:none;
-                  border-radius:9px;cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;
-                  font-size:13px;margin-bottom:10px;display:block;width:100%;">
-                ▶ Coba Tonton Episode 1
-              </button>
-              <a href="https://otakudesu.blog/anime/${animeId}/"
-                target="_blank" rel="noopener"
-                style="display:block;padding:9px 18px;background:var(--bg-card);color:var(--text);
-                  border:1.5px solid var(--border);border-radius:9px;font-weight:800;
-                  font-family:'Nunito',sans-serif;font-size:12px;text-decoration:none;
-                  margin-bottom:14px;text-align:center;">
-                🌐 Buka di OtakuDesu
-              </a>
-            </div>
-            
-            <!-- Input manual episode ID -->
-            <div style="background:var(--bg-surface);border:1px solid var(--border);
-              border-radius:10px;padding:12px;">
-              <p style="font-size:11px;font-weight:800;color:var(--text-muted);
-                text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
-                🔍 Cari Episode Manual
-              </p>
-              <p style="font-size:11px;color:#555;margin-bottom:8px;">
-                Contoh: <code style="color:var(--anime-accent2);font-size:10px;">namaanime-episode-1-sub-indo</code>
-              </p>
-              <div style="display:flex;gap:6px;">
-                <input id="manualEpInput" type="text"
-                  placeholder="episode-id-sub-indo"
-                  style="flex:1;padding:8px 10px;background:var(--bg-card);
-                    border:1px solid var(--border);border-radius:8px;
-                    color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;
-                    outline:none;">
-                <button onclick="watchEpisode(document.getElementById('manualEpInput').value.trim())"
-                  style="padding:8px 14px;background:var(--anime-accent);color:#fff;
-                    border:none;border-radius:8px;cursor:pointer;font-weight:800;
-                    font-family:'Nunito',sans-serif;font-size:12px;white-space:nowrap;">
-                  Tonton ▶
-                </button>
-              </div>
-            </div>
-          </div>` :
-          [...epList].reverse().map((ep, i) => `
+        ${episodeList.length === 0
+          ? `<div style="text-align:center;padding:24px 0;color:var(--text-muted);">
+               <div style="font-size:32px;margin-bottom:8px;">📡</div>
+               <p style="font-size:13px;">Belum ada episode tersedia.</p>
+             </div>`
+          : episodeList.map(ep => `
             <div class="ep-item" onclick="watchEpisode('${esc(ep.episodeId)}')">
-              <div class="ep-num">${ep.eps || (epList.length - i)}</div>
+              <div class="ep-num">${ep.eps || ""}</div>
               <div class="ep-info">
-                <div class="ep-info-title">${esc(ep.title || `Episode ${ep.eps || epList.length - i}`)}</div>
+                <div class="ep-info-title">${esc(ep.title || `Episode ${ep.eps}`)}</div>
                 ${ep.date ? `<div class="ep-info-date">📅 ${esc(ep.date)}</div>` : ""}
               </div>
               <div class="ep-play-icon">▶</div>
             </div>`).join("")}
       </div>
+
+      <!-- Rekomendasi -->
+      ${recList.length ? `
+        <div class="section-divider"></div>
+        <div class="rec-section">
+          <div class="rec-title">🔥 Rekomendasi</div>
+          <div class="rec-scroll">
+            ${recList.map(a => `
+              <div class="rec-card" onclick="window.location.href=window._animeURL('${esc(a.animeId)}')">
+                <img src="${esc(a.poster||"")}" alt="${esc(a.title)}" loading="lazy"
+                  onerror="this.style.display='none'">
+                <div class="rec-card-title">${esc(a.title)}</div>
+              </div>`).join("")}
+          </div>
+        </div>` : ""}
     `;
 
   } catch(e) {
     console.error("[detail] Error:", e);
-    container.innerHTML = `
+    document.getElementById("detailContent").innerHTML = `
       <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
         <p style="font-size:40px;margin-bottom:12px;">😕</p>
         <p style="margin-bottom:6px;">Gagal memuat detail anime.</p>
@@ -516,13 +496,9 @@ async function loadDetail() {
   }
 }
 
-
 window.watchEpisode = function(episodeId) {
   const id = (episodeId || "").trim();
-  if (!id) {
-    alert("Masukkan episode ID terlebih dahulu.");
-    return;
-  }
+  if (!id) { alert("Episode ID tidak valid."); return; }
   window.location.href = window._animeWatchURL(id);
 };
 
