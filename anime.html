@@ -615,7 +615,15 @@ async function loadOngoing(append=false) {
     const list = json.data?.animeList || [];
     if (!append) grid.innerHTML = "";
     if (!list.length && !append) {
-      grid.innerHTML = '<div class="anime-empty" style="grid-column:1/-1"><div class="ico">😕</div><p>Tidak ada data</p></div>';
+      grid.innerHTML = `<div class="anime-empty" style="grid-column:1/-1">
+        <div class="ico">📭</div>
+        <p>Tidak ada data anime.</p>
+        <button onclick="retryOngoing()" style="margin-top:12px;padding:9px 22px;
+          background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
+          cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;font-size:13px;">
+          🔄 Refresh
+        </button>
+      </div>`;
       return;
     }
     list.forEach(a => { grid.insertAdjacentHTML("beforeend", renderCard(a)); });
@@ -629,10 +637,23 @@ async function loadOngoing(append=false) {
     }
   } catch(e) {
     console.error(e);
-    if (!append) grid.innerHTML = '<div class="anime-empty" style="grid-column:1/-1"><div class="ico">😕</div><p>Gagal memuat. Coba lagi.</p></div>';
+    if (!append) grid.innerHTML = `<div class="anime-empty" style="grid-column:1/-1">
+        <div class="ico">😕</div>
+        <p>Gagal memuat anime.</p>
+        <p style="font-size:11px;margin-top:4px;color:#555;">Periksa koneksi lalu coba lagi.</p>
+        <button onclick="retryOngoing()" style="margin-top:12px;padding:9px 22px;
+          background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
+          cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;font-size:13px;">
+          🔄 Coba Lagi
+        </button>
+      </div>`;
   }
 }
-window.loadMoreOngoing = () => loadOngoing(true);
+window.loadMoreOngoing  = () => loadOngoing(true);
+window.retryOngoing = () => {
+  ongoingPage = 1; ongoingDone = false;
+  loadOngoing(false);
+};
 
 /* ── COMPLETE ─────────────────────────────────────────────── */
 async function loadComplete(reset=false) {
@@ -652,10 +673,20 @@ async function loadComplete(reset=false) {
       more.style.display = "none"; completeDone = true;
     }
   } catch(e) {
-    if (completePage === 1) grid.innerHTML = '<div class="anime-empty" style="grid-column:1/-1"><div class="ico">😕</div><p>Gagal memuat.</p></div>';
+    if (completePage === 1) grid.innerHTML = `<div class="anime-empty" style="grid-column:1/-1">
+        <div class="ico">😕</div>
+        <p>Gagal memuat anime tamat.</p>
+        <p style="font-size:11px;margin-top:4px;color:#555;">Periksa koneksi lalu coba lagi.</p>
+        <button onclick="retryComplete()" style="margin-top:12px;padding:9px 22px;
+          background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
+          cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;font-size:13px;">
+          🔄 Coba Lagi
+        </button>
+      </div>`;
   }
 }
 window.loadMoreComplete = () => loadComplete(false);
+window.retryComplete = () => loadComplete(true);
 
 /* ── SCHEDULE ─────────────────────────────────────────────── */
 async function loadSchedule() {
