@@ -122,6 +122,7 @@
       gap: 8px;
       padding: 10px 14px;
       border-bottom: 1px solid var(--border);
+      overflow: hidden;
     }
 
     .sort-select {
@@ -380,20 +381,49 @@
 
     /* ---- GENRE BROWSE CARDS --------------------------------- */
     .genre-browse-card {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 6px; padding: 16px 8px;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: var(--radius); cursor: pointer; min-height: 90px; text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 16px 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
       transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      min-height: 90px;
+      text-align: center;
     }
-    .genre-browse-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(232,82,42,0.18); border-color: rgba(232,82,42,0.3); }
-    .genre-browse-card:active { transform: scale(0.95); }
-    .genre-browse-emoji { font-size: 28px; line-height: 1; display: block; }
+
+    .genre-browse-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(232,82,42,0.18);
+      border-color: rgba(232,82,42,0.3);
+    }
+
+    .genre-browse-card:active {
+      transform: scale(0.95);
+    }
+
+    .genre-browse-emoji {
+      font-size: 28px;
+      line-height: 1;
+      display: block;
+    }
+
     .genre-browse-name {
-      font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700;
-      color: var(--text); line-height: 1.3; word-break: break-word; max-width: 100%;
-      overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.3;
+      word-break: break-word;
+      max-width: 100%;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
   </style>
@@ -478,9 +508,8 @@ function proxyImg(url) {
    GENRE PAGE — genre.js (inline)
    ============================================================ */
 
-const GENRES_API  = "https://www.sankavollerei.com/comic/mangakita/genres";
-const GENRE_API   = "https://www.sankavollerei.com/comic/mangakita/genres/";
-const GENRE_API_2 = "https://www.sankavollerei.com/comic/bacakomik/genre/";
+const GENRES_API = "https://www.sankavollerei.com/comic/komikindo/genres";
+const GENRE_API  = "https://www.sankavollerei.com/comic/bacakomik/genre/";
 
 /* ---- STATE ---------------------------------------------- */
 let allGenres     = [];
@@ -640,50 +669,25 @@ async function fetchGenreKomik(slug, page) {
   pagination.style.display = "none";
 
   try {
-    const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-");
+    /* Endpoint: /comic/bacakomik/genre/:genre?page=N */
+    const res  = await fetch(`${GENRE_API}${encodeURIComponent(slug)}?page=${page}`);
+    const data = await res.json();
 
-    /* Fetch kedua API paralel: mangakita (1) + bacakomik (2) */
-    const [r1, r2] = await Promise.allSettled([
-      fetch(`${GENRE_API}${cleanSlug}/${page}`).then(r => r.json()).catch(() => null),
-      fetch(`${GENRE_API_2}${cleanSlug}/${page}`).then(r => r.json()).catch(() => null),
-    ]);
-
-    const d1 = r1.status === "fulfilled" ? r1.value : null;
-    const d2 = r2.status === "fulfilled" ? r2.value : null;
-
-    /* Normalize mangakita: mangaList[{image, slug, rating, latestChapter}] */
-    const list1 = (d1?.mangaList || []).map(k => ({
-      cover:   k.image || k.banner || k.cover || "",
-      title:   k.title || "Untitled",
-      slug:    k.slug  || "",
-      type:    k.type  || "",
-      rating:  k.rating || "–",
+    /* API bacakomik: komikList[] dengan cover, slug, rating, type */
+    const raw  = data.komikList || data.comics || data.data || [];
+    allFetched = raw.map(k => ({
+      ...k,
+      cover:   k.cover   || k.image   || k.thumbnail || "",
+      title:   k.title   || k.name    || "Untitled",
+      slug:    k.slug    || k.id      || "",
+      type:    k.type    || k.type_name || "",
+      rating:  k.rating  || k.score   || "–",
       chapter: k.latestChapter || k.chapter || "",
     }));
 
-    /* Normalize bacakomik: komikList[{cover, slug, rating, type}] */
-    const list2 = (d2?.komikList || []).map(k => ({
-      cover:   k.cover || k.image || "",
-      title:   k.title || "Untitled",
-      slug:    k.slug  || "",
-      type:    k.type  || "",
-      rating:  k.rating || "–",
-      chapter: k.latestChapter || k.chapter || "",
-    }));
-
-    /* Merge: mangakita dulu, bacakomik tambal yang tidak ada */
-    const seen = new Set();
-    allFetched = [...list1, ...list2].filter(k => {
-      if (!k.slug || seen.has(k.slug)) return false;
-      seen.add(k.slug);
-      return true;
-    });
-
-    if (!allFetched.length) throw new Error(`Genre "${slug}" tidak ada`);
-
-    const pag   = d1?.pagination || {};
-    hasNextPage = !!(pag.hasNextPage ?? pag.hasNext ?? d2?.hasNextPage ?? false);
-    currentPage = pag.currentPage || d2?.currentPage || page;
+    /* Pagination: hasNextPage + currentPage */
+    hasNextPage = !!(data.hasNextPage);
+    currentPage = data.currentPage || page;
 
     document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
 
