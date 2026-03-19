@@ -402,6 +402,12 @@
     }
     .anime-empty .ico { font-size: 40px; margin-bottom: 10px; }
 
+    /* Pastikan card image tidak blank saat loading */
+    .anime-card-img {
+      background-color: var(--bg-surface);
+      min-height: 120px;
+    }
+
     /* ── Spinner ───────────────────────────────────────────── */
     .anime-spinner {
       display: flex; align-items: center; justify-content: center;
@@ -551,9 +557,8 @@ window.switchTab = function(tab, btn) {
 
 /* ── Proxy img ────────────────────────────────────────────── */
 function pImg(url, w=300) {
-  if (!url) return "";
-  if (url.includes("weserv") || url.includes("wsrv")) return url;
-  return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//,''))}&w=${w}&output=webp&q=80`;
+  return url || "";
+}&w=${w}&output=webp&q=80`;
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -570,9 +575,10 @@ function renderCard(a, badge="") {
   const day   = a.releaseDay ? a.releaseDay.slice(0,3) : "";
   return `
     <div class="anime-card" onclick="gotoAnime('${esc(id)}')">
-      ${img ? `<img class="anime-card-img" src="${esc(img)}" alt="${title}" loading="lazy"
-        onerror="this.src='';this.style.background='var(--bg-surface)'">` :
-        `<div class="anime-card-img" style="display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-surface);">⚡</div>`}
+      ${img
+        ? `<img class="anime-card-img" src="${esc(img)}" alt="${title}" loading="lazy"
+            onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=\'anime-card-img\' style=\'display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-surface)\'>⚡</div>')">`
+        : `<div class="anime-card-img" style="display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-surface);">⚡</div>`}
       ${eps ? `<span class="anime-card-eps">${eps}</span>` : ""}
       ${day ? `<span class="anime-card-day">${day}</span>` : ""}
       ${badge ? `<span class="anime-card-eps" style="background:rgba(232,82,42,0.9);left:auto;right:6px;top:auto;bottom:6px;">${badge}</span>` : ""}
@@ -654,7 +660,7 @@ async function loadSchedule() {
       const items = (d.anime_list || []).map(a => `
         <div class="schedule-item" onclick="gotoAnime('${esc(a.slug)}')">
           ${a.poster ? `<img src="${esc(pImg(a.poster,80))}" alt="${esc(a.title)}" loading="lazy"
-            onerror="this.style.background='var(--bg-surface)';this.src=''">` :
+            onerror="this.outerHTML='<div style=\'width:40px;height:56px;background:var(--bg-surface);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center\'>⚡</div>'" >` :
             `<div style="width:40px;height:56px;background:var(--bg-surface);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">⚡</div>`}
           <div class="schedule-item-info">
             <div class="schedule-item-title">${esc(a.title)}</div>
