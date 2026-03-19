@@ -737,3 +737,55 @@ async function loadGenres() {
       </div>`;
   }
 }
+
+/* ── SEARCH ───────────────────────────────────────────────── */
+let searchTimer = null;
+window.searchAnime = function(q) {
+  clearTimeout(searchTimer);
+  const result = document.getElementById("animeSearchResult");
+  if (!q || q.length < 2) { result.style.display = "none"; return; }
+  searchTimer = setTimeout(async () => {
+    try {
+      const res  = await fetch(`${API}/anime/search?q=${encodeURIComponent(q)}`);
+      const json = await res.json();
+      const list = json.data?.animeList || [];
+      if (!list.length) { result.style.display = "none"; return; }
+      result.style.display = "block";
+      result.innerHTML = list.slice(0,8).map(a => `
+        <div class="anime-search-item" onclick="gotoAnime('${esc(a.animeId||a.slug||"")}')">
+          ${a.poster ? `<img src="${esc(a.poster)}" alt="${esc(a.title)}" loading="lazy">` : ""}
+          <div class="asi-info">
+            <p>${esc(a.title)}</p>
+            <p>${esc(a.score ? "⭐ "+a.score : a.season||"")}</p>
+          </div>
+        </div>`).join("");
+    } catch(e) { result.style.display = "none"; }
+  }, 350);
+};
+
+/* Tutup search result kalau klik di luar */
+document.addEventListener("click", e => {
+  const inp = document.getElementById("animeSearchInput");
+  const res = document.getElementById("animeSearchResult");
+  if (res && !res.contains(e.target) && e.target !== inp) res.style.display = "none";
+});
+
+window.toggleDarkMode = () => {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+};
+window.toggleMenu = () => {
+  const m = document.getElementById("menuDropdown");
+  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
+};
+document.addEventListener("click", e => {
+  const m = document.getElementById("menuDropdown");
+  const b = document.querySelector('button[onclick="toggleMenu()"]');
+  if (m && m.style.display === "block" && !m.contains(e.target) && !b?.contains(e.target)) {
+    m.style.display = "none";
+  }
+});
+
+</script>
+</body>
+</html>
