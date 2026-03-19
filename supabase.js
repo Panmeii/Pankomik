@@ -1161,3 +1161,25 @@ export async function getTopComments(limit = 5) {
     return { comments: [], error: err };
   }
 }
+
+/**
+ * Ambil komentar milik user sendiri (untuk tab profil)
+ * @param {string} userId
+ * @param {number} limit
+ */
+export async function getMyComments(userId, limit = 30) {
+  try {
+    const { data: comments, error } = await supabase
+      .from("comments")
+      .select("id, content, created_at, komik_slug, like_count, parent_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return { comments: comments || [], error: null };
+  } catch (err) {
+    console.error("Error in getMyComments:", err);
+    return { comments: [], error: err };
+  }
+}
