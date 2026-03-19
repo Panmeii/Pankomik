@@ -240,6 +240,7 @@ async function loadChapter() {
     if (d.komikInfo?.chapters?.length) {
       allChapters = d.komikInfo.chapters;
       renderChapterList();
+      updateNavButtons();
     } else if (allChapters.length === 0) {
       loadChapterListFromAPI();
     } else {
@@ -294,18 +295,27 @@ function showError(msg) {
 
 /* ── Update tombol prev/next di header ─────────────────── */
 function updateNavButtons() {
+  /* Jika nextSlug/prevSlug null dari API, fallback ke chapter list */
+  const navFromList = getNavFromChapterList(currentChapterSlug);
+  const effectivePrev = prevSlug || navFromList.prev || null;
+  const effectiveNext = nextSlug || navFromList.next || null;
+
+  /* Update state global jika dapat dari chapter list */
+  if (!prevSlug && navFromList.prev) prevSlug = navFromList.prev;
+  if (!nextSlug && navFromList.next) nextSlug = navFromList.next;
+
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
 
   if (prevBtn) {
-    prevBtn.disabled           = !prevSlug;
-    prevBtn.style.opacity      = prevSlug ? "1" : "0.3";
-    prevBtn.style.pointerEvents = prevSlug ? "auto" : "none";
+    prevBtn.disabled            = !effectivePrev;
+    prevBtn.style.opacity       = effectivePrev ? "1" : "0.3";
+    prevBtn.style.pointerEvents = effectivePrev ? "auto" : "none";
   }
   if (nextBtn) {
-    nextBtn.disabled           = !nextSlug;
-    nextBtn.style.opacity      = nextSlug ? "1" : "0.3";
-    nextBtn.style.pointerEvents = nextSlug ? "auto" : "none";
+    nextBtn.disabled            = !effectiveNext;
+    nextBtn.style.opacity       = effectiveNext ? "1" : "0.3";
+    nextBtn.style.pointerEvents = effectiveNext ? "auto" : "none";
   }
 }
 
@@ -354,6 +364,13 @@ async function loadChapterListFromAPI() {
     if (chapters?.length) {
       allChapters = chapters;
       renderChapterList();
+      /* Update nav buttons dan re-render bottom nav sekarang allChapters sudah ada */
+      updateNavButtons();
+      /* Re-render bottom nav agar Prev/Next info terupdate */
+      const oldNav = document.getElementById("bottomChapterNav");
+      if (oldNav) { oldNav.remove(); }
+      const readerEl = document.getElementById("reader");
+      if (readerEl) appendBottomNav(readerEl);
     }
   } catch (err) { console.error("[Reader] Gagal load chapter list:", err); }
 }
