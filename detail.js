@@ -730,6 +730,10 @@ async function loadComments() {
             : safeComments.map(c => renderComment(c)).join("")}
         </div>
       </div>`;
+
+    /* Pasang event delegation setelah render */
+    bindCommentEvents(section);
+
   } catch (err) {
     console.error("loadComments error:", err);
     section.innerHTML = `<div class="comment-section">
@@ -750,16 +754,20 @@ function renderComment(c, isReply = false) {
   const name     = escHtml(profile.username || "User");
   const avatar   = profile.avatar_url;
   const level    = profile.level || 1;
-  const isLiked  = likedSet.has(c.id);
+  /* PENTING: gunakan c.id asli (UUID) untuk likedSet dan data-id,
+     bukan safeId yang bisa memotong karakter UUID */
+  const realId   = String(c.id);
+  const isLiked  = likedSet.has(realId);
   const isOwner  = currentUser?.id === c.user_id;
-  const safeId   = String(c.id).replace(/[^a-zA-Z0-9-]/g, "");
+  /* safeId hanya untuk id elemen DOM (tidak boleh ada karakter spesial) */
+  const safeId   = realId.replace(/[^a-zA-Z0-9-]/g, "");
   const replies  = Array.isArray(c.replies) ? c.replies : [];
 
   let time = "–";
   try { time = new Date(c.created_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" }); } catch {}
 
   return `
-    <div class="comment-item ${isReply ? "is-reply" : ""}" id="comment-${safeId}">
+    <div class="comment-item ${isReply ? "is-reply" : ""}" id="comment-${safeId}" data-comment-id="${escHtml(realId)}">
       <div class="comment-avatar">
         ${avatar
           ? `<img src="${avatar}" alt="${name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
@@ -775,12 +783,13 @@ function renderComment(c, isReply = false) {
         <p class="comment-text">${escHtml(c.content || "")}</p>
         <div class="comment-actions">
           ${currentUser ? `
-            <button class="comment-btn ${isLiked ? "liked" : ""}" onclick="likeKomentar('${safeId}',this)">
+            <button class="comment-btn like-btn ${isLiked ? "liked" : ""}"
+              data-id="${escHtml(realId)}">
               ❤️ <span class="like-count">${c.like_count || 0}</span>
             </button>
-            ${!isReply ? `<button class="comment-btn" onclick="toggleReplyForm('${safeId}')">💬 Balas</button>` : ""}
+            ${!isReply ? `<button class="comment-btn reply-btn" data-id="${safeId}">💬 Balas</button>` : ""}
           ` : `<span class="comment-btn-muted">❤️ ${c.like_count || 0}</span>`}
-          ${isOwner ? `<button class="comment-btn danger" onclick="hapusKomentar('${safeId}')">🗑️</button>` : ""}
+          ${isOwner ? `<button class="comment-btn danger delete-btn" data-id="${escHtml(realId)}">🗑️</button>` : ""}
         </div>
         ${!isReply ? `
           <div class="reply-form" id="reply-form-${safeId}" style="display:none">
@@ -788,7 +797,8 @@ function renderComment(c, isReply = false) {
               oninput="document.getElementById('reply-char-count-${safeId}').textContent=this.value.length+'/300'"></textarea>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
               <span id="reply-char-count-${safeId}" style="font-size:11px;color:var(--text-muted);">0/300</span>
-              <button onclick="submitReply('${safeId}')" id="reply-btn-${safeId}">Kirim Balasan</button>
+              <button class="reply-submit-btn" data-id="${escHtml(realId)}" data-safe="${safeId}"
+                id="reply-btn-${safeId}">Kirim Balasan</button>
             </div>
             <p id="reply-error-${safeId}" style="color:var(--accent);font-size:12px;display:none;"></p>
           </div>
@@ -836,30 +846,8 @@ window.submitKomentar = async function () {
   }
 };
 
-window.submitReply = async function (parentId) {
-  if (isSubmitting) return;
-  const input = document.getElementById(`reply-input-${parentId}`);
-  const text  = input?.value.trim();
-  if (!text)        { showCommentError("Balasan kosong!", true, parentId); return; }
-  if (!currentUser) { window.location.href = "/masuk"; return; }
-  isSubmitting = true;
-  const btn = document.getElementById(`reply-btn-${parentId}`);
-  if (btn) { btn.disabled = true; btn.innerHTML = `<span class="btn-spinner"></span>`; }
-  if (input) input.disabled = true;
-  try {
-    const { error } = await addComment(currentUser.id, slug, text, parentId);
-    if (error) { showCommentError(error.message || "Gagal.", true, parentId); return; }
-    showToast("Balasan terkirim! 💬", "success");
-    await loadComments();
-  } catch { showCommentError("Kesalahan.", true, parentId); }
-  finally {
-    isSubmitting = false;
-    if (input) input.disabled = false;
-    if (btn)   { btn.disabled = false; btn.textContent = "Kirim Balasan"; }
-  }
-};
-
 window.toggleReplyForm = function (commentId) {
+  /* Legacy fallback — sekarang handled oleh event delegation di bindCommentEvents */
   const form = document.getElementById(`reply-form-${commentId}`);
   if (!form) return;
   const wasHidden = form.style.display === "none";
@@ -873,13 +861,13 @@ window.likeKomentar = async function (commentId, btn) {
   btn.disabled = true;
   try {
     const { liked, likeCount, error } = await toggleLike(currentUser.id, commentId);
-    if (error) { btn.disabled = false; return; }
+    if (error) { console.error("Like error:", error); btn.disabled = false; return; }
     const cs = btn.querySelector(".like-count");
     if (cs && likeCount !== null) cs.textContent = likeCount;
     btn.classList.toggle("liked", liked);
     if (liked) likedSet.add(commentId); else likedSet.delete(commentId);
-    btn.style.transform = "scale(1.25)";
-    setTimeout(() => btn.style.transform = "scale(1)", 180);
+    btn.style.transform = "scale(1.3)";
+    setTimeout(() => { btn.style.transform = "scale(1)"; }, 180);
   } finally { btn.disabled = false; }
 };
 
@@ -888,7 +876,8 @@ window.hapusKomentar = async function (commentId) {
   try {
     const { error } = await deleteComment(commentId, currentUser.id);
     if (error) { showToast("Gagal menghapus", "error"); return; }
-    const el = document.getElementById(`comment-${commentId}`);
+    /* Cari elemen dengan data-comment-id */
+    const el = document.querySelector(`[data-comment-id="${commentId}"]`);
     if (el) {
       el.style.transition = "all 0.3s";
       el.style.opacity    = "0";
@@ -900,4 +889,72 @@ window.hapusKomentar = async function (commentId) {
     }
     showToast("Komentar dihapus", "info");
   } catch { showToast("Gagal menghapus", "error"); }
+};
+
+/* ── Event delegation untuk semua action di comment section ── */
+function bindCommentEvents(section) {
+  section.addEventListener("click", async e => {
+    /* LIKE */
+    const likeBtn = e.target.closest(".like-btn");
+    if (likeBtn) {
+      e.stopPropagation();
+      const id = likeBtn.dataset.id;
+      if (id) await window.likeKomentar(id, likeBtn);
+      return;
+    }
+
+    /* REPLY TOGGLE */
+    const replyBtn = e.target.closest(".reply-btn");
+    if (replyBtn) {
+      const safeId = replyBtn.dataset.id;
+      const form   = document.getElementById(`reply-form-${safeId}`);
+      if (!form) return;
+      const wasHidden = form.style.display === "none";
+      form.style.display = wasHidden ? "block" : "none";
+      if (wasHidden) setTimeout(() => document.getElementById(`reply-input-${safeId}`)?.focus(), 80);
+      return;
+    }
+
+    /* REPLY SUBMIT */
+    const replySubmit = e.target.closest(".reply-submit-btn");
+    if (replySubmit) {
+      const realId  = replySubmit.dataset.id;   /* UUID asli */
+      const safeId  = replySubmit.dataset.safe; /* DOM-safe id */
+      await window.submitReply(realId, safeId);
+      return;
+    }
+
+    /* DELETE */
+    const deleteBtn = e.target.closest(".delete-btn");
+    if (deleteBtn) {
+      const id = deleteBtn.dataset.id;
+      if (id) await window.hapusKomentar(id);
+      return;
+    }
+  });
+}
+
+window.submitReply = async function (parentId, safeId) {
+  if (isSubmitting) return;
+  /* safeId untuk ambil elemen DOM, parentId (UUID) untuk Supabase */
+  const domId = safeId || parentId.replace(/[^a-zA-Z0-9-]/g, "");
+  const input = document.getElementById(`reply-input-${domId}`);
+  const text  = input?.value.trim();
+  if (!text)        { showCommentError("Balasan kosong!", true, domId); return; }
+  if (!currentUser) { window.location.href = "/masuk"; return; }
+  isSubmitting = true;
+  const btn = document.getElementById(`reply-btn-${domId}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = `<span class="btn-spinner"></span>`; }
+  if (input) input.disabled = true;
+  try {
+    const { error } = await addComment(currentUser.id, slug, text, parentId);
+    if (error) { showCommentError(error.message || "Gagal.", true, domId); return; }
+    showToast("Balasan terkirim! 💬", "success");
+    await loadComments();
+  } catch { showCommentError("Kesalahan.", true, domId); }
+  finally {
+    isSubmitting = false;
+    if (input) input.disabled = false;
+    if (btn)   { btn.disabled = false; btn.textContent = "Kirim Balasan"; }
+  }
 };
