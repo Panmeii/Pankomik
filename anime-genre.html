@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genre Anime — Pankomik</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    :root {
+      --anime-accent: #6c63ff;
+      --anime-accent2: #a78bfa;
+      --anime-glow: rgba(108,99,255,0.3);
+      --anime-surface: rgba(108,99,255,0.08);
+    }
+    .page-header {
+      padding: 14px 14px 0;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .back-btn {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px; color: var(--text);
+      flex-shrink: 0; transition: background 0.2s;
+    }
+    .back-btn:hover { background: var(--bg-surface); }
+    .page-header-title {
+      font-family: 'Bangers', cursive;
+      font-size: 22px; letter-spacing: 2px;
+      color: var(--anime-accent2);
+    }
+    .genre-badge {
+      margin-left: auto;
+      padding: 3px 10px;
+      background: var(--anime-surface);
+      border: 1px solid rgba(108,99,255,0.2);
+      border-radius: 99px;
+      font-size: 11px; font-weight: 800;
+      color: var(--anime-accent2);
+    }
+    .anime-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      padding: 14px;
+    }
+    .anime-card {
+      background: var(--bg-card);
+      border-radius: 10px; overflow: hidden;
+      border: 1px solid var(--border); cursor: pointer;
+      transition: transform 0.18s, border-color 0.2s, box-shadow 0.2s;
+      position: relative;
+    }
+    .anime-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--anime-accent);
+      box-shadow: 0 8px 24px rgba(108,99,255,0.2);
+    }
+    .anime-card:active { transform: scale(0.97); }
+    .anime-card img {
+      width: 100%; aspect-ratio: 3/4; object-fit: cover;
+      display: block; background: var(--bg-surface);
+    }
+    .anime-card-eps {
+      position: absolute; top: 6px; left: 6px;
+      background: rgba(108,99,255,0.9);
+      color: #fff; font-size: 9px; font-weight: 800;
+      padding: 2px 6px; border-radius: 5px;
+    }
+    .anime-card-info { padding: 7px 8px 8px; }
+    .anime-card-title {
+      font-size: 11px; font-weight: 800; line-height: 1.4;
+      color: var(--text);
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 3px;
+    }
+    .anime-card-score { font-size: 10px; color: #f5a623; font-weight: 700; }
+    .skel-anime {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-surface) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 10px;
+    }
+    .skel-card { aspect-ratio: 3/4; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    .load-more-wrap { padding: 0 14px 20px; }
+    .load-more-btn {
+      width: 100%; padding: 12px; background: var(--bg-card);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .load-more-btn:hover {
+      background: var(--anime-accent); border-color: var(--anime-accent);
+      color: #fff; transform: translateY(-2px);
+    }
+    .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .anime-spinner {
+      display: flex; align-items: center; justify-content: center;
+      padding: 40px; gap: 12px; color: var(--text-muted); font-size: 13px;
+    }
+    .spin-ring {
+      width: 24px; height: 24px;
+      border: 3px solid rgba(108,99,255,0.2);
+      border-top-color: var(--anime-accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .anime-empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="header">
+  <div class="logo" onclick="window.location.href='/'">Pankomik</div>
+  <div style="flex:1"></div>
+  <div class="header-right">
+    <button onclick="toggleDarkMode()">🌙</button>
+    <button onclick="toggleMenu()">👤</button>
+  </div>
+</header>
+<div id="menuDropdown" class="dropdown"></div>
+
+<div class="page-header">
+  <div class="back-btn" onclick="history.back()">←</div>
+  <div class="page-header-title" id="genreTitle">Genre</div>
+  <span class="genre-badge" id="genreCount">...</span>
+</div>
+
+<div class="anime-grid" id="genreAnimeGrid">
+  <div class="anime-spinner" style="grid-column:1/-1"><div class="spin-ring"></div>Memuat...</div>
+</div>
+<div class="load-more-wrap" id="loadMoreWrap" style="display:none">
+  <button class="load-more-btn" id="loadMoreBtn" onclick="loadMore()">Muat Lebih Banyak ↓</button>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+  <button class="nav-item" onclick="window.location.href='/'"><span class="nav-icon">📚</span><span class="nav-label">Komik</span></button>
+  <button class="nav-item active"><span class="nav-icon">⚡</span><span class="nav-label">Anime</span></button>
+  <button class="nav-item" onclick="window.location.href='/novel/'"><span class="nav-icon">📖</span><span class="nav-label">Novel</span></button>
+  <button class="nav-item" onclick="window.location.href='/profil'"><span class="nav-icon">👤</span><span class="nav-label">Profil</span></button>
+</nav>
+
+<script type="module">
+  import { initAuthHeader } from "/auth-header.js";
+  initAuthHeader();
+</script>
+<script>
+const API = "https://www.sankavollerei.com";
+let genreSlug = "";
+let page = 1;
+let hasNext = false;
+let totalItems = 0;
+
+function getGenreSlug() {
+  const m = window.location.pathname.match(/^\/anime-genre\/([^/]+)/);
+  if (m) return m[1];
+  return new URLSearchParams(window.location.search).get("genre") || "";
+}
+
+function pImg(url, w=200) {
+  if (!url) return "";
+  return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//,''))}&w=${w}&output=webp&q=80`;
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderCard(a) {
+  const img = pImg(a.poster || "", 200);
+  const id  = a.animeId || a.slug || "";
+  return `
+    <div class="anime-card" onclick="window.location.href='/anime/${esc(id)}'">
+      ${img ? `<img src="${esc(img)}" alt="${esc(a.title)}" loading="lazy"
+        onerror="this.style.background='var(--bg-surface)';this.src=''">` :
+        `<div style="width:100%;aspect-ratio:3/4;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px;">⚡</div>`}
+      ${a.episodes ? `<span class="anime-card-eps">Ep ${a.episodes}</span>` : ""}
+      <div class="anime-card-info">
+        <div class="anime-card-title">${esc(a.title)}</div>
+        ${a.score ? `<div class="anime-card-score">⭐ ${esc(a.score)}</div>` :
+          `<div style="font-size:10px;color:var(--text-muted);">${esc(a.season||"")}</div>`}
+      </div>
+    </div>`;
+}
+
+async function loadPage(append=false) {
+  const grid = document.getElementById("genreAnimeGrid");
+  const btn  = document.getElementById("loadMoreBtn");
+  if (!append) {
+    grid.innerHTML = `<div class="anime-spinner" style="grid-column:1/-1"><div class="spin-ring"></div>Memuat...</div>`;
+  }
+  if (btn) btn.disabled = true;
+
+  try {
+    const res  = await fetch(`${API}/anime/genre/${genreSlug}?page=${page}`);
+    const json = await res.json();
+    const list = json.data?.animeList || [];
+    hasNext    = json.pagination?.hasNextPage || false;
+    totalItems += list.length;
+
+    if (!append) grid.innerHTML = "";
+    if (!list.length && !append) {
+      grid.innerHTML = '<div class="anime-empty" style="grid-column:1/-1"><p style="font-size:36px">🎌</p><p>Tidak ada anime di genre ini</p></div>';
+      return;
+    }
+
+    list.forEach(a => grid.insertAdjacentHTML("beforeend", renderCard(a)));
+
+    document.getElementById("genreCount").textContent = `${totalItems} anime`;
+    const wrap = document.getElementById("loadMoreWrap");
+    if (hasNext) {
+      wrap.style.display = "block"; page++;
+    } else {
+      wrap.style.display = "none";
+    }
+  } catch(e) {
+    if (!append) grid.innerHTML = '<div class="anime-empty" style="grid-column:1/-1"><p style="font-size:36px">😕</p><p>Gagal memuat. Coba lagi.</p></div>';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+window.loadMore = () => loadPage(true);
+
+window.addEventListener("load", () => {
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+  genreSlug = getGenreSlug();
+  if (!genreSlug) { window.location.href = "/anime/"; return; }
+
+  // Set title dari slug
+  const title = genreSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
+  document.getElementById("genreTitle").textContent = `⚡ ${title}`;
+  document.title = `${title} — Anime Pankomik`;
+
+  loadPage();
+});
+
+window.toggleDarkMode = () => {
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark");
+};
+window.toggleMenu = () => {
+  const m = document.getElementById("menuDropdown");
+  if (m) m.style.display = m.style.display==="block"?"none":"block";
+};
+document.addEventListener("click", e => {
+  const m = document.getElementById("menuDropdown");
+  const b = document.querySelector('button[onclick="toggleMenu()"]');
+  if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display="none";
+});
+</script>
+</body>
+</html>
