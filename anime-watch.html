@@ -14,7 +14,7 @@
     }
 
     body { background: #08080f; }
-    body.light { background: #0e0e16; } /* player page selalu gelap */
+    body.light { background: #0e0e16; }
 
     /* ── Player container ─────────────────────────────────── */
     .player-wrap {
@@ -111,7 +111,7 @@
       display: flex; align-items: center; justify-content: center; gap: 5px;
     }
     .ep-nav-btn:hover { background: var(--anime-accent); border-color: var(--anime-accent); color: #fff; }
-    .ep-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .ep-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
 
     /* ── Server selector ──────────────────────────────────── */
     .server-section {
@@ -157,6 +157,11 @@
     }
     .server-chip.loading {
       opacity: 0.6; pointer-events: none;
+    }
+    /* Empty quality row (no servers) */
+    .quality-empty {
+      font-size: 11px; color: #444;
+      padding: 4px 0; font-style: italic;
     }
 
     /* ── Download section ─────────────────────────────────── */
@@ -217,6 +222,21 @@
       border-color: var(--anime-accent); color: #fff;
     }
 
+    /* ── Anime info bar ───────────────────────────────────── */
+    .anime-info-bar {
+      padding: 10px 14px;
+      background: rgba(108,99,255,0.04);
+      border-top: 1px solid rgba(108,99,255,0.08);
+      display: flex; align-items: center; gap: 10px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .anime-info-bar:hover { background: rgba(108,99,255,0.1); }
+    .anime-info-back-title {
+      font-size: 12px; font-weight: 800; color: var(--anime-accent2);
+      flex: 1;
+    }
+    .anime-info-sub { font-size: 10px; color: #555; }
+
     /* ── Error state ──────────────────────────────────────── */
     .player-error {
       position: absolute; inset: 0;
@@ -237,6 +257,22 @@
     .err-msg { font-size: 13px; color: #aaa; }
     .err-id  { font-size: 11px; color: #666; margin-top: 4px; }
     .err-det { font-size: 10px; color: #555; margin-top: 2px; max-width: 280px; word-break: break-all; }
+
+    /* ── Genre chips kecil ────────────────────────────────── */
+    .ep-genre-wrap {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      padding: 0 14px 10px;
+    }
+    .ep-genre-chip {
+      padding: 3px 8px;
+      background: rgba(108,99,255,0.08);
+      border: 1px solid rgba(108,99,255,0.15);
+      border-radius: 99px;
+      font-size: 10px; font-weight: 700;
+      color: var(--anime-accent2); cursor: pointer;
+      transition: all 0.18s;
+    }
+    .ep-genre-chip:hover { background: var(--anime-accent); color: #fff; }
   </style>
 </head>
 <body>
@@ -279,10 +315,17 @@
   <div id="serverList"><div style="color:#555;font-size:13px;text-align:center;padding:10px;">Memuat server...</div></div>
 </div>
 
-<!-- Download links -->
-<div class="download-section" id="downloadSection" style="display:none">
-  <div class="download-title">⬇ Unduh Episode</div>
-  <div id="downloadLinks"></div>
+<!-- Genre chips dari info episode -->
+<div class="ep-genre-wrap" id="epGenreWrap" style="display:none"></div>
+
+<!-- Link balik ke detail anime -->
+<div class="anime-info-bar" id="animeInfoBar" style="display:none" onclick="goToAnimeDetail()">
+  <span style="font-size:20px;">⚡</span>
+  <div>
+    <div class="anime-info-back-title" id="animeInfoTitle">Lihat Detail Anime</div>
+    <div class="anime-info-sub">Tap untuk ke halaman detail</div>
+  </div>
+  <span style="color:#555;font-size:14px;">→</span>
 </div>
 
 <!-- Episode list -->
@@ -291,175 +334,193 @@
   <div class="ep-list-scroll" id="epListScroll"></div>
 </div>
 
+<!-- Download links -->
+<div class="download-section" id="downloadSection" style="display:none">
+  <div class="download-title">⬇ Unduh Episode</div>
+  <div id="downloadLinks"></div>
+</div>
+
+<!-- Auth dropdown -->
+<div id="menuDropdown" class="dropdown" style="display:none;position:fixed;right:10px;top:58px;z-index:2000;background:rgba(20,20,28,0.96);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.10);border-radius:12px;overflow:hidden;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+</div>
+
 <script type="module">
   import { initAuthHeader } from "/auth-header.js";
   initAuthHeader();
 </script>
 <script type="module">
-import { getAnimeEpisodeId, animeWatchURL, animeURL, pushAnimeURL } from "/router.js";
+import { getAnimeEpisodeId, animeWatchURL, animeURL, animeGenreURL, pushAnimeURL } from "/router.js";
 
 const API = "https://www.sankavollerei.com";
 
-/* Expose fungsi router ke window agar bisa dipakai di onclick inline */
-window._animeWatchURL = animeWatchURL;
-window._animeURL      = animeURL;
-
-function getEpisodeId() { return getAnimeEpisodeId(); }
+window._animeWatchURL  = animeWatchURL;
+window._animeURL       = animeURL;
+window._animeGenreURL  = animeGenreURL;
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-let episodeData = null;
-let currentServerId = null;
+let episodeData    = null;
+let currentAnimeId = null;
 
+/* ── Muat data episode via /anime/episode/:slug ── */
 async function loadEpisode() {
-  const epId = getEpisodeId();
+  const epId = getAnimeEpisodeId();
   if (!epId) { window.location.href = "/anime/"; return; }
 
-  let rawTitle = ""; /* declare di luar try agar bisa diakses di catch */
-
   /* Reset UI */
-  document.getElementById("epTitle").textContent = "Memuat...";
-  document.getElementById("epMeta").textContent  = "";
+  document.getElementById("epTitle").textContent  = "Memuat...";
+  document.getElementById("epMeta").textContent   = "";
+  document.getElementById("watchTitle").textContent = "Memuat...";
   document.getElementById("serverList").innerHTML =
     '<div style="color:#555;font-size:13px;text-align:center;padding:10px;">Memuat server...</div>';
+  document.getElementById("prevEpBtn").disabled = true;
+  document.getElementById("nextEpBtn").disabled = true;
+  document.getElementById("animeInfoBar").style.display  = "none";
+  document.getElementById("epListWrap").style.display    = "none";
+  document.getElementById("downloadSection").style.display = "none";
+  document.getElementById("epGenreWrap").style.display   = "none";
 
   try {
     const res  = await fetch(`${API}/anime/episode/${epId}`);
     const json = await res.json();
 
-    if (!json.data) {
-      console.error("[Watch] No data. Raw:", JSON.stringify(json).slice(0,300));
-      throw new Error("API tidak mengembalikan data untuk: " + epId);
+    if (!json.ok || !json.data) {
+      throw new Error(json.message || "Data episode tidak ditemukan: " + epId);
     }
+
     episodeData = json.data;
-
     const d     = episodeData;
-    rawTitle = d.title || "";
-    /* Bersihkan judul: hapus "- Episode N" atau "Episode N Sub Indo" di akhir */
-    const title = rawTitle
-      .replace(/\s*[-–]?\s*episode\s*\d+.*/i, "")
-      .trim() || epId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
-                     .replace(/sub indo/i,"").trim();
 
-    document.title = `${rawTitle || title} — Pankomik`;
-    document.getElementById("watchTitle").textContent = title;
-    document.getElementById("epTitle").textContent   = rawTitle || title;
+    /* ── Judul ── */
+    const rawTitle = d.title || "";
+    const shortTitle = rawTitle
+      .replace(/\s*subtitle\s*indonesia/i, "")
+      .trim();
+
+    document.title = `${shortTitle || epId} — Pankomik`;
+    document.getElementById("watchTitle").textContent = shortTitle || epId;
+    document.getElementById("epTitle").textContent   = rawTitle || shortTitle;
     document.getElementById("epMeta").textContent    = d.releaseTime
-      ? `📅 Rilis: ${d.releaseTime}` : "";
+      ? `📅 ${d.releaseTime}` : "";
 
-    /* Prev / Next buttons */
+    /* ── Prev / Next ── */
     const prevBtn = document.getElementById("prevEpBtn");
     const nextBtn = document.getElementById("nextEpBtn");
     prevBtn.disabled = !(d.hasPrevEpisode && d.prevEpisode?.episodeId);
     nextBtn.disabled = !(d.hasNextEpisode && d.nextEpisode?.episodeId);
 
-    /* Render server list */
+    /* ── Render server list dari d.server.qualities ── */
     renderServers(d.server?.qualities || []);
 
-    /* Load stream: coba defaultStreamingUrl dulu, lalu server pertama */
+    /* ── Muat stream: utamakan defaultStreamingUrl ── */
     if (d.defaultStreamingUrl) {
-      /* Tandai chip server default sebagai active */
-      const defaultServer = d.server?.qualities
-        ?.find(q => q.serverList?.length)?.serverList?.[0];
-      if (defaultServer) {
-        const chip = document.querySelector(`[data-id="${defaultServer.serverId}"]`);
-        if (chip) chip.classList.add("active");
-      }
       loadStream(d.defaultStreamingUrl);
+      /* Tandai server chip yang sesuai sebagai active (coba cocokkan dari qualities) */
+      const allServers = (d.server?.qualities || []).flatMap(q => q.serverList || []);
+      if (allServers.length) {
+        /* Aktifkan chip pertama dari kualitas terbaik secara visual saja */
+        const ordered = [...(d.server?.qualities||[])].sort((a,b)=>{
+          const o = {"720p":0,"480p":1,"360p":2};
+          return (o[a.title]??9) - (o[b.title]??9);
+        });
+        const firstServer = ordered.find(q => q.serverList?.length)?.serverList?.[0];
+        if (firstServer) {
+          const chip = document.querySelector(`[data-sid="${firstServer.serverId}"]`);
+          if (chip) chip.classList.add("active");
+        }
+      }
     } else {
-      /* Coba server pertama dari kualitas tertinggi */
-      const qualities = d.server?.qualities || [];
-      /* Urutkan: 720p > 480p > 360p */
-      const ordered = [...qualities].sort((a, b) => {
-        const order = {"720p":0,"480p":1,"360p":2};
-        return (order[a.title]??9) - (order[b.title]??9);
+      /* Tidak ada defaultStreamingUrl — coba server pertama kualitas tertinggi */
+      const ordered = [...(d.server?.qualities||[])].sort((a,b)=>{
+        const o = {"720p":0,"480p":1,"360p":2};
+        return (o[a.title]??9) - (o[b.title]??9);
       });
       const firstServer = ordered.find(q => q.serverList?.length)?.serverList?.[0];
       if (firstServer) {
-        await selectServer(firstServer.serverId,
-          document.querySelector(`[data-id="${firstServer.serverId}"]`));
+        await selectServer(firstServer.serverId);
       } else {
-        showPlayerError("Tidak ada server stream tersedia untuk episode ini.");
+        showPlayerError("Tidak ada server streaming tersedia untuk episode ini.");
       }
     }
 
-    /* Download & episode list */
-    renderDownloads(d.downloadUrl?.qualities || []);
+    /* ── Anime info bar (link kembali ke detail) ── */
+    currentAnimeId = d.animeId || null;
+    if (currentAnimeId) {
+      const bar   = document.getElementById("animeInfoBar");
+      const title = document.getElementById("animeInfoTitle");
+      title.textContent = `Detail Anime: ${currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim()}`;
+      bar.style.display = "flex";
+    }
+
+    /* ── Genre chips dari d.info.genreList ── */
+    const genreList = d.info?.genreList || [];
+    if (genreList.length) {
+      const wrap = document.getElementById("epGenreWrap");
+      wrap.style.display = "flex";
+      wrap.innerHTML = genreList.map(g =>
+        `<span class="ep-genre-chip"
+          onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')"
+        >${esc(g.title)}</span>`
+      ).join("");
+    }
+
+    /* ── Episode list dari d.info.episodeList ── */
     renderEpList(d.info?.episodeList || [], epId);
+
+    /* ── Download links dari d.downloadUrl.qualities ── */
+    renderDownloads(d.downloadUrl?.qualities || []);
 
   } catch(e) {
     console.error("[Watch] loadEpisode error:", e);
     showPlayerError("Gagal memuat episode.", epId, String(e.message||e));
-    document.getElementById("epTitle").textContent = rawTitle || "Episode tidak ditemukan";
+    document.getElementById("epTitle").textContent = "Episode tidak ditemukan";
     document.getElementById("serverList").innerHTML =
       `<div style="text-align:center;padding:16px;color:#555;font-size:12px;">
-         Episode ID tidak valid atau tidak tersedia di API.<br>
-         <strong style="color:#a78bfa;">${epId}</strong>
+         Gagal memuat data untuk:<br>
+         <strong style="color:#a78bfa;">${esc(epId)}</strong>
        </div>`;
   }
 }
 
+/* ── Render server pills dari d.server.qualities ── */
 function renderServers(qualities) {
   const el = document.getElementById("serverList");
-  if (!qualities.length) {
+  /* Filter kualitas yang punya server */
+  const hasServers = qualities.some(q => q.serverList?.length);
+
+  if (!hasServers) {
     el.innerHTML = '<div style="color:#555;font-size:13px;text-align:center;padding:10px;">Tidak ada server tersedia</div>';
     return;
   }
-  el.innerHTML = qualities.filter(q => q.serverList?.length).map(q => `
-    <div class="quality-group">
+
+  el.innerHTML = qualities.map(q => {
+    if (!q.serverList?.length) {
+      return `<div class="quality-group">
+        <div class="quality-label">${esc(q.title)}</div>
+        <div class="quality-empty">Tidak ada server untuk kualitas ini</div>
+      </div>`;
+    }
+    return `<div class="quality-group">
       <div class="quality-label">${esc(q.title)}</div>
       <div class="server-chips">
         ${q.serverList.map(s => `
-          <div class="server-chip" data-id="${esc(s.serverId)}"
+          <div class="server-chip" data-sid="${esc(s.serverId)}"
             onclick="selectServer('${esc(s.serverId)}',this)">
             ${esc(s.title.trim())}
-          </div>`).join('')}
+          </div>`).join("")}
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join("");
 }
 
-function renderDownloads(qualities) {
-  const section = document.getElementById("downloadSection");
-  const el      = document.getElementById("downloadLinks");
-  if (!qualities.length) { section.style.display="none"; return; }
-  section.style.display = "block";
-  el.innerHTML = qualities.filter(q => q.urls?.length).map(q => `
-    <div class="dl-quality-group">
-      <div class="dl-quality-label">${esc(q.title)} · ${esc(q.size||"")}</div>
-      <div class="dl-links">
-        ${q.urls.map(u => `<a class="dl-link" href="${esc(u.url)}" target="_blank" rel="noopener">${esc(u.title)}</a>`).join('')}
-      </div>
-    </div>`).join('');
-}
-
-function renderEpList(epList, currentId) {
-  const wrap   = document.getElementById("epListWrap");
-  const scroll = document.getElementById("epListScroll");
-  if (!epList.length) { wrap.style.display="none"; return; }
-  wrap.style.display = "block";
-  scroll.innerHTML = [...epList].reverse().map(ep => `
-    <div class="ep-chip ${ep.episodeId===currentId?'current':''}"
-      onclick="navigateEpisode('${esc(ep.episodeId)}')">
-      ${esc(ep.title||`Ep ${ep.eps}`)}
-    </div>`).join('');
-  /* Scroll ke episode aktif */
-  setTimeout(() => {
-    const active = scroll.querySelector(".current");
-    if (active) active.scrollIntoView({ block:"nearest", inline:"center", behavior:"smooth" });
-  }, 300);
-}
-
+/* ── Pilih server & fetch embed URL via /anime/server/:serverId ── */
 window.selectServer = async function(serverId, chipEl) {
   if (!serverId) return;
-  currentServerId = serverId;
 
-  /* Update active chip */
+  /* Update chip active state */
   document.querySelectorAll(".server-chip").forEach(c => c.classList.remove("active","loading"));
-  if (chipEl) { chipEl.classList.add("active","loading"); }
-  else {
-    const chip = document.querySelector(`[data-id="${serverId}"]`);
-    if (chip) chip.classList.add("active","loading");
-  }
+  const chip = chipEl || document.querySelector(`[data-sid="${serverId}"]`);
+  if (chip) chip.classList.add("active","loading");
 
   const loading = document.getElementById("playerLoading");
   loading.classList.remove("hidden");
@@ -467,35 +528,82 @@ window.selectServer = async function(serverId, chipEl) {
   try {
     const res  = await fetch(`${API}/anime/server/${serverId}`);
     const json = await res.json();
-    const url  = json.data?.url || json.url || json.data?.embed_url;
+
+    if (!json.ok) throw new Error(json.message || "Server error");
+
+    /* API mengembalikan { data: { url: "..." } } atau { data: { embedUrl: "..." } } */
+    const url = json.data?.url
+             || json.data?.embedUrl
+             || json.data?.embed_url
+             || json.data?.streamUrl;
+
     if (url) {
       loadStream(url);
     } else {
-      showPlayerError("URL stream tidak tersedia untuk server ini.");
+      throw new Error("URL stream tidak ditemukan dalam respons API");
     }
   } catch(e) {
-    showPlayerError("Gagal memuat server. Coba server lain.");
+    console.error("[Watch] selectServer error:", e);
+    showPlayerError("Gagal memuat server ini. Coba server lain.");
   } finally {
-    document.querySelectorAll(".server-chip.loading").forEach(c => c.classList.remove("loading"));
+    const c = document.querySelector(`[data-sid="${serverId}"]`);
+    if (c) c.classList.remove("loading");
   }
 };
 
+/* ── Render download links ── */
+function renderDownloads(qualities) {
+  const section = document.getElementById("downloadSection");
+  const el      = document.getElementById("downloadLinks");
+  const hasLinks = qualities.some(q => q.urls?.length);
+  if (!hasLinks) { section.style.display = "none"; return; }
+
+  section.style.display = "block";
+  el.innerHTML = qualities.filter(q => q.urls?.length).map(q => `
+    <div class="dl-quality-group">
+      <div class="dl-quality-label">${esc(q.title)}${q.size ? ` · ${esc(q.size)}` : ""}</div>
+      <div class="dl-links">
+        ${q.urls.map(u => `<a class="dl-link" href="${esc(u.url)}" target="_blank" rel="noopener">${esc(u.title)}</a>`).join("")}
+      </div>
+    </div>`).join("");
+}
+
+/* ── Render episode list scroll ── */
+function renderEpList(epList, currentId) {
+  const wrap   = document.getElementById("epListWrap");
+  const scroll = document.getElementById("epListScroll");
+  if (!epList.length) { wrap.style.display = "none"; return; }
+  wrap.style.display = "block";
+
+  scroll.innerHTML = epList.map(ep => `
+    <div class="ep-chip ${ep.episodeId === currentId ? "current" : ""}"
+      onclick="navigateEpisode('${esc(ep.episodeId)}')">
+      ${esc(ep.title || `Ep ${ep.eps}`)}
+    </div>`).join("");
+
+  /* Scroll ke episode aktif */
+  setTimeout(() => {
+    const active = scroll.querySelector(".current");
+    if (active) active.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }, 300);
+}
+
+/* ── Load stream ke iframe ── */
 function loadStream(url) {
   const frame   = document.getElementById("playerFrame");
   const loading = document.getElementById("playerLoading");
 
-  /* Remove error state jika ada */
+  /* Hapus error state */
   const errEl = frame.parentElement.querySelector(".player-error");
   if (errEl) errEl.remove();
 
   loading.classList.remove("hidden");
   frame.src = url;
-  frame.onload = () => {
-    setTimeout(() => loading.classList.add("hidden"), 500);
-  };
+  frame.onload  = () => { setTimeout(() => loading.classList.add("hidden"), 600); };
   frame.onerror = () => { showPlayerError("Gagal memuat stream."); };
 }
 
+/* ── Tampilkan error di player ── */
 function showPlayerError(msg, epId, detail) {
   const loading = document.getElementById("playerLoading");
   loading.classList.add("hidden");
@@ -507,17 +615,31 @@ function showPlayerError(msg, epId, detail) {
     errEl.className = "player-error";
     frame.parentElement.appendChild(errEl);
   }
-  /* Gunakan textContent untuk bagian teks, innerHTML hanya untuk struktur */
   errEl.innerHTML = `
     <div class="err-icon">😕</div>
     <p class="err-msg"></p>
-    ${epId  ? '<p class="err-id"></p>'  : ''}
-    ${detail? '<p class="err-det"></p>' : ''}
+    ${epId   ? '<p class="err-id"></p>'  : ""}
+    ${detail ? '<p class="err-det"></p>' : ""}
     <button class="btn-retry" onclick="location.reload()">🔄 Coba Lagi</button>`;
   errEl.querySelector(".err-msg").textContent = msg;
   if (epId)   errEl.querySelector(".err-id").textContent  = "ID: " + epId;
   if (detail) errEl.querySelector(".err-det").textContent = detail;
 }
+
+/* ── Navigasi antar episode ── */
+function navigateEpisode(episodeId) {
+  pushAnimeURL(episodeId);
+  const frame   = document.getElementById("playerFrame");
+  const loading = document.getElementById("playerLoading");
+  frame.src = "";
+  loading.classList.remove("hidden");
+  const err = frame.parentElement.querySelector(".player-error");
+  if (err) err.remove();
+  episodeData = null;
+  loadEpisode();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+window.navigateEpisode = navigateEpisode;
 
 window.goPrev = function() {
   const ep = episodeData?.prevEpisode?.episodeId;
@@ -527,26 +649,10 @@ window.goNext = function() {
   const ep = episodeData?.nextEpisode?.episodeId;
   if (ep) navigateEpisode(ep);
 };
-window.navigateEpisode = navigateEpisode;
 
-/* Ganti episode tanpa full page reload — URL berubah tapi halaman tidak */
-function navigateEpisode(episodeId) {
-  /* Update URL dulu agar akurat */
-  pushAnimeURL(episodeId);
-  /* Reset player */
-  const frame   = document.getElementById("playerFrame");
-  const loading = document.getElementById("playerLoading");
-  frame.src = "";
-  loading.classList.remove("hidden");
-  /* Hapus error state jika ada */
-  const err = frame.parentElement.querySelector(".player-error");
-  if (err) err.remove();
-  /* Reload data episode baru */
-  episodeData = null;
-  loadEpisode();
-  /* Scroll ke atas */
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
+window.goToAnimeDetail = function() {
+  if (currentAnimeId) window.location.href = window._animeURL(currentAnimeId);
+};
 
 window.shareEp = async function() {
   const title = document.getElementById("epTitle").textContent;
@@ -565,7 +671,6 @@ document.addEventListener("keydown", e => {
 });
 
 window.addEventListener("load", () => {
-  /* Watch page selalu dark */
   document.body.classList.remove("light");
   loadEpisode();
 });
@@ -573,8 +678,15 @@ window.addEventListener("load", () => {
 window.toggleDarkMode = () => {};
 window.toggleMenu = () => {
   const m = document.getElementById("menuDropdown");
-  if (m) m.style.display = m.style.display==="block"?"none":"block";
+  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
 };
+document.addEventListener("click", e => {
+  const m = document.getElementById("menuDropdown");
+  const b = document.querySelector('.watch-share');
+  if (m && m.style.display === "block" && !m.contains(e.target) && !b?.contains(e.target)) {
+    m.style.display = "none";
+  }
+});
 </script>
 </body>
 </html>
