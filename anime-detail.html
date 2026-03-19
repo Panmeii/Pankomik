@@ -13,346 +13,208 @@
       --as: rgba(108,99,255,0.08);
     }
 
-    /* ── Hero ─────────────────────────────────────────────── */
-    .d-hero {
-      position: relative;
-      overflow: hidden;
-      min-height: 230px;
-    }
+    .d-hero { position:relative; overflow:hidden; min-height:230px; }
     .d-hero-bg {
-      position: absolute; inset: 0;
-      background-size: cover;
-      background-position: center top;
-      filter: blur(22px) brightness(0.22) saturate(1.5);
-      transform: scale(1.12);
+      position:absolute; inset:0;
+      background-size:cover; background-position:center top;
+      filter:blur(22px) brightness(0.22) saturate(1.5);
+      transform:scale(1.12);
     }
     .d-hero-grad {
-      position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.75) 100%);
+      position:absolute; inset:0;
+      background:linear-gradient(180deg,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.78) 100%);
     }
     .d-hero-body {
-      position: relative; z-index: 2;
-      display: flex;
-      flex-direction: row;
-      align-items: flex-end;
-      gap: 14px;
-      padding: 56px 14px 20px;
-      width: 100%;
-      box-sizing: border-box;
+      position:relative; z-index:2;
+      display:flex; flex-direction:row; align-items:flex-end;
+      gap:14px; padding:56px 14px 20px;
+      width:100%; box-sizing:border-box;
     }
     .d-poster {
-      width: 106px;
-      height: 150px;
-      border-radius: 10px;
-      object-fit: cover;
-      flex-shrink: 0;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.85);
-      border: 2px solid rgba(108,99,255,0.55);
-      display: block;
+      width:106px; height:150px; border-radius:10px;
+      object-fit:cover; flex-shrink:0; display:block;
+      box-shadow:0 8px 28px rgba(0,0,0,0.85);
+      border:2px solid rgba(108,99,255,0.55);
     }
     .d-poster-ph {
-      width: 106px;
-      height: 150px;
-      border-radius: 10px;
-      flex-shrink: 0;
-      background: rgba(108,99,255,0.15);
-      border: 2px solid rgba(108,99,255,0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 44px;
+      width:106px; height:150px; border-radius:10px; flex-shrink:0;
+      background:rgba(108,99,255,0.15); border:2px solid rgba(108,99,255,0.3);
+      display:flex; align-items:center; justify-content:center; font-size:44px;
     }
-    .d-info {
-      flex: 1;
-      min-width: 0;
-      padding-bottom: 2px;
-    }
+    .d-info { flex:1; min-width:0; padding-bottom:2px; }
     .d-title {
-      font-size: 15px;
-      font-weight: 900;
-      color: #fff;
-      line-height: 1.35;
-      margin-bottom: 5px;
-      text-shadow: 0 1px 8px rgba(0,0,0,0.9);
-      word-break: break-word;
+      font-size:15px; font-weight:900; color:#fff;
+      line-height:1.35; margin-bottom:5px;
+      text-shadow:0 1px 8px rgba(0,0,0,0.9); word-break:break-word;
     }
     .d-jp {
-      font-size: 11px;
-      color: rgba(255,255,255,0.45);
-      margin-bottom: 8px;
-      font-style: italic;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      font-size:11px; color:rgba(255,255,255,0.45);
+      margin-bottom:8px; font-style:italic;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .d-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-bottom: 8px;
-    }
+    .d-chips { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:8px; }
     .d-chip {
-      padding: 3px 9px;
-      border-radius: 99px;
-      font-size: 10px;
-      font-weight: 700;
-      color: rgba(255,255,255,0.92);
-      background: rgba(255,255,255,0.14);
-      border: 1px solid rgba(255,255,255,0.2);
+      padding:3px 9px; border-radius:99px; font-size:10px; font-weight:700;
+      color:rgba(255,255,255,0.92); background:rgba(255,255,255,0.14);
+      border:1px solid rgba(255,255,255,0.2);
     }
-    .chip-purple { background: rgba(108,99,255,0.75) !important; border-color: rgba(108,99,255,0.9) !important; }
-    .chip-orange { background: rgba(232,82,42,0.8)  !important; border-color: rgba(232,82,42,0.95) !important; }
-    .chip-green  { background: rgba(39,174,96,0.8)  !important; border-color: rgba(39,174,96,0.95) !important; }
-    .d-score {
-      font-size: 13px;
-      font-weight: 800;
-      color: #f5a623;
-    }
+    .chip-purple { background:rgba(108,99,255,0.75)!important; border-color:rgba(108,99,255,0.9)!important; }
+    .chip-orange { background:rgba(232,82,42,0.8)!important;   border-color:rgba(232,82,42,0.95)!important; }
+    .chip-green  { background:rgba(39,174,96,0.8)!important;   border-color:rgba(39,174,96,0.95)!important; }
+    .d-score { font-size:13px; font-weight:800; color:#f5a623; }
 
-    /* ── Action row ───────────────────────────────────────── */
-    .d-actions {
-      display: flex;
-      gap: 8px;
-      padding: 12px 14px;
-      align-items: stretch;
-    }
+    .d-actions { display:flex; gap:8px; padding:12px 14px; align-items:stretch; }
     .d-btn {
-      flex: 1;
-      padding: 12px 8px;
-      border: none;
-      border-radius: 10px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 12px;
-      font-weight: 900;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 5px;
-      transition: opacity 0.15s, transform 0.1s;
-      -webkit-tap-highlight-color: transparent;
+      flex:1; padding:12px 8px; border:none; border-radius:10px;
+      font-family:'Nunito',sans-serif; font-size:12px; font-weight:900;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      gap:5px; -webkit-tap-highlight-color:transparent;
     }
-    .d-btn:active { transform: scale(0.95); opacity: 0.85; }
-    .d-btn-ep1    { background: var(--ap); color: #fff; box-shadow: 0 4px 14px var(--ag); }
-    .d-btn-new    { background: var(--as); color: var(--ap2); border: 1.5px solid rgba(108,99,255,0.35); }
+    .d-btn:active { opacity:0.8; transform:scale(0.96); }
+    .d-btn-ep1  { background:var(--ap); color:#fff; box-shadow:0 4px 14px var(--ag); }
+    .d-btn-new  { background:var(--as); color:var(--ap2); border:1.5px solid rgba(108,99,255,0.35); }
     .d-btn-bm {
-      flex: none;
-      width: 46px;
-      padding: 0;
-      background: var(--bg-card, #1e1e28);
-      border: 1.5px solid var(--border, rgba(255,255,255,0.1));
-      border-radius: 10px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-      -webkit-tap-highlight-color: transparent;
+      flex:none; width:46px; padding:0;
+      background:var(--bg-card,#1e1e28);
+      border:1.5px solid var(--border,rgba(255,255,255,0.1));
+      border-radius:10px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      -webkit-tap-highlight-color:transparent;
     }
-    .d-btn-bm svg { width: 22px; height: 22px; }
-    .d-btn-bm.saved { background: rgba(245,166,35,0.15); border-color: #f5a623; }
-    .d-btn-bm.saved svg path { fill: #f5a623; stroke: #f5a623; }
-    .d-btn-bm:active { transform: scale(0.88); }
+    .d-btn-bm svg { width:22px; height:22px; }
+    .d-btn-bm.saved { background:rgba(245,166,35,0.15); border-color:#f5a623; }
+    .d-btn-bm.saved svg path { fill:#f5a623; stroke:#f5a623; }
+    .d-btn-bm:active { transform:scale(0.88); }
 
-    /* ── Bookmark sheet ───────────────────────────────────── */
+    /* Bookmark sheet */
     .bm-overlay {
-      position: fixed; inset: 0; z-index: 9000;
-      background: rgba(0,0,0,0.55);
-      backdrop-filter: blur(3px);
-      display: flex;
-      align-items: flex-end;
-      animation: bmo .15s ease;
+      position:fixed; inset:0; z-index:9000;
+      background:rgba(0,0,0,0.55); backdrop-filter:blur(3px);
+      display:flex; align-items:flex-end; animation:bmo .15s ease;
     }
     @keyframes bmo { from{opacity:0} to{opacity:1} }
     .bm-sheet {
-      width: 100%;
-      background: var(--bg-card, #1a1a24);
-      border-radius: 20px 20px 0 0;
-      padding: 0 14px 40px;
-      animation: bms .22s ease;
+      width:100%; background:var(--bg-card,#1a1a24);
+      border-radius:20px 20px 0 0; padding:0 14px 40px;
+      animation:bms .22s ease;
     }
     @keyframes bms { from{transform:translateY(100%)} to{transform:translateY(0)} }
-    .bm-handle {
-      width: 36px; height: 4px;
-      background: var(--border, rgba(255,255,255,0.12));
-      border-radius: 99px;
-      margin: 10px auto 14px;
-    }
-    .bm-ttl {
-      font-size: 14px; font-weight: 800;
-      text-align: center; margin-bottom: 14px;
-      color: var(--text, #eaeaf0);
-    }
-    .bm-ttl span { color: var(--ap2); }
+    .bm-handle { width:36px; height:4px; background:var(--border,rgba(255,255,255,0.12)); border-radius:99px; margin:10px auto 14px; }
+    .bm-ttl    { font-size:14px; font-weight:800; text-align:center; margin-bottom:14px; color:var(--text,#eaeaf0); }
+    .bm-ttl span { color:var(--ap2); }
     .bm-opt {
-      display: flex; align-items: center; gap: 12px;
-      padding: 12px 14px; border-radius: 12px;
-      cursor: pointer; margin-bottom: 6px;
-      background: var(--bg-surface, rgba(255,255,255,0.05));
-      border: 1.5px solid var(--border, rgba(255,255,255,0.08));
-      transition: border-color 0.18s;
-      -webkit-tap-highlight-color: transparent;
+      display:flex; align-items:center; gap:12px; padding:12px 14px;
+      border-radius:12px; cursor:pointer; margin-bottom:6px;
+      background:var(--bg-surface,rgba(255,255,255,0.05));
+      border:1.5px solid var(--border,rgba(255,255,255,0.08));
+      -webkit-tap-highlight-color:transparent;
     }
-    .bm-opt.active { background: var(--as); border-color: var(--ap); }
-    .bm-opt:active { transform: scale(0.98); }
-    .bm-opt-ico   { font-size: 22px; line-height: 1; }
-    .bm-opt-lbl   { font-size: 13px; font-weight: 700; color: var(--text, #eaeaf0); }
-    .bm-opt-desc  { font-size: 11px; color: var(--text-muted, #888); margin-top: 1px; }
-    .bm-check     { margin-left: auto; color: var(--ap); font-size: 16px; font-weight: 900; }
+    .bm-opt.active { background:var(--as); border-color:var(--ap); }
+    .bm-opt:active { transform:scale(0.98); }
+    .bm-opt-ico  { font-size:22px; line-height:1; }
+    .bm-opt-lbl  { font-size:13px; font-weight:700; color:var(--text,#eaeaf0); }
+    .bm-opt-desc { font-size:11px; color:var(--text-muted,#888); margin-top:1px; }
+    .bm-check    { margin-left:auto; color:var(--ap); font-size:16px; font-weight:900; }
     .bm-btn {
-      width: 100%; padding: 12px;
-      border-radius: 10px; margin-top: 6px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 800;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      width:100%; padding:12px; border-radius:10px; margin-top:6px;
+      font-family:'Nunito',sans-serif; font-size:13px; font-weight:800;
+      cursor:pointer; -webkit-tap-highlight-color:transparent;
     }
-    .bm-del { background: rgba(231,76,60,0.1); border: 1.5px solid rgba(231,76,60,0.3); color: #e74c3c; }
-    .bm-cls { background: var(--bg-surface, rgba(255,255,255,0.05)); border: 1.5px solid var(--border, rgba(255,255,255,0.08)); color: var(--text-muted,#888); }
+    .bm-del { background:rgba(231,76,60,0.1); border:1.5px solid rgba(231,76,60,0.3); color:#e74c3c; }
+    .bm-cls { background:var(--bg-surface,rgba(255,255,255,0.05)); border:1.5px solid var(--border,rgba(255,255,255,0.08)); color:var(--text-muted,#888); }
 
-    /* ── Info table ───────────────────────────────────────── */
-    .d-table {
-      margin: 0 14px 16px;
-      background: var(--bg-card, #1a1a24);
-      border: 1px solid var(--border, rgba(255,255,255,0.08));
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .d-row {
-      display: flex;
-      padding: 9px 13px;
-      border-bottom: 1px solid var(--border, rgba(255,255,255,0.06));
-      font-size: 12px;
-    }
-    .d-row:last-child { border-bottom: none; }
-    .d-lbl { color: var(--text-muted, #888); font-weight: 600; min-width: 86px; flex-shrink: 0; }
-    .d-val { font-weight: 700; color: var(--text, #eaeaf0); }
+    /* Info table */
+    .d-table { margin:0 14px 16px; background:var(--bg-card,#1a1a24); border:1px solid var(--border,rgba(255,255,255,0.08)); border-radius:12px; overflow:hidden; }
+    .d-row { display:flex; padding:9px 13px; border-bottom:1px solid var(--border,rgba(255,255,255,0.06)); font-size:12px; }
+    .d-row:last-child { border-bottom:none; }
+    .d-lbl { color:var(--text-muted,#888); font-weight:600; min-width:86px; flex-shrink:0; }
+    .d-val { font-weight:700; color:var(--text,#eaeaf0); }
 
-    /* ── Section title ────────────────────────────────────── */
-    .sec-h {
-      font-family: 'Bangers', cursive;
-      font-size: 17px; letter-spacing: 1.5px;
-      color: var(--text, #eaeaf0);
-      margin-bottom: 8px;
-    }
+    .sec-h { font-family:'Bangers',cursive; font-size:17px; letter-spacing:1.5px; color:var(--text,#eaeaf0); margin-bottom:8px; }
 
-    /* ── Synopsis ─────────────────────────────────────────── */
-    .d-syn-box  { padding: 0 14px 16px; }
+    /* Synopsis */
+    .d-syn-box  { padding:0 14px 16px; }
     .d-syn-text {
-      font-size: 13px; line-height: 1.75;
-      color: var(--text-muted, #888);
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size:13px; line-height:1.75; color:var(--text-muted,#888);
+      display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;
     }
-    .d-syn-text.open { display: block; }
-    .d-syn-more {
-      margin-top: 7px; background: none; border: none;
-      color: var(--ap2); font-family: 'Nunito', sans-serif;
-      font-size: 12px; font-weight: 800; cursor: pointer; padding: 0;
-    }
+    .d-syn-text.open { display:block; }
+    .d-syn-more { margin-top:7px; background:none; border:none; color:var(--ap2); font-family:'Nunito',sans-serif; font-size:12px; font-weight:800; cursor:pointer; padding:0; }
 
-    /* ── Genres ───────────────────────────────────────────── */
-    .d-genres { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 16px; }
+    /* Genres */
+    .d-genres { display:flex; flex-wrap:wrap; gap:6px; padding:0 14px 16px; }
     .d-genre {
-      padding: 4px 11px;
-      background: var(--as);
-      border: 1px solid rgba(108,99,255,0.2);
-      border-radius: 99px; cursor: pointer;
-      font-size: 11px; font-weight: 700;
-      color: var(--ap2);
-      -webkit-tap-highlight-color: transparent;
+      padding:4px 11px; background:var(--as); border:1px solid rgba(108,99,255,0.2);
+      border-radius:99px; cursor:pointer; font-size:11px; font-weight:700; color:var(--ap2);
+      -webkit-tap-highlight-color:transparent;
     }
-    .d-genre:active { background: var(--ap); color: #fff; }
+    .d-genre:active { background:var(--ap); color:#fff; }
 
-    /* ── Episode list ─────────────────────────────────────── */
-    .d-ep-sec  { padding: 0 14px 16px; }
-    .d-ep-head {
-      display: flex; align-items: center;
-      justify-content: space-between; margin-bottom: 10px;
-    }
-    .d-ep-badge {
-      font-size: 11px; font-weight: 800;
-      background: var(--as); color: var(--ap2);
-      padding: 3px 9px; border-radius: 99px;
-      border: 1px solid rgba(108,99,255,0.2);
-    }
+    /* Episodes */
+    .d-ep-sec  { padding:0 14px 16px; }
+    .d-ep-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+    .d-ep-badge { font-size:11px; font-weight:800; background:var(--as); color:var(--ap2); padding:3px 9px; border-radius:99px; border:1px solid rgba(108,99,255,0.2); }
     .d-ep {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px;
-      background: var(--bg-card, #1a1a24);
-      border: 1px solid var(--border, rgba(255,255,255,0.08));
-      border-radius: 10px; margin-bottom: 6px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
+      display:flex; align-items:center; gap:10px; padding:10px 12px;
+      background:var(--bg-card,#1a1a24); border:1px solid var(--border,rgba(255,255,255,0.08));
+      border-radius:10px; margin-bottom:6px; cursor:pointer; -webkit-tap-highlight-color:transparent;
     }
-    .d-ep:active { border-color: var(--ap); background: var(--as); }
+    .d-ep:active { border-color:var(--ap); background:var(--as); }
     .d-ep-num {
-      width: 34px; height: 34px; border-radius: 8px;
-      background: var(--bg-surface, rgba(255,255,255,0.05));
-      flex-shrink: 0; display: flex; align-items: center;
-      justify-content: center; font-size: 12px; font-weight: 900;
-      color: var(--ap2); border: 1px solid rgba(108,99,255,0.15);
+      width:34px; height:34px; border-radius:8px; background:var(--bg-surface,rgba(255,255,255,0.05));
+      flex-shrink:0; display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:900; color:var(--ap2); border:1px solid rgba(108,99,255,0.15);
     }
-    .d-ep-info { flex: 1; min-width: 0; }
-    .d-ep-ttl  { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text, #eaeaf0); }
-    .d-ep-date { font-size: 10px; color: var(--text-muted, #888); margin-top: 2px; }
-    .d-ep-play { font-size: 17px; color: var(--ap); opacity: 0.75; flex-shrink: 0; }
+    .d-ep-info { flex:1; min-width:0; }
+    .d-ep-ttl  { font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text,#eaeaf0); }
+    .d-ep-date { font-size:10px; color:var(--text-muted,#888); margin-top:2px; }
+    .d-ep-play { font-size:17px; color:var(--ap); opacity:0.75; flex-shrink:0; }
 
-    /* ── Batch ────────────────────────────────────────────── */
+    /* Batch */
     .d-batch {
-      display: flex; align-items: center; gap: 7px;
-      padding: 10px 13px; margin: 0 14px 16px;
-      background: rgba(39,174,96,0.1);
-      border: 1px solid rgba(39,174,96,0.3);
-      border-radius: 10px; color: #27ae60;
-      font-size: 12px; font-weight: 800;
-      text-decoration: none;
+      display:flex; align-items:center; gap:7px; padding:10px 13px;
+      margin:0 14px 16px; background:rgba(39,174,96,0.1);
+      border:1px solid rgba(39,174,96,0.3); border-radius:10px;
+      color:#27ae60; font-size:12px; font-weight:800; text-decoration:none;
     }
 
-    /* ── Recommended ─────────────────────────────────────── */
-    .d-rec-sec  { padding: 0 14px 16px; }
-    .d-rec-row  {
-      display: flex; gap: 10px;
-      overflow-x: auto; padding-bottom: 4px;
-      scrollbar-width: none;
-    }
-    .d-rec-row::-webkit-scrollbar { display: none; }
-    .d-rec-card { flex-shrink: 0; width: 88px; cursor: pointer; }
-    .d-rec-card img {
-      width: 88px; height: 124px; object-fit: cover;
-      border-radius: 8px; display: block;
-      border: 1px solid rgba(108,99,255,0.2);
-      background: var(--bg-surface, rgba(255,255,255,0.05));
-    }
-    .d-rec-ttl {
-      font-size: 10px; font-weight: 700; color: var(--text, #eaeaf0);
-      margin-top: 5px; line-height: 1.4;
-      display: -webkit-box; -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical; overflow: hidden;
-    }
+    /* Recommended */
+    .d-rec-sec { padding:0 14px 16px; }
+    .d-rec-row { display:flex; gap:10px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
+    .d-rec-row::-webkit-scrollbar { display:none; }
+    .d-rec-card { flex-shrink:0; width:88px; cursor:pointer; }
+    .d-rec-card img { width:88px; height:124px; object-fit:cover; border-radius:8px; display:block; border:1px solid rgba(108,99,255,0.2); background:var(--bg-surface,rgba(255,255,255,0.05)); }
+    .d-rec-ttl { font-size:10px; font-weight:700; color:var(--text,#eaeaf0); margin-top:5px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
 
-    /* ── Misc ─────────────────────────────────────────────── */
-    .d-divider { height: 1px; background: var(--border, rgba(255,255,255,0.07)); margin: 0 0 16px; }
+    .d-divider { height:1px; background:var(--border,rgba(255,255,255,0.07)); margin:0 0 16px; }
+
+    /* Skeleton */
     .skel {
-      background: linear-gradient(90deg, var(--bg-card,#1a1a24) 25%, var(--bg-surface,rgba(255,255,255,0.05)) 50%, var(--bg-card,#1a1a24) 75%);
-      background-size: 200% 100%; animation: sk 1.4s infinite; border-radius: 8px;
+      background:linear-gradient(90deg,var(--bg-card,#1a1a24) 25%,var(--bg-surface,rgba(255,255,255,0.05)) 50%,var(--bg-card,#1a1a24) 75%);
+      background-size:200% 100%; animation:sk 1.4s infinite; border-radius:8px;
     }
     @keyframes sk { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
+    /* Toast */
     .d-toast {
-      position: fixed; bottom: 76px; left: 50%;
-      transform: translateX(-50%) translateY(12px);
-      background: rgba(18,18,26,0.96);
-      backdrop-filter: blur(10px);
-      color: #fff; padding: 10px 20px; border-radius: 99px;
-      font-size: 13px; font-weight: 700; z-index: 9999;
-      white-space: nowrap;
-      border: 1px solid rgba(255,255,255,0.1);
-      opacity: 0; transition: all 0.25s ease; pointer-events: none;
+      position:fixed; bottom:76px; left:50%;
+      transform:translateX(-50%) translateY(12px);
+      background:rgba(18,18,26,0.96); backdrop-filter:blur(10px);
+      color:#fff; padding:10px 20px; border-radius:99px;
+      font-size:13px; font-weight:700; z-index:9999; white-space:nowrap;
+      border:1px solid rgba(255,255,255,0.1);
+      opacity:0; transition:all 0.25s ease; pointer-events:none;
     }
-    .d-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .d-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* Error retry */
+    .d-err { text-align:center; padding:60px 20px; color:var(--text-muted,#888); }
+    .d-err-ico { font-size:44px; margin-bottom:14px; }
+    .d-err-btn {
+      display:inline-block; margin-top:20px; padding:10px 26px;
+      background:#6c63ff; color:#fff; border:none; border-radius:10px;
+      cursor:pointer; font-weight:800; font-family:'Nunito',sans-serif; font-size:14px;
+    }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -377,7 +239,6 @@
 <div class="d-toast" id="dToast"></div>
 
 <div id="dContent">
-  <!-- Skeleton -->
   <div style="height:230px;background:var(--bg-surface);"></div>
   <div style="padding:12px 14px;display:flex;gap:8px;">
     <div class="skel" style="height:46px;flex:1;"></div>
@@ -403,43 +264,26 @@
   <button class="nav-item" onclick="location.href='/profil'"><span class="nav-icon">👤</span><span class="nav-label">Profil</span></button>
 </nav>
 
+<!-- Auth header (modul terpisah, tidak memblok render) -->
 <script type="module">
 import { initAuthHeader } from "/auth-header.js";
 initAuthHeader();
 </script>
 
+<!-- Main logic: static imports only, no top-level await -->
 <script type="module">
-/* ── Router (optional) ──────────────────────────────────── */
-let _watchURL = id => `/anime/watch/${id}`;
-let _genreURL = id => `/anime/genre/${id}`;
-let _animeURL = id => `/anime/detail/${id}`;
-try {
-  const r = await import("/router.js");
-  if (r.animeWatchURL) _watchURL = r.animeWatchURL;
-  if (r.animeGenreURL) _genreURL = r.animeGenreURL;
-  if (r.animeURL)      _animeURL = r.animeURL;
-} catch(e) {}
+import { animeWatchURL, animeGenreURL, animeURL } from "/router.js";
+import { getCurrentUser, addBookmark, removeBookmark, checkBookmark } from "/supabase.js";
 
-window._watchURL = _watchURL;
-window._genreURL = _genreURL;
-window._animeURL = _animeURL;
-
-/* ── Supabase (optional) ────────────────────────────────── */
-let fn_getUser    = async () => null;
-let fn_addBm      = async () => ({ error: null });
-let fn_removeBm   = async () => ({ error: null });
-let fn_checkBm    = async () => ({ isBookmarked: false, kategori: null });
-try {
-  const s = await import("/supabase.js");
-  if (s.getCurrentUser) fn_getUser  = s.getCurrentUser;
-  if (s.addBookmark)    fn_addBm    = s.addBookmark;
-  if (s.removeBookmark) fn_removeBm = s.removeBookmark;
-  if (s.checkBookmark)  fn_checkBm  = s.checkBookmark;
-} catch(e) { console.warn("[detail] supabase not loaded:", e.message); }
-
-/* ── Helpers ────────────────────────────────────────────── */
+/* ── Constants ─────────────────────────────────────────── */
 const API = "https://www.sankavollerei.com";
 
+/* ── Expose router helpers ke window (onclick inline) ───── */
+window._watchURL = animeWatchURL;
+window._genreURL = animeGenreURL;
+window._animeURL = animeURL;
+
+/* ── Helpers ─────────────────────────────────────────────── */
 function esc(s) {
   return String(s || "")
     .replace(/&/g,"&amp;").replace(/</g,"&lt;")
@@ -447,15 +291,14 @@ function esc(s) {
 }
 
 function getSlug() {
-  const p = window.location.pathname;
   const q = new URLSearchParams(window.location.search);
   for (const k of ["slug","id","anime","animeId"]) {
     const v = q.get(k); if (v) return v.trim();
   }
-  const parts = p.split("/").filter(Boolean);
+  const parts = window.location.pathname.split("/").filter(Boolean);
   for (let i = 0; i < parts.length - 1; i++) {
     if (["detail","anime"].includes(parts[i])) {
-      const c = parts[i+1];
+      const c = parts[i + 1];
       if (c && !["watch","genre","search","episode","server"].includes(c)) return c;
     }
   }
@@ -463,7 +306,7 @@ function getSlug() {
   return (last && last.includes("-")) ? last : null;
 }
 
-function toast(msg, ms=2400) {
+function showToast(msg, ms = 2400) {
   const t = document.getElementById("dToast");
   if (!t) return;
   t.textContent = msg;
@@ -472,114 +315,116 @@ function toast(msg, ms=2400) {
   t._t = setTimeout(() => t.classList.remove("show"), ms);
 }
 
-/* ── State ──────────────────────────────────────────────── */
-const slug  = getSlug();
-let user    = null;
-let data    = null;
-let bmKat   = null; /* bookmark kategori */
-
-/* ── Bookmark SVG icon (no emoji, always renders correctly) ── */
-function bmIcon(filled) {
-  const fill = filled ? "#f5a623" : "none";
-  const stroke = filled ? "#f5a623" : "currentColor";
-  return `<svg viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="2"
-    stroke-linecap="round" stroke-linejoin="round">
-    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-  </svg>`;
-}
-
-/* ── Load ───────────────────────────────────────────────── */
-async function load() {
-  if (!slug) {
-    showErr("Anime tidak ditemukan.", "Slug tidak ada di URL.");
-    return;
-  }
-  try {
-    const [res, u] = await Promise.all([
-      fetch(`${API}/anime/anime/${slug}`),
-      fn_getUser()
-    ]);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (!json.data) throw new Error(json.message || "Data kosong");
-
-    user = u;
-    data = json.data;
-
-    if (user) {
-      try {
-        const r = await fn_checkBm(user.id, `anime:${slug}`);
-        bmKat = r.kategori || null;
-      } catch(e) {}
-    }
-    render();
-  } catch(e) {
-    showErr("Gagal memuat detail anime.", e.message);
-  }
+function bmSVG(filled) {
+  const f = filled ? "#f5a623" : "none";
+  const s = filled ? "#f5a623" : "currentColor";
+  return `<svg viewBox="0 0 24 24" fill="${f}" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
 }
 
 function showErr(msg, detail) {
   document.getElementById("dContent").innerHTML = `
-    <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
-      <div style="font-size:44px;margin-bottom:14px;">😕</div>
+    <div class="d-err">
+      <div class="d-err-ico">😕</div>
       <p style="font-size:14px;font-weight:700;margin-bottom:6px;">${esc(msg)}</p>
-      ${detail ? `<p style="font-size:11px;color:#555;margin-bottom:20px;">${esc(detail)}</p>` : "<div style='margin-bottom:20px'></div>"}
-      <button onclick="location.reload()"
-        style="padding:10px 26px;background:#6c63ff;color:#fff;border:none;
-        border-radius:10px;cursor:pointer;font-weight:800;
-        font-family:'Nunito',sans-serif;font-size:14px;">
-        🔄 Coba Lagi
-      </button>
+      ${detail ? `<p style="font-size:11px;color:#555;">${esc(detail)}</p>` : ""}
+      <button class="d-err-btn" onclick="location.reload()">🔄 Coba Lagi</button>
     </div>`;
+}
+
+/* ── State ─────────────────────────────────────────────── */
+const slug = getSlug();
+let user   = null;
+let data   = null;
+let bmKat  = null;
+
+/* ── Main load function ─────────────────────────────────── */
+async function load() {
+  if (!slug) { showErr("Anime tidak ditemukan.", "Slug tidak ada di URL."); return; }
+
+  try {
+    /* Fetch data anime & user secara paralel */
+    const [res, u] = await Promise.all([
+      fetch(`${API}/anime/anime/${slug}`),
+      getCurrentUser().catch(() => null)
+    ]);
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.data) throw new Error(json.message || "Data kosong dari API");
+
+    user = u;
+    data = json.data;
+
+    /* Cek status bookmark (tidak blocking) */
+    if (user) {
+      checkBookmark(user.id, `anime:${slug}`)
+        .then(r => { bmKat = r?.kategori || null; })
+        .catch(() => {})
+        .finally(() => {
+          /* Update tombol bookmark setelah cek selesai */
+          const btn = document.getElementById("bmBtn");
+          if (btn && bmKat) {
+            btn.classList.add("saved");
+            btn.innerHTML = bmSVG(true);
+          }
+        });
+    }
+
+    render();
+
+  } catch(e) {
+    console.error("[anime-detail] load error:", e);
+    showErr("Gagal memuat detail anime.", e.message || String(e));
+  }
 }
 
 /* ── Render ─────────────────────────────────────────────── */
 function render() {
-  const d = data;
-  const title    = d.title    || slug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
-  const poster   = d.poster   || "";
-  const japanese = d.japanese || "";
-  const score    = d.score    || "";
-  const type     = d.type     || "";
-  const status   = d.status   || "";
-  const eps      = d.episodes || "";
-  const dur      = d.duration || "";
-  const aired    = d.aired    || "";
-  const studios  = d.studios  || "";
-  const prod     = d.producers|| "";
-  const batch    = d.batch    || null;
-  const genres   = d.genreList  || [];
-  const epList   = d.episodeList || [];
-  const recs     = d.recommendedAnimeList || [];
-  const syn      = (d.synopsis?.paragraphs || []).join(" ");
+  const d       = data;
+  const title   = d.title    || slug.replace(/-/g," ").replace(/\b./g, c => c.toUpperCase());
+  const poster  = d.poster   || "";
+  const jp      = d.japanese || "";
+  const score   = d.score    || "";
+  const type    = d.type     || "";
+  const status  = d.status   || "";
+  const eps     = d.episodes || "";
+  const dur     = d.duration || "";
+  const aired   = d.aired    || "";
+  const studios = d.studios  || "";
+  const prod    = d.producers|| "";
+  const batch   = d.batch    || null;
+  const genres  = d.genreList  || [];
+  const epList  = d.episodeList || [];
+  const recs    = d.recommendedAnimeList || [];
+  const syn     = (d.synopsis?.paragraphs || []).join(" ");
 
-  const ep1     = epList.length ? epList[epList.length - 1] : null;
-  const epLast  = epList.length ? epList[0] : null;
-  const hasNew  = ep1 && epLast && ep1.episodeId !== epLast.episodeId;
-  const stChip  = status.toLowerCase() === "ongoing" ? "chip-orange" : "chip-green";
+  const ep1    = epList.length ? epList[epList.length - 1] : null;
+  const epNew  = epList.length ? epList[0] : null;
+  const hasNew = ep1 && epNew && ep1.episodeId !== epNew.episodeId;
+  const stCls  = status.toLowerCase() === "ongoing" ? "chip-orange" : "chip-green";
 
   document.title = `${title} — Pankomik`;
   document.getElementById("hTitle").textContent = title;
 
-  /* Build poster HTML — avoid nested escaped quotes in onerror */
+  /* Bangun HTML poster tanpa inline onerror (set via JS setelah render) */
   const posterHTML = poster
-    ? `<img class="d-poster" src="${esc(poster)}" alt="${esc(title)}" id="dPoster">`
+    ? `<img class="d-poster" id="dPoster" src="${esc(poster)}" alt="${esc(title)}">`
     : `<div class="d-poster-ph">⚡</div>`;
 
   document.getElementById("dContent").innerHTML = `
-
-    <!-- HERO -->
     <div class="d-hero">
-      ${poster ? `<div class="d-hero-bg" id="dHeroBg"></div>` : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(0,0,0,0.65));"></div>`}
+      ${poster
+        ? `<div class="d-hero-bg" id="dHeroBg"></div>`
+        : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(0,0,0,0.65));"></div>`}
       <div class="d-hero-grad"></div>
       <div class="d-hero-body">
         ${posterHTML}
         <div class="d-info">
           <div class="d-title">${esc(title)}</div>
-          ${japanese ? `<div class="d-jp">${esc(japanese)}</div>` : ""}
+          ${jp ? `<div class="d-jp">${esc(jp)}</div>` : ""}
           <div class="d-chips">
             ${type   ? `<span class="d-chip chip-purple">${esc(type)}</span>` : ""}
-            ${status ? `<span class="d-chip ${stChip}">${esc(status)}</span>` : ""}
+            ${status ? `<span class="d-chip ${stCls}">${esc(status)}</span>` : ""}
             ${eps    ? `<span class="d-chip">${esc(String(eps))} Ep</span>` : ""}
           </div>
           ${score ? `<div class="d-score">⭐ ${esc(score)}</div>` : ""}
@@ -587,13 +432,10 @@ function render() {
       </div>
     </div>
 
-    <!-- ACTIONS -->
     <div class="d-actions">
-      ${ep1  ? `<button class="d-btn d-btn-ep1" onclick="goEp('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
-      ${hasNew ? `<button class="d-btn d-btn-new" onclick="goEp('${esc(epLast.episodeId)}')">⚡ Terbaru</button>` : ""}
-      <button class="d-btn-bm ${bmKat ? 'saved' : ''}" id="bmBtn" onclick="openBm()">
-        ${bmIcon(!!bmKat)}
-      </button>
+      ${ep1    ? `<button class="d-btn d-btn-ep1" onclick="goEp('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
+      ${hasNew ? `<button class="d-btn d-btn-new" onclick="goEp('${esc(epNew.episodeId)}')">⚡ Terbaru</button>` : ""}
+      <button class="d-btn-bm" id="bmBtn" onclick="openBm()">${bmSVG(false)}</button>
     </div>
 
     ${batch ? `<a href="${esc(batch.otakudesuUrl||"#")}" target="_blank" rel="noopener" class="d-batch">📦 Download Batch Tersedia</a>` : ""}
@@ -612,7 +454,7 @@ function render() {
       <div class="d-divider"></div>` : ""}
 
     <div class="d-table">
-      ${aired   ? `<div class="d-row"><span class="d-lbl">Tayang</span><span class="d-val">${esc(aired)}</span></div>`  : ""}
+      ${aired   ? `<div class="d-row"><span class="d-lbl">Tayang</span><span class="d-val">${esc(aired)}</span></div>`   : ""}
       ${studios ? `<div class="d-row"><span class="d-lbl">Studio</span><span class="d-val">${esc(studios)}</span></div>` : ""}
       ${prod    ? `<div class="d-row"><span class="d-lbl">Produser</span><span class="d-val">${esc(prod)}</span></div>`  : ""}
       ${dur     ? `<div class="d-row"><span class="d-lbl">Durasi</span><span class="d-val">${esc(dur)}</span></div>`     : ""}
@@ -629,7 +471,8 @@ function render() {
         ${epList.length === 0
           ? `<div style="text-align:center;padding:24px;color:var(--text-muted);">
                <div style="font-size:32px;margin-bottom:8px;">📡</div>
-               <p style="font-size:13px;">Belum ada episode tersedia.</p></div>`
+               <p style="font-size:13px;">Belum ada episode tersedia.</p>
+             </div>`
           : epList.map(ep => `
               <div class="d-ep" onclick="goEp('${esc(ep.episodeId)}')">
                 <div class="d-ep-num">${ep.eps || ""}</div>
@@ -656,35 +499,32 @@ function render() {
         </div>
       </div>` : ""}
 
-    <div style="height:24px;"></div>
-  `;
+    <div style="height:24px;"></div>`;
 
-  /* Set background image after DOM inserted to avoid inline quote escaping */
+  /* Set elemen poster/bg setelah DOM terbentuk (hindari quote escaping di innerHTML) */
   if (poster) {
     const bg = document.getElementById("dHeroBg");
     if (bg) bg.style.backgroundImage = `url(${poster})`;
-    /* onerror fallback for poster img */
+
     const img = document.getElementById("dPoster");
-    if (img) img.onerror = function() {
-      this.style.display = "none";
-      const ph = document.createElement("div");
-      ph.className = "d-poster-ph";
-      ph.textContent = "⚡";
-      this.parentNode.insertBefore(ph, this);
-    };
+    if (img) {
+      img.onerror = function() {
+        this.outerHTML = `<div class="d-poster-ph">⚡</div>`;
+      };
+    }
   }
 }
 
-/* ── Bookmark ───────────────────────────────────────────── */
-const BM = [
-  { k:"favorit",     ico:"❤️",  lbl:"Favorit",      desc:"Anime favoritmu" },
-  { k:"lagi_dibaca", ico:"▶️",  lbl:"Lagi Ditonton", desc:"Sedang ditonton" },
-  { k:"tamat",       ico:"✅",  lbl:"Selesai",       desc:"Sudah selesai" },
+/* ── Bookmark ────────────────────────────────────────────── */
+const BM_OPTS = [
+  { k: "favorit",     ico: "❤️", lbl: "Favorit",       desc: "Anime favoritmu" },
+  { k: "lagi_dibaca", ico: "▶️", lbl: "Lagi Ditonton",  desc: "Sedang ditonton" },
+  { k: "tamat",       ico: "✅", lbl: "Selesai",        desc: "Sudah selesai ditonton" },
 ];
 
-window.openBm = function() {
+window.openBm = function () {
   if (!user) {
-    toast("🔑 Login dulu untuk bookmark anime");
+    showToast("🔑 Login dulu untuk bookmark anime");
     setTimeout(() => location.href = "/masuk", 1600);
     return;
   }
@@ -698,14 +538,14 @@ window.openBm = function() {
     <div class="bm-sheet">
       <div class="bm-handle"></div>
       <div class="bm-ttl">Simpan ke <span>Bookmark</span></div>
-      ${BM.map(o => `
-        <div class="bm-opt ${bmKat===o.k?"active":""}" onclick="saveBm('${o.k}')">
+      ${BM_OPTS.map(o => `
+        <div class="bm-opt ${bmKat === o.k ? "active" : ""}" onclick="saveBm('${o.k}')">
           <span class="bm-opt-ico">${o.ico}</span>
           <div>
             <div class="bm-opt-lbl">${o.lbl}</div>
             <div class="bm-opt-desc">${o.desc}</div>
           </div>
-          ${bmKat===o.k ? `<span class="bm-check">✓</span>` : ""}
+          ${bmKat === o.k ? `<span class="bm-check">✓</span>` : ""}
         </div>`).join("")}
       ${bmKat ? `<button class="bm-btn bm-del" onclick="delBm()">Hapus Bookmark</button>` : ""}
       <button class="bm-btn bm-cls" onclick="document.getElementById('bmOvl').remove()">Batal</button>
@@ -713,43 +553,44 @@ window.openBm = function() {
   document.body.appendChild(ovl);
 };
 
-window.saveBm = async function(kat) {
+window.saveBm = async function (kat) {
   document.getElementById("bmOvl")?.remove();
   if (!user || !data) return;
-  const { error } = await fn_addBm(user.id, {
-    slug: `anime:${slug}`,
-    title: data.title || slug,
-    cover: data.poster || "",
+  const { error } = await addBookmark(user.id, {
+    slug:     `anime:${slug}`,
+    title:    data.title || slug,
+    cover:    data.poster || "",
     kategori: kat
   });
   if (!error) {
     bmKat = kat;
     const btn = document.getElementById("bmBtn");
-    if (btn) { btn.classList.add("saved"); btn.innerHTML = bmIcon(true); }
-    toast(`✅ Disimpan ke ${BM.find(o=>o.k===kat)?.lbl}`);
+    if (btn) { btn.classList.add("saved"); btn.innerHTML = bmSVG(true); }
+    showToast(`✅ Disimpan ke ${BM_OPTS.find(o => o.k === kat)?.lbl}`);
   } else {
-    toast("❌ Gagal menyimpan bookmark");
+    showToast("❌ Gagal menyimpan bookmark");
+    console.error("saveBm error:", error);
   }
 };
 
-window.delBm = async function() {
+window.delBm = async function () {
   document.getElementById("bmOvl")?.remove();
   if (!user) return;
-  const { error } = await fn_removeBm(user.id, `anime:${slug}`);
+  const { error } = await removeBookmark(user.id, `anime:${slug}`);
   if (!error) {
     bmKat = null;
     const btn = document.getElementById("bmBtn");
-    if (btn) { btn.classList.remove("saved"); btn.innerHTML = bmIcon(false); }
-    toast("🗑️ Bookmark dihapus");
+    if (btn) { btn.classList.remove("saved"); btn.innerHTML = bmSVG(false); }
+    showToast("🗑️ Bookmark dihapus");
   } else {
-    toast("❌ Gagal menghapus bookmark");
+    showToast("❌ Gagal menghapus bookmark");
   }
 };
 
-/* ── Navigation ─────────────────────────────────────────── */
-window.goEp    = id => { if (id) location.href = _watchURL(id); };
-window.goGenre = id => { if (id) location.href = _genreURL(id); };
-window.toggleSyn = function() {
+/* ── Navigation helpers ──────────────────────────────────── */
+window.goEp     = id => { if (id) location.href = window._watchURL(id); };
+window.goGenre  = id => { if (id) location.href = window._genreURL(id); };
+window.toggleSyn = function () {
   const p = document.getElementById("synP");
   const b = document.querySelector(".d-syn-more");
   if (!p) return;
@@ -757,12 +598,7 @@ window.toggleSyn = function() {
   b.textContent = p.classList.contains("open") ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
 };
 
-/* ── Init ───────────────────────────────────────────────── */
-window.addEventListener("load", () => {
-  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
-  load();
-});
-
+/* ── Theme & menu ────────────────────────────────────────── */
 window.toggleDarkMode = () => {
   document.body.classList.toggle("light");
   localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
@@ -777,6 +613,11 @@ document.addEventListener("click", e => {
   if (m && m.style.display === "block" && !m.contains(e.target) && !b?.contains(e.target))
     m.style.display = "none";
 });
+
+/* ── Init ────────────────────────────────────────────────── */
+/* Terapkan tema dulu, lalu langsung load — tidak tunggu event "load" */
+if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+load();
 </script>
 </body>
 </html>
