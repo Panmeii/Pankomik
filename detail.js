@@ -280,40 +280,50 @@ function normalizeFromBacakomik(det) {
 async function getDetail() {
   const container = document.getElementById("detailKomik");
   try {
-    /* ── Coba API 1: komikindo ── */
-    let komikDataRaw = null;
-    let source = "komikindo";
+    /* ── Fetch semua 3 API paralel, pilih yang chapter-nya TERBANYAK ── */
+    const [r1, r2, r3] = await Promise.allSettled([
+      fetch(API_DETAIL).then(r => r.json()).catch(() => null),
+      fetch(API_DETAIL_2).then(r => r.json()).catch(() => null),
+      fetch(API_DETAIL_3).then(r => r.json()).catch(() => null),
+    ]);
 
-    try {
-      const res  = await fetch(API_DETAIL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      if (!json.success || !json.data) throw new Error("API 1 error");
-      komikDataRaw = normalizeFromKomikindo(json.data);
-    } catch (err1) {
-      console.warn("[Detail] API 1 gagal, coba API 2:", err1.message);
-      try {
-        /* ── Fallback ke API 2: mangakita ── */
-        const res2  = await fetch(API_DETAIL_2);
-        if (!res2.ok) throw new Error(`API 2 HTTP ${res2.status}`);
-        const json2 = await res2.json();
-        if (!json2.success || !json2.details) throw new Error("API 2 error");
-        komikDataRaw = normalizeFromMangakita(json2.details);
-        source = "mangakita";
-      } catch (err2) {
-        console.warn("[Detail] API 2 gagal, coba API 3:", err2.message);
-        /* ── Fallback ke API 3: bacakomik ── */
-        const res3  = await fetch(API_DETAIL_3);
-        if (!res3.ok) throw new Error(`API 3 HTTP ${res3.status}`);
-        const json3 = await res3.json();
-        if (!json3.success || !json3.detail) throw new Error("API 3 error");
-        komikDataRaw = normalizeFromBacakomik(json3.detail);
-        source = "bacakomik";
-      }
+    const candidates = [];
+
+    const j1 = r1.status === "fulfilled" ? r1.value : null;
+    if (j1?.success && j1?.data) {
+      const d = normalizeFromKomikindo(j1.data);
+      candidates.push({ data: d, source: "komikindo", count: d.chapters.length });
+    }
+    const j2 = r2.status === "fulfilled" ? r2.value : null;
+    if (j2?.success && j2?.details) {
+      const d = normalizeFromMangakita(j2.details);
+      candidates.push({ data: d, source: "mangakita", count: d.chapters.length });
+    }
+    const j3 = r3.status === "fulfilled" ? r3.value : null;
+    if (j3?.success && j3?.detail) {
+      const d = normalizeFromBacakomik(j3.detail);
+      candidates.push({ data: d, source: "bacakomik", count: d.chapters.length });
+    }
+
+    if (!candidates.length) throw new Error("Semua API gagal");
+
+    /* Pilih kandidat dengan chapter terbanyak */
+    candidates.sort((a, b) => b.count - a.count);
+    const best = candidates[0];
+    const source = best.source;
+    let komikDataRaw = best.data;
+
+    /* Jika cover kosong dari source terpilih, ambil dari source lain */
+    if (!komikDataRaw.cover) {
+      const withCover = candidates.find(c => c.data.cover);
+      if (withCover) komikDataRaw = { ...komikDataRaw, cover: withCover.data.cover };
     }
 
     komikData = komikDataRaw;
-    console.log(`[Detail] Loaded from: ${source}`);
+    console.log(`[Detail] Source: ${source}, chapters: ${best.count}`);
+    /* Simpan source ke sessionStorage agar reader.js tahu API mana yang dipakai */
+    sessionStorage.setItem("komikSource", source);
+    sessionStorage.setItem("komikSlugKey", slug);
     document.title = `${komikData.title} — Pankomik`;
     await tampilkanDetail(komikData);
     await loadComments();
