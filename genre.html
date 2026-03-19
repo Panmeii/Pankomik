@@ -120,19 +120,21 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 10px 14px;
+      padding: 8px 14px;
       border-bottom: 1px solid var(--border);
+      overflow: hidden;
     }
 
     .sort-select {
-      flex: 1;
-      padding: 7px 10px;
+      flex-shrink: 0;
+      width: 110px;
+      padding: 7px 8px;
       background: var(--bg-surface);
       border: 1px solid var(--border);
       border-radius: 8px;
       color: var(--text);
       font-family: 'Nunito', sans-serif;
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
       outline: none;
@@ -143,11 +145,17 @@
 
     .type-filter-btns {
       display: flex;
-      gap: 5px;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
     }
+    .type-filter-btns::-webkit-scrollbar { display: none; }
 
     .type-btn {
-      padding: 6px 11px;
+      flex-shrink: 0;
+      padding: 6px 10px;
       border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--bg-surface);
@@ -159,6 +167,7 @@
       transition: background 0.2s, color 0.2s, border-color 0.2s;
       text-transform: uppercase;
       letter-spacing: 0.3px;
+      white-space: nowrap;
     }
 
     .type-btn.active {
@@ -370,13 +379,7 @@
       color: transparent;
     }
 
-    /* ---- GENRE BROWSE CARDS -------------------------------- */
-    #genreGrid.browse-mode {
-      grid-template-columns: repeat(3, 1fr) !important;
-      gap: 10px;
-      padding: 12px 14px;
-    }
-
+    /* ── GENRE BROWSE CARDS ─── */
     .genre-browse-card {
       background: var(--bg-card);
       border: 1px solid var(--border);
@@ -386,54 +389,57 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 16px 6px;
+      padding: 14px 4px;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-      min-height: 100px;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
       text-align: center;
-      position: relative;
       overflow: hidden;
-    }
-
-    .genre-browse-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--accent) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.2s;
+      min-height: 90px;
+      /* PENTING: tidak boleh overflow keluar grid */
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .genre-browse-card:hover {
       transform: translateY(-3px);
-      box-shadow: 0 6px 18px rgba(232,82,42,0.2);
+      box-shadow: 0 6px 18px rgba(232,82,42,0.18);
       border-color: rgba(232,82,42,0.35);
     }
 
-    .genre-browse-card:hover::before { opacity: 0.06; }
-    .genre-browse-card:active { transform: scale(0.95); }
+    .genre-browse-card:active { transform: scale(0.93); }
 
     .genre-browse-emoji {
-      font-size: 28px;
+      font-size: 26px;
       line-height: 1;
       display: block;
     }
 
     .genre-browse-name {
       font-family: 'Nunito', sans-serif;
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
       color: var(--text);
       line-height: 1.3;
+      /* Wrap teks agar tidak overflow */
       word-break: break-word;
+      overflow-wrap: break-word;
       max-width: 100%;
-      position: relative;
+      padding: 0 2px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
 
-    /* Toolbar tidak tampil saat browse mode */
-    body.browse-mode .genre-toolbar {
-      display: none;
+    /* Grid browse: selalu 3 kolom, padding ketat */
+    .genre-grid.browse-mode {
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 8px;
+      padding: 10px 12px;
     }
+
+    /* Sembunyikan toolbar saat browse mode */
+    body.browse-mode .genre-toolbar { display: none; }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -632,7 +638,6 @@ function selectGenre(slug, title) {
   typeFilter   = "";
   sortMode     = "";
 
-  /* Keluar dari browse mode */
   document.body.classList.remove("browse-mode");
 
   /* Reset toolbar */
@@ -824,7 +829,7 @@ function showGenreBrowse() {
   document.getElementById("activeGenreName").textContent = "Semua Genre";
   document.getElementById("activeGenreCount").textContent = allGenres.length ? `(${allGenres.length})` : "";
 
-  const grid = document.getElementById("genreGrid");
+  const grid       = document.getElementById("genreGrid");
   const pagination = document.getElementById("pagination");
   pagination.style.display = "none";
   document.body.classList.add("browse-mode");
@@ -834,35 +839,32 @@ function showGenreBrowse() {
     return;
   }
 
-  /* Emoji map lengkap */
-  const EMOJI_MAP = {
-    "4-koma":"📰","koma":"📰","action":"⚔️","adventure":"🗺️","adult":"🔞",
-    "apocalypse":"💀","comedy":"😄","cooking":"🍳","crime":"🔪","cyberpunk":"🤖",
-    "dark-fantasy":"🌑","dark":"🌑","demons":"😈","detective":"🕵️","distopia":"🏚️",
-    "dystopia":"🏚️","doujinshi":"📖","drama":"🎭","ecchi":"🌸","fantasy":"🧙",
-    "full-color":"🎨","gender-bender":"⚧️","game":"🎮","harem":"💫",
-    "historical":"📜","horror":"👻","isekai":"🌀","josei":"👩","magic":"🪄",
-    "martial-arts":"🥋","martial":"🥋","mecha":"🤖","medical":"🏥",
-    "military":"🪖","music":"🎵","mystery":"🔍","philosophical":"🤔",
-    "psychological":"🧠","reincarnation":"♻️","romance":"💕","school-life":"🏫",
-    "school":"🏫","sci-fi":"🚀","seinen":"👨","shoujo":"🌹","shounen":"💥",
-    "slice-of-life":"☕","slice":"☕","sports":"⚽","supernatural":"✨",
-    "survival":"🏕️","thriller":"😱","time-travel":"⏰","tragedy":"💔",
-    "vampire":"🧛","villainess":"👸","wuxia":"🐉","xianxia":"🏔️",
-    "yaoi":"💙","yuri":"💜","zombies":"🧟","monster":"🧟","reverse-harem":"💘",
+  const EM = {
+    "4-koma":"📰","action":"⚔️","adult":"🔞","adventure":"🗺️",
+    "apocalypse":"💀","comedy":"😄","cooking":"🍳","crime":"🔪",
+    "cyberpunk":"🖥️","dark-fantasy":"🌑","demons":"😈","detective":"🕵️",
+    "distopia":"🏚️","dystopia":"🏚️","doujinshi":"📖","drama":"🎭",
+    "ecchi":"🌸","fantasy":"🧙","full-color":"🎨","gender-bender":"⚧️",
+    "harem":"💫","historical":"📜","horror":"👻","isekai":"🌀",
+    "josei":"👩","martial-arts":"🥋","mecha":"🦾","medical":"🏥",
+    "military":"🪖","music":"🎵","mystery":"🔍","psychological":"🧠",
+    "reincarnation":"♻️","romance":"💕","school-life":"🏫","sci-fi":"🚀",
+    "seinen":"👨","shoujo":"🌹","shounen":"💥","slice-of-life":"☕",
+    "sports":"⚽","supernatural":"✨","survival":"🏕️","thriller":"😱",
+    "time-travel":"⏰","tragedy":"💔","vampire":"🧛","villainess":"👸",
+    "wuxia":"🐉","xianxia":"🏔️","yaoi":"💙","yuri":"💜","zombies":"🧟",
   };
+  const DOTS = ["🔴","🟠","🟡","🟢","🔵","🟣","🟤","⚫"];
 
   function getEmoji(slug) {
     const s = slug.toLowerCase();
-    if (EMOJI_MAP[s]) return EMOJI_MAP[s];
-    for (const key of Object.keys(EMOJI_MAP)) {
-      if (s.includes(key) || key.includes(s.split("-")[0])) return EMOJI_MAP[key];
+    if (EM[s]) return EM[s];
+    for (const k of Object.keys(EM)) {
+      if (s.includes(k) || k.includes(s)) return EM[k];
     }
-    /* Warna dot berdasarkan hash */
-    const dots = ["🔴","🟠","🟡","🟢","🔵","🟣","⚫","🟤"];
     let h = 0;
     for (let i = 0; i < s.length; i++) h = ((h<<5)-h)+s.charCodeAt(i);
-    return dots[Math.abs(h) % dots.length];
+    return DOTS[Math.abs(h) % DOTS.length];
   }
 
   grid.className = "genre-grid browse-mode";
@@ -875,9 +877,14 @@ function showGenreBrowse() {
       document.body.classList.remove("browse-mode");
       selectGenre(g.slug, g.title);
     };
-    card.innerHTML =
-      `<span class="genre-browse-emoji">${getEmoji(g.slug)}</span>` +
-      `<span class="genre-browse-name">${g.title}</span>`;
+    const emoji = document.createElement("span");
+    emoji.className = "genre-browse-emoji";
+    emoji.textContent = getEmoji(g.slug);
+    const name = document.createElement("span");
+    name.className = "genre-browse-name";
+    name.textContent = g.title;
+    card.appendChild(emoji);
+    card.appendChild(name);
     grid.appendChild(card);
   });
 }
