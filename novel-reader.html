@@ -355,12 +355,28 @@
   </div>
 </div>
 
+<!-- ── Komentar Chapter Novel ────────────────────────────── -->
+<div id="novelReaderCommentSection"
+  style="max-width:780px;margin:0 auto;"></div>
+
 <!-- Toast container -->
 <div id="toastWrap"></div>
 
 <script type="module">
   import { getCurrentUser, saveNovelHistory, updateNovelProgress } from "/supabase.js";
+  import { initComments } from "/comment-system.js";
   window._novelAuth = { getCurrentUser, saveNovelHistory, updateNovelProgress };
+
+  /* Expose initComments untuk dipanggil dari script biasa */
+  window._initNovelChapterComments = async function(chSlug) {
+    const user = await getCurrentUser();
+    await initComments({
+      containerId : "novelReaderCommentSection",
+      contentSlug : `novel-chapter:${chSlug}`,
+      accentColor : "#8e44ad",
+      user,
+    });
+  };
 </script>
 
 <script>
@@ -432,6 +448,11 @@ async function loadChapter(slug, append = false) {
     document.getElementById("headerTitle").textContent = d.title || "Novel";
 
     renderChapter(d);
+
+    /* Init komentar untuk chapter ini */
+    if (typeof window._initNovelChapterComments === "function") {
+      window._initNovelChapterComments(slug);
+    }
 
     /* Auto-save riwayat */
     if (currentUser && !historySaved && window._novelAuth) {
@@ -532,6 +553,9 @@ window.goToChapter = function (slug) {
   if (!slug) return;
   currentSlug  = slug;
   historySaved = false;
+  /* Reset section komentar saat ganti chapter */
+  const cs = document.getElementById("novelReaderCommentSection");
+  if (cs) cs.innerHTML = "";
   loadChapter(slug);
   /* Update active state di panel */
   setTimeout(renderChapterPanel, 600);
