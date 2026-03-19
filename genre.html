@@ -122,7 +122,6 @@
       gap: 8px;
       padding: 10px 14px;
       border-bottom: 1px solid var(--border);
-      overflow: hidden;
     }
 
     .sort-select {
@@ -381,33 +380,20 @@
 
     /* ---- GENRE BROWSE CARDS --------------------------------- */
     .genre-browse-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 16px 8px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      cursor: pointer;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px; padding: 16px 8px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); cursor: pointer; min-height: 90px; text-align: center;
       transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-      min-height: 90px;
-      text-align: center;
     }
-    .genre-browse-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(232,82,42,0.18);
-      border-color: rgba(232,82,42,0.3);
-    }
+    .genre-browse-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(232,82,42,0.18); border-color: rgba(232,82,42,0.3); }
     .genre-browse-card:active { transform: scale(0.95); }
     .genre-browse-emoji { font-size: 28px; line-height: 1; display: block; }
     .genre-browse-name {
-      font-family: 'Nunito', sans-serif;
-      font-size: 11px; font-weight: 700; color: var(--text);
-      line-height: 1.3; word-break: break-word; max-width: 100%;
-      overflow: hidden; display: -webkit-box;
-      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      font-family: 'Nunito', sans-serif; font-size: 11px; font-weight: 700;
+      color: var(--text); line-height: 1.3; word-break: break-word; max-width: 100%;
+      overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
 
   </style>
@@ -480,33 +466,12 @@
 <script>
 
 function proxyImg(url) {
+  /* Skip SVG placeholder kosong */
   if (!url || url === "undefined" || url === "null") return "";
   if (url.startsWith("data:image/svg") && url.includes("viewBox")) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
-  var clean = url.split("?")[0];
-  var ref = "";
-  try {
-    var host = new URL(clean.startsWith("http") ? clean : "https://" + clean).hostname;
-    var refMap = {
-      "mangakita.me":  "https://mangakita.me",
-      "i0.wp.com":     "https://mangakita.me",
-      "i1.wp.com":     "https://mangakita.me",
-      "i2.wp.com":     "https://mangakita.me",
-      "i3.wp.com":     "https://mangakita.me",
-      "bacakomik":     "https://bacakomik.my",
-      "bacakomik.my":  "https://bacakomik.my",
-      "komikindo":     "https://komikindo.org",
-      "komikcast":     "https://komikcast.me",
-      "komiku":        "https://komiku.id",
-    };
-    for (var k in refMap) {
-      if (host === k || host.indexOf(k) !== -1) { ref = refMap[k]; break; }
-    }
-    if (!ref) ref = "https://" + host;
-  } catch(e) {}
-  var q = "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
-  if (ref) q += "&ref=" + encodeURIComponent(ref);
-  return q;
+  /* Jangan strip query string — WordPress ?resize= wajib dipertahankan */
+  return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=300&output=webp&q=80&n=-1";
 }
 
 /* ============================================================
@@ -706,7 +671,7 @@ async function fetchGenreKomik(slug, page) {
       chapter: k.latestChapter || k.chapter || "",
     }));
 
-    /* Merge deduplicate by slug: mangakita dulu, bacakomik tambal yg tidak ada */
+    /* Merge: mangakita dulu, bacakomik tambal yang tidak ada */
     const seen = new Set();
     allFetched = [...list1, ...list2].filter(k => {
       if (!k.slug || seen.has(k.slug)) return false;
@@ -714,22 +679,19 @@ async function fetchGenreKomik(slug, page) {
       return true;
     });
 
-    if (!allFetched.length) {
-      throw new Error(`Tidak ada komik untuk genre "${slug}"`);
-    }
+    if (!allFetched.length) throw new Error(`Genre "${slug}" tidak ada`);
 
-    /* Pagination: prioritaskan mangakita, fallback bacakomik */
     const pag   = d1?.pagination || {};
     hasNextPage = !!(pag.hasNextPage ?? pag.hasNext ?? d2?.hasNextPage ?? false);
     currentPage = pag.currentPage || d2?.currentPage || page;
 
-    document.getElementById("activeGenreCount").textContent = `(${allFetched.length}+)`;
+    document.getElementById("activeGenreCount").textContent = allFetched.length ? `(${allFetched.length}+)` : "";
 
     applyFilterAndSort();
     renderPagination();
 
   } catch (err) {
-    console.error("[Genre] Gagal fetch:", err);
+    console.error("Gagal fetch genre komik:", err);
     grid.innerHTML = `
       <div style="grid-column:1/-1" class="genre-empty">
         <p>😕</p>
