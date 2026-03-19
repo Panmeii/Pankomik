@@ -292,15 +292,16 @@
   import { initAuthHeader } from "/auth-header.js";
   initAuthHeader();
 </script>
+<script type="module">
+import { getAnimeEpisodeId, animeWatchURL, animeURL, pushAnimeURL } from "/router.js";
 
-<script>
 const API = "https://www.sankavollerei.com";
 
-function getEpisodeId() {
-  const m = window.location.pathname.match(/^\/anime-watch\/([^/]+)\/?$/);
-  if (m) return m[1];
-  return new URLSearchParams(window.location.search).get("ep") || "";
-}
+/* Expose fungsi router ke window agar bisa dipakai di onclick inline */
+window._animeWatchURL = animeWatchURL;
+window._animeURL      = animeURL;
+
+function getEpisodeId() { return getAnimeEpisodeId(); }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -308,6 +309,7 @@ let episodeData = null;
 let currentServerId = null;
 
 async function loadEpisode() {
+  /* Selalu baca dari URL terkini (mendukung navigasi tanpa reload) */
   const epId = getEpisodeId();
   if (!epId) { window.location.href = "/anime/"; return; }
 
@@ -404,7 +406,7 @@ function renderEpList(epList, currentId) {
   wrap.style.display = "block";
   scroll.innerHTML = [...epList].reverse().map(ep => `
     <div class="ep-chip ${ep.episodeId===currentId?'current':''}"
-      onclick="window.location.href='/anime-watch/${esc(ep.episodeId)}'">
+      onclick="navigateEpisode('${esc(ep.episodeId)}')">
       ${esc(ep.title||`Ep ${ep.eps}`)}
     </div>`).join('');
   /* Scroll ke episode aktif */
@@ -480,12 +482,32 @@ function showPlayerError(msg) {
 
 window.goPrev = function() {
   const ep = episodeData?.prevEpisode?.episodeId;
-  if (ep) window.location.href = `/anime-watch/${ep}`;
+  if (ep) navigateEpisode(ep);
 };
 window.goNext = function() {
   const ep = episodeData?.nextEpisode?.episodeId;
-  if (ep) window.location.href = `/anime-watch/${ep}`;
+  if (ep) navigateEpisode(ep);
 };
+window.navigateEpisode = navigateEpisode;
+
+/* Ganti episode tanpa full page reload — URL berubah tapi halaman tidak */
+function navigateEpisode(episodeId) {
+  /* Update URL dulu agar akurat */
+  pushAnimeURL(episodeId);
+  /* Reset player */
+  const frame   = document.getElementById("playerFrame");
+  const loading = document.getElementById("playerLoading");
+  frame.src = "";
+  loading.classList.remove("hidden");
+  /* Hapus error state jika ada */
+  const err = frame.parentElement.querySelector(".player-error");
+  if (err) err.remove();
+  /* Reload data episode baru */
+  episodeData = null;
+  loadEpisode();
+  /* Scroll ke atas */
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 window.shareEp = async function() {
   const title = document.getElementById("epTitle").textContent;
