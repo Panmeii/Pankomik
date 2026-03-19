@@ -53,6 +53,18 @@ function escHtml(str) {
 
 function cleanTitle(str) { return (str || "").replace(/\s+/g, " ").trim(); }
 
+/* ── Format chapter number: "Chapter 123" → "Ch.123" ─────── */
+function formatChapterLabel(chTitle, chSlug) {
+  const raw = chTitle || chSlug || "";
+  const m = raw.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
+    || raw.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
+  if (!m) return chTitle || "–";
+  const num = m[1].replace(/[_-]/g, ".");
+  const [main, sub] = num.split(".");
+  const padded = parseInt(main) < 100 ? main.padStart(2, "0") : main;
+  return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
+}
+
 /* ── STATE ──────────────────────────────────────────────── */
 let currentUser     = null;
 let isBookmarked    = false;
@@ -425,7 +437,7 @@ async function tampilkanDetail(d) {
             </div>
             ${lastReadData ? `
               <a href="${readerURL(lastReadData.chapter_slug, slug)}" class="btn-lanjut">
-                ▶️ Lanjut Ch.${escHtml(lastReadData.chapter_number || "?")}
+                ▶️ Lanjut ${escHtml(formatChapterLabel("Chapter " + (lastReadData.chapter_number || "?"), lastReadData.chapter_slug))}
               </a>` : ""}
           ` : `
             <a href="/masuk" class="btn-lanjut" style="text-decoration:none;text-align:center;">🔑 Login untuk Bookmark</a>
@@ -509,7 +521,8 @@ function renderChapterList(chapters, lastRead, filterQuery = "") {
   }
 
   el.innerHTML = ordered.map(ch => {
-    const title      = cleanTitle(ch.title);
+    const title      = formatChapterLabel(cleanTitle(ch.title), ch.slug);
+    const rawTitle   = cleanTitle(ch.title);   /* untuk title attribute tooltip */
     const date       = ch.releaseTime || ch.date || "";
     const isLastRead = lastRead?.chapter_slug === ch.slug;
     return `
