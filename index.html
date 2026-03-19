@@ -82,6 +82,90 @@
 <h2 class="section-title"><span>⭐</span>Rekomendasi</h2>
 <div id="komikRekomen" class="rekom-container"></div>
 
+<!-- ── Widget Top Komentar Teratas ──────────────────────── -->
+<style>
+  .top-comments-section {
+    padding: 0 14px 16px;
+  }
+  .top-comment-card {
+    display: flex;
+    gap: 10px;
+    padding: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    transition: transform 0.15s, border-color 0.15s;
+    cursor: default;
+    text-decoration: none;
+  }
+  .top-comment-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+  }
+  .top-comment-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; color: #fff;
+    flex-shrink: 0; overflow: hidden;
+  }
+  .top-comment-avatar img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .top-comment-body { flex: 1; min-width: 0; }
+  .top-comment-meta {
+    display: flex; align-items: center; gap: 6px;
+    flex-wrap: wrap; margin-bottom: 4px;
+  }
+  .top-comment-user {
+    font-size: 12px; font-weight: 800;
+    color: var(--text);
+  }
+  .top-comment-level {
+    font-size: 9px; font-weight: 700;
+    background: var(--accent); color: #fff;
+    padding: 1px 6px; border-radius: 99px;
+  }
+  .top-comment-source {
+    font-size: 10px; color: var(--text-muted);
+    margin-left: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+  }
+  .top-comment-text {
+    font-size: 13px; color: var(--text);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+    margin-bottom: 5px;
+  }
+  .top-comment-likes {
+    font-size: 11px; font-weight: 700;
+    color: #ff4060;
+    display: flex; align-items: center; gap: 4px;
+  }
+  /* Skeleton top komentar */
+  .top-comment-skeleton {
+    height: 74px; border-radius: 12px; margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+</style>
+
+<h2 class="section-title"><span>🔥</span>Komentar Terpopuler</h2>
+<div class="top-comments-section" id="topCommentsWidget">
+  <div class="top-comment-skeleton"></div>
+  <div class="top-comment-skeleton"></div>
+  <div class="top-comment-skeleton"></div>
+</div>
+
 <!-- ── Bottom Navigation ── -->
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="window.location.href='/'">
@@ -106,6 +190,88 @@
   initAuthHeader();
 </script>
 <script src="/script.js"></script>
-  <script type="module" src="/global-chat.js"></script>
+<script type="module">
+  /* ── Widget Top Komentar Terpopuler ── */
+  import { getTopComments } from "/supabase.js";
+
+  function escHtml(str) {
+    return String(str || "")
+      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  }
+
+  function formatSlugLabel(komikSlug) {
+    if (!komikSlug) return "Pankomik";
+    if (komikSlug.startsWith("novel-chapter:")) return "📖 Novel";
+    if (komikSlug.startsWith("novel:")) return "📖 " + komikSlug.replace("novel:","").replace(/-/g," ").slice(0,18);
+    if (komikSlug.startsWith("chapter:")) return "📚 " + komikSlug.replace("chapter:","").replace(/-/g," ").slice(0,18);
+    return "📚 " + komikSlug.replace(/-/g," ").slice(0,18);
+  }
+
+  function getContentURL(komikSlug) {
+    if (!komikSlug) return "/";
+    if (komikSlug.startsWith("novel-chapter:")) return "/baca-novel/" + komikSlug.replace("novel-chapter:","");
+    if (komikSlug.startsWith("novel:"))         return "/novel/"      + komikSlug.replace("novel:","");
+    if (komikSlug.startsWith("chapter:"))       return "/baca/"       + komikSlug.replace("chapter:","");
+    return "/komik/" + komikSlug;
+  }
+
+  async function loadTopComments() {
+    const widget = document.getElementById("topCommentsWidget");
+    if (!widget) return;
+
+    try {
+      const { comments, error } = await getTopComments(5);
+
+      if (error || !comments || comments.length === 0) {
+        widget.innerHTML = `
+          <div style="text-align:center;padding:24px 16px;color:var(--text-muted);font-size:13px;">
+            <div style="font-size:32px;margin-bottom:8px;">💬</div>
+            Belum ada komentar populer. Jadilah yang pertama!
+          </div>`;
+        return;
+      }
+
+      widget.innerHTML = comments.map(c => {
+        const profile = c.profiles || {};
+        const name    = escHtml(profile.username || "User");
+        const avatar  = profile.avatar_url;
+        const level   = profile.level || 1;
+        const initial = (profile.username || "U")[0].toUpperCase();
+        const label   = escHtml(formatSlugLabel(c.komik_slug));
+        const url     = getContentURL(c.komik_slug);
+        const text    = escHtml((c.content || "").slice(0, 120));
+        const likes   = c.like_count || 0;
+
+        return `
+          <a class="top-comment-card" href="${escHtml(url)}">
+            <div class="top-comment-avatar">
+              ${avatar
+                ? `<img src="${escHtml(avatar)}" alt="${name}" loading="lazy"
+                     onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`
+                : initial}
+            </div>
+            <div class="top-comment-body">
+              <div class="top-comment-meta">
+                <span class="top-comment-user">${name}</span>
+                <span class="top-comment-level">Lv.${level}</span>
+                <span class="top-comment-source">${label}</span>
+              </div>
+              <p class="top-comment-text">${text}</p>
+              <div class="top-comment-likes">❤️ ${likes} suka</div>
+            </div>
+          </a>`;
+      }).join("");
+
+    } catch (err) {
+      console.warn("[TopComments] Gagal:", err);
+      widget.innerHTML = "";
+    }
+  }
+
+  /* Load setelah konten utama agar tidak block render */
+  window.addEventListener("load", () => setTimeout(loadTopComments, 800));
+</script>
+<script type="module" src="/global-chat.js"></script>
 </body>
 </html>
