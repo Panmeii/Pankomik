@@ -15,273 +15,265 @@
 
     /* ── Hero ─────────────────────────────────────────────── */
     .detail-hero {
-      position: relative; overflow: hidden;
-      min-height: 220px;
+      position: relative;
+      min-height: 240px;
+      overflow: hidden;
     }
     .hero-blur-bg {
       position: absolute; inset: 0;
-      background-size: cover; background-position: center;
-      filter: blur(20px) brightness(0.3);
-      transform: scale(1.1);
+      background-size: cover; background-position: center top;
+      filter: blur(24px) brightness(0.2) saturate(1.5);
+      transform: scale(1.15);
+    }
+    .hero-gradient {
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(0,0,0,0.1) 0%,
+        rgba(0,0,0,0.55) 55%,
+        rgba(0,0,0,0.88) 100%
+      );
     }
     .hero-content {
-      position: relative; z-index: 1;
+      position: relative; z-index: 2;
       display: flex; gap: 14px;
-      padding: 20px 14px 16px;
+      padding: 60px 14px 18px;
       align-items: flex-end;
     }
     .hero-poster {
-      width: 110px; height: 156px;
+      width: 100px; height: 142px;
       object-fit: cover; border-radius: 10px;
       flex-shrink: 0;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.7);
-      border: 2px solid rgba(108,99,255,0.4);
-      background: var(--bg-surface);
+      box-shadow: 0 10px 32px rgba(0,0,0,0.8);
+      border: 2px solid rgba(108,99,255,0.45);
+      background: #1a1a2e;
     }
-    .hero-info { flex: 1; min-width: 0; padding-bottom: 4px; }
+    .hero-info { flex: 1; min-width: 0; }
     .hero-title {
-      font-size: 17px; font-weight: 900;
-      color: #fff; line-height: 1.3; margin-bottom: 6px;
+      font-size: 15px; font-weight: 900; color: #fff;
+      line-height: 1.35; margin-bottom: 5px;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
     }
     .hero-japanese {
-      font-size: 11px; color: rgba(255,255,255,0.5);
-      margin-bottom: 6px; font-style: italic;
+      font-size: 10px; color: rgba(255,255,255,0.45);
+      margin-bottom: 7px; font-style: italic;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .hero-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
     .hero-chip {
-      padding: 3px 8px; border-radius: 99px;
-      font-size: 10px; font-weight: 700;
+      padding: 2px 7px; border-radius: 99px; font-size: 9px; font-weight: 800;
+      color: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.12);
       border: 1px solid rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.85);
-      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(4px);
     }
-    .hero-chip.purple { background: var(--anime-accent); border-color: var(--anime-accent); }
-    .hero-chip.orange { background: #e8522a; border-color: #e8522a; }
-    .hero-chip.green  { background: #27ae60; border-color: #27ae60; }
-    .hero-chip.red    { background: #e74c3c; border-color: #e74c3c; }
+    .hero-chip.purple { background: rgba(108,99,255,0.85); border-color: transparent; }
+    .hero-chip.orange { background: rgba(232,82,42,0.88); border-color: transparent; }
+    .hero-chip.green  { background: rgba(39,174,96,0.88); border-color: transparent; }
     .hero-score {
-      font-size: 13px; font-weight: 800; color: #f5a623;
+      font-size: 13px; font-weight: 900; color: #f5c842;
       display: flex; align-items: center; gap: 4px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
     }
 
-    /* ── Action buttons ───────────────────────────────────── */
+    /* ── Action row ───────────────────────────────────────── */
     .action-row {
-      display: flex; gap: 8px; padding: 12px 14px;
+      display: flex; gap: 7px; padding: 12px 14px 10px;
+      align-items: center;
     }
-    .btn-watch-first {
-      flex: 1; padding: 11px 0;
-      background: var(--anime-accent);
-      color: #fff; border: none; border-radius: 10px;
+    .btn-action {
+      flex: 1; padding: 10px 6px;
+      border-radius: 10px; border: none;
       font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 900;
+      font-size: 12px; font-weight: 900;
       cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      transition: filter 0.2s, transform 0.1s;
-      box-shadow: 0 4px 16px var(--anime-glow);
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      transition: all 0.2s; white-space: nowrap;
     }
-    .btn-watch-first:hover { filter: brightness(1.12); }
-    .btn-watch-first:active { transform: scale(0.97); }
-    .btn-watch-last {
-      flex: 1; padding: 11px 0;
-      background: rgba(108,99,255,0.12);
-      color: var(--anime-accent2);
-      border: 1.5px solid rgba(108,99,255,0.3);
-      border-radius: 10px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 900;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-      transition: all 0.2s;
+    .btn-action.primary {
+      background: var(--anime-accent); color: #fff;
+      box-shadow: 0 4px 14px var(--anime-glow);
     }
-    .btn-watch-last:hover { background: var(--anime-accent); color: #fff; border-color: var(--anime-accent); }
-    .btn-watch-last:active { transform: scale(0.97); }
-    .btn-share-anime {
-      padding: 11px 14px;
+    .btn-action.primary:hover { filter: brightness(1.12); }
+    .btn-action.secondary {
+      background: rgba(108,99,255,0.1); color: var(--anime-accent2);
+      border: 1.5px solid rgba(108,99,255,0.25);
+    }
+    .btn-action.secondary:hover { background: rgba(108,99,255,0.2); }
+    .btn-action.icon-only {
+      flex: 0; padding: 10px 12px;
       background: var(--bg-card);
-      border: 1.5px solid var(--border);
-      border-radius: 10px; color: var(--text);
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 800;
-      cursor: pointer; transition: all 0.2s;
+      border: 1.5px solid var(--border); color: var(--text);
     }
-    .btn-share-anime:hover { border-color: var(--anime-accent); }
+    .btn-action.icon-only:hover { border-color: var(--anime-accent); }
+    .btn-action:active { transform: scale(0.95); }
 
-    /* ── Info section ─────────────────────────────────────── */
-    .info-section {
-      padding: 0 14px 14px;
+    /* ── Bookmark dropdown ────────────────────────────────── */
+    .bm-wrap { position: relative; flex: 0; }
+    .btn-bookmark.saved {
+      background: rgba(108,99,255,0.18) !important;
+      border-color: var(--anime-accent) !important;
+      color: var(--anime-accent2) !important;
     }
-    .info-row {
-      display: flex; justify-content: space-between;
-      padding: 8px 0; border-bottom: 1px solid var(--border);
-      font-size: 13px;
+    .bookmark-dropdown {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      z-index: 300; min-width: 175px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+      display: none;
     }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { color: var(--text-muted); font-weight: 600; }
-    .info-value { font-weight: 700; text-align: right; max-width: 60%; }
+    .bookmark-dropdown.show { display: block; animation: popIn 0.14s ease; }
+    @keyframes popIn {
+      from { opacity:0; transform:scale(0.94) translateY(-5px); }
+      to   { opacity:1; transform:scale(1) translateY(0); }
+    }
+    .bm-option {
+      padding: 11px 14px; cursor: pointer;
+      font-size: 13px; font-weight: 700; color: var(--text);
+      transition: background 0.15s;
+      display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .bm-option:last-of-type { border-bottom: none; }
+    .bm-option:hover { background: var(--bg-surface); }
+    .bm-option.active { color: var(--anime-accent2); }
+    .bm-remove {
+      padding: 10px 14px; cursor: pointer;
+      font-size: 12px; font-weight: 700; color: #e74c3c;
+      text-align: center; border-top: 1px solid var(--border);
+      background: rgba(231,76,60,0.05);
+    }
+    .bm-remove:hover { background: rgba(231,76,60,0.14); }
 
-    /* ── Synopsis ─────────────────────────────────────────── */
-    .synopsis-box {
-      padding: 0 14px 14px;
+    /* ── Genre chips ─────────────────────────────────────── */
+    .genre-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 14px 12px; }
+    .genre-tag {
+      padding: 4px 10px; background: var(--anime-surface);
+      border: 1px solid rgba(108,99,255,0.2); border-radius: 99px;
+      cursor: pointer; font-size: 11px; font-weight: 700;
+      color: var(--anime-accent2); transition: all 0.18s;
     }
-    .synopsis-title {
+    .genre-tag:hover { background: var(--anime-accent); color: #fff; border-color: var(--anime-accent); }
+
+    /* ── Section heading ─────────────────────────────────── */
+    .section-heading {
       font-family: 'Bangers', cursive;
-      font-size: 16px; letter-spacing: 1px;
-      color: var(--text); margin-bottom: 8px;
+      font-size: 16px; letter-spacing: 1px; color: var(--text);
+      margin-bottom: 9px; display: flex; align-items: center; gap: 6px;
     }
+
+    /* ── Synopsis ────────────────────────────────────────── */
+    .synopsis-box { padding: 0 14px 14px; }
     .synopsis-text {
-      font-size: 13px; line-height: 1.7;
-      color: var(--text-muted);
+      font-size: 13px; line-height: 1.75; color: var(--text-muted);
       display: -webkit-box; -webkit-line-clamp: 4;
       -webkit-box-orient: vertical; overflow: hidden;
     }
-    .synopsis-text.expanded {
-      display: block; -webkit-line-clamp: unset;
-    }
+    .synopsis-text.expanded { display: block; }
     .synopsis-toggle {
       margin-top: 6px; background: none; border: none;
       color: var(--anime-accent2); font-family: 'Nunito', sans-serif;
       font-size: 12px; font-weight: 800; cursor: pointer; padding: 0;
     }
 
-    /* ── Genre chips ─────────────────────────────────────── */
-    .genre-wrap {
-      display: flex; flex-wrap: wrap; gap: 6px;
-      padding: 0 14px 14px;
+    /* ── Info rows ───────────────────────────────────────── */
+    .info-section { padding: 0 14px 12px; }
+    .info-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
     }
-    .genre-tag {
-      padding: 4px 10px;
-      background: var(--anime-surface);
-      border: 1px solid rgba(108,99,255,0.2);
-      border-radius: 99px; cursor: pointer;
-      font-size: 11px; font-weight: 700;
-      color: var(--anime-accent2);
-      transition: all 0.18s;
-    }
-    .genre-tag:hover { background: var(--anime-accent); color: #fff; border-color: var(--anime-accent); }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: var(--text-muted); font-weight: 600; }
+    .info-value { font-weight: 800; text-align: right; max-width: 58%; color: var(--text); }
 
-    /* ── Episode List ─────────────────────────────────────── */
+    /* ── Episode list ────────────────────────────────────── */
     .episode-section { padding: 0 14px 14px; }
     .ep-header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 10px;
     }
-    .ep-title {
-      font-family: 'Bangers', cursive;
-      font-size: 18px; letter-spacing: 1px;
-    }
-    .ep-count {
-      font-size: 11px; font-weight: 800;
-      background: var(--anime-surface);
-      color: var(--anime-accent2);
+    .ep-count-badge {
+      font-size: 10px; font-weight: 800;
+      background: var(--anime-surface); color: var(--anime-accent2);
       padding: 3px 9px; border-radius: 99px;
       border: 1px solid rgba(108,99,255,0.2);
     }
     .ep-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 6px;
-      cursor: pointer;
-      transition: all 0.18s;
+      padding: 10px 12px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 6px; cursor: pointer; transition: all 0.18s;
     }
     .ep-item:hover {
-      border-color: var(--anime-accent);
-      background: var(--anime-surface);
+      border-color: var(--anime-accent); background: var(--anime-surface);
       transform: translateX(4px);
     }
     .ep-item:active { transform: scale(0.98); }
     .ep-num {
       width: 34px; height: 34px; border-radius: 8px;
-      background: var(--bg-surface);
+      background: var(--bg-surface); flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      font-size: 12px; font-weight: 900;
-      color: var(--anime-accent2); flex-shrink: 0;
+      font-size: 12px; font-weight: 900; color: var(--anime-accent2);
       border: 1px solid rgba(108,99,255,0.15);
     }
-    .ep-info { flex: 1; }
-    .ep-info-title { font-size: 13px; font-weight: 700; }
-    .ep-info-date { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-    .ep-play-icon {
-      font-size: 20px; color: var(--anime-accent);
-      flex-shrink: 0; opacity: 0.7;
-    }
+    .ep-info { flex: 1; min-width: 0; }
+    .ep-info-title { font-size: 12px; font-weight: 700; color: var(--text); }
+    .ep-info-date  { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .ep-play-icon  { font-size: 16px; color: var(--anime-accent); flex-shrink: 0; opacity: 0.7; }
 
-    /* ── Recommended ─────────────────────────────────────── */
-    .rec-section { padding: 0 14px 14px; }
-    .rec-title {
-      font-family: 'Bangers', cursive;
-      font-size: 18px; letter-spacing: 1px; margin-bottom: 10px;
+    /* ── Batch & Rec ─────────────────────────────────────── */
+    .batch-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 12px; margin: 0 14px 12px;
+      background: rgba(39,174,96,0.1); border: 1px solid rgba(39,174,96,0.28);
+      border-radius: 9px; font-size: 12px; font-weight: 800; color: #27ae60;
+      cursor: pointer; transition: background 0.2s; text-decoration: none;
     }
-    .rec-scroll {
-      display: flex; gap: 10px;
-      overflow-x: auto; padding-bottom: 4px;
-      scrollbar-width: none;
-    }
+    .batch-badge:hover { background: rgba(39,174,96,0.2); }
+    .rec-section { padding: 0 14px 20px; }
+    .rec-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
     .rec-scroll::-webkit-scrollbar { display: none; }
-    .rec-card {
-      flex-shrink: 0; width: 90px; cursor: pointer;
-      transition: transform 0.18s;
-    }
+    .rec-card { flex-shrink: 0; width: 88px; cursor: pointer; transition: transform 0.18s; }
     .rec-card:hover { transform: translateY(-3px); }
     .rec-card img {
-      width: 90px; height: 126px; object-fit: cover;
-      border-radius: 8px; display: block;
-      border: 1px solid rgba(108,99,255,0.2);
-      background: var(--bg-surface);
+      width: 88px; height: 124px; object-fit: cover; border-radius: 8px;
+      border: 1px solid rgba(108,99,255,0.18); background: var(--bg-surface); display: block;
     }
     .rec-card-title {
-      font-size: 10px; font-weight: 700;
-      color: var(--text); margin-top: 5px;
+      font-size: 10px; font-weight: 700; color: var(--text); margin-top: 5px;
       display: -webkit-box; -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical; overflow: hidden;
-      line-height: 1.4;
+      -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;
     }
 
-    /* ── Skeleton ─────────────────────────────────────────── */
+    /* ── Divider / Skeleton ──────────────────────────────── */
+    .section-divider { height: 1px; background: var(--border); margin: 2px 14px 14px; }
     .skel {
-      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-surface) 50%, var(--bg-card) 75%);
+      background: linear-gradient(90deg,var(--bg-card) 25%,var(--bg-surface) 50%,var(--bg-card) 75%);
       background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px;
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .anime-spinner {
-      display: flex; align-items: center; justify-content: center;
-      padding: 40px; gap: 12px; color: var(--text-muted); font-size: 13px;
+    /* ── Toast ───────────────────────────────────────────── */
+    #toastMsg {
+      position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
+      background: rgba(20,20,30,0.95); color: #fff;
+      padding: 9px 20px; border-radius: 99px;
+      font-size: 13px; font-weight: 700;
+      z-index: 9999; opacity: 0; pointer-events: none;
+      transition: opacity 0.25s; white-space: nowrap;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.45);
     }
-    .spin-ring {
-      width: 24px; height: 24px;
-      border: 3px solid rgba(108,99,255,0.2);
-      border-top-color: var(--anime-accent);
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-    }
-
-    /* ── Divider ──────────────────────────────────────────── */
-    .section-divider {
-      height: 1px; background: var(--border);
-      margin: 4px 14px 14px;
-    }
-    /* ── Batch badge ──────────────────────────────────────── */
-    .batch-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 12px;
-      background: rgba(39,174,96,0.12);
-      border: 1px solid rgba(39,174,96,0.3);
-      border-radius: 9px;
-      font-size: 12px; font-weight: 800;
-      color: #27ae60; margin: 0 14px 14px;
-      cursor: pointer; transition: background 0.2s;
-    }
-    .batch-badge:hover { background: rgba(39,174,96,0.22); }
+    #toastMsg.show { opacity: 1; }
   </style>
 </head>
 <body class="has-bottom-nav">
 
+<div id="toastMsg"></div>
+
 <header class="header">
   <button onclick="history.back()" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">←</button>
-  <div style="flex:1;font-family:'Bangers',cursive;font-size:18px;letter-spacing:1px;color:var(--anime-accent2);padding-left:6px;" id="headerTitle">Detail Anime</div>
+  <div style="flex:1;font-family:'Bangers',cursive;font-size:17px;letter-spacing:1px;color:var(--anime-accent2);padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="headerTitle">Detail Anime</div>
   <div class="header-right">
     <button onclick="toggleDarkMode()">🌙</button>
     <button onclick="toggleMenu()">👤</button>
@@ -290,23 +282,20 @@
 <div id="menuDropdown" class="dropdown"></div>
 
 <div id="detailContent">
-  <!-- Skeleton loading -->
-  <div style="padding:16px;">
-    <div style="display:flex;gap:14px;margin-bottom:16px;">
-      <div class="skel" style="width:110px;height:156px;flex-shrink:0;border-radius:10px;"></div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:10px;padding-top:8px;">
-        <div class="skel" style="height:18px;border-radius:6px;"></div>
-        <div class="skel" style="height:13px;width:80%;border-radius:6px;"></div>
-        <div class="skel" style="height:13px;width:60%;border-radius:6px;"></div>
-        <div style="display:flex;gap:6px;">
-          <div class="skel" style="height:22px;width:60px;border-radius:99px;"></div>
-          <div class="skel" style="height:22px;width:70px;border-radius:99px;"></div>
-        </div>
-      </div>
+  <div style="padding:14px;">
+    <div style="height:240px;border-radius:12px;margin-bottom:12px;" class="skel"></div>
+    <div style="display:flex;gap:7px;margin-bottom:14px;">
+      <div class="skel" style="height:42px;border-radius:10px;flex:2;"></div>
+      <div class="skel" style="height:42px;border-radius:10px;flex:2;"></div>
+      <div class="skel" style="height:42px;width:44px;border-radius:10px;flex:0;"></div>
     </div>
-    <div class="skel" style="height:44px;border-radius:10px;margin-bottom:12px;"></div>
-    <div class="skel" style="height:80px;border-radius:10px;margin-bottom:12px;"></div>
-    ${Array(5).fill('<div class="skel" style="height:54px;border-radius:10px;margin-bottom:6px;"></div>').join("")}
+    <div class="skel" style="height:14px;width:60%;margin-bottom:8px;"></div>
+    <div class="skel" style="height:14px;width:40%;margin-bottom:16px;"></div>
+    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
+    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
+    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
+    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
+    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
   </div>
 </div>
 
@@ -324,6 +313,7 @@
 </script>
 <script type="module">
 import { getAnimeId, animeWatchURL, animeGenreURL, animeURL } from "/router.js";
+import { getCurrentUser, checkAnimeBookmark, addAnimeBookmark, removeAnimeBookmark } from "/supabase.js";
 
 const API = "https://www.sankavollerei.com";
 
@@ -333,120 +323,228 @@ window._animeURL      = animeURL;
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+/* ── Toast ─────────────────────────────────────────────── */
+function toast(msg, dur=2300) {
+  const el = document.getElementById("toastMsg");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), dur);
+}
+
+/* ── Bookmark state ─────────────────────────────────────── */
+let _user        = null;
+let _animeSlug   = "";
+let _animeTitle  = "";
+let _animePoster = "";
+let _bmKategori  = null;  /* null = belum bookmark */
+let _bmOpen      = false;
+
+function getCategoryLabel(cat) {
+  return cat === "favorit" ? "❤️ Favorit"
+       : cat === "lagi_menonton" ? "📺 Nonton"
+       : cat === "selesai" ? "✅ Selesai"
+       : "＋ Simpan";
+}
+
+function renderBmBtn() {
+  const btn = document.getElementById("bmBtn");
+  const dd  = document.getElementById("bmDropdown");
+  if (!btn) return;
+  const saved = _bmKategori !== null;
+  btn.textContent = saved ? getCategoryLabel(_bmKategori) : "＋ Simpan";
+  btn.className   = `btn-action icon-only btn-bookmark${saved ? " saved" : ""}`;
+  /* Rebuild dropdown options (agar active class benar) */
+  if (dd) dd.innerHTML = `
+    <div class="bm-option${_bmKategori==='favorit'?' active':''}" onclick="selectBmCat('favorit')">❤️ Favorit</div>
+    <div class="bm-option${_bmKategori==='lagi_menonton'?' active':''}" onclick="selectBmCat('lagi_menonton')">📺 Lagi Nonton</div>
+    <div class="bm-option${_bmKategori==='selesai'?' active':''}" onclick="selectBmCat('selesai')">✅ Selesai</div>
+    ${saved ? `<div class="bm-remove" onclick="removeAnimeBm()">🗑️ Hapus Bookmark</div>` : ""}
+  `;
+}
+
+window.toggleBmDD = function(e) {
+  e.stopPropagation();
+  if (!_user) { toast("⚠️ Login dulu untuk bookmark!"); return; }
+  _bmOpen = !_bmOpen;
+  document.getElementById("bmDropdown")?.classList.toggle("show", _bmOpen);
+};
+
+window.selectBmCat = async function(kategori) {
+  document.getElementById("bmDropdown")?.classList.remove("show"); _bmOpen = false;
+  if (!_user) { toast("⚠️ Login dulu!"); return; }
+  const { error } = await addAnimeBookmark(_user.id, {
+    slug: _animeSlug, title: _animeTitle, poster: _animePoster, kategori
+  });
+  if (error) { toast("❌ Gagal simpan bookmark"); console.error(error); return; }
+  _bmKategori = kategori;
+  renderBmBtn();
+  const labels = { favorit:"Favorit", lagi_menonton:"Lagi Nonton", selesai:"Selesai" };
+  toast(`🔖 Ditambahkan ke ${labels[kategori] || kategori}!`);
+};
+
+window.removeAnimeBm = async function() {
+  document.getElementById("bmDropdown")?.classList.remove("show"); _bmOpen = false;
+  if (!_user) return;
+  await removeAnimeBookmark(_user.id, _animeSlug);
+  _bmKategori = null;
+  renderBmBtn();
+  toast("🗑️ Bookmark dihapus");
+};
+
+document.addEventListener("click", e => {
+  if (_bmOpen) {
+    const wrap = document.getElementById("bmWrap");
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById("bmDropdown")?.classList.remove("show");
+      _bmOpen = false;
+    }
+  }
+});
+
+/* ═════════════════════════════════════════════════════════
+   LOAD DETAIL
+   ═════════════════════════════════════════════════════════ */
 async function loadDetail() {
   const animeSlug = getAnimeId();
   if (!animeSlug) { window.location.href = "/anime/"; return; }
-
-  const container = document.getElementById("detailContent");
+  _animeSlug = animeSlug;
 
   try {
-    /* ── Fetch detail lengkap via /anime/anime/:slug ── */
-    const res  = await fetch(`${API}/anime/anime/${animeSlug}`);
-    const json = await res.json();
+    /* Fetch data anime + user login secara paralel */
+    const [res, user] = await Promise.all([
+      fetch(`${API}/anime/anime/${animeSlug}`),
+      getCurrentUser().catch(() => null)
+    ]);
+    _user = user;
 
-    if (!json.data) throw new Error("Data tidak ditemukan untuk: " + animeSlug);
+    const json = await res.json();
+    if (!json.data) throw new Error("Data tidak ditemukan: " + animeSlug);
 
     const d = json.data;
 
-    /* ── Parsing data ── */
-    const title       = d.title  || animeSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
-    const poster      = d.poster || "";
-    const japanese    = d.japanese || "";
-    const score       = d.score  || "";
-    const type        = d.type   || "";
-    const status      = d.status || "";
-    const episodes    = d.episodes || "";
-    const duration    = d.duration || "";
-    const aired       = d.aired  || "";
-    const studios     = d.studios || "";
-    const producers   = d.producers || "";
-    const batch       = d.batch;
-    const genreList   = d.genreList  || [];
+    /* ── Parse fields ── */
+    const title    = d.title    || animeSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
+    const poster   = d.poster   || "";
+    const japanese = d.japanese || "";
+    const score    = d.score    || "";
+    const type     = d.type     || "";
+    const status   = d.status   || "";
+    const episodes = d.episodes != null ? String(d.episodes) : "";
+    const duration = d.duration || "";
+    const aired    = d.aired    || "";
+    const studios  = d.studios  || "";
+    const producers= d.producers|| "";
+    const batch    = d.batch;
+    const genreList   = d.genreList   || [];
     const episodeList = d.episodeList || [];
     const recList     = d.recommendedAnimeList || [];
     const synopsis    = (d.synopsis?.paragraphs || []).join(" ");
 
-    /* ── Episode pertama & terakhir untuk tombol ── */
-    /* episodeList urut dari terbaru ke terlama, jadi [last] = ep 1 */
-    const ep1  = episodeList.length ? episodeList[episodeList.length - 1] : null;
+    _animeTitle  = title;
+    _animePoster = poster;
+
+    /* ── Check bookmark ── */
+    if (_user) {
+      try {
+        const bm = await checkAnimeBookmark(_user.id, animeSlug);
+        _bmKategori = bm?.isBookmarked ? (bm.kategori || "favorit") : null;
+      } catch { _bmKategori = null; }
+    }
+
+    /* ── Episode shortcuts ── */
+    const ep1   = episodeList.length ? episodeList[episodeList.length - 1] : null;
     const epNew = episodeList.length ? episodeList[0] : null;
+    const statusClass = status?.toLowerCase() === "ongoing" ? "orange" : "green";
 
     document.title = `${title} — Anime Pankomik`;
     document.getElementById("headerTitle").textContent = title;
 
-    /* ── Status chip color ── */
-    const statusClass = status?.toLowerCase() === "ongoing" ? "orange" : "green";
+    const bmSaved = _bmKategori !== null;
 
-    container.innerHTML = `
-      <!-- Hero -->
+    document.getElementById("detailContent").innerHTML = `
+
+      <!-- HERO -->
       <div class="detail-hero">
-        ${poster ? `<div class="hero-blur-bg" style="background-image:url('${esc(poster)}')"></div>` : ""}
+        ${poster
+          ? `<div class="hero-blur-bg" style="background-image:url('${esc(poster)}')"></div>`
+          : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#16213e);"></div>`}
+        <div class="hero-gradient"></div>
         <div class="hero-content">
           ${poster
             ? `<img class="hero-poster" src="${esc(poster)}" alt="${esc(title)}"
-                onerror="this.outerHTML='<div class=\\"hero-poster\\" style=\\"display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg-surface)\\">⚡</div>'">`
-            : `<div class="hero-poster" style="display:flex;align-items:center;justify-content:center;font-size:48px;background:var(--bg-surface);">⚡</div>`}
+                onerror="this.style.background='var(--bg-surface)';this.src=''">`
+            : `<div class="hero-poster" style="display:flex;align-items:center;justify-content:center;font-size:44px;">⚡</div>`}
           <div class="hero-info">
             <div class="hero-title">${esc(title)}</div>
             ${japanese ? `<div class="hero-japanese">${esc(japanese)}</div>` : ""}
-            <div class="hero-meta">
-              ${type   ? `<span class="hero-chip purple">${esc(type)}</span>`   : ""}
-              ${status ? `<span class="hero-chip ${statusClass}">${esc(status)}</span>` : ""}
-              ${episodes ? `<span class="hero-chip">${esc(String(episodes))} Ep</span>` : ""}
+            <div class="hero-chips">
+              ${type     ? `<span class="hero-chip purple">${esc(type)}</span>` : ""}
+              ${status   ? `<span class="hero-chip ${statusClass}">${esc(status)}</span>` : ""}
+              ${episodes ? `<span class="hero-chip">${esc(episodes)} Ep</span>` : ""}
+              ${studios  ? `<span class="hero-chip">${esc(studios.split(",")[0].trim())}</span>` : ""}
             </div>
             ${score ? `<div class="hero-score">⭐ ${esc(score)}</div>` : ""}
           </div>
         </div>
       </div>
 
-      <!-- Action buttons -->
+      <!-- ACTION ROW -->
       <div class="action-row">
-        ${ep1 ? `<button class="btn-watch-first" onclick="watchEpisode('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
-        ${epNew && epNew !== ep1 ? `<button class="btn-watch-last" onclick="watchEpisode('${esc(epNew.episodeId)}')">⚡ Ep Terbaru</button>` : ""}
-        <button class="btn-share-anime" onclick="shareAnime('${esc(title)}')">🔗</button>
+        ${ep1  ? `<button class="btn-action primary" onclick="watchEp('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
+        ${epNew && ep1 && epNew.episodeId !== ep1.episodeId
+          ? `<button class="btn-action secondary" onclick="watchEp('${esc(epNew.episodeId)}')">⚡ Terbaru</button>` : ""}
+        <!-- Bookmark -->
+        <div class="bm-wrap" id="bmWrap">
+          <button id="bmBtn"
+            class="btn-action icon-only btn-bookmark${bmSaved ? " saved" : ""}"
+            onclick="toggleBmDD(event)">
+            ${bmSaved ? getCategoryLabel(_bmKategori) : "＋ Simpan"}
+          </button>
+          <div id="bmDropdown" class="bookmark-dropdown">
+            <div class="bm-option${_bmKategori==='favorit'?' active':''}" onclick="selectBmCat('favorit')">❤️ Favorit</div>
+            <div class="bm-option${_bmKategori==='lagi_menonton'?' active':''}" onclick="selectBmCat('lagi_menonton')">📺 Lagi Nonton</div>
+            <div class="bm-option${_bmKategori==='selesai'?' active':''}" onclick="selectBmCat('selesai')">✅ Selesai</div>
+            ${bmSaved ? `<div class="bm-remove" onclick="removeAnimeBm()">🗑️ Hapus Bookmark</div>` : ""}
+          </div>
+        </div>
+        <button class="btn-action icon-only" onclick="shareAnime('${esc(title)}')">🔗</button>
       </div>
 
-      <!-- Batch download jika ada -->
-      ${batch ? `
-        <a href="${esc(batch.otakudesuUrl||"#")}" target="_blank" rel="noopener" class="batch-badge">
-          📦 Download Batch Tersedia
-        </a>` : ""}
+      <!-- BATCH -->
+      ${batch ? `<a href="${esc(batch.otakudesuUrl||"#")}" target="_blank" rel="noopener" class="batch-badge">📦 Download Batch Tersedia</a>` : ""}
 
-      <!-- Genre chips -->
+      <!-- GENRE -->
       ${genreList.length ? `
         <div class="genre-wrap">
-          ${genreList.map(g =>
-            `<span class="genre-tag"
-              onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')"
-            >${esc(g.title)}</span>`
-          ).join("")}
+          ${genreList.map(g => `<span class="genre-tag" onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')">${esc(g.title)}</span>`).join("")}
         </div>` : ""}
 
-      <!-- Synopsis -->
+      <!-- SYNOPSIS -->
       ${synopsis ? `
         <div class="synopsis-box">
-          <div class="synopsis-title">📖 Sinopsis</div>
+          <div class="section-heading">📖 Sinopsis</div>
           <p class="synopsis-text" id="synText">${esc(synopsis)}</p>
           <button class="synopsis-toggle" onclick="toggleSyn()">Baca Selengkapnya ▼</button>
         </div>
         <div class="section-divider"></div>` : ""}
 
-      <!-- Info rows -->
+      <!-- INFO -->
       <div class="info-section">
-        ${aired    ? `<div class="info-row"><span class="info-label">Tayang</span><span class="info-value">${esc(aired)}</span></div>` : ""}
-        ${studios  ? `<div class="info-row"><span class="info-label">Studio</span><span class="info-value">${esc(studios)}</span></div>` : ""}
-        ${producers? `<div class="info-row"><span class="info-label">Produser</span><span class="info-value">${esc(producers)}</span></div>` : ""}
-        ${duration ? `<div class="info-row"><span class="info-label">Durasi</span><span class="info-value">${esc(duration)}</span></div>` : ""}
-        ${type     ? `<div class="info-row"><span class="info-label">Tipe</span><span class="info-value">${esc(type)}</span></div>` : ""}
-        ${episodes ? `<div class="info-row"><span class="info-label">Total Episode</span><span class="info-value">${esc(String(episodes))}</span></div>` : ""}
+        ${aired      ? `<div class="info-row"><span class="info-label">Tayang</span><span class="info-value">${esc(aired)}</span></div>` : ""}
+        ${studios    ? `<div class="info-row"><span class="info-label">Studio</span><span class="info-value">${esc(studios)}</span></div>` : ""}
+        ${producers  ? `<div class="info-row"><span class="info-label">Produser</span><span class="info-value">${esc(producers)}</span></div>` : ""}
+        ${duration   ? `<div class="info-row"><span class="info-label">Durasi</span><span class="info-value">${esc(duration)}</span></div>` : ""}
+        ${type       ? `<div class="info-row"><span class="info-label">Tipe</span><span class="info-value">${esc(type)}</span></div>` : ""}
+        ${episodes   ? `<div class="info-row"><span class="info-label">Total Episode</span><span class="info-value">${esc(episodes)}</span></div>` : ""}
       </div>
       <div class="section-divider"></div>
 
-      <!-- Episode list -->
+      <!-- EPISODE LIST -->
       <div class="episode-section">
         <div class="ep-header">
-          <div class="ep-title">📺 Daftar Episode</div>
-          <span class="ep-count">${episodeList.length ? episodeList.length + " episode" : "?"}</span>
+          <div class="section-heading" style="margin-bottom:0;">📺 Daftar Episode</div>
+          <span class="ep-count-badge">${episodeList.length || "?"} ep</span>
         </div>
         ${episodeList.length === 0
           ? `<div style="text-align:center;padding:24px 0;color:var(--text-muted);">
@@ -454,7 +552,7 @@ async function loadDetail() {
                <p style="font-size:13px;">Belum ada episode tersedia.</p>
              </div>`
           : episodeList.map(ep => `
-            <div class="ep-item" onclick="watchEpisode('${esc(ep.episodeId)}')">
+            <div class="ep-item" onclick="watchEp('${esc(ep.episodeId)}')">
               <div class="ep-num">${ep.eps || ""}</div>
               <div class="ep-info">
                 <div class="ep-info-title">${esc(ep.title || `Episode ${ep.eps}`)}</div>
@@ -464,16 +562,15 @@ async function loadDetail() {
             </div>`).join("")}
       </div>
 
-      <!-- Rekomendasi -->
+      <!-- REKOMENDASI -->
       ${recList.length ? `
         <div class="section-divider"></div>
         <div class="rec-section">
-          <div class="rec-title">🔥 Rekomendasi</div>
+          <div class="section-heading">🔥 Rekomendasi</div>
           <div class="rec-scroll">
             ${recList.map(a => `
               <div class="rec-card" onclick="window.location.href=window._animeURL('${esc(a.animeId)}')">
-                <img src="${esc(a.poster||"")}" alt="${esc(a.title)}" loading="lazy"
-                  onerror="this.style.display='none'">
+                <img src="${esc(a.poster||"")}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'">
                 <div class="rec-card-title">${esc(a.title)}</div>
               </div>`).join("")}
           </div>
@@ -481,14 +578,14 @@ async function loadDetail() {
     `;
 
   } catch(e) {
-    console.error("[detail] Error:", e);
+    console.error("[detail]", e);
     document.getElementById("detailContent").innerHTML = `
       <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
         <p style="font-size:40px;margin-bottom:12px;">😕</p>
         <p style="margin-bottom:6px;">Gagal memuat detail anime.</p>
         <p style="font-size:11px;color:#555;margin-bottom:16px;">${esc(String(e.message||e))}</p>
         <button onclick="location.reload()"
-          style="padding:9px 22px;background:#6c63ff;color:#fff;border:none;border-radius:9px;
+          style="padding:9px 22px;background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
             cursor:pointer;font-weight:700;font-family:'Nunito',sans-serif;font-size:14px;">
           🔄 Coba Lagi
         </button>
@@ -496,34 +593,29 @@ async function loadDetail() {
   }
 }
 
-window.watchEpisode = function(episodeId) {
-  const id = (episodeId || "").trim();
-  if (!id) { alert("Episode ID tidak valid."); return; }
-  window.location.href = window._animeWatchURL(id);
+window.watchEp = id => {
+  const s = (id||"").trim();
+  if (!s) return;
+  window.location.href = window._animeWatchURL(s);
 };
-
-window.toggleSyn = function() {
+window.toggleSyn = () => {
   const t = document.getElementById("synText");
   const b = document.querySelector(".synopsis-toggle");
   if (!t) return;
   t.classList.toggle("expanded");
   b.textContent = t.classList.contains("expanded") ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
 };
-
-window.shareAnime = async function(title) {
+window.shareAnime = async title => {
   const url = window.location.href;
-  if (navigator.share) {
-    try { await navigator.share({ title, url }); return; } catch {}
-  }
+  if (navigator.share) { try { await navigator.share({title,url}); return; } catch {} }
   try { await navigator.clipboard.writeText(url); } catch {}
-  alert("Link disalin!");
+  toast("🔗 Link disalin!");
 };
 
 window.addEventListener("load", () => {
   if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
   loadDetail();
 });
-
 window.toggleDarkMode = () => {
   document.body.classList.toggle("light");
   localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark");
