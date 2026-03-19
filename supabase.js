@@ -795,85 +795,92 @@ export async function deleteComment(commentId, userId) {
 }
 
 /**
- * Like / Unlike komentar
+ * Like / Unlike komentar.
  *
- * STRATEGI: Hanya insert/delete di tabel comment_likes (user punya RLS penuh).
- * TIDAK update kolom like_count di tabel comments (sering gagal RLS karena
- * user tidak punya izin update baris milik orang lain).
- * like_count dihitung realtime dari comment_likes saat getComments/getCommentsForSlug.
+ * Coba via RPC "toggle_comment_like" (SECURITY DEFINER, bypass RLS).
+ * Jika RPC belum dibuat, fallback ke insert/delete langsung.
+ *
+ * ── SQL untuk dijalankan di Supabase SQL Editor ──────────────
+ * CREATE OR REPLACE FUNCTION toggle_comment_like(
+ *   p_user_id uuid, p_comment_id uuid
+ * ) RETURNS json LANGUAGE plpgsql SECURITY DEFINER
+ * SET search_path = public AS $$
+ * DECLARE
+ *   v_exist uuid; v_count int; v_liked boolean;
+ * BEGIN
+ *   SELECT id INTO v_exist FROM comment_likes
+ *   WHERE user_id=p_user_id AND comment_id=p_comment_id LIMIT 1;
+ *   IF v_exist IS NOT NULL THEN
+ *     DELETE FROM comment_likes WHERE id=v_exist;
+ *     v_liked := false;
+ *   ELSE
+ *     INSERT INTO comment_likes(user_id,comment_id)
+ *     VALUES(p_user_id,p_comment_id) ON CONFLICT DO NOTHING;
+ *     v_liked := true;
+ *   END IF;
+ *   SELECT COUNT(*) INTO v_count FROM comment_likes WHERE comment_id=p_comment_id;
+ *   UPDATE comments SET like_count=v_count WHERE id=p_comment_id;
+ *   RETURN json_build_object('liked',v_liked,'like_count',v_count);
+ * END; $$;
+ * ─────────────────────────────────────────────────────────────
  */
 export async function toggleLike(userId, commentId) {
+  const uid = String(userId);
+  const cid = String(commentId);
+
+  /* ── 1. Coba RPC (bypass RLS) ───────────────────────────── */
   try {
-    // Pastikan commentId bertipe string/uuid konsisten
-    const cid = String(commentId);
+    const { data, error: rpcErr } = await supabase.rpc("toggle_comment_like", {
+      p_user_id: uid,
+      p_comment_id: cid,
+    });
+    if (!rpcErr && data != null) {
+      const r = typeof data === "string" ? JSON.parse(data) : data;
+      return { liked: !!r.liked, likeCount: r.like_count ?? 0, error: null };
+    }
+    if (rpcErr) console.warn("[like] RPC gagal →", rpcErr.message, "| pakai fallback");
+  } catch (ex) {
+    console.warn("[like] RPC exception →", ex, "| pakai fallback");
+  }
 
-    // 1. Cek apakah sudah like
-    const { data: existing, error: checkError } = await supabase
-      .from("comment_likes")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("comment_id", cid)
-      .maybeSingle();
+  /* ── 2. Fallback langsung ────────────────────────────────── */
+  try {
+    /* Cek sudah like belum */
+    const { data: ex, error: exErr } = await supabase
+      .from("comment_likes").select("id")
+      .eq("user_id", uid).eq("comment_id", cid).maybeSingle();
+    if (exErr) throw exErr;
 
-    if (checkError) throw checkError;
-
-    if (existing) {
-      // 2a. Unlike — hapus baris like milik user sendiri (RLS: user bisa delete miliknya)
+    let liked;
+    if (ex) {
+      /* Unlike */
       const { error: delErr } = await supabase
-        .from("comment_likes")
-        .delete()
-        .eq("id", existing.id);
+        .from("comment_likes").delete().eq("id", ex.id);
       if (delErr) throw delErr;
-
-      // 3a. Hitung ulang dari sumber kebenaran
-      const { count, error: cntErr } = await supabase
-        .from("comment_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("comment_id", cid);
-      if (cntErr) throw cntErr;
-
-      const newCount = count ?? 0;
-
-      // 4a. Update like_count — dijalankan via RPC jika ada, fallback optimistic
-      try {
-        await supabase.from("comments").update({ like_count: newCount }).eq("id", cid);
-      } catch (_) { /* abaikan jika RLS memblokir — UI tetap update optimistic */ }
-
-      return { liked: false, likeCount: newCount, error: null };
-
+      liked = false;
     } else {
-      // 2b. Like — insert baris baru (RLS: user bisa insert miliknya sendiri)
+      /* Like */
       const { error: insErr } = await supabase
-        .from("comment_likes")
-        .insert({ user_id: userId, comment_id: cid });
-
-      // Jika duplicate key error (race condition), tidak throw — anggap sudah liked
-      if (insErr) {
-        const isDuplicate = insErr.code === "23505"
-          || insErr.message?.toLowerCase().includes("duplicate")
-          || insErr.message?.toLowerCase().includes("unique");
-        if (!isDuplicate) throw insErr;
-      }
-
-      // 3b. Hitung ulang
-      const { count, error: cntErr } = await supabase
-        .from("comment_likes")
-        .select("*", { count: "exact", head: true })
-        .eq("comment_id", cid);
-      if (cntErr) throw cntErr;
-
-      const newCount = count ?? 1;
-
-      // 4b. Update like_count — abaikan error RLS
-      try {
-        await supabase.from("comments").update({ like_count: newCount }).eq("id", cid);
-      } catch (_) { /* abaikan */ }
-
-      return { liked: true, likeCount: newCount, error: null };
+        .from("comment_likes").insert({ user_id: uid, comment_id: cid });
+      if (insErr && insErr.code !== "23505") throw insErr;
+      liked = true;
     }
 
+    /* Hitung ulang */
+    const { count } = await supabase
+      .from("comment_likes").select("*", { count: "exact", head: true })
+      .eq("comment_id", cid);
+    const newCount = count ?? (liked ? 1 : 0);
+
+    /* Update like_count — abaikan error RLS */
+    supabase.from("comments").update({ like_count: newCount }).eq("id", cid)
+      .then(({ error: upErr }) => {
+        if (upErr) console.warn("[like] like_count update diblokir RLS:", upErr.message);
+      });
+
+    return { liked, likeCount: newCount, error: null };
   } catch (err) {
-    console.error("Error in toggleLike:", err);
+    console.error("[like] Error:", err);
     return { liked: false, likeCount: null, error: err };
   }
 }
@@ -1122,24 +1129,21 @@ export async function addCommentForSlug(userId, contentSlug, content, parentId =
 }
 
 /**
- * Ambil top komentar berdasarkan like_count (untuk widget home)
- * @param {number} limit - jumlah komentar teratas
+ * Ambil komentar terbaru dari seluruh platform (untuk widget home)
+ * @param {number} limit
  */
-export async function getTopComments(limit = 5) {
+export async function getLastComments(limit = 6) {
   try {
-    // Ambil komentar dengan like_count tertinggi, hanya parent comment
     const { data: comments, error } = await supabase
       .from("comments")
       .select("id, content, created_at, user_id, komik_slug, like_count")
       .is("parent_id", null)
-      .gt("like_count", 0)
-      .order("like_count", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
     if (!comments || comments.length === 0) return { comments: [], error: null };
 
-    // Ambil profiles
     const userIds = [...new Set(comments.map(c => c.user_id))];
     let profilesMap = {};
     if (userIds.length > 0) {
@@ -1150,14 +1154,15 @@ export async function getTopComments(limit = 5) {
       (profiles || []).forEach(p => { profilesMap[p.id] = p; });
     }
 
-    const enriched = comments.map(c => ({
-      ...c,
-      profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 }
-    }));
-
-    return { comments: enriched, error: null };
+    return {
+      comments: comments.map(c => ({
+        ...c,
+        profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 }
+      })),
+      error: null
+    };
   } catch (err) {
-    console.error("Error in getTopComments:", err);
+    console.error("Error in getLastComments:", err);
     return { comments: [], error: err };
   }
 }
