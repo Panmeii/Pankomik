@@ -261,14 +261,15 @@
   import { initAuthHeader } from "/auth-header.js";
   initAuthHeader();
 </script>
-<script>
+<script type="module">
+import { getAnimeId, animeWatchURL, animeGenreURL, animeURL } from "/router.js";
+
 const API = "https://www.sankavollerei.com";
 
-function getAnimeId() {
-  const m = window.location.pathname.match(/^\/anime\/([^/]+)\/?$/);
-  if (m) return m[1];
-  return new URLSearchParams(window.location.search).get("id") || "";
-}
+/* Expose ke window agar onclick inline di template string bisa mengaksesnya */
+window._animeWatchURL  = animeWatchURL;
+window._animeGenreURL  = animeGenreURL;
+window._animeURL       = animeURL;
 
 function pImg(url, w=400) {
   if (!url) return "";
@@ -367,7 +368,7 @@ async function loadDetail() {
       <!-- Genre -->
       ${genreList.length ? `
         <div class="genre-wrap">
-          ${genreList.map(g => `<span class="genre-tag" onclick="window.location.href='/anime-genre/${esc(g.genreId)}'">${esc(g.title)}</span>`).join("")}
+          ${genreList.map(g => `<span class="genre-tag" onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')">${esc(g.title)}</span>`).join("")}
         </div>` : ""}
 
       <!-- Synopsis -->
@@ -421,7 +422,7 @@ async function loadDetail() {
 
 window.watchEpisode = function(episodeId) {
   if (!episodeId) return;
-  window.location.href = `/anime-watch/${episodeId}`;
+  window.location.href = window._animeWatchURL(episodeId);
 };
 
 window.toggleSyn = function() {
