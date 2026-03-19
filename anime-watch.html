@@ -309,60 +309,94 @@ let episodeData = null;
 let currentServerId = null;
 
 async function loadEpisode() {
-  /* Selalu baca dari URL terkini (mendukung navigasi tanpa reload) */
   const epId = getEpisodeId();
   if (!epId) { window.location.href = "/anime/"; return; }
+
+  let rawTitle = ""; /* declare di luar try agar bisa diakses di catch */
+
+  /* Reset UI */
+  document.getElementById("epTitle").textContent = "Memuat...";
+  document.getElementById("epMeta").textContent  = "";
+  document.getElementById("serverList").innerHTML =
+    '<div style="color:#555;font-size:13px;text-align:center;padding:10px;">Memuat server...</div>';
 
   try {
     const res  = await fetch(`${API}/anime/episode/${epId}`);
     const json = await res.json();
-    if (!json.data) throw new Error("No data");
+
+    if (!json.data) {
+      console.error("[Watch] No data. Raw:", JSON.stringify(json).slice(0,300));
+      throw new Error("API tidak mengembalikan data untuk: " + epId);
+    }
     episodeData = json.data;
 
-    const d = episodeData;
-    const title = d.title || epId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
-    document.title = `${title} — Nonton Anime`;
-    document.getElementById("watchTitle").textContent = title;
-    document.getElementById("epTitle").textContent   = title;
-    document.getElementById("epMeta").textContent    = `Rilis: ${d.releaseTime || "—"}`;
+    const d     = episodeData;
+    const rawTitle = d.title || "";
+    /* Bersihkan judul: hapus "- Episode N" atau "Episode N Sub Indo" di akhir */
+    const title = rawTitle
+      .replace(/\s*[-–]?\s*episode\s*\d+.*/i, "")
+      .trim() || epId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
+                     .replace(/sub indo/i,"").trim();
 
-    /* Prev / Next */
+    document.title = `${rawTitle || title} — Pankomik`;
+    document.getElementById("watchTitle").textContent = title;
+    document.getElementById("epTitle").textContent   = rawTitle || title;
+    document.getElementById("epMeta").textContent    = d.releaseTime
+      ? `📅 Rilis: ${d.releaseTime}` : "";
+
+    /* Prev / Next buttons */
     const prevBtn = document.getElementById("prevEpBtn");
     const nextBtn = document.getElementById("nextEpBtn");
-    if (d.hasPrevEpisode && d.prevEpisode?.episodeId) {
-      prevBtn.disabled = false;
-    } else {
-      prevBtn.disabled = true;
-    }
-    if (d.hasNextEpisode && d.nextEpisode?.episodeId) {
-      nextBtn.disabled = false;
-    } else {
-      nextBtn.disabled = true;
-    }
+    prevBtn.disabled = !(d.hasPrevEpisode && d.prevEpisode?.episodeId);
+    nextBtn.disabled = !(d.hasNextEpisode && d.nextEpisode?.episodeId);
 
-    /* Server list */
+    /* Render server list */
     renderServers(d.server?.qualities || []);
 
-    /* Load default stream */
+    /* Load stream: coba defaultStreamingUrl dulu, lalu server pertama */
     if (d.defaultStreamingUrl) {
+      /* Tandai chip server default sebagai active */
+      const defaultServer = d.server?.qualities
+        ?.find(q => q.serverList?.length)?.serverList?.[0];
+      if (defaultServer) {
+        const chip = document.querySelector(`[data-id="${defaultServer.serverId}"]`);
+        if (chip) chip.classList.add("active");
+      }
       loadStream(d.defaultStreamingUrl);
     } else {
-      /* Coba server pertama yang ada */
-      const firstServer = d.server?.qualities?.find(q => q.serverList?.length)
-        ?.serverList?.[0];
-      if (firstServer) await selectServer(firstServer.serverId);
-      else showPlayerError("Tidak ada stream tersedia.");
+      /* Coba server pertama dari kualitas tertinggi */
+      const qualities = d.server?.qualities || [];
+      /* Urutkan: 720p > 480p > 360p */
+      const ordered = [...qualities].sort((a, b) => {
+        const order = {"720p":0,"480p":1,"360p":2};
+        return (order[a.title]??9) - (order[b.title]??9);
+      });
+      const firstServer = ordered.find(q => q.serverList?.length)?.serverList?.[0];
+      if (firstServer) {
+        await selectServer(firstServer.serverId,
+          document.querySelector(`[data-id="${firstServer.serverId}"]`));
+      } else {
+        showPlayerError("Tidak ada server stream tersedia untuk episode ini.");
+      }
     }
 
-    /* Download links */
+    /* Download & episode list */
     renderDownloads(d.downloadUrl?.qualities || []);
-
-    /* Episode list */
     renderEpList(d.info?.episodeList || [], epId);
 
   } catch(e) {
-    console.error(e);
-    showPlayerError("Gagal memuat episode. Coba lagi.");
+    console.error("[Watch] loadEpisode error:", e);
+    showPlayerError(
+      "Gagal memuat episode.<br>" +
+      `<small style="color:#666;font-size:11px;">ID: ${epId}</small><br>` +
+      `<small style="color:#555;font-size:10px;">${esc(String(e.message||e))}</small>`
+    );
+    document.getElementById("epTitle").textContent = rawTitle || "Episode tidak ditemukan";
+    document.getElementById("serverList").innerHTML =
+      `<div style="text-align:center;padding:16px;color:#555;font-size:12px;">
+         Episode ID tidak valid atau tidak tersedia di API.<br>
+         <strong style="color:#a78bfa;">${epId}</strong>
+       </div>`;
   }
 }
 
