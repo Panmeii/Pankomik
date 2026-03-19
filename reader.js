@@ -56,6 +56,15 @@ let allImages   = [];   /* array of { id, url } */
    INIT
    ============================================================ */
 window.addEventListener("DOMContentLoaded", async () => {
+  /* Bug fix: kalau komikSlug tersimpan di sessionStorage berasal dari
+     komik lain (stale), bersihkan supaya tidak dipakai sebagai fallback
+     yang salah. Deteksi: kalau chapter slug saat ini tidak mengandung
+     prefix dari komikSlug yang tersimpan → clear. */
+  const _storedKomikSlug = sessionStorage.getItem("komikSlug") || "";
+  if (_storedKomikSlug && slug && !slug.startsWith(_storedKomikSlug.slice(0, 8))) {
+    sessionStorage.removeItem("komikSlug");
+  }
+
   currentUser = await getCurrentUser();
   initProgressBar();
   applyReadMode();
@@ -222,8 +231,24 @@ async function loadChapter() {
     currentPage = 0;
 
     /* Komik info */
-    komikSlug  = d.navigation?.allChapterSlug
-      || currentChapterSlug.replace(/-chapter-[\d]+.*/i, "");
+    /* Bug fix: komikSlug extraction lebih robust —
+       1. Prioritas: allChapterSlug dari API (paling akurat)
+       2. Fallback: potong pola "-chapter-N", "-ch-N", "-chN" dari slug
+       3. Last resort: ?komik= dari URL atau sessionStorage sebelumnya */
+    const _komikFromSlug = currentChapterSlug
+      .replace(/-chapter-[\d]+(?:[.-][\d]+)?.*$/i, "")
+      .replace(/-ch-[\d]+(?:[.-][\d]+)?.*$/i, "")
+      .replace(/-(ch|ep|eps)[\d]+.*$/i, "")
+      .trim();
+    const _komikFromSession = sessionStorage.getItem("komikSlug") || "";
+    const _komikFromUrl = new URLSearchParams(window.location.search).get("komik") || "";
+    komikSlug = d.navigation?.allChapterSlug
+      || _komikFromUrl
+      || (_komikFromSlug !== currentChapterSlug ? _komikFromSlug : "")
+      || _komikFromSession
+      || currentChapterSlug;
+    /* Simpan agar chapter navigasi berikutnya bisa pakai sebagai fallback */
+    if (komikSlug) sessionStorage.setItem("komikSlug", komikSlug);
     komikTitle = cleanText(
       d.komikInfo?.title
       || d.thumbnail?.title
@@ -259,10 +284,17 @@ async function loadChapter() {
       detail: { slug: currentChapterSlug, komikSlug }
     }));
 
-    /* Auto-save history */
+    /* Auto-save history
+       Bug fix: capture nilai saat ini ke variabel lokal agar tidak
+       kena race condition kalau user langsung navigasi chapter lain
+       sebelum request Supabase selesai */
     if (currentUser && !historyWasSaved) {
       historyWasSaved = true;
-      autoSaveHistory();
+      const _saveChSlug  = currentChapterSlug;
+      const _saveKSlug   = komikSlug;
+      const _saveKTitle  = komikTitle;
+      const _saveKCover  = komikCover;
+      autoSaveHistory(_saveChSlug, _saveKSlug, _saveKTitle, _saveKCover);
     }
 
     /* Preload chapter berikutnya */
@@ -862,19 +894,44 @@ function preloadChapter(chSlug) {
   document.head.appendChild(link);
 }
 
-async function autoSaveHistory() {
-  const match         = currentChapterSlug.match(/chapter-(\d+)/i);
-  const chapterNumber = match ? match[1] : "?";
-  await saveHistory(
-    currentUser.id,
-    { slug: komikSlug, title: komikTitle, cover: komikCover },
-    { slug: currentChapterSlug, number: chapterNumber }
-  );
-  await updateProgress(
-    currentUser.id,
-    { slug: komikSlug, title: komikTitle, lastChapterSlug: currentChapterSlug },
-    0
-  );
+async function autoSaveHistory(chSlug, kSlug, kTitle, kCover) {
+  /* Pakai parameter yang di-capture saat dipanggil (bukan variabel global)
+     agar tidak kena race condition kalau user navigasi chapter lain
+     sebelum request Supabase ini selesai */
+  const _chSlug = chSlug || currentChapterSlug;
+  const _kSlug  = kSlug  || komikSlug;
+  const _kTitle = kTitle || komikTitle;
+  const _kCover = kCover || komikCover;
+
+  /* Ekstrak nomor chapter lebih robust: "gyaru-chapter-05-2" → "05.2" */
+  const match = _chSlug.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
+  const chapterNumber = match
+    ? match[1].replace(/[_-]/g, ".")
+    : "?";
+
+  /* Guard: jangan simpan kalau komikSlug kosong / sama dengan chapterSlug */
+  if (!_kSlug || _kSlug === _chSlug) {
+    console.warn("[History] komikSlug tidak valid, skip save:", _kSlug);
+    return;
+  }
+
+  try {
+    await saveHistory(
+      currentUser.id,
+      { slug: _kSlug, title: _kTitle, cover: _kCover },
+      { slug: _chSlug, number: chapterNumber }
+    );
+    await updateProgress(
+      currentUser.id,
+      { slug: _kSlug, title: _kTitle, lastChapterSlug: _chSlug },
+      0
+    );
+    console.log("[History] Tersimpan:", _kSlug, "→", _chSlug);
+  } catch (err) {
+    console.error("[History] Gagal simpan:", err);
+    /* Reset flag agar bisa dicoba ulang saat navigasi berikutnya */
+    historyWasSaved = false;
+  }
 }
 
 /* ============================================================
