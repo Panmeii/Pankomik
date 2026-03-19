@@ -1,398 +1,1190 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pankomik — Baca Komik Online</title>
-  <link rel="stylesheet" href="/style.css">
-  <style>
-    #loadMoreWrap {
-      display: none; flex-direction: column;
-      align-items: center; gap: 10px; padding: 16px 14px 28px;
-    }
-    #pageInfo { font-size: 12px; color: var(--text-muted); font-weight: 700; }
-    #loadMoreBtn {
-      width: 100%; max-width: 360px; padding: 13px 20px; border-radius: 12px;
-      border: 1.5px solid var(--border); background: var(--bg-card); color: var(--text);
-      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.1s;
-    }
-    #loadMoreBtn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #fff; transform: translateY(-2px); }
-    #loadMoreBtn:active:not(:disabled) { transform: scale(0.97); }
-    #loadMoreBtn:disabled { cursor: not-allowed; }
-    #loadMoreSpinner { display: none; grid-template-columns: repeat(2,1fr); gap: 10px; padding: 0 14px; width: 100%; }
-    .skeleton-pulse {
-      height: 210px; border-radius: 10px;
-      background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
-      background-size: 200% 100%; animation: shimmer 1.4s infinite;
-    }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-    #infiniteHint { text-align: center; font-size: 11px; color: var(--text-muted); padding: 4px 0 2px; }
+/* ============================================================
+   PANKOMIK — supabase.js
+   File ini adalah "jembatan" antara Pankomik dan Supabase.
+   Import file ini di semua halaman HTML.
 
-    /* ═══════════════════════════════════════════════════════════
-       WIDGET TOP KOMENTAR
-    ═══════════════════════════════════════════════════════════ */
-    .top-comments-wrap { padding: 0 14px 4px; }
+   CARA PAKAI:
+   Ganti dua variabel di bawah dengan milikmu:
+   - SUPABASE_URL  → dari Settings > API > Project URL
+   - SUPABASE_KEY  → dari Settings > API > anon public key
+   ============================================================ */
 
-    .top-comment-card {
-      display: flex;
-      gap: 10px;
-      padding: 11px 12px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      margin-bottom: 8px;
-      text-decoration: none;
-      color: inherit;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
-    }
-    /* Garis aksen kiri saat hover */
-    .top-comment-card::before {
-      content: '';
-      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
-      background: var(--accent);
-      border-radius: 3px 0 0 3px;
-      opacity: 0; transition: opacity 0.2s;
-    }
-    .top-comment-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-      box-shadow: 0 4px 16px rgba(232,82,42,0.12);
-    }
-    .top-comment-card:hover::before { opacity: 1; }
-    .top-comment-card:active { transform: scale(0.98); }
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-    /* Avatar */
-    .top-comment-avatar {
-      width: 38px; height: 38px; border-radius: 50%;
-      background: var(--accent);
-      display: flex; align-items: center; justify-content: center;
-      font-weight: 800; font-size: 15px; color: #fff;
-      flex-shrink: 0; overflow: hidden;
-      border: 2px solid rgba(255,255,255,0.07);
-    }
-    .top-comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* ---- KONFIGURASI ------------------------------------------ */
+/* ⚠️  Ganti kedua nilai ini dengan milikmu dari dashboard Supabase */
+const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";  /* anon/public key — aman untuk frontend */
 
-    /* Body */
-    .top-comment-body { flex: 1; min-width: 0; }
+/* Buat satu instance client, dipakai di seluruh aplikasi */
+export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    /* Baris 1: nama + level + lokasi */
-    .top-comment-meta {
-      display: flex; align-items: center; gap: 5px;
-      margin-bottom: 4px;
-    }
-    .top-comment-user {
-      font-size: 12px; font-weight: 800; color: var(--text);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      max-width: 85px;
-    }
-    .top-comment-level {
-      font-size: 9px; font-weight: 800;
-      background: var(--accent); color: #fff;
-      padding: 1px 5px; border-radius: 99px; flex-shrink: 0;
-    }
-    /* Pill lokasi — di mana komentar ini berada */
-    .top-comment-loc {
-      margin-left: auto;
-      display: inline-flex; align-items: center; gap: 3px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 2px 7px;
-      max-width: 140px; flex-shrink: 0;
-    }
-    .top-comment-loc-icon { font-size: 10px; flex-shrink: 0; }
-    .top-comment-loc-text {
-      font-size: 10px; font-weight: 700; color: var(--text-muted);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
 
-    /* Baris 2: isi komentar */
-    .top-comment-text {
-      font-size: 13px; line-height: 1.5; color: var(--text);
-      display: -webkit-box;
-      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
-      overflow: hidden; word-break: break-word;
-      margin-bottom: 6px;
-    }
+/* ============================================================
+   AUTH — LOGIN, REGISTER, LOGOUT
+   ============================================================ */
 
-    /* Baris 3: like count + tanda klik */
-    .top-comment-footer { display: flex; align-items: center; gap: 6px; }
-    .top-comment-likes {
-      font-size: 11px; font-weight: 800; color: #ff4060;
-      display: flex; align-items: center; gap: 3px;
-    }
-    .top-comment-goto {
-      margin-left: auto; font-size: 10px; font-weight: 700;
-      color: var(--accent);
-      opacity: 0; transition: opacity 0.2s;
-      display: flex; align-items: center; gap: 2px;
-    }
-    .top-comment-card:hover .top-comment-goto { opacity: 1; }
-
-    /* Skeleton */
-    .top-comment-skeleton {
-      height: 86px; border-radius: 12px; margin-bottom: 8px;
-      background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
-      background-size: 200% 100%; animation: shimmer 1.4s infinite;
-    }
-  </style>
-</head>
-<body class="has-bottom-nav">
-
-<header class="header">
-  <div class="logo" onclick="goHome()">Pankomik</div>
-  <input type="text" id="searchInput" placeholder="Cari komik..." oninput="liveSearch()" autocomplete="off">
-  <div class="header-right">
-    <button onclick="toggleDarkMode()" title="Ganti Tema">🌙</button>
-    <button onclick="toggleMenu()" title="Menu">👤</button>
-  </div>
-</header>
-
-<div id="searchResult" class="search-result"></div>
-<div id="menuDropdown" class="dropdown"></div>
-<div class="toast-container" id="toastContainer"></div>
-<button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
-
-<!-- Top Komik slider -->
-<h2 class="section-title"><span>🔥</span>Top Komik</h2>
-<div id="topKomik" class="slider"></div>
-
-<!-- Genre chips -->
-<div class="genre-section-wrap">
-  <div class="genre-section-header">
-    <h2 class="section-title" style="padding:0;margin:0;"><span>🏷️</span>Genre</h2>
-    <button class="genre-see-all" onclick="window.location.href='/genre/'">Lihat Semua →</button>
-  </div>
-  <div class="genre-chips-index" id="genreChipsIndex">
-    <div class="genre-chip-index skeleton" style="width:70px;height:30px;border-radius:99px;"></div>
-    <div class="genre-chip-index skeleton" style="width:80px;height:30px;border-radius:99px;"></div>
-    <div class="genre-chip-index skeleton" style="width:60px;height:30px;border-radius:99px;"></div>
-    <div class="genre-chip-index skeleton" style="width:90px;height:30px;border-radius:99px;"></div>
-    <div class="genre-chip-index skeleton" style="width:70px;height:30px;border-radius:99px;"></div>
-    <div class="genre-chip-index skeleton" style="width:85px;height:30px;border-radius:99px;"></div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════════
-     WIDGET TOP KOMENTAR — ditaruh tepat di bawah Genre
-══════════════════════════════════════════════════════════ -->
-<h2 class="section-title"><span>💬</span>Komentar Terbaru</h2>
-<div class="top-comments-wrap" id="topCommentsWidget">
-  <!-- Skeleton loading awal -->
-  <div class="top-comment-skeleton"></div>
-  <div class="top-comment-skeleton"></div>
-  <div class="top-comment-skeleton"></div>
-  <div class="top-comment-skeleton"></div>
-</div>
-
-<!-- Komik terbaru -->
-<h2 class="section-title"><span>🆕</span>Update Terbaru</h2>
-<div id="komikLatest" class="grid-komik"></div>
-
-<div id="loadMoreSpinner">
-  <div class="skeleton-pulse"></div><div class="skeleton-pulse"></div>
-  <div class="skeleton-pulse"></div><div class="skeleton-pulse"></div>
-</div>
-<div id="loadMoreWrap">
-  <p id="infiniteHint">Scroll ke bawah atau tekan tombol untuk muat lebih banyak</p>
-  <span id="pageInfo"></span>
-  <button id="loadMoreBtn" onclick="loadMore()">Muat Lebih Banyak ↓</button>
-</div>
-
-<!-- Rekomendasi -->
-<h2 class="section-title"><span>⭐</span>Rekomendasi</h2>
-<div id="komikRekomen" class="rekom-container"></div>
-
-<!-- Bottom Navigation -->
-<nav class="bottom-nav">
-  <button class="nav-item active" onclick="window.location.href='/'">
-    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
-  </button>
-  <button class="nav-item" onclick="window.location.href='/'">
-    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
-  </button>
-  <button class="nav-item" onclick="window.location.href='/novel/'">
-    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
-  </button>
-  <button class="nav-item" onclick="window.location.href='/donatur'">
-    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
-  </button>
-  <button class="nav-item" onclick="window.location.href='/profil'">
-    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
-  </button>
-</nav>
-
-<!-- Auth header -->
-<script type="module">
-  import { initAuthHeader } from "/auth-header.js";
-  initAuthHeader();
-</script>
-
-<!-- Script utama halaman -->
-<script src="/script.js"></script>
-
-<!-- Widget Top Komentar -->
-<script type="module">
-/* ================================================================
-   TOP KOMENTAR TERPOPULER
-   - Ambil dari Supabase: 6 komentar terbaru dari semua konten
-   - Resolusi lokasi (komik / novel / chapter) dari komik_slug
-   - Klik card → navigasi langsung ke halaman konten tersebut
-   ================================================================ */
-import { getLastComments } from "/supabase.js";
-
-/* ── Escape HTML ── */
-function esc(str) {
-  return String(str || "")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+/**
+ * Daftar dengan email + password
+ * @returns { user, error }
+ */
+export async function registerWithEmail(email, password) {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  return { user: data?.user, error };
 }
 
 /**
- * Konversi komik_slug ke { icon, label, url }
- *
- * Aturan prefix slug:
- *   "novel-chapter:{chapter-slug}"  → baca chapter novel
- *   "novel:{novel-slug}"            → detail novel
- *   "chapter:{chapter-slug}"        → baca chapter komik
- *   "{komik-slug}"                  → detail komik (tanpa prefix)
+ * Login dengan email + password
+ * @returns { user, error }
  */
-function resolveLocation(raw) {
-  if (!raw) return { icon: "💬", label: "Pankomik", url: "/" };
-
-  /* ── 1. Chapter novel ─────────────────────────── */
-  if (raw.startsWith("novel-chapter:")) {
-    const slug  = raw.slice("novel-chapter:".length);
-    /* Ambil nama novel: potong "-chapter-N" di akhir */
-    const name  = slug
-      .replace(/-chapter-[\d-]+$/i, "")
-      .replace(/-vol(ume)?-[\d]+/i, "")
-      .replace(/-/g, " ")
-      .replace(/\b./g, c => c.toUpperCase())
-      .trim().slice(0, 24) || "Chapter Novel";
-    return { icon: "📖", label: name, url: `/baca-novel/${slug}` };
-  }
-
-  /* ── 2. Detail novel ──────────────────────────── */
-  if (raw.startsWith("novel:")) {
-    const slug = raw.slice("novel:".length);
-    const name = slug
-      .replace(/-/g, " ")
-      .replace(/\b./g, c => c.toUpperCase())
-      .trim().slice(0, 24) || "Novel";
-    return { icon: "📖", label: name, url: `/novel/${slug}` };
-  }
-
-  /* ── 3. Chapter komik ─────────────────────────── */
-  if (raw.startsWith("chapter:")) {
-    const slug = raw.slice("chapter:".length);
-    /* Ambil nama komik: potong "-chapter-N" di akhir */
-    const name = slug
-      .replace(/-chapter-[\d-]+$/i, "")
-      .replace(/-/g, " ")
-      .replace(/\b./g, c => c.toUpperCase())
-      .trim().slice(0, 24) || "Chapter Komik";
-    return { icon: "📚", label: name, url: `/baca/${slug}` };
-  }
-
-  /* ── 4. Legacy: slug komik langsung ──────────── */
-  const name = raw
-    .replace(/-/g, " ")
-    .replace(/\b./g, c => c.toUpperCase())
-    .trim().slice(0, 24) || "Komik";
-  return { icon: "📚", label: name, url: `/komik/${raw}` };
+export async function loginWithEmail(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  return { user: data?.user, error };
 }
 
-/* ── Render widget ────────────────────────────────────────── */
-async function loadTopComments() {
-  const widget = document.getElementById("topCommentsWidget");
-  if (!widget) return;
+/**
+ * Login dengan Google (OAuth)
+ * Redirect ke halaman ini setelah login sukses
+ */
+export async function loginWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      /* Setelah login Google, user diarahkan ke sini */
+      redirectTo: window.location.origin + "/"
+    }
+  });
+  if (error) console.error("Google login error:", error);
+}
 
+/**
+ * Ganti password user yang sedang login
+ * @returns { error }
+ */
+export async function updatePassword(newPassword) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  return { error };
+}
+
+/**
+ * Cek apakah user login via Google (OAuth), bukan email/password
+ * OAuth user tidak bisa ganti password
+ */
+export function isOAuthUser(user) {
+  return user?.app_metadata?.provider === "google"
+    || (user?.identities || []).some(i => i.provider === "google");
+}
+
+/**
+ * Logout
+ */
+export async function logout() {
+  await supabase.auth.signOut();
+  window.location.href = '/';
+}
+
+/**
+ * Ambil user yang sedang login
+ * @returns user object atau null
+ */
+export async function getCurrentUser() {
+  const { data } = await supabase.auth.getSession();
+  return data?.session?.user || null;
+}
+
+/**
+ * Dengarkan perubahan status auth (login/logout)
+ * @param callback(user) — dipanggil saat status berubah
+ */
+export function onAuthChange(callback) {
+  supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session?.user || null);
+  });
+}
+
+
+/* ============================================================
+   PROFILES
+   ============================================================ */
+
+/**
+ * Ambil profil user berdasarkan id
+ */
+export async function getProfile(userId) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*, user_badges(badge_id, earned_at, badges(name, icon, description))")
+    .eq("id", userId)
+    .single();
+  return { profile: data, error };
+}
+
+/**
+ * Update profil (username, avatar_url)
+ */
+export async function updateProfile(userId, updates) {
+  /* Coba update dulu */
+  const { data, error } = await supabase
+    .from("profiles")
+    .update(updates)
+    .eq("id", userId)
+    .select()
+    .single();
+
+  /* Kalau update berhasil, return langsung */
+  if (!error) return { profile: data, error: null };
+
+  /* Kalau error karena row tidak ada (profiles belum dibuat untuk user ini),
+     coba upsert untuk create sekaligus update */
+  if (error.code === "PGRST116" || error.message?.includes("No rows")) {
+    const { data: upserted, error: upsertError } = await supabase
+      .from("profiles")
+      .upsert({ id: userId, ...updates })
+      .select()
+      .single();
+    return { profile: upserted, error: upsertError };
+  }
+
+  console.error("updateProfile error:", error);
+  return { profile: null, error };
+}
+
+/**
+ * Upload foto profil ke Supabase Storage
+ * Pastikan sudah buat bucket "avatars" di Storage (public bucket)
+ */
+export async function uploadAvatar(userId, file) {
+  /* Nama file unik berdasarkan user id */
+  const path = `${userId}/avatar.${file.name.split(".").pop()}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { upsert: true });
+
+  if (uploadError) return { url: null, error: uploadError };
+
+  /* Ambil public URL */
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  return { url: data.publicUrl, error: null };
+}
+
+
+/* ============================================================
+   BOOKMARKS
+   ============================================================ */
+
+/**
+ * Tambah bookmark.
+ * Kalau sudah ada (komik yang sama), update kategorinya.
+ * @param kategori "favorit" | "lagi_dibaca" | "tamat"
+ */
+export async function addBookmark(userId, komik) {
+  /*
+    upsert: kalau sudah ada (user_id + komik_slug sama) → update
+            kalau belum ada → insert
+  */
+  const { data, error } = await supabase
+    .from("bookmarks")
+    .upsert({
+      user_id:     userId,
+      komik_slug:  komik.slug,
+      komik_title: komik.title,
+      komik_cover: komik.cover,
+      kategori:    komik.kategori || "favorit"
+    }, { onConflict: "user_id,komik_slug" })
+    .select()
+    .single();
+  return { bookmark: data, error };
+}
+
+/**
+ * Hapus bookmark
+ */
+export async function removeBookmark(userId, komikSlug) {
+  const { error } = await supabase
+    .from("bookmarks")
+    .delete()
+    .eq("user_id", userId)
+    .eq("komik_slug", komikSlug);
+  return { error };
+}
+
+/**
+ * Cek apakah komik sudah di-bookmark
+ * @returns { isBookmarked: boolean, kategori: string|null }
+ */
+export async function checkBookmark(userId, komikSlug) {
+  const { data } = await supabase
+    .from("bookmarks")
+    .select("kategori")
+    .eq("user_id", userId)
+    .eq("komik_slug", komikSlug)
+    .single();
+  return { isBookmarked: !!data, kategori: data?.kategori || null };
+}
+
+/**
+ * Ambil semua bookmark user, dikelompokkan per kategori
+ */
+export async function getBookmarks(userId) {
+  const { data, error } = await supabase
+    .from("bookmarks")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) return { bookmarks: {}, error };
+
+  /* Kelompokkan berdasarkan kategori */
+  const grouped = { favorit: [], lagi_dibaca: [], tamat: [] };
+  data.forEach(b => {
+    if (grouped[b.kategori]) grouped[b.kategori].push(b);
+  });
+
+  return { bookmarks: grouped, error: null };
+}
+
+
+/* ============================================================
+   READING HISTORY
+   ============================================================ */
+
+/**
+ * Simpan/update riwayat baca.
+ * Tabel reading_history → upsert per komik (untuk "terakhir dibaca")
+ * Tabel chapter_reads    → insert per chapter unik (untuk hitung total)
+ */
+export async function saveHistory(userId, komik, chapter) {
+  /* 1. Upsert di reading_history (satu baris per komik = chapter terakhir) */
+  const { data, error } = await supabase
+    .from("reading_history")
+    .upsert({
+      user_id:        userId,
+      komik_slug:     komik.slug,
+      komik_title:    komik.title,
+      komik_cover:    komik.cover,
+      chapter_slug:   chapter.slug,
+      chapter_number: chapter.number,
+      read_at:        new Date().toISOString()
+    }, { onConflict: "user_id,komik_slug" })
+    .select()
+    .single();
+
+  /* 2. Insert di chapter_reads (unik per user+chapter, untuk hitung XP) */
+  /*    ignoreDuplicates: true → tidak error kalau sudah pernah baca chapter ini */
+  await supabase
+    .from("chapter_reads")
+    .upsert({
+      user_id:      userId,
+      chapter_slug: chapter.slug,
+      komik_slug:   komik.slug,
+      read_at:      new Date().toISOString()
+    }, { onConflict: "user_id,chapter_slug", ignoreDuplicates: true });
+
+  return { history: data, error };
+}
+
+/**
+ * Ambil semua riwayat baca user (terbaru dulu)
+ */
+export async function getHistory(userId) {
+  const { data, error } = await supabase
+    .from("reading_history")
+    .select("*")
+    .eq("user_id", userId)
+    .order("read_at", { ascending: false })
+    .limit(50);  /* maks 50 item */
+  return { history: data || [], error };
+}
+
+/**
+ * Ambil chapter terakhir yang dibaca untuk satu komik
+ * (dipakai untuk fitur "Lanjut Baca" di detail page)
+ */
+export async function getLastRead(userId, komikSlug) {
+  const { data } = await supabase
+    .from("reading_history")
+    .select("chapter_slug, chapter_number, read_at")
+    .eq("user_id", userId)
+    .eq("komik_slug", komikSlug)
+    .single();
+  return data || null;
+}
+
+
+/* ============================================================
+   READING PROGRESS
+   ============================================================ */
+
+/**
+ * Ambil semua reading progress user (untuk halaman profil)
+ * Diurutkan berdasarkan waktu update terbaru
+ */
+export async function getProgress(userId) {
+  const { data, error } = await supabase
+    .from("reading_progress")
+    .select("*")
+    .eq("user_id", userId)
+    .order("updated_at", { ascending: false })
+    .limit(50);
+  return { progress: data || [], error };
+}
+
+/**
+ * Update progress baca.
+ * Dipanggil setiap kali user baca chapter baru.
+ */
+export async function updateProgress(userId, komik, totalChapters) {
+  /* Hitung chapter UNIK yang sudah dibaca untuk komik ini
+     dari chapter_reads (bukan reading_history yang upsert per komik) */
+  const { count: readCount } = await supabase
+    .from("chapter_reads")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("komik_slug", komik.slug);
+
+  const readChapters = readCount || 1;
+  const percent      = totalChapters > 0
+    ? Math.round((readChapters / totalChapters) * 100)
+    : 0;
+
+  const { data, error } = await supabase
+    .from("reading_progress")
+    .upsert({
+      user_id:           userId,
+      komik_slug:        komik.slug,
+      komik_title:       komik.title,
+      total_chapters:    totalChapters,
+      read_chapters:     readChapters,
+      last_chapter_slug: komik.lastChapterSlug,
+      updated_at:        new Date().toISOString()
+    }, { onConflict: "user_id,komik_slug" })
+    .select()
+    .single();
+
+  /* Update total chapter di profil & cek badge */
+  await updateTotalChapters(userId);
+
+  return { progress: data, percent, error };
+}
+
+/**
+ * Update total chapter yang dibaca di profil user
+ * (dipakai untuk sistem level dan badge)
+ */
+async function updateTotalChapters(userId) {
+  /* Hitung TOTAL chapter unik yang pernah dibaca user (lintas semua komik) */
+  const { count } = await supabase
+    .from("chapter_reads")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+
+  const total = count || 0;
+
+  /* Hitung level: naik level tiap 50 chapter */
+  const level = Math.floor(total / 50) + 1;
+
+  await supabase
+    .from("profiles")
+    .update({ total_chapters_read: total, level })
+    .eq("id", userId);
+
+  /* Cek dan berikan badge yang layak */
+  await checkAndAwardBadges(userId, total);
+}
+
+
+/**
+ * Ambil total chapter unik yang sudah dibaca user (dari chapter_reads)
+ * Dipakai di halaman profil untuk sync manual
+ */
+export async function getTotalChaptersRead(userId) {
+  const { count, error } = await supabase
+    .from("chapter_reads")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+  return { total: count || 0, error };
+}
+
+/**
+ * Sync ulang total_chapters_read, level, DAN nama/avatar dari Google.
+ * Panggil ini saat halaman profil dibuka.
+ */
+export async function syncProfileProgress(userId) {
+  /* 1. Sync chapter count & level */
+  await updateTotalChapters(userId);
+
+  /* 2. Sync nama & avatar dari Google metadata kalau profile masih kosong */
   try {
-    const { comments, error } = await getLastComments(6);
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) return;
 
-    if (error || !comments || comments.length === 0) {
-      widget.innerHTML = `
-        <div style="text-align:center;padding:28px 16px 20px;
-          color:var(--text-muted);font-size:13px;">
-          <div style="font-size:36px;margin-bottom:10px;">💬</div>
-          Belum ada komentar populer.<br>
-          <span style="font-size:12px;">Jadilah yang pertama berkomentar!</span>
-        </div>`;
-      return;
+    /* Pakai maybeSingle() agar tidak error kalau row belum ada */
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const meta       = user.user_metadata || {};
+    const googleName = meta.full_name || meta.name || meta.preferred_username
+                       || user.email?.split("@")[0] || "User";
+    const googleAv   = meta.avatar_url || meta.picture || null;
+
+    /* Hanya update kolom yang masih kosong — tidak timpa yang sudah diset user */
+    const updates = {};
+    if (!profile?.username)   updates.username   = googleName;
+    if (!profile?.avatar_url) updates.avatar_url = googleAv;
+
+    if (Object.keys(updates).length > 0) {
+      await supabase
+        .from("profiles")
+        .upsert({ id: userId, ...updates }, { onConflict: "id", ignoreDuplicates: false });
+    }
+  } catch (e) {
+    console.warn("[syncProfileProgress] metadata sync error:", e);
+  }
+}
+
+
+/* ============================================================
+   BADGE SYSTEM
+   ============================================================ */
+
+/* Definisi badge hardcoded sebagai fallback kalau tabel badges kosong */
+const BADGE_DEFINITIONS = [
+  { id: "pemula",        name: "Pemula",        icon: "📖", min_chapters: 1    },
+  { id: "pembaca_aktif", name: "Pembaca Aktif",  icon: "🔥", min_chapters: 50   },
+  { id: "otaku",         name: "Otaku",          icon: "⭐", min_chapters: 200  },
+  { id: "legenda",       name: "Legenda",        icon: "👑", min_chapters: 500  },
+  { id: "top_reader",    name: "Top Reader",     icon: "🏆", min_chapters: 1000 },
+];
+
+/**
+ * Cek apakah user layak dapat badge baru, lalu berikan.
+ * Dipanggil otomatis setelah update progress.
+ */
+async function checkAndAwardBadges(userId, totalChapters) {
+  /* Coba dari tabel badges dulu */
+  let { data: dbBadges } = await supabase
+    .from("badges")
+    .select("id, min_chapters")
+    .lte("min_chapters", totalChapters)
+    .gt("min_chapters", 0);
+
+  /* Kalau tabel badges kosong atau tidak ada, pakai definisi hardcoded */
+  if (!dbBadges?.length) {
+    /* Simulasikan dengan badge hardcoded menggunakan string id */
+    const eligible = BADGE_DEFINITIONS.filter(b => b.min_chapters <= totalChapters && totalChapters > 0);
+    if (!eligible.length) return;
+
+    /* Ambil badge yang sudah dimiliki (pakai badge_name sebagai key) */
+    const { data: owned } = await supabase
+      .from("user_badges")
+      .select("badge_id")
+      .eq("user_id", userId);
+
+    const ownedIds = new Set((owned || []).map(b => b.badge_id));
+
+    const newBadges = eligible
+      .filter(b => !ownedIds.has(b.id))
+      .map(b => ({ user_id: userId, badge_id: b.id, earned_at: new Date().toISOString() }));
+
+    if (newBadges.length > 0) {
+      await supabase.from("user_badges").insert(newBadges);
+    }
+    return;
+  }
+
+  /* Pakai data dari tabel badges DB */
+  const { data: ownedBadges } = await supabase
+    .from("user_badges")
+    .select("badge_id")
+    .eq("user_id", userId);
+
+  const ownedIds = new Set((ownedBadges || []).map(b => b.badge_id));
+
+  const newBadges = dbBadges
+    .filter(b => !ownedIds.has(b.id))
+    .map(b => ({ user_id: userId, badge_id: b.id, earned_at: new Date().toISOString() }));
+
+  if (newBadges.length > 0) {
+    await supabase.from("user_badges").insert(newBadges);
+  }
+}
+
+
+/* ============================================================
+   LEADERBOARD
+   ============================================================ */
+
+/**
+ * Ambil top N user berdasarkan total_chapters_read dari tabel profiles
+ * @param {number} limit  — jumlah user yang ditampilkan (default 20)
+ */
+export async function getLeaderboard(limit = 20) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, level, total_chapters_read")
+    .order("total_chapters_read", { ascending: false })
+    .gt("total_chapters_read", 0)
+    .limit(limit);
+  return { leaderboard: data || [], error };
+}
+
+/**
+ * Leaderboard novel — top pembaca berdasarkan total_novel_chapters_read
+ */
+export async function getNovelLeaderboard(limit = 20) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, username, avatar_url, level, total_novel_chapters_read")
+    .order("total_novel_chapters_read", { ascending: false })
+    .gt("total_novel_chapters_read", 0)
+    .limit(limit);
+  return { leaderboard: data || [], error };
+}
+
+/* ============================================================
+   COMMENTS - FIXED VERSION (No Foreign Key Dependency)
+   ============================================================ */
+
+/**
+ * Ambil komentar untuk sebuah komik TANPA foreign key relationship
+ * Menggunakan query terpisah untuk menghindari error PGRST200
+ */
+export async function getComments(komikSlug) {
+  try {
+    // 1. Ambil komentar utama (tanpa join ke profiles)
+    const { data: comments, error: commentsError } = await supabase
+      .from("comments")
+      .select(`
+        id, content, created_at, user_id, komik_slug, parent_id, like_count
+      `)
+      .eq("komik_slug", komikSlug)
+      .is("parent_id", null)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (commentsError) throw commentsError;
+    if (!comments || comments.length === 0) return { comments: [], error: null };
+
+    // 2. Ambil semua user_id unik dari komentar
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+
+    // 3. Ambil profiles untuk user-user tersebut (query terpisah)
+    let profilesMap = {};
+    if (userIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url, level")
+        .in("id", userIds);
+
+      if (profilesError) {
+        console.warn("Error fetching profiles:", profilesError);
+      } else if (profiles) {
+        profiles.forEach(p => {
+          profilesMap[p.id] = p;
+        });
+      }
     }
 
-    widget.innerHTML = comments.map(c => {
-      const p       = c.profiles || {};
-      const name    = esc(p.username || "User");
-      const avatar  = p.avatar_url  || "";
-      const level   = p.level       || 1;
-      const initial = (p.username   || "U")[0].toUpperCase();
-      const likes   = c.like_count  || 0;
-      const raw     = (c.content    || "");
-      /* Potong teks panjang */
-      const text    = esc(raw.length > 110 ? raw.slice(0, 107) + "…" : raw);
-      const loc     = resolveLocation(c.komik_slug);
+    // 4. Ambil like counts untuk semua komentar
+    const commentIds = comments.map(c => c.id);
+    let likeCountMap = {};
 
-      return `
-        <a class="top-comment-card"
-           href="${esc(loc.url)}"
-           title="Komentar di: ${esc(loc.label)} — klik untuk melihat">
+    const { data: likeCounts, error: likeError } = await supabase
+      .from("comment_likes")
+      .select("comment_id")
+      .in("comment_id", commentIds);
 
-          <!-- Avatar -->
-          <div class="top-comment-avatar">
-            ${avatar
-              ? `<img src="${esc(avatar)}" alt="${name}" loading="lazy"
-                   onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`
-              : initial}
-          </div>
+    if (likeError) {
+      console.warn("Error fetching like counts:", likeError);
+    } else if (likeCounts) {
+      likeCounts.forEach(like => {
+        likeCountMap[like.comment_id] = (likeCountMap[like.comment_id] || 0) + 1;
+      });
+    }
 
-          <!-- Konten -->
-          <div class="top-comment-body">
+    // 5. Ambil replies untuk komentar utama
+    const { data: replies, error: repliesError } = await supabase
+      .from("comments")
+      .select(`
+        id, content, created_at, user_id, komik_slug, parent_id, like_count
+      `)
+      .in("parent_id", commentIds)
+      .order("created_at", { ascending: true });
 
-            <!-- Nama · Level · Lokasi -->
-            <div class="top-comment-meta">
-              <span class="top-comment-user">${name}</span>
-              <span class="top-comment-level">Lv.${level}</span>
-              <span class="top-comment-loc" title="${esc(loc.icon)} ${esc(loc.label)}">
-                <span class="top-comment-loc-icon">${esc(loc.icon)}</span>
-                <span class="top-comment-loc-text">${esc(loc.label)}</span>
-              </span>
-            </div>
+    let enrichedReplies = [];
+    if (replies && replies.length > 0) {
+      // Ambil user_ids dari replies
+      const replyUserIds = [...new Set(replies.map(r => r.user_id))];
 
-            <!-- Teks komentar -->
-            <p class="top-comment-text">${text}</p>
+      // Ambil profiles untuk replies (gabung dengan yang sudah ada)
+      const allReplyUserIds = replyUserIds.filter(id => !profilesMap[id]);
+      if (allReplyUserIds.length > 0) {
+        const { data: replyProfiles } = await supabase
+          .from("profiles")
+          .select("id, username, avatar_url, level")
+          .in("id", allReplyUserIds);
 
-            <!-- Like count + tanda "Lihat →" -->
-            <div class="top-comment-footer">
-              <span class="top-comment-likes">❤️ ${likes} suka</span>
-              <span class="top-comment-goto">Lihat →</span>
-            </div>
+        if (replyProfiles) {
+          replyProfiles.forEach(p => {
+            profilesMap[p.id] = p;
+          });
+        }
+      }
 
-          </div>
-        </a>`;
-    }).join("");
+      // Ambil like counts untuk replies
+      const replyIds = replies.map(r => r.id);
+      const { data: replyLikes } = await supabase
+        .from("comment_likes")
+        .select("comment_id")
+        .in("comment_id", replyIds);
+
+      let replyLikeMap = {};
+      if (replyLikes) {
+        replyLikes.forEach(like => {
+          replyLikeMap[like.comment_id] = (replyLikeMap[like.comment_id] || 0) + 1;
+        });
+      }
+
+      // Enrich replies dengan profile dan like count
+      enrichedReplies = replies.map(r => ({
+        ...r,
+        profiles: profilesMap[r.user_id] || { username: "User", avatar_url: null, level: 1 },
+        like_count: replyLikeMap[r.id] || r.like_count || 0
+      }));
+    }
+
+    // 6. Group replies by parent_id
+    const repliesByParent = {};
+    enrichedReplies.forEach(reply => {
+      if (!repliesByParent[reply.parent_id]) {
+        repliesByParent[reply.parent_id] = [];
+      }
+      repliesByParent[reply.parent_id].push(reply);
+    });
+
+    // 7. Gabungkan komentar dengan profile dan replies
+    const enrichedComments = comments.map(c => ({
+      ...c,
+      profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 },
+      like_count: likeCountMap[c.id] || c.like_count || 0,
+      replies: repliesByParent[c.id] || []
+    }));
+
+    return { comments: enrichedComments, error: null };
 
   } catch (err) {
-    console.warn("[TopComments] Gagal memuat:", err);
-    widget.innerHTML = ""; /* Kosong tanpa error visual */
+    console.error("Error in getComments:", err);
+    return { comments: [], error: err };
   }
 }
 
-/* Mulai load setelah halaman selesai render,
-   agar tidak blocking konten utama */
-if (document.readyState === "complete") {
-  setTimeout(loadTopComments, 500);
-} else {
-  window.addEventListener("load", () => setTimeout(loadTopComments, 500));
-}
-</script>
+/**
+ * Tambah komentar baru
+ */
+/* Cooldown guard untuk addComment — cegah spam kiriman cepat */
+let _lastCommentAt = 0;
+const COMMENT_COOLDOWN_MS = 3000; /* 3 detik antar komentar */
 
-<script type="module" src="/global-chat.js"></script>
-</body>
-</html>
+export async function addComment(userId, komikSlug, content, parentId = null) {
+  try {
+    if (!content || content.trim().length === 0) {
+      return { comment: null, error: { message: "Komentar tidak boleh kosong" } };
+    }
+    if (content.length > 1000) {
+      return { comment: null, error: { message: "Komentar terlalu panjang (maks 1000 karakter)" } };
+    }
+
+    /* Cooldown check */
+    const now = Date.now();
+    if (now - _lastCommentAt < COMMENT_COOLDOWN_MS) {
+      const sisa = Math.ceil((COMMENT_COOLDOWN_MS - (now - _lastCommentAt)) / 1000);
+      return { comment: null, error: { message: `Harap tunggu ${sisa} detik sebelum komentar lagi.` } };
+    }
+    _lastCommentAt = now;
+
+    const sanitizedContent = content
+      .trim()
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+    const { data, error } = await supabase
+      .from("comments")
+      .insert({
+        user_id:    userId,
+        komik_slug: komikSlug,
+        content:    sanitizedContent,
+        parent_id:  parentId,
+        like_count: 0
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Ambil profile user untuk response
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("username, avatar_url, level")
+      .eq("id", userId)
+      .single();
+
+    return { 
+      comment: { 
+        ...data, 
+        profiles: profile || { username: "User", avatar_url: null, level: 1 },
+        like_count: 0, 
+        replies: [] 
+      }, 
+      error: null 
+    };
+
+  } catch (err) {
+    console.error("Error in addComment:", err);
+    return { comment: null, error: err };
+  }
+}
+
+/**
+ * Hapus komentar dengan verifikasi ownership
+ */
+export async function deleteComment(commentId, userId) {
+  try {
+    // Verifikasi ownership
+    const { data: comment, error: fetchError } = await supabase
+      .from("comments")
+      .select("user_id")
+      .eq("id", commentId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (!comment) throw new Error("Komentar tidak ditemukan");
+    if (comment.user_id !== userId) {
+      throw new Error("Anda tidak memiliki izin untuk menghapus komentar ini");
+    }
+
+    // Hapus likes terlebih dahulu
+    await supabase
+      .from("comment_likes")
+      .delete()
+      .eq("comment_id", commentId);
+
+    // Hapus replies
+    await supabase
+      .from("comments")
+      .delete()
+      .eq("parent_id", commentId);
+
+    // Hapus komentar utama
+    const { error } = await supabase
+      .from("comments")
+      .delete()
+      .eq("id", commentId);
+
+    if (error) throw error;
+    return { error: null };
+
+  } catch (err) {
+    console.error("Error in deleteComment:", err);
+    return { error: err };
+  }
+}
+
+/**
+ * Like / Unlike komentar.
+ *
+ * Coba via RPC "toggle_comment_like" (SECURITY DEFINER, bypass RLS).
+ * Jika RPC belum dibuat, fallback ke insert/delete langsung.
+ *
+ * ── SQL untuk dijalankan di Supabase SQL Editor ──────────────
+ * CREATE OR REPLACE FUNCTION toggle_comment_like(
+ *   p_user_id uuid, p_comment_id uuid
+ * ) RETURNS json LANGUAGE plpgsql SECURITY DEFINER
+ * SET search_path = public AS $$
+ * DECLARE
+ *   v_exist uuid; v_count int; v_liked boolean;
+ * BEGIN
+ *   SELECT id INTO v_exist FROM comment_likes
+ *   WHERE user_id=p_user_id AND comment_id=p_comment_id LIMIT 1;
+ *   IF v_exist IS NOT NULL THEN
+ *     DELETE FROM comment_likes WHERE id=v_exist;
+ *     v_liked := false;
+ *   ELSE
+ *     INSERT INTO comment_likes(user_id,comment_id)
+ *     VALUES(p_user_id,p_comment_id) ON CONFLICT DO NOTHING;
+ *     v_liked := true;
+ *   END IF;
+ *   SELECT COUNT(*) INTO v_count FROM comment_likes WHERE comment_id=p_comment_id;
+ *   UPDATE comments SET like_count=v_count WHERE id=p_comment_id;
+ *   RETURN json_build_object('liked',v_liked,'like_count',v_count);
+ * END; $$;
+ * ─────────────────────────────────────────────────────────────
+ */
+export async function toggleLike(userId, commentId) {
+  const uid = String(userId);
+  const cid = String(commentId);
+
+  /* ── 1. Coba RPC (bypass RLS) ───────────────────────────── */
+  try {
+    const { data, error: rpcErr } = await supabase.rpc("toggle_comment_like", {
+      p_user_id: uid,
+      p_comment_id: cid,
+    });
+    if (!rpcErr && data != null) {
+      const r = typeof data === "string" ? JSON.parse(data) : data;
+      return { liked: !!r.liked, likeCount: r.like_count ?? 0, error: null };
+    }
+    if (rpcErr) console.warn("[like] RPC gagal →", rpcErr.message, "| pakai fallback");
+  } catch (ex) {
+    console.warn("[like] RPC exception →", ex, "| pakai fallback");
+  }
+
+  /* ── 2. Fallback langsung ────────────────────────────────── */
+  try {
+    /* Cek sudah like belum */
+    const { data: ex, error: exErr } = await supabase
+      .from("comment_likes").select("id")
+      .eq("user_id", uid).eq("comment_id", cid).maybeSingle();
+    if (exErr) throw exErr;
+
+    let liked;
+    if (ex) {
+      /* Unlike */
+      const { error: delErr } = await supabase
+        .from("comment_likes").delete().eq("id", ex.id);
+      if (delErr) throw delErr;
+      liked = false;
+    } else {
+      /* Like */
+      const { error: insErr } = await supabase
+        .from("comment_likes").insert({ user_id: uid, comment_id: cid });
+      if (insErr && insErr.code !== "23505") throw insErr;
+      liked = true;
+    }
+
+    /* Hitung ulang */
+    const { count } = await supabase
+      .from("comment_likes").select("*", { count: "exact", head: true })
+      .eq("comment_id", cid);
+    const newCount = count ?? (liked ? 1 : 0);
+
+    /* Update like_count — abaikan error RLS */
+    supabase.from("comments").update({ like_count: newCount }).eq("id", cid)
+      .then(({ error: upErr }) => {
+        if (upErr) console.warn("[like] like_count update diblokir RLS:", upErr.message);
+      });
+
+    return { liked, likeCount: newCount, error: null };
+  } catch (err) {
+    console.error("[like] Error:", err);
+    return { liked: false, likeCount: null, error: err };
+  }
+}
+
+/**
+ * Cek komentar mana yang sudah di-like oleh user
+ */
+export async function getLikedComments(userId) {
+  try {
+    const { data, error } = await supabase
+      .from("comment_likes")
+      .select("comment_id")
+      .eq("user_id", userId);
+
+    if (error) throw error;
+    return new Set((data || []).map(l => l.comment_id));
+
+  } catch (err) {
+    console.error("Error in getLikedComments:", err);
+    return new Set();
+  }
+}
+
+/* ============================================================
+   NOVEL — BOOKMARK
+   Tabel: novel_bookmarks (terpisah dari bookmarks komik)
+   Kolom: user_id, novel_slug, novel_title, novel_cover, kategori, created_at
+   ============================================================ */
+
+export async function addNovelBookmark(userId, novel) {
+  const { data, error } = await supabase
+    .from("novel_bookmarks")
+    .upsert({
+      user_id:     userId,
+      novel_slug:  novel.slug,
+      novel_title: novel.title,
+      novel_cover: novel.cover || "",
+      kategori:    novel.kategori || "favorit"
+    }, { onConflict: "user_id,novel_slug" })
+    .select().single();
+  return { bookmark: data, error };
+}
+
+export async function removeNovelBookmark(userId, novelSlug) {
+  const { error } = await supabase
+    .from("novel_bookmarks").delete()
+    .eq("user_id", userId).eq("novel_slug", novelSlug);
+  return { error };
+}
+
+export async function checkNovelBookmark(userId, novelSlug) {
+  const { data } = await supabase
+    .from("novel_bookmarks").select("kategori")
+    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
+  return { isBookmarked: !!data, kategori: data?.kategori || null };
+}
+
+export async function getNovelBookmarks(userId) {
+  const { data, error } = await supabase
+    .from("novel_bookmarks").select("*")
+    .eq("user_id", userId).order("created_at", { ascending: false });
+  if (error) return { bookmarks: {}, error };
+  const grouped = { favorit: [], lagi_dibaca: [], tamat: [] };
+  (data || []).forEach(b => { if (grouped[b.kategori]) grouped[b.kategori].push(b); });
+  return { bookmarks: grouped, error: null };
+}
+
+
+/* ============================================================
+   NOVEL — READING HISTORY & PROGRESS
+   Tabel: novel_reading_history
+   Kolom: user_id, novel_slug, novel_title, novel_cover,
+          chapter_slug, chapter_title, read_at
+   ============================================================ */
+
+export async function saveNovelHistory(userId, novel, chapter) {
+  const { data, error } = await supabase
+    .from("novel_reading_history")
+    .upsert({
+      user_id:       userId,
+      novel_slug:    novel.slug,
+      novel_title:   novel.title,
+      novel_cover:   novel.cover || "",
+      chapter_slug:  chapter.slug,
+      chapter_title: chapter.title || "",
+      read_at:       new Date().toISOString()
+    }, { onConflict: "user_id,novel_slug" })
+    .select().single();
+
+  /* Juga catat di novel_chapter_reads (untuk XP / level) */
+  await supabase.from("novel_chapter_reads").upsert({
+    user_id:      userId,
+    chapter_slug: chapter.slug,
+    novel_slug:   novel.slug,
+    read_at:      new Date().toISOString()
+  }, { onConflict: "user_id,chapter_slug", ignoreDuplicates: true });
+
+  /* Update total chapter di profil */
+  await updateTotalNovelChapters(userId);
+
+  return { history: data, error };
+}
+
+export async function getNovelHistory(userId) {
+  const { data, error } = await supabase
+    .from("novel_reading_history").select("*")
+    .eq("user_id", userId).order("read_at", { ascending: false }).limit(50);
+  return { history: data || [], error };
+}
+
+export async function getLastNovelRead(userId, novelSlug) {
+  const { data } = await supabase
+    .from("novel_reading_history")
+    .select("chapter_slug, chapter_title, read_at")
+    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
+  return data || null;
+}
+
+async function updateTotalNovelChapters(userId) {
+  const { count } = await supabase
+    .from("novel_chapter_reads").select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+  await supabase.from("profiles")
+    .update({ total_novel_chapters_read: count || 0 })
+    .eq("id", userId);
+}
+
+export async function getTotalNovelChaptersRead(userId) {
+  const { count, error } = await supabase
+    .from("novel_chapter_reads").select("*", { count: "exact", head: true })
+    .eq("user_id", userId);
+  return { total: count || 0, error };
+}
+
+
+/* ============================================================
+   KOMENTAR UNIVERSAL — Novel Detail & Reader
+   Menggunakan kolom komik_slug sebagai identifier universal.
+   Format slug:
+     - Komik detail  : "komik-slug"
+     - Novel detail  : "novel:novel-slug"
+     - Komik chapter : "chapter:chapter-slug"
+     - Novel chapter : "novel-chapter:chapter-slug"
+   ============================================================ */
+
+/**
+ * Ambil komentar untuk slug apapun (komik/novel/chapter)
+ * Reusable version dari getComments dengan slug bebas
+ */
+export async function getCommentsForSlug(contentSlug, limit = 50) {
+  try {
+    const { data: comments, error: commentsError } = await supabase
+      .from("comments")
+      .select("id, content, created_at, user_id, komik_slug, parent_id, like_count")
+      .eq("komik_slug", contentSlug)
+      .is("parent_id", null)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (commentsError) throw commentsError;
+    if (!comments || comments.length === 0) return { comments: [], error: null };
+
+    // Kumpulkan user_id unik
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+
+    // Fetch profiles
+    let profilesMap = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url, level")
+        .in("id", userIds);
+      (profiles || []).forEach(p => { profilesMap[p.id] = p; });
+    }
+
+    // Fetch like counts
+    const commentIds = comments.map(c => c.id);
+    let likeCountMap = {};
+    const { data: likeCounts } = await supabase
+      .from("comment_likes")
+      .select("comment_id")
+      .in("comment_id", commentIds);
+    (likeCounts || []).forEach(l => {
+      likeCountMap[l.comment_id] = (likeCountMap[l.comment_id] || 0) + 1;
+    });
+
+    // Fetch replies
+    const { data: replies } = await supabase
+      .from("comments")
+      .select("id, content, created_at, user_id, komik_slug, parent_id, like_count")
+      .in("parent_id", commentIds)
+      .order("created_at", { ascending: true });
+
+    let enrichedReplies = [];
+    if (replies && replies.length > 0) {
+      const replyUserIds = [...new Set(replies.map(r => r.user_id))].filter(id => !profilesMap[id]);
+      if (replyUserIds.length > 0) {
+        const { data: rp } = await supabase
+          .from("profiles")
+          .select("id, username, avatar_url, level")
+          .in("id", replyUserIds);
+        (rp || []).forEach(p => { profilesMap[p.id] = p; });
+      }
+      const replyIds = replies.map(r => r.id);
+      let replyLikeMap = {};
+      const { data: replyLikes } = await supabase
+        .from("comment_likes")
+        .select("comment_id")
+        .in("comment_id", replyIds);
+      (replyLikes || []).forEach(l => {
+        replyLikeMap[l.comment_id] = (replyLikeMap[l.comment_id] || 0) + 1;
+      });
+      enrichedReplies = replies.map(r => ({
+        ...r,
+        profiles: profilesMap[r.user_id] || { username: "User", avatar_url: null, level: 1 },
+        like_count: replyLikeMap[r.id] || r.like_count || 0
+      }));
+    }
+
+    const repliesByParent = {};
+    enrichedReplies.forEach(r => {
+      if (!repliesByParent[r.parent_id]) repliesByParent[r.parent_id] = [];
+      repliesByParent[r.parent_id].push(r);
+    });
+
+    const enrichedComments = comments.map(c => ({
+      ...c,
+      profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 },
+      like_count: likeCountMap[c.id] || c.like_count || 0,
+      replies: repliesByParent[c.id] || []
+    }));
+
+    return { comments: enrichedComments, error: null };
+  } catch (err) {
+    console.error("Error in getCommentsForSlug:", err);
+    return { comments: [], error: err };
+  }
+}
+
+/**
+ * Tambah komentar universal (support semua tipe konten)
+ * Wrapper tipis dari addComment yang sudah ada
+ */
+export async function addCommentForSlug(userId, contentSlug, content, parentId = null) {
+  return addComment(userId, contentSlug, content, parentId);
+}
+
+/**
+ * Ambil komentar terbaru dari seluruh platform (untuk widget home)
+ * @param {number} limit
+ */
+export async function getLastComments(limit = 6) {
+  try {
+    const { data: comments, error } = await supabase
+      .from("comments")
+      .select("id, content, created_at, user_id, komik_slug, like_count")
+      .is("parent_id", null)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    if (!comments || comments.length === 0) return { comments: [], error: null };
+
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+    let profilesMap = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url, level")
+        .in("id", userIds);
+      (profiles || []).forEach(p => { profilesMap[p.id] = p; });
+    }
+
+    return {
+      comments: comments.map(c => ({
+        ...c,
+        profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 }
+      })),
+      error: null
+    };
+  } catch (err) {
+    console.error("Error in getLastComments:", err);
+    return { comments: [], error: err };
+  }
+}
+
+/**
+ * Ambil komentar milik user sendiri (untuk tab profil)
+ * @param {string} userId
+ * @param {number} limit
+ */
+export async function getMyComments(userId, limit = 30) {
+  try {
+    const { data: comments, error } = await supabase
+      .from("comments")
+      .select("id, content, created_at, komik_slug, like_count, parent_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return { comments: comments || [], error: null };
+  } catch (err) {
+    console.error("Error in getMyComments:", err);
+    return { comments: [], error: err };
+  }
+}
