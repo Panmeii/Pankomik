@@ -414,24 +414,37 @@ async function loadDetail() {
 
 /* ── Placeholder saat gambar tidak muncul ─────────────── */
 function posterFallback(el, title) {
-  /* Multi-step: /api/img → weserv.nl → div placeholder */
-  var original = el.getAttribute("data-original") || "";
+  var original = el.getAttribute("data-original") || el.src || "";
+  var clean = original.split("?")[0];
   var step = parseInt(el.getAttribute("data-fb-step") || "0");
   step++;
   el.setAttribute("data-fb-step", step);
 
-  if (step === 1 && original) {
-    /* Step 1: weserv.nl */
-    var c = original.split("?")[0].replace(/^https?:\/\//, "");
+  if (step === 1) {
+    /* Step 1: WordPress Jetpack CDN — bypass Cloudflare untuk sakuranovel */
+    try {
+      var u = new URL(clean);
+      if (u.pathname.includes("/wp-content/")) {
+        el.src = "https://i0.wp.com/" + u.hostname + u.pathname + "?w=300&ssl=1&quality=85";
+        return;
+      }
+    } catch(e) {}
+    /* Bukan WP → langsung ke /api/img */
+    el.src = "/api/img?url=" + encodeURIComponent(clean);
+    return;
+  }
+  if (step === 2) {
+    /* Step 2: /api/img */
+    el.src = "/api/img?url=" + encodeURIComponent(clean);
+    return;
+  }
+  if (step === 3) {
+    /* Step 3: weserv.nl */
+    var c = clean.replace(/^https?:\/\//, "");
     el.src = "https://images.weserv.nl/?url=" + encodeURIComponent(c) + "&w=300&output=webp&q=80";
     return;
   }
-  if (step === 2 && original) {
-    /* Step 2: wsrv.nl */
-    el.src = "https://wsrv.nl/?url=" + encodeURIComponent(original.split("?")[0]) + "&w=300&output=webp&q=85&n=-1";
-    return;
-  }
-  /* Step 3+: placeholder div */
+  /* Step 4+: placeholder div */
   const initials = (title || "N").slice(0, 2).toUpperCase();
   el.outerHTML = `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;
     background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;flex-direction:column;
@@ -446,12 +459,37 @@ function posterFallback(el, title) {
    sakuranovel.id dilindungi Cloudflare Bot Protection
    Strategi: coba images.weserv.nl → wsrv.nl → langsung (fallback)
    ============================================================ */
+
+/* ── WordPress Jetpack CDN — bypass Cloudflare untuk sakuranovel.id ──
+   i0.wp.com adalah CDN resmi WordPress.com yang bisa serve gambar
+   dari semua WordPress site tanpa hotlink protection / Cloudflare block.
+   Format: https://i0.wp.com/{domain}/{path}?w=300&ssl=1 */
+function toWpCdn(url, width) {
+  if (!url) return "";
+  try {
+    var clean = url.split("?")[0];
+    var m = clean.match(/^https?:\/\/([^/]+)(\/.+)$/);
+    if (!m) return "";
+    var domain = m[1];
+    var path   = m[2];
+    var w = width || 300;
+    return "https://i0.wp.com/" + domain + path + "?w=" + w + "&ssl=1&quality=85";
+  } catch(e) { return ""; }
+}
+
 function proxyImg(url, width) {
   if (!url) return "";
-  if (url.includes("/api/img")) return url;
-  if (url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
+  if (url.includes("/api/img") || url.includes("wp.com") ||
+      url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
+  var w = width || 300;
+  /* WordPress.com CDN — bypass Cloudflare sakuranovel.id */
+  try {
+    var u = new URL(url);
+    if (u.pathname.includes("/wp-content/")) {
+      return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=" + w + "&ssl=1&quality=85";
+    }
+  } catch(e) {}
   var clean = url.split("?")[0];
-  /* Pakai /api/img — server otomatis redirect ke wsrv.nl jika Cloudflare blok */
   return "/api/img?url=" + encodeURIComponent(clean);
 }
 
@@ -464,11 +502,21 @@ function createProxiedImg(originalUrl, altText, cssText) {
   var step  = 0;
 
   function getUrl(n) {
-    /* Step 0: /api/img — server proxy, redirect ke wsrv.nl jika Cloudflare blok */
-    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
-    /* Step 1: weserv.nl — CDN independen */
-    if (n === 1) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean.replace(/^https?:\/\//, "")) + "&w=300&output=webp&q=80";
-    /* Step 2: direct */
+    /* Step 0: WordPress.com CDN — bypass Cloudflare */
+    if (n === 0) {
+      try {
+        var u = new URL(clean);
+        if (u.pathname.includes("/wp-content/")) {
+          return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=300&ssl=1&quality=85";
+        }
+      } catch(e) {}
+      return "/api/img?url=" + encodeURIComponent(clean);
+    }
+    /* Step 1: /api/img */
+    if (n === 1) return "/api/img?url=" + encodeURIComponent(clean);
+    /* Step 2: weserv.nl */
+    if (n === 2) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean.replace(/^https?:\/\//, "")) + "&w=300&output=webp&q=80";
+    /* Step 3: direct */
     return originalUrl;
   }
 
@@ -476,7 +524,7 @@ function createProxiedImg(originalUrl, altText, cssText) {
     step++;
     img.onerror = null;
     console.warn("[Novel Detail] img error, trying step=" + step, clean.substring(0, 70));
-    if (step <= 2) {
+    if (step <= 3) {
       img.onerror = onImgError;
       img.src = getUrl(step);
     } else {
