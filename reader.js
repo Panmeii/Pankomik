@@ -38,6 +38,8 @@ if (!slug) window.location.href = "/";
 let autoScrollInterval = null;
 let nextSlug           = null;
 let prevSlug           = null;
+/* Baca source dari sessionStorage (diset oleh detail.js) */
+let currentApiSource   = sessionStorage.getItem("komikSource") || "komikindo";
 let currentUser        = null;
 let historyWasSaved    = false;
 let allChapters        = [];
@@ -165,38 +167,42 @@ async function loadChapter() {
       if (btn) { btn.textContent = "▶️ Mulai Auto Scroll"; btn.classList.remove("running"); }
     }
 
-    /* ── Coba API 1: komikindo ── */
+    /* ── Load chapter: coba API sesuai source terakhir, fallback ke yang lain ── */
     let d = null;
-    let _apiSource = "komikindo";
+    let _apiSource = currentApiSource;
 
-    try {
-      const res = await fetch(API_CHAPTER + currentChapterSlug);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      if (!json.success || !json.data) throw new Error("API 1 invalid");
-      d = json.data;
-    } catch (err1) {
-      console.warn("[Reader] API 1 gagal, coba API 2:", err1.message);
+    /* Urutkan API berdasarkan source yang terakhir berhasil */
+    const _APIs = {
+      komikindo: { fetch: (s) => fetch(API_CHAPTER  + s).then(r=>r.json()), norm: null           },
+      mangakita: { fetch: (s) => fetch(API_CHAPTER_2 + s).then(r=>r.json()), norm: "mangakita"   },
+      bacakomik: { fetch: (s) => fetch(API_CHAPTER_3 + s).then(r=>r.json()), norm: "bacakomik"   },
+    };
+    const _order = currentApiSource === "mangakita"
+      ? ["mangakita", "bacakomik", "komikindo"]
+      : currentApiSource === "bacakomik"
+      ? ["bacakomik", "komikindo", "mangakita"]
+      : ["komikindo", "mangakita", "bacakomik"];
+
+    for (const key of _order) {
       try {
-        /* ── Fallback ke API 2: mangakita ── */
-        const res2  = await fetch(API_CHAPTER_2 + currentChapterSlug);
-        if (!res2.ok) throw new Error(`API 2 HTTP ${res2.status}`);
-        const json2 = await res2.json();
-        if (!json2.success) throw new Error("API 2 error");
-        d = _normalizeChapter(json2, "mangakita");
-        _apiSource = "mangakita";
-      } catch (err2) {
-        console.warn("[Reader] API 2 gagal, coba API 3:", err2.message);
-        /* ── Fallback ke API 3: bacakomik ── */
-        const res3  = await fetch(API_CHAPTER_3 + currentChapterSlug);
-        if (!res3.ok) throw new Error(`API 3 HTTP ${res3.status}`);
-        const json3 = await res3.json();
-        if (!json3.success) throw new Error("API 3 error");
-        d = _normalizeChapter(json3, "bacakomik");
-        _apiSource = "bacakomik";
+        const json = await _APIs[key].fetch(currentChapterSlug);
+        if (key === "komikindo") {
+          if (!json.success || !json.data) throw new Error("no data");
+          d = json.data;
+        } else {
+          if (!json.success) throw new Error("no success");
+          d = _normalizeChapter(json, key);
+        }
+        _apiSource = key;
+        break;
+      } catch(e) {
+        console.warn(`[Reader] ${key} gagal:`, e.message);
       }
     }
+    if (!d) throw new Error("Semua API gagal");
     console.log("[Reader] Loaded from:", _apiSource);
+    currentApiSource = _apiSource; /* simpan untuk navigasi next/prev */
+    sessionStorage.setItem("komikSource", _apiSource);
 
     /* Reset progress bar */
     const bar = document.getElementById("readingProgressBar");
@@ -852,16 +858,33 @@ async function autoSaveHistory() {
 /* ============================================================
    NAVIGASI CHAPTER
    ============================================================ */
+
+/* ── Cari prev/next dari allChapters (lebih reliable dari API response) ── */
+function getNavFromChapterList(currentSlug) {
+  if (!allChapters || !allChapters.length) return { prev: null, next: null };
+  const idx = allChapters.findIndex(ch => ch.slug === currentSlug);
+  if (idx < 0) return { prev: null, next: null };
+  /* allChapters urutan: [terbaru, ..., terlama] */
+  const next = idx > 0 ? allChapters[idx - 1]?.slug : null;
+  const prev = idx < allChapters.length - 1 ? allChapters[idx + 1]?.slug : null;
+  return { prev, next };
+}
+
 window.nextChapter = () => {
-  if (!nextSlug) return;
-  currentChapterSlug = nextSlug;
+  /* Prioritaskan slug dari chapter list, fallback ke navigation API */
+  const nav = getNavFromChapterList(currentChapterSlug);
+  const target = nav.next || nextSlug;
+  if (!target) return;
+  currentChapterSlug = target;
   historyWasSaved    = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
   loadChapter();
 };
 window.prevChapter = () => {
-  if (!prevSlug) return;
-  currentChapterSlug = prevSlug;
+  const nav = getNavFromChapterList(currentChapterSlug);
+  const target = nav.prev || prevSlug;
+  if (!target) return;
+  currentChapterSlug = target;
   historyWasSaved    = false;
   window.scrollTo({ top: 0, behavior: "smooth" });
   loadChapter();
