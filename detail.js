@@ -319,11 +319,65 @@ async function getDetail() {
 
     if (!candidates.length) throw new Error("Semua API gagal");
 
-    /* Pilih kandidat dengan chapter terbanyak */
+    /* ── Pilih base data dari source dengan chapter TERBANYAK ── */
     candidates.sort((a, b) => b.count - a.count);
-    const best = candidates[0];
+    const best   = candidates[0];
     const source = best.source;
     let komikDataRaw = best.data;
+
+    /* ── Merge chapter dari SEMUA source ──────────────────────
+       Masalah: API A belum update Ch.06, tapi API B sudah ada.
+       Solusi:  Kumpulkan chapter dari semua source, deduplicate
+                berdasarkan nomor chapter (bukan slug mentah),
+                lalu urutkan terbaru di atas.
+       Slug untuk reader: source terkuat (best) menang. */
+    const allChapterMaps = new Map();
+
+    /* Proses dari source TERLEMAH dulu → source terkuat (best) diproses terakhir
+       sehingga slug milik best source menimpa slug source lain.
+       Ini penting agar reader.js bisa load chapter dengan API yang benar. */
+    const _srcOrder = [...candidates].reverse(); /* terlemah → terkuat */
+    for (const c of _srcOrder) {
+      const isBest = c.source === source;
+      for (const ch of c.data.chapters) {
+        const label = ch.title || ch.slug || "";
+        const m = label.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
+               || label.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
+        if (!m) continue;
+        const num = parseFloat(m[1].replace(/[_,]/g, "."));
+        if (isNaN(num)) continue;
+        const existing = allChapterMaps.get(num);
+        allChapterMaps.set(num, {
+          /* Title: pakai yang ada dulu, best source menimpa */
+          title: (isBest && ch.title) ? ch.title : (existing?.title || ch.title || ""),
+          /* Slug: best source WAJIB menang untuk kompatibilitas reader */
+          slug:  (isBest && ch.slug)  ? ch.slug  : (existing?.slug  || ch.slug  || ""),
+          /* releaseTime: ambil yang paling informatif */
+          releaseTime: ch.releaseTime || ch.date || existing?.releaseTime || "",
+          _num: num,
+        });
+      }
+    }
+
+    /* Fallback: kalau merge kosong (semua chapter tak berformat angka),
+       gunakan chapter dari best source langsung */
+    if (allChapterMaps.size === 0) {
+      best.data.chapters.forEach((ch, i) => {
+        allChapterMaps.set(-(i), { ...ch, _num: -(i) });
+      });
+    }
+
+    /* Urutkan: nomor chapter terbesar (terbaru) di atas */
+    const mergedChapters = Array.from(allChapterMaps.values())
+      .sort((a, b) => b._num - a._num);
+
+    /* Ganti chapter list dengan hasil merge dari semua source */
+    komikDataRaw = {
+      ...komikDataRaw,
+      chapters:      mergedChapters,
+      firstChapter:  mergedChapters.length ? mergedChapters[mergedChapters.length - 1] : null,
+      latestChapter: mergedChapters.length ? mergedChapters[0] : null,
+    };
 
     /* Jika cover kosong dari source terpilih, ambil dari source lain */
     if (!komikDataRaw.cover) {
@@ -332,7 +386,7 @@ async function getDetail() {
     }
 
     komikData = komikDataRaw;
-    console.log(`[Detail] Source: ${source}, chapters: ${best.count}`);
+    console.log(`[Detail] Base: ${source} (${best.count}ch), merged: ${mergedChapters.length}ch`);
     /* Simpan source ke sessionStorage agar reader.js tahu API mana yang dipakai */
     sessionStorage.setItem("komikSource", source);
     sessionStorage.setItem("komikSlugKey", slug);
