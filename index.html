@@ -181,7 +181,7 @@
 <!-- ══════════════════════════════════════════════════════════
      WIDGET TOP KOMENTAR — ditaruh tepat di bawah Genre
 ══════════════════════════════════════════════════════════ -->
-<h2 class="section-title"><span>💬</span>Komentar Terpopuler</h2>
+<h2 class="section-title"><span>💬</span>Komentar Terbaru</h2>
 <div class="top-comments-wrap" id="topCommentsWidget">
   <!-- Skeleton loading awal -->
   <div class="top-comment-skeleton"></div>
@@ -240,11 +240,11 @@
 <script type="module">
 /* ================================================================
    TOP KOMENTAR TERPOPULER
-   - Ambil dari Supabase: 6 komentar like_count tertinggi
+   - Ambil dari Supabase: 6 komentar terbaru dari semua konten
    - Resolusi lokasi (komik / novel / chapter) dari komik_slug
    - Klik card → navigasi langsung ke halaman konten tersebut
    ================================================================ */
-import { getTopComments } from "/supabase.js";
+import { getLastComments } from "/supabase.js";
 
 /* ── Escape HTML ── */
 function esc(str) {
@@ -314,7 +314,7 @@ async function loadTopComments() {
   if (!widget) return;
 
   try {
-    const { comments, error } = await getTopComments(6);
+    const { comments, error } = await getLastComments(6);
 
     if (error || !comments || comments.length === 0) {
       widget.innerHTML = `
