@@ -324,6 +324,9 @@ async function getDetail() {
     /* Simpan source ke sessionStorage agar reader.js tahu API mana yang dipakai */
     sessionStorage.setItem("komikSource", source);
     sessionStorage.setItem("komikSlugKey", slug);
+    /* Bug fix: simpan komikSlug yang benar ke sessionStorage sebagai fallback
+       untuk reader.js — menggantikan nilai stale dari komik sebelumnya */
+    sessionStorage.setItem("komikSlug", slug);
     document.title = `${komikData.title} — Pankomik`;
     await tampilkanDetail(komikData);
     await loadComments();
