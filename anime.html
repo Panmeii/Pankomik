@@ -574,7 +574,6 @@ window.switchTab = function(tab, btn) {
 /* ── Proxy img ────────────────────────────────────────────── */
 function pImg(url, w=300) {
   return url || "";
-}&w=${w}&output=webp&q=80`;
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -712,7 +711,7 @@ async function loadGenres() {
     const json = await res.json();
     const list = json.data?.genreList || [];
     el.innerHTML = list.map(g =>
-      `<div class="genre-chip-anime" onclick="window.location.href=window._animeGenreURL(g.genreId)">
+      `<div class="genre-chip-anime" onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')">
         ${esc(g.title)}
       </div>`
     ).join('');
