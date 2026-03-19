@@ -437,18 +437,56 @@ async function loadDetail() {
           <span class="ep-count">${epList.length ? epList.length + " episode" : "?"}</span>
         </div>
         ${epList.length === 0 ? `
-          <div style="text-align:center;padding:30px 20px;color:var(--text-muted);">
-            <div style="font-size:36px;margin-bottom:10px;">📡</div>
-            <p style="font-size:13px;margin-bottom:6px;">Daftar episode tidak tersedia secara otomatis.</p>
-            <p style="font-size:11px;margin-bottom:14px;color:#555;">
-              Slug dicoba: ${esc(ep1Slugs.join(", "))}
-            </p>
-            <button onclick="watchEpisode('${esc(ep1ForWatch)}')"
-              style="padding:9px 20px;background:var(--anime-accent);color:#fff;border:none;
-                border-radius:9px;cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;
-                font-size:13px;">
-              ▶ Coba Tonton Episode 1
-            </button>
+          <div style="padding:20px 0;">
+            <div style="text-align:center;padding:0 0 16px;">
+              <div style="font-size:36px;margin-bottom:8px;">📡</div>
+              <p style="font-size:13px;margin-bottom:4px;color:var(--text-muted);">
+                Episode tidak terdeteksi otomatis.
+              </p>
+              <p style="font-size:10px;color:#444;margin-bottom:14px;">
+                Coba tonton langsung atau cari secara manual di bawah.
+              </p>
+              <button onclick="watchEpisode('${esc(ep1ForWatch)}')"
+                style="padding:9px 18px;background:var(--anime-accent);color:#fff;border:none;
+                  border-radius:9px;cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;
+                  font-size:13px;margin-bottom:10px;display:block;width:100%;">
+                ▶ Coba Tonton Episode 1
+              </button>
+              <a href="https://otakudesu.blog/anime/${animeId}/"
+                target="_blank" rel="noopener"
+                style="display:block;padding:9px 18px;background:var(--bg-card);color:var(--text);
+                  border:1.5px solid var(--border);border-radius:9px;font-weight:800;
+                  font-family:'Nunito',sans-serif;font-size:12px;text-decoration:none;
+                  margin-bottom:14px;text-align:center;">
+                🌐 Buka di OtakuDesu
+              </a>
+            </div>
+            
+            <!-- Input manual episode ID -->
+            <div style="background:var(--bg-surface);border:1px solid var(--border);
+              border-radius:10px;padding:12px;">
+              <p style="font-size:11px;font-weight:800;color:var(--text-muted);
+                text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">
+                🔍 Cari Episode Manual
+              </p>
+              <p style="font-size:11px;color:#555;margin-bottom:8px;">
+                Contoh: <code style="color:var(--anime-accent2);font-size:10px;">namaanime-episode-1-sub-indo</code>
+              </p>
+              <div style="display:flex;gap:6px;">
+                <input id="manualEpInput" type="text"
+                  placeholder="episode-id-sub-indo"
+                  style="flex:1;padding:8px 10px;background:var(--bg-card);
+                    border:1px solid var(--border);border-radius:8px;
+                    color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;
+                    outline:none;">
+                <button onclick="watchEpisode(document.getElementById('manualEpInput').value.trim())"
+                  style="padding:8px 14px;background:var(--anime-accent);color:#fff;
+                    border:none;border-radius:8px;cursor:pointer;font-weight:800;
+                    font-family:'Nunito',sans-serif;font-size:12px;white-space:nowrap;">
+                  Tonton ▶
+                </button>
+              </div>
+            </div>
           </div>` :
           [...epList].reverse().map((ep, i) => `
             <div class="ep-item" onclick="watchEpisode('${esc(ep.episodeId)}')">
@@ -480,8 +518,12 @@ async function loadDetail() {
 
 
 window.watchEpisode = function(episodeId) {
-  if (!episodeId) return;
-  window.location.href = window._animeWatchURL(episodeId);
+  const id = (episodeId || "").trim();
+  if (!id) {
+    alert("Masukkan episode ID terlebih dahulu.");
+    return;
+  }
+  window.location.href = window._animeWatchURL(id);
 };
 
 window.toggleSyn = function() {
