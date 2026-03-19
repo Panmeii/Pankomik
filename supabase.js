@@ -300,14 +300,25 @@ export async function getHistory(userId) {
 /**
  * Ambil chapter terakhir yang dibaca untuk satu komik
  * (dipakai untuk fitur "Lanjut Baca" di detail page)
+ *
+ * Bug fix: destructure error juga — .single() throw PGRST116 jika
+ * tidak ada baris, yang sebelumnya di-silent dan bisa menyebabkan
+ * data berisi undefined (bukan null) di beberapa versi Supabase client.
  */
 export async function getLastRead(userId, komikSlug) {
-  const { data } = await supabase
+  if (!userId || !komikSlug) return null;
+  const { data, error } = await supabase
     .from("reading_history")
     .select("chapter_slug, chapter_number, read_at")
     .eq("user_id", userId)
     .eq("komik_slug", komikSlug)
-    .single();
+    .order("read_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();          /* maybeSingle: tidak error kalau 0 baris */
+  if (error) {
+    console.warn("[getLastRead] Error:", error.message);
+    return null;
+  }
   return data || null;
 }
 
