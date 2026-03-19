@@ -674,11 +674,96 @@ window.switchTab = function (tab) {
 /* ============================================================
    BOOKMARK
    ============================================================ */
+/* ============================================================
+   BOOKMARK KOMIK — hanya slug yang TIDAK ber-prefix "anime:"
+   ============================================================ */
 async function loadBookmarks() {
   const { bookmarks } = await getBookmarks(currentUser.id);
-  bookmarkData = bookmarks;
+  /* Saring: hapus entry yang slug-nya mulai dengan "anime:" */
+  bookmarkData = {
+    favorit:     (bookmarks.favorit     || []).filter(b => !b.komik_slug?.startsWith("anime:")),
+    lagi_dibaca: (bookmarks.lagi_dibaca || []).filter(b => !b.komik_slug?.startsWith("anime:")),
+    tamat:       (bookmarks.tamat       || []).filter(b => !b.komik_slug?.startsWith("anime:")),
+  };
   renderBookmarks(activeKategori);
 }
+
+/* ============================================================
+   ANIME BOOKMARK — hanya slug yang ber-prefix "anime:"
+   ============================================================ */
+let animeBookmarkData    = {};
+let activeAnimeKategori  = "favorit";
+let _animeBookmarkLoaded = false;
+
+async function loadAnimeBookmarks() {
+  if (!_animeBookmarkLoaded) {
+    const { bookmarks } = await getBookmarks(currentUser.id);
+    /* Saring: hanya entry yang slug-nya mulai dengan "anime:" */
+    animeBookmarkData = {
+      favorit:     (bookmarks.favorit     || []).filter(b => b.komik_slug?.startsWith("anime:")),
+      lagi_dibaca: (bookmarks.lagi_dibaca || []).filter(b => b.komik_slug?.startsWith("anime:")),
+      tamat:       (bookmarks.tamat       || []).filter(b => b.komik_slug?.startsWith("anime:")),
+    };
+    _animeBookmarkLoaded = true;
+  }
+  renderAnimeBookmarks(activeAnimeKategori);
+}
+
+function renderAnimeBookmarks(kategori) {
+  const list = animeBookmarkData[kategori] || [];
+  const el   = document.getElementById("animeBookmarkList");
+  if (!el) return;
+  if (!list.length) {
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada anime di kategori ini.</p>
+      <p style="font-size:11px;margin-top:4px;color:var(--text-muted);">
+        Buka halaman detail anime dan tap tombol bookmark untuk menambahkan.
+      </p></div>`;
+    return;
+  }
+  el.innerHTML = list.map(bm => {
+    /* Slug bersih tanpa prefix "anime:" untuk navigasi */
+    const cleanSlug = bm.komik_slug.replace(/^anime:/, "");
+    return `
+      <div class="komik-list-item">
+        ${bm.komik_cover
+          ? `<img src="${bm.komik_cover}" alt="${bm.komik_title}"
+              style="width:50px;height:68px;object-fit:cover;border-radius:6px;
+                     flex-shrink:0;cursor:pointer;border:1px solid rgba(108,99,255,0.2);"
+              onclick="gotoAnimeDetail('${cleanSlug}')"
+              onerror="this.style.display='none'">`
+          : `<div style="width:50px;height:68px;background:rgba(108,99,255,0.08);
+              border-radius:6px;flex-shrink:0;display:flex;align-items:center;
+              justify-content:center;font-size:22px;">⚡</div>`}
+        <div class="komik-list-info" onclick="gotoAnimeDetail('${cleanSlug}')" style="cursor:pointer">
+          <div class="title">${bm.komik_title || cleanSlug}</div>
+          <p style="color:#a78bfa;font-size:11px;">⚡ Anime</p>
+          <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID")}</p>
+        </div>
+        <div class="komik-list-actions">
+          <button class="btn-sm primary" onclick="gotoAnimeDetail('${cleanSlug}')">Buka</button>
+          <button class="btn-sm" onclick="hapusAnimeBookmark('${bm.komik_slug}',this)">Hapus</button>
+        </div>
+      </div>`;
+  }).join("");
+}
+
+window.filterAnimeKategori = function(kategori, btn) {
+  activeAnimeKategori = kategori;
+  document.querySelectorAll("#content-anime-bookmark .kategori-btn")
+    .forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderAnimeBookmarks(kategori);
+};
+
+window.hapusAnimeBookmark = async function(fullSlug, btn) {
+  btn.textContent = "..."; btn.disabled = true;
+  /* fullSlug sudah mengandung prefix "anime:", langsung pakai removeBookmark */
+  await removeBookmark(currentUser.id, fullSlug);
+  _animeBookmarkLoaded = false;
+  await loadAnimeBookmarks();
+};
+
+window.gotoAnimeDetail = slug => window.location.href = `/anime/detail/${slug}`;
 
 function renderBookmarks(kategori) {
   const list = bookmarkData[kategori] || [];
@@ -1100,71 +1185,8 @@ function showFormMsg(id, text, type) {
    HELPERS
    ============================================================ */
 /* ============================================================
-   ANIME BOOKMARK
+   NOVEL BOOKMARK
    ============================================================ */
-let animeBookmarkData   = {};
-let activeAnimeKategori = "favorit";
-
-async function loadAnimeBookmarks() {
-  try {
-    const { getAnimeBookmarks } = await import("/supabase.js");
-    const { bookmarks } = await getAnimeBookmarks(currentUser.id);
-    animeBookmarkData = bookmarks || {};
-  } catch(e) {
-    console.error("loadAnimeBookmarks:", e);
-    animeBookmarkData = {};
-  }
-  renderAnimeBookmarks(activeAnimeKategori);
-}
-
-function renderAnimeBookmarks(kategori) {
-  const list = animeBookmarkData[kategori] || [];
-  const el   = document.getElementById("animeBookmarkList");
-  if (!el) return;
-  if (!list.length) {
-    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada anime di kategori ini.</p><p style="font-size:11px;margin-top:4px;">Buka halaman detail anime dan tap ＋ Simpan.</p></div>`;
-    return;
-  }
-  el.innerHTML = list.map(bm => `
-    <div class="komik-list-item">
-      ${bm.anime_poster
-        ? `<img src="${bm.anime_poster}" alt="${bm.anime_title}"
-            style="width:50px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer;border:1px solid rgba(108,99,255,0.2);"
-            onclick="gotoAnimeDetail('${bm.anime_slug}')"
-            onerror="this.style.display='none'">`
-        : `<div style="width:50px;height:68px;background:rgba(108,99,255,0.08);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;">⚡</div>`}
-      <div class="komik-list-info" onclick="gotoAnimeDetail('${bm.anime_slug}')" style="cursor:pointer">
-        <div class="title">${bm.anime_title || bm.anime_slug}</div>
-        <p style="color:var(--text-muted);font-size:11px;">⚡ Anime</p>
-        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
-      </div>
-      <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="gotoAnimeDetail('${bm.anime_slug}')">Buka</button>
-        <button class="btn-sm" onclick="hapusAnimeBookmark('${bm.anime_slug}',this)">Hapus</button>
-      </div>
-    </div>`).join("");
-}
-
-window.filterAnimeKategori = function(kategori, btn) {
-  activeAnimeKategori = kategori;
-  document.querySelectorAll("#content-anime-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  renderAnimeBookmarks(kategori);
-};
-
-window.hapusAnimeBookmark = async function(slug, btn) {
-  btn.textContent = "..."; btn.disabled = true;
-  try {
-    const { removeAnimeBookmark } = await import("/supabase.js");
-    await removeAnimeBookmark(currentUser.id, slug);
-  } catch(e) { console.error(e); }
-  await loadAnimeBookmarks();
-};
-
-window.gotoAnimeDetail = slug => window.location.href = `/anime/detail/${slug}`;
-
-/* ============================================================
-   NOVEL functions (existing)
 let novelBookmarkData   = {};
 let activeNovelKategori = "favorit";
 
