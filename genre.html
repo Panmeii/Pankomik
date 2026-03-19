@@ -469,25 +469,32 @@ function proxyImg(url) {
   if (!url || url === "undefined" || url === "null") return "";
   if (url.startsWith("data:image/svg") && url.includes("viewBox")) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl")) return url;
-  /* Strip query agar tidak duplikat params WordPress ?resize= */
+
+  try {
+    var host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
+    /* i0-i3.wp.com = Jetpack CDN WordPress — bisa akses langsung dari browser */
+    /* Cukup buang query string ?resize= dan pakai URL asli */
+    if (host === "i0.wp.com" || host === "i1.wp.com" ||
+        host === "i2.wp.com" || host === "i3.wp.com") {
+      return url.split("?")[0];
+    }
+  } catch(e) {}
+
+  /* Domain lain: tetap pakai wsrv.nl dengan referer */
   var clean = url.split("?")[0];
-  /* Referer spoofing — bypass hotlink protection tiap domain */
   var ref = "";
   try {
-    var host = new URL(clean.startsWith("http") ? clean : "https://" + clean).hostname;
-    if (host.indexOf("mangakita") !== -1) ref = "https://mangakita.me";
-    else if (host === "i0.wp.com" || host === "i1.wp.com" || host === "i2.wp.com" || host === "i3.wp.com") ref = "https://mangakita.me";
-    else if (host.indexOf("bacakomik") !== -1) ref = "https://bacakomik.my";
-    else if (host.indexOf("komikindo") !== -1) ref = "https://komikindo.org";
-    else if (host.indexOf("komikcast") !== -1) ref = "https://komikcast.me";
-    else if (host.indexOf("maid.my.id") !== -1) ref = "https://www.maid.my.id";
-    else ref = "https://" + host;
+    var h = new URL(clean.startsWith("http") ? clean : "https://" + clean).hostname;
+    if (h.indexOf("bacakomik") !== -1) ref = "https://bacakomik.my";
+    else if (h.indexOf("komikindo") !== -1) ref = "https://komikindo.org";
+    else if (h.indexOf("komikcast") !== -1) ref = "https://komikcast.me";
+    else if (h.indexOf("maid.my.id") !== -1) ref = "https://www.maid.my.id";
+    else ref = "https://" + h;
   } catch(e) {}
   var q = "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1";
   if (ref) q += "&ref=" + encodeURIComponent(ref);
   return q;
 }
-
 /* ============================================================
    GENRE PAGE — genre.js (inline)
    ============================================================ */
