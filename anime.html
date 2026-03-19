@@ -738,36 +738,113 @@ async function loadGenres() {
   }
 }
 
-/* ── SEARCH ───────────────────────────────────────────────── */
+/* ── SEARCH  (GET /anime/search/:keyword) ─────────────────── */
 let searchTimer = null;
+let lastQuery   = "";
+
 window.searchAnime = function(q) {
   clearTimeout(searchTimer);
   const result = document.getElementById("animeSearchResult");
-  if (!q || q.length < 2) { result.style.display = "none"; return; }
+  const trimmed = q.trim();
+
+  /* Sembunyikan jika kosong */
+  if (!trimmed || trimmed.length < 2) {
+    result.style.display = "none";
+    lastQuery = "";
+    return;
+  }
+
+  /* Tampilkan skeleton sementara menunggu debounce */
+  result.style.display = "block";
+  result.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;color:var(--text-muted);font-size:13px;">
+      <div class="spin-ring" style="width:18px;height:18px;border-width:2px;"></div>
+      Mencari "<strong style="color:var(--anime-accent2);">${esc(trimmed)}</strong>"...
+    </div>`;
+
   searchTimer = setTimeout(async () => {
+    if (trimmed === lastQuery) return; /* Tidak perlu fetch ulang */
+    lastQuery = trimmed;
+
     try {
-      const res  = await fetch(`${API}/anime/search?q=${encodeURIComponent(q)}`);
+      const res  = await fetch(`${API}/anime/search/${encodeURIComponent(trimmed)}`);
       const json = await res.json();
+
+      if (!json.ok) throw new Error(json.message || "API error");
+
       const list = json.data?.animeList || [];
-      if (!list.length) { result.style.display = "none"; return; }
-      result.style.display = "block";
-      result.innerHTML = list.slice(0,8).map(a => `
-        <div class="anime-search-item" onclick="gotoAnime('${esc(a.animeId||a.slug||"")}')">
-          ${a.poster ? `<img src="${esc(a.poster)}" alt="${esc(a.title)}" loading="lazy">` : ""}
-          <div class="asi-info">
-            <p>${esc(a.title)}</p>
-            <p>${esc(a.score ? "⭐ "+a.score : a.season||"")}</p>
-          </div>
-        </div>`).join("");
-    } catch(e) { result.style.display = "none"; }
-  }, 350);
+
+      if (!list.length) {
+        result.innerHTML = `
+          <div style="padding:18px 14px;text-align:center;color:var(--text-muted);font-size:13px;">
+            <div style="font-size:28px;margin-bottom:6px;">🔍</div>
+            Tidak ada hasil untuk "<strong>${esc(trimmed)}</strong>"
+          </div>`;
+        return;
+      }
+
+      result.innerHTML = list.slice(0, 8).map(a => {
+        const id     = a.animeId || "";
+        const genres = (a.genreList || []).slice(0, 3).map(g => esc(g.title)).join(", ");
+        const status = a.status || "";
+        const statusColor = status.toLowerCase() === "ongoing" ? "#f5a623" : "#27ae60";
+        return `
+          <div class="anime-search-item" onclick="gotoAnime('${esc(id)}')">
+            ${a.poster
+              ? `<img src="${esc(a.poster)}" alt="${esc(a.title)}" loading="lazy"
+                  onerror="this.style.display='none'">`
+              : `<div style="width:38px;height:54px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">⚡</div>`}
+            <div class="asi-info" style="flex:1;min-width:0;">
+              <p style="font-size:12px;font-weight:800;color:var(--text);
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${esc(a.title)}
+              </p>
+              <p style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
+                ${a.score
+                  ? `<span style="color:#f5a623;font-size:10px;font-weight:700;">⭐ ${esc(a.score)}</span>`
+                  : ""}
+                ${status
+                  ? `<span style="font-size:10px;font-weight:700;color:${statusColor};">${esc(status)}</span>`
+                  : ""}
+              </p>
+              ${genres
+                ? `<p style="font-size:10px;color:var(--text-muted);margin-top:2px;
+                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${genres}</p>`
+                : ""}
+            </div>
+          </div>`;
+      }).join("") +
+      /* Footer jumlah hasil */
+      `<div style="padding:8px 14px;text-align:center;font-size:11px;
+        color:var(--text-muted);border-top:1px solid var(--border);">
+        ${list.length > 8 ? `Menampilkan 8 dari ${list.length} hasil` : `${list.length} hasil ditemukan`}
+      </div>`;
+
+    } catch(e) {
+      console.error("[Search]", e);
+      result.innerHTML = `
+        <div style="padding:14px;text-align:center;color:var(--text-muted);font-size:13px;">
+          <div style="font-size:24px;margin-bottom:6px;">😕</div>
+          Gagal mencari. Coba lagi.
+        </div>`;
+    }
+  }, 400);
 };
 
-/* Tutup search result kalau klik di luar */
+/* Tutup search result kalau klik di luar / tekan Escape */
 document.addEventListener("click", e => {
   const inp = document.getElementById("animeSearchInput");
   const res = document.getElementById("animeSearchResult");
   if (res && !res.contains(e.target) && e.target !== inp) res.style.display = "none";
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    const inp = document.getElementById("animeSearchInput");
+    const res = document.getElementById("animeSearchResult");
+    if (inp) { inp.value = ""; inp.blur(); }
+    if (res) res.style.display = "none";
+    lastQuery = "";
+  }
 });
 
 window.toggleDarkMode = () => {
