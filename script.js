@@ -170,16 +170,61 @@ function normalizeMKLatest(k) {
   };
 }
 
-/* ── Merge dua list latest, deduplicate by slug ── */
+/* ── Ekstrak angka chapter dari title/slug ───────────────── */
+function extractChapterNum(str) {
+  if (!str) return -1;
+  /* Coba dari title: "Chapter 123", "Ch.45", "Chapter 12.5" */
+  const m = str.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
+    || str.match(/([\d]+(?:[.,][\d]+)?)$/);
+  return m ? parseFloat(m[1].replace(",", ".")) : -1;
+}
+
+/* ── Format chapter number jadi "Ch.01", "Ch.123", "Ch.12.5" ── */
+function formatChapterLabel(chTitle, chSlug) {
+  /* Coba ekstrak angka dari title dulu, lalu dari slug */
+  const raw = chTitle || chSlug || "";
+  const m = raw.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
+    || raw.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
+  if (!m) return chTitle || "–";          /* Tidak ada angka, tampilkan apa adanya */
+  const num = m[1].replace(/[_-]/g, ".");
+  /* Pad angka utama ke minimal 2 digit jika <= 99 */
+  const [main, sub] = num.split(".");
+  const padded = parseInt(main) < 100 ? main.padStart(2, "0") : main;
+  return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
+}
+
+/* ── Merge dua list latest, deduplicate by slug.
+   Jika slug sama, ambil yang chapter number-nya LEBIH BESAR
+   agar update terbaru selalu menang meski dari API berbeda. ── */
 function mergeLatestLists(list1, list2) {
-  const seen = new Set();
-  const merged = [];
+  const map = new Map();
+
+  const getLatestChNum = (komik) => {
+    const ch = (komik.chapters && komik.chapters[0]) || {};
+    return extractChapterNum(ch.title || "") || extractChapterNum(ch.slug || "");
+  };
+
   for (const k of [...list1, ...list2]) {
-    if (!k.slug || seen.has(k.slug)) continue;
-    seen.add(k.slug);
-    merged.push(k);
+    if (!k.slug) continue;
+    if (!map.has(k.slug)) {
+      map.set(k.slug, k);
+    } else {
+      /* Sudah ada entri untuk slug ini — bandingkan chapter number */
+      const existing = map.get(k.slug);
+      const numExist = getLatestChNum(existing);
+      const numNew   = getLatestChNum(k);
+      /* Ganti dengan yang chapter-nya lebih tinggi */
+      if (numNew > numExist) {
+        map.set(k.slug, {
+          ...existing,         /* pertahankan cover/type dari entri lama jika baru kosong */
+          image: k.image || existing.image,
+          chapters: k.chapters,
+          _src: k._src,
+        });
+      }
+    }
   }
-  return merged;
+  return Array.from(map.values());
 }
 
 /* ── ANIMASI MASUK ──────────────────────────────────────── */
@@ -321,6 +366,9 @@ function renderLatest(list, container) {
     const chDate   = latestCh.date  || komik.date || komik.time || "";
     const chSlug   = latestCh.slug  || komik.slug;
 
+    /* Format label chapter: "Chapter 123" → "Ch.123", pad 2 digit */
+    const chLabel  = formatChapterLabel(chTitle, chSlug);
+
     const card = document.createElement("div");
     card.className = "grid-card";
 
@@ -333,7 +381,7 @@ function renderLatest(list, container) {
         <p class="title">${escHtml(title)}</p>
         <div class="grid-meta">
           <div class="grid-ch-row">
-            <span class="grid-chapter" title="${escHtml(chTitle)}">📖 ${escHtml(chTitle) || "–"}</span>
+            <span class="grid-chapter" title="${escHtml(chTitle)}">📖 ${escHtml(chLabel)}</span>
             ${chSlug ? `<a class="grid-ch-link" href="${readerURL(chSlug, komik.slug)}" onclick="event.stopPropagation()">Baca ▶</a>` : ""}
           </div>
           <span class="grid-date">🕐 ${escHtml(chDate) || "–"}</span>
