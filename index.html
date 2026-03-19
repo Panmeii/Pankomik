@@ -29,6 +29,117 @@
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     #infiniteHint { text-align: center; font-size: 11px; color: var(--text-muted); padding: 4px 0 2px; }
+
+    /* ═══════════════════════════════════════════════════════════
+       WIDGET TOP KOMENTAR
+    ═══════════════════════════════════════════════════════════ */
+    .top-comments-wrap { padding: 0 14px 4px; }
+
+    .top-comment-card {
+      display: flex;
+      gap: 10px;
+      padding: 11px 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 8px;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+    }
+    /* Garis aksen kiri saat hover */
+    .top-comment-card::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--accent);
+      border-radius: 3px 0 0 3px;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .top-comment-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 4px 16px rgba(232,82,42,0.12);
+    }
+    .top-comment-card:hover::before { opacity: 1; }
+    .top-comment-card:active { transform: scale(0.98); }
+
+    /* Avatar */
+    .top-comment-avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 15px; color: #fff;
+      flex-shrink: 0; overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.07);
+    }
+    .top-comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Body */
+    .top-comment-body { flex: 1; min-width: 0; }
+
+    /* Baris 1: nama + level + lokasi */
+    .top-comment-meta {
+      display: flex; align-items: center; gap: 5px;
+      margin-bottom: 4px;
+    }
+    .top-comment-user {
+      font-size: 12px; font-weight: 800; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 85px;
+    }
+    .top-comment-level {
+      font-size: 9px; font-weight: 800;
+      background: var(--accent); color: #fff;
+      padding: 1px 5px; border-radius: 99px; flex-shrink: 0;
+    }
+    /* Pill lokasi — di mana komentar ini berada */
+    .top-comment-loc {
+      margin-left: auto;
+      display: inline-flex; align-items: center; gap: 3px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 2px 7px;
+      max-width: 140px; flex-shrink: 0;
+    }
+    .top-comment-loc-icon { font-size: 10px; flex-shrink: 0; }
+    .top-comment-loc-text {
+      font-size: 10px; font-weight: 700; color: var(--text-muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Baris 2: isi komentar */
+    .top-comment-text {
+      font-size: 13px; line-height: 1.5; color: var(--text);
+      display: -webkit-box;
+      -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; word-break: break-word;
+      margin-bottom: 6px;
+    }
+
+    /* Baris 3: like count + tanda klik */
+    .top-comment-footer { display: flex; align-items: center; gap: 6px; }
+    .top-comment-likes {
+      font-size: 11px; font-weight: 800; color: #ff4060;
+      display: flex; align-items: center; gap: 3px;
+    }
+    .top-comment-goto {
+      margin-left: auto; font-size: 10px; font-weight: 700;
+      color: var(--accent);
+      opacity: 0; transition: opacity 0.2s;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .top-comment-card:hover .top-comment-goto { opacity: 1; }
+
+    /* Skeleton */
+    .top-comment-skeleton {
+      height: 86px; border-radius: 12px; margin-bottom: 8px;
+      background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite;
+    }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -47,9 +158,11 @@
 <div class="toast-container" id="toastContainer"></div>
 <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
 
+<!-- Top Komik slider -->
 <h2 class="section-title"><span>🔥</span>Top Komik</h2>
 <div id="topKomik" class="slider"></div>
 
+<!-- Genre chips -->
 <div class="genre-section-wrap">
   <div class="genre-section-header">
     <h2 class="section-title" style="padding:0;margin:0;"><span>🏷️</span>Genre</h2>
@@ -65,6 +178,19 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════════════════════════
+     WIDGET TOP KOMENTAR — ditaruh tepat di bawah Genre
+══════════════════════════════════════════════════════════ -->
+<h2 class="section-title"><span>💬</span>Komentar Terpopuler</h2>
+<div class="top-comments-wrap" id="topCommentsWidget">
+  <!-- Skeleton loading awal -->
+  <div class="top-comment-skeleton"></div>
+  <div class="top-comment-skeleton"></div>
+  <div class="top-comment-skeleton"></div>
+  <div class="top-comment-skeleton"></div>
+</div>
+
+<!-- Komik terbaru -->
 <h2 class="section-title"><span>🆕</span>Update Terbaru</h2>
 <div id="komikLatest" class="grid-komik"></div>
 
@@ -72,101 +198,17 @@
   <div class="skeleton-pulse"></div><div class="skeleton-pulse"></div>
   <div class="skeleton-pulse"></div><div class="skeleton-pulse"></div>
 </div>
-
 <div id="loadMoreWrap">
   <p id="infiniteHint">Scroll ke bawah atau tekan tombol untuk muat lebih banyak</p>
   <span id="pageInfo"></span>
   <button id="loadMoreBtn" onclick="loadMore()">Muat Lebih Banyak ↓</button>
 </div>
 
+<!-- Rekomendasi -->
 <h2 class="section-title"><span>⭐</span>Rekomendasi</h2>
 <div id="komikRekomen" class="rekom-container"></div>
 
-<!-- ── Widget Top Komentar Teratas ──────────────────────── -->
-<style>
-  .top-comments-section {
-    padding: 0 14px 16px;
-  }
-  .top-comment-card {
-    display: flex;
-    gap: 10px;
-    padding: 12px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 8px;
-    transition: transform 0.15s, border-color 0.15s;
-    cursor: default;
-    text-decoration: none;
-  }
-  .top-comment-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent);
-  }
-  .top-comment-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: var(--accent);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 14px; color: #fff;
-    flex-shrink: 0; overflow: hidden;
-  }
-  .top-comment-avatar img {
-    width: 100%; height: 100%; object-fit: cover;
-  }
-  .top-comment-body { flex: 1; min-width: 0; }
-  .top-comment-meta {
-    display: flex; align-items: center; gap: 6px;
-    flex-wrap: wrap; margin-bottom: 4px;
-  }
-  .top-comment-user {
-    font-size: 12px; font-weight: 800;
-    color: var(--text);
-  }
-  .top-comment-level {
-    font-size: 9px; font-weight: 700;
-    background: var(--accent); color: #fff;
-    padding: 1px 6px; border-radius: 99px;
-  }
-  .top-comment-source {
-    font-size: 10px; color: var(--text-muted);
-    margin-left: auto;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100px;
-  }
-  .top-comment-text {
-    font-size: 13px; color: var(--text);
-    line-height: 1.5;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    word-break: break-word;
-    margin-bottom: 5px;
-  }
-  .top-comment-likes {
-    font-size: 11px; font-weight: 700;
-    color: #ff4060;
-    display: flex; align-items: center; gap: 4px;
-  }
-  /* Skeleton top komentar */
-  .top-comment-skeleton {
-    height: 74px; border-radius: 12px; margin-bottom: 8px;
-    background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.4s infinite;
-  }
-</style>
-
-<h2 class="section-title"><span>🔥</span>Komentar Terpopuler</h2>
-<div class="top-comments-section" id="topCommentsWidget">
-  <div class="top-comment-skeleton"></div>
-  <div class="top-comment-skeleton"></div>
-  <div class="top-comment-skeleton"></div>
-</div>
-
-<!-- ── Bottom Navigation ── -->
+<!-- Bottom Navigation -->
 <nav class="bottom-nav">
   <button class="nav-item active" onclick="window.location.href='/'">
     <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
@@ -185,93 +227,172 @@
   </button>
 </nav>
 
+<!-- Auth header -->
 <script type="module">
   import { initAuthHeader } from "/auth-header.js";
   initAuthHeader();
 </script>
+
+<!-- Script utama halaman -->
 <script src="/script.js"></script>
+
+<!-- Widget Top Komentar -->
 <script type="module">
-  /* ── Widget Top Komentar Terpopuler ── */
-  import { getTopComments } from "/supabase.js";
+/* ================================================================
+   TOP KOMENTAR TERPOPULER
+   - Ambil dari Supabase: 6 komentar like_count tertinggi
+   - Resolusi lokasi (komik / novel / chapter) dari komik_slug
+   - Klik card → navigasi langsung ke halaman konten tersebut
+   ================================================================ */
+import { getTopComments } from "/supabase.js";
 
-  function escHtml(str) {
-    return String(str || "")
-      .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-      .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+/* ── Escape HTML ── */
+function esc(str) {
+  return String(str || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+/**
+ * Konversi komik_slug ke { icon, label, url }
+ *
+ * Aturan prefix slug:
+ *   "novel-chapter:{chapter-slug}"  → baca chapter novel
+ *   "novel:{novel-slug}"            → detail novel
+ *   "chapter:{chapter-slug}"        → baca chapter komik
+ *   "{komik-slug}"                  → detail komik (tanpa prefix)
+ */
+function resolveLocation(raw) {
+  if (!raw) return { icon: "💬", label: "Pankomik", url: "/" };
+
+  /* ── 1. Chapter novel ─────────────────────────── */
+  if (raw.startsWith("novel-chapter:")) {
+    const slug  = raw.slice("novel-chapter:".length);
+    /* Ambil nama novel: potong "-chapter-N" di akhir */
+    const name  = slug
+      .replace(/-chapter-[\d-]+$/i, "")
+      .replace(/-vol(ume)?-[\d]+/i, "")
+      .replace(/-/g, " ")
+      .replace(/\b./g, c => c.toUpperCase())
+      .trim().slice(0, 24) || "Chapter Novel";
+    return { icon: "📖", label: name, url: `/baca-novel/${slug}` };
   }
 
-  function formatSlugLabel(komikSlug) {
-    if (!komikSlug) return "Pankomik";
-    if (komikSlug.startsWith("novel-chapter:")) return "📖 Novel";
-    if (komikSlug.startsWith("novel:")) return "📖 " + komikSlug.replace("novel:","").replace(/-/g," ").slice(0,18);
-    if (komikSlug.startsWith("chapter:")) return "📚 " + komikSlug.replace("chapter:","").replace(/-/g," ").slice(0,18);
-    return "📚 " + komikSlug.replace(/-/g," ").slice(0,18);
+  /* ── 2. Detail novel ──────────────────────────── */
+  if (raw.startsWith("novel:")) {
+    const slug = raw.slice("novel:".length);
+    const name = slug
+      .replace(/-/g, " ")
+      .replace(/\b./g, c => c.toUpperCase())
+      .trim().slice(0, 24) || "Novel";
+    return { icon: "📖", label: name, url: `/novel/${slug}` };
   }
 
-  function getContentURL(komikSlug) {
-    if (!komikSlug) return "/";
-    if (komikSlug.startsWith("novel-chapter:")) return "/baca-novel/" + komikSlug.replace("novel-chapter:","");
-    if (komikSlug.startsWith("novel:"))         return "/novel/"      + komikSlug.replace("novel:","");
-    if (komikSlug.startsWith("chapter:"))       return "/baca/"       + komikSlug.replace("chapter:","");
-    return "/komik/" + komikSlug;
+  /* ── 3. Chapter komik ─────────────────────────── */
+  if (raw.startsWith("chapter:")) {
+    const slug = raw.slice("chapter:".length);
+    /* Ambil nama komik: potong "-chapter-N" di akhir */
+    const name = slug
+      .replace(/-chapter-[\d-]+$/i, "")
+      .replace(/-/g, " ")
+      .replace(/\b./g, c => c.toUpperCase())
+      .trim().slice(0, 24) || "Chapter Komik";
+    return { icon: "📚", label: name, url: `/baca/${slug}` };
   }
 
-  async function loadTopComments() {
-    const widget = document.getElementById("topCommentsWidget");
-    if (!widget) return;
+  /* ── 4. Legacy: slug komik langsung ──────────── */
+  const name = raw
+    .replace(/-/g, " ")
+    .replace(/\b./g, c => c.toUpperCase())
+    .trim().slice(0, 24) || "Komik";
+  return { icon: "📚", label: name, url: `/komik/${raw}` };
+}
 
-    try {
-      const { comments, error } = await getTopComments(5);
+/* ── Render widget ────────────────────────────────────────── */
+async function loadTopComments() {
+  const widget = document.getElementById("topCommentsWidget");
+  if (!widget) return;
 
-      if (error || !comments || comments.length === 0) {
-        widget.innerHTML = `
-          <div style="text-align:center;padding:24px 16px;color:var(--text-muted);font-size:13px;">
-            <div style="font-size:32px;margin-bottom:8px;">💬</div>
-            Belum ada komentar populer. Jadilah yang pertama!
-          </div>`;
-        return;
-      }
+  try {
+    const { comments, error } = await getTopComments(6);
 
-      widget.innerHTML = comments.map(c => {
-        const profile = c.profiles || {};
-        const name    = escHtml(profile.username || "User");
-        const avatar  = profile.avatar_url;
-        const level   = profile.level || 1;
-        const initial = (profile.username || "U")[0].toUpperCase();
-        const label   = escHtml(formatSlugLabel(c.komik_slug));
-        const url     = getContentURL(c.komik_slug);
-        const text    = escHtml((c.content || "").slice(0, 120));
-        const likes   = c.like_count || 0;
-
-        return `
-          <a class="top-comment-card" href="${escHtml(url)}">
-            <div class="top-comment-avatar">
-              ${avatar
-                ? `<img src="${escHtml(avatar)}" alt="${name}" loading="lazy"
-                     onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`
-                : initial}
-            </div>
-            <div class="top-comment-body">
-              <div class="top-comment-meta">
-                <span class="top-comment-user">${name}</span>
-                <span class="top-comment-level">Lv.${level}</span>
-                <span class="top-comment-source">${label}</span>
-              </div>
-              <p class="top-comment-text">${text}</p>
-              <div class="top-comment-likes">❤️ ${likes} suka</div>
-            </div>
-          </a>`;
-      }).join("");
-
-    } catch (err) {
-      console.warn("[TopComments] Gagal:", err);
-      widget.innerHTML = "";
+    if (error || !comments || comments.length === 0) {
+      widget.innerHTML = `
+        <div style="text-align:center;padding:28px 16px 20px;
+          color:var(--text-muted);font-size:13px;">
+          <div style="font-size:36px;margin-bottom:10px;">💬</div>
+          Belum ada komentar populer.<br>
+          <span style="font-size:12px;">Jadilah yang pertama berkomentar!</span>
+        </div>`;
+      return;
     }
-  }
 
-  /* Load setelah konten utama agar tidak block render */
-  window.addEventListener("load", () => setTimeout(loadTopComments, 800));
+    widget.innerHTML = comments.map(c => {
+      const p       = c.profiles || {};
+      const name    = esc(p.username || "User");
+      const avatar  = p.avatar_url  || "";
+      const level   = p.level       || 1;
+      const initial = (p.username   || "U")[0].toUpperCase();
+      const likes   = c.like_count  || 0;
+      const raw     = (c.content    || "");
+      /* Potong teks panjang */
+      const text    = esc(raw.length > 110 ? raw.slice(0, 107) + "…" : raw);
+      const loc     = resolveLocation(c.komik_slug);
+
+      return `
+        <a class="top-comment-card"
+           href="${esc(loc.url)}"
+           title="Komentar di: ${esc(loc.label)} — klik untuk melihat">
+
+          <!-- Avatar -->
+          <div class="top-comment-avatar">
+            ${avatar
+              ? `<img src="${esc(avatar)}" alt="${name}" loading="lazy"
+                   onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`
+              : initial}
+          </div>
+
+          <!-- Konten -->
+          <div class="top-comment-body">
+
+            <!-- Nama · Level · Lokasi -->
+            <div class="top-comment-meta">
+              <span class="top-comment-user">${name}</span>
+              <span class="top-comment-level">Lv.${level}</span>
+              <span class="top-comment-loc" title="${esc(loc.icon)} ${esc(loc.label)}">
+                <span class="top-comment-loc-icon">${esc(loc.icon)}</span>
+                <span class="top-comment-loc-text">${esc(loc.label)}</span>
+              </span>
+            </div>
+
+            <!-- Teks komentar -->
+            <p class="top-comment-text">${text}</p>
+
+            <!-- Like count + tanda "Lihat →" -->
+            <div class="top-comment-footer">
+              <span class="top-comment-likes">❤️ ${likes} suka</span>
+              <span class="top-comment-goto">Lihat →</span>
+            </div>
+
+          </div>
+        </a>`;
+    }).join("");
+
+  } catch (err) {
+    console.warn("[TopComments] Gagal memuat:", err);
+    widget.innerHTML = ""; /* Kosong tanpa error visual */
+  }
+}
+
+/* Mulai load setelah halaman selesai render,
+   agar tidak blocking konten utama */
+if (document.readyState === "complete") {
+  setTimeout(loadTopComments, 500);
+} else {
+  window.addEventListener("load", () => setTimeout(loadTopComments, 500));
+}
 </script>
+
 <script type="module" src="/global-chat.js"></script>
 </body>
 </html>
