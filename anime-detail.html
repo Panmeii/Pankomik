@@ -15,288 +15,264 @@
 
     /* ── Hero ─────────────────────────────────────────────── */
     .detail-hero {
-      position: relative;
-      min-height: 240px;
-      overflow: hidden;
+      position: relative; overflow: hidden; min-height: 220px;
     }
     .hero-blur-bg {
       position: absolute; inset: 0;
       background-size: cover; background-position: center top;
-      filter: blur(24px) brightness(0.2) saturate(1.5);
+      filter: blur(24px) brightness(0.22) saturate(1.4);
       transform: scale(1.15);
     }
-    .hero-gradient {
+    .hero-overlay {
       position: absolute; inset: 0;
-      background: linear-gradient(
-        to bottom,
-        rgba(0,0,0,0.1) 0%,
-        rgba(0,0,0,0.55) 55%,
-        rgba(0,0,0,0.88) 100%
-      );
+      background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.72) 100%);
     }
     .hero-content {
       position: relative; z-index: 2;
       display: flex; gap: 14px;
-      padding: 60px 14px 18px;
+      padding: 60px 14px 22px;
       align-items: flex-end;
     }
     .hero-poster {
-      width: 100px; height: 142px;
-      object-fit: cover; border-radius: 10px;
-      flex-shrink: 0;
-      box-shadow: 0 10px 32px rgba(0,0,0,0.8);
-      border: 2px solid rgba(108,99,255,0.45);
-      background: #1a1a2e;
+      width: 100px; height: 144px; object-fit: cover;
+      border-radius: 10px; flex-shrink: 0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      border: 2px solid rgba(108,99,255,0.5);
+    }
+    .hero-poster-ph {
+      width: 100px; height: 144px; border-radius: 10px; flex-shrink: 0;
+      background: rgba(108,99,255,0.15); border: 2px solid rgba(108,99,255,0.3);
+      display: flex; align-items: center; justify-content: center; font-size: 40px;
     }
     .hero-info { flex: 1; min-width: 0; }
     .hero-title {
       font-size: 15px; font-weight: 900; color: #fff;
       line-height: 1.35; margin-bottom: 5px;
-      text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+      text-shadow: 0 2px 10px rgba(0,0,0,0.9);
     }
-    .hero-japanese {
-      font-size: 10px; color: rgba(255,255,255,0.45);
-      margin-bottom: 7px; font-style: italic;
+    .hero-jp {
+      font-size: 11px; color: rgba(255,255,255,0.45);
+      margin-bottom: 8px; font-style: italic;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .hero-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+    .hero-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
     .hero-chip {
-      padding: 2px 7px; border-radius: 99px; font-size: 9px; font-weight: 800;
-      color: rgba(255,255,255,0.9);
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.2);
-      backdrop-filter: blur(4px);
+      padding: 3px 8px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      color: rgba(255,255,255,0.92); background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
     }
-    .hero-chip.purple { background: rgba(108,99,255,0.85); border-color: transparent; }
-    .hero-chip.orange { background: rgba(232,82,42,0.88); border-color: transparent; }
-    .hero-chip.green  { background: rgba(39,174,96,0.88); border-color: transparent; }
-    .hero-score {
-      font-size: 13px; font-weight: 900; color: #f5c842;
-      display: flex; align-items: center; gap: 4px;
-      text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+    .c-purple { background: rgba(108,99,255,0.75) !important; border-color: rgba(108,99,255,0.9) !important; }
+    .c-orange  { background: rgba(232,82,42,0.8)  !important; border-color: rgba(232,82,42,0.95) !important; }
+    .c-green   { background: rgba(39,174,96,0.8)  !important; border-color: rgba(39,174,96,0.95) !important; }
+    .hero-score { font-size: 13px; font-weight: 800; color: #f5a623; display: flex; align-items: center; gap: 4px; }
+
+    /* ── Actions ──────────────────────────────────────────── */
+    .action-row { display: flex; gap: 8px; padding: 12px 14px; align-items: center; }
+    .btn-a {
+      flex: 1; padding: 11px 6px; border: none; border-radius: 10px;
+      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 900;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 5px; transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-watch  { background: var(--anime-accent); color: #fff; box-shadow: 0 4px 16px var(--anime-glow); }
+    .btn-watch:active  { transform: scale(0.96); filter: brightness(0.9); }
+    .btn-latest { background: rgba(108,99,255,0.12); color: var(--anime-accent2); border: 1.5px solid rgba(108,99,255,0.3) !important; }
+    .btn-latest:active { transform: scale(0.96); }
+    .btn-bm {
+      width: 44px; flex: none; height: 44px; padding: 0; border-radius: 10px;
+      background: var(--bg-card); border: 1.5px solid var(--border) !important;
+      color: var(--text); font-size: 19px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; -webkit-tap-highlight-color: transparent;
+    }
+    .btn-bm.saved { background: rgba(245,166,35,0.15); border-color: #f5a623 !important; }
+    .btn-bm:active { transform: scale(0.88); }
+
+    /* ── Bookmark bottom-sheet ────────────────────────────── */
+    .bm-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(3px);
+      display: flex; align-items: flex-end;
+      animation: bmFade 0.15s ease;
+    }
+    @keyframes bmFade { from{opacity:0} to{opacity:1} }
+    .bm-sheet {
+      width: 100%; background: var(--bg-card);
+      border-radius: 18px 18px 0 0; padding: 6px 14px 38px;
+      animation: bmUp 0.22s ease;
+    }
+    @keyframes bmUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .bm-handle { width: 36px; height: 4px; background: var(--border); border-radius: 99px; margin: 10px auto 14px; }
+    .bm-title  { font-size: 14px; font-weight: 800; text-align: center; margin-bottom: 14px; color: var(--text); }
+    .bm-title span { color: var(--anime-accent2); }
+    .bm-opt {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: 12px; cursor: pointer;
+      margin-bottom: 6px; background: var(--bg-surface);
+      border: 1.5px solid var(--border); transition: all 0.18s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bm-opt:active  { transform: scale(0.98); }
+    .bm-opt.active  { background: rgba(108,99,255,0.12); border-color: var(--anime-accent); }
+    .bm-opt-icon    { font-size: 22px; }
+    .bm-opt-label   { font-size: 13px; font-weight: 700; color: var(--text); }
+    .bm-opt-desc    { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .bm-btn {
+      width: 100%; padding: 11px; border-radius: 10px;
+      font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
+      cursor: pointer; margin-top: 6px; transition: all 0.18s;
+    }
+    .bm-remove { background: rgba(231,76,60,0.1); border: 1.5px solid rgba(231,76,60,0.3); color: #e74c3c; }
+    .bm-cancel { background: var(--bg-surface); border: 1.5px solid var(--border); color: var(--text-muted); }
+
+    /* ── Info table ───────────────────────────────────────── */
+    .info-table {
+      margin: 0 14px 16px; background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+    }
+    .info-row  { display: flex; padding: 9px 13px; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .info-row:last-child { border-bottom: none; }
+    .info-lbl  { color: var(--text-muted); font-weight: 600; min-width: 86px; flex-shrink: 0; }
+    .info-val  { font-weight: 700; color: var(--text); }
+
+    /* ── Section title ────────────────────────────────────── */
+    .sec-ttl {
+      font-family: 'Bangers', cursive; font-size: 17px; letter-spacing: 1.5px;
+      color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 7px;
     }
 
-    /* ── Action row ───────────────────────────────────────── */
-    .action-row {
-      display: flex; gap: 7px; padding: 12px 14px 10px;
-      align-items: center;
-    }
-    .btn-action {
-      flex: 1; padding: 10px 6px;
-      border-radius: 10px; border: none;
-      font-family: 'Nunito', sans-serif;
-      font-size: 12px; font-weight: 900;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center; gap: 5px;
-      transition: all 0.2s; white-space: nowrap;
-    }
-    .btn-action.primary {
-      background: var(--anime-accent); color: #fff;
-      box-shadow: 0 4px 14px var(--anime-glow);
-    }
-    .btn-action.primary:hover { filter: brightness(1.12); }
-    .btn-action.secondary {
-      background: rgba(108,99,255,0.1); color: var(--anime-accent2);
-      border: 1.5px solid rgba(108,99,255,0.25);
-    }
-    .btn-action.secondary:hover { background: rgba(108,99,255,0.2); }
-    .btn-action.icon-only {
-      flex: 0; padding: 10px 12px;
-      background: var(--bg-card);
-      border: 1.5px solid var(--border); color: var(--text);
-    }
-    .btn-action.icon-only:hover { border-color: var(--anime-accent); }
-    .btn-action:active { transform: scale(0.95); }
-
-    /* ── Bookmark dropdown ────────────────────────────────── */
-    .bm-wrap { position: relative; flex: 0; }
-    .btn-bookmark.saved {
-      background: rgba(108,99,255,0.18) !important;
-      border-color: var(--anime-accent) !important;
-      color: var(--anime-accent2) !important;
-    }
-    .bookmark-dropdown {
-      position: absolute; top: calc(100% + 8px); right: 0;
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden;
-      z-index: 300; min-width: 175px;
-      box-shadow: 0 8px 28px rgba(0,0,0,0.4);
-      display: none;
-    }
-    .bookmark-dropdown.show { display: block; animation: popIn 0.14s ease; }
-    @keyframes popIn {
-      from { opacity:0; transform:scale(0.94) translateY(-5px); }
-      to   { opacity:1; transform:scale(1) translateY(0); }
-    }
-    .bm-option {
-      padding: 11px 14px; cursor: pointer;
-      font-size: 13px; font-weight: 700; color: var(--text);
-      transition: background 0.15s;
-      display: flex; align-items: center; gap: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .bm-option:last-of-type { border-bottom: none; }
-    .bm-option:hover { background: var(--bg-surface); }
-    .bm-option.active { color: var(--anime-accent2); }
-    .bm-remove {
-      padding: 10px 14px; cursor: pointer;
-      font-size: 12px; font-weight: 700; color: #e74c3c;
-      text-align: center; border-top: 1px solid var(--border);
-      background: rgba(231,76,60,0.05);
-    }
-    .bm-remove:hover { background: rgba(231,76,60,0.14); }
-
-    /* ── Genre chips ─────────────────────────────────────── */
-    .genre-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 14px 12px; }
-    .genre-tag {
-      padding: 4px 10px; background: var(--anime-surface);
-      border: 1px solid rgba(108,99,255,0.2); border-radius: 99px;
-      cursor: pointer; font-size: 11px; font-weight: 700;
-      color: var(--anime-accent2); transition: all 0.18s;
-    }
-    .genre-tag:hover { background: var(--anime-accent); color: #fff; border-color: var(--anime-accent); }
-
-    /* ── Section heading ─────────────────────────────────── */
-    .section-heading {
-      font-family: 'Bangers', cursive;
-      font-size: 16px; letter-spacing: 1px; color: var(--text);
-      margin-bottom: 9px; display: flex; align-items: center; gap: 6px;
-    }
-
-    /* ── Synopsis ────────────────────────────────────────── */
-    .synopsis-box { padding: 0 14px 14px; }
-    .synopsis-text {
+    /* ── Synopsis ─────────────────────────────────────────── */
+    .syn-box   { padding: 0 14px 16px; }
+    .syn-text  {
       font-size: 13px; line-height: 1.75; color: var(--text-muted);
-      display: -webkit-box; -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical; overflow: hidden;
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden;
     }
-    .synopsis-text.expanded { display: block; }
-    .synopsis-toggle {
-      margin-top: 6px; background: none; border: none;
+    .syn-text.open { display: block; }
+    .syn-btn {
+      margin-top: 7px; background: none; border: none;
       color: var(--anime-accent2); font-family: 'Nunito', sans-serif;
       font-size: 12px; font-weight: 800; cursor: pointer; padding: 0;
     }
 
-    /* ── Info rows ───────────────────────────────────────── */
-    .info-section { padding: 0 14px 12px; }
-    .info-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px;
+    /* ── Genre ────────────────────────────────────────────── */
+    .genre-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 16px; }
+    .genre-tag  {
+      padding: 4px 11px; background: var(--anime-surface);
+      border: 1px solid rgba(108,99,255,0.2); border-radius: 99px; cursor: pointer;
+      font-size: 11px; font-weight: 700; color: var(--anime-accent2); transition: all 0.18s;
     }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { color: var(--text-muted); font-weight: 600; }
-    .info-value { font-weight: 800; text-align: right; max-width: 58%; color: var(--text); }
+    .genre-tag:active { background: var(--anime-accent); color: #fff; border-color: var(--anime-accent); }
 
-    /* ── Episode list ────────────────────────────────────── */
-    .episode-section { padding: 0 14px 14px; }
-    .ep-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .ep-count-badge {
-      font-size: 10px; font-weight: 800;
-      background: var(--anime-surface); color: var(--anime-accent2);
-      padding: 3px 9px; border-radius: 99px;
+    /* ── Episode ──────────────────────────────────────────── */
+    .ep-sec    { padding: 0 14px 16px; }
+    .ep-head   { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .ep-badge  {
+      font-size: 11px; font-weight: 800; background: var(--anime-surface);
+      color: var(--anime-accent2); padding: 3px 9px; border-radius: 99px;
       border: 1px solid rgba(108,99,255,0.2);
     }
     .ep-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px; background: var(--bg-card);
-      border: 1px solid var(--border); border-radius: 10px;
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
       margin-bottom: 6px; cursor: pointer; transition: all 0.18s;
+      -webkit-tap-highlight-color: transparent;
     }
-    .ep-item:hover {
-      border-color: var(--anime-accent); background: var(--anime-surface);
-      transform: translateX(4px);
-    }
-    .ep-item:active { transform: scale(0.98); }
+    .ep-item:active { border-color: var(--anime-accent); background: var(--anime-surface); }
     .ep-num {
-      width: 34px; height: 34px; border-radius: 8px;
-      background: var(--bg-surface); flex-shrink: 0;
+      width: 34px; height: 34px; border-radius: 8px; background: var(--bg-surface); flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       font-size: 12px; font-weight: 900; color: var(--anime-accent2);
       border: 1px solid rgba(108,99,255,0.15);
     }
-    .ep-info { flex: 1; min-width: 0; }
-    .ep-info-title { font-size: 12px; font-weight: 700; color: var(--text); }
-    .ep-info-date  { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-    .ep-play-icon  { font-size: 16px; color: var(--anime-accent); flex-shrink: 0; opacity: 0.7; }
+    .ep-info     { flex: 1; min-width: 0; }
+    .ep-ttl      { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ep-date     { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .ep-play     { font-size: 18px; color: var(--anime-accent); opacity: 0.7; flex-shrink: 0; }
 
-    /* ── Batch & Rec ─────────────────────────────────────── */
-    .batch-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 12px; margin: 0 14px 12px;
-      background: rgba(39,174,96,0.1); border: 1px solid rgba(39,174,96,0.28);
-      border-radius: 9px; font-size: 12px; font-weight: 800; color: #27ae60;
-      cursor: pointer; transition: background 0.2s; text-decoration: none;
+    /* ── Batch ────────────────────────────────────────────── */
+    .batch-link {
+      display: flex; align-items: center; gap: 7px; padding: 10px 13px;
+      margin: 0 14px 16px; background: rgba(39,174,96,0.1);
+      border: 1px solid rgba(39,174,96,0.3); border-radius: 10px;
+      color: #27ae60; font-size: 12px; font-weight: 800;
+      text-decoration: none; transition: background 0.2s;
     }
-    .batch-badge:hover { background: rgba(39,174,96,0.2); }
-    .rec-section { padding: 0 14px 20px; }
+    .batch-link:active { background: rgba(39,174,96,0.2); }
+
+    /* ── Recommended ─────────────────────────────────────── */
+    .rec-sec    { padding: 0 14px 16px; }
     .rec-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
     .rec-scroll::-webkit-scrollbar { display: none; }
-    .rec-card { flex-shrink: 0; width: 88px; cursor: pointer; transition: transform 0.18s; }
-    .rec-card:hover { transform: translateY(-3px); }
+    .rec-card   { flex-shrink: 0; width: 88px; cursor: pointer; }
     .rec-card img {
-      width: 88px; height: 124px; object-fit: cover; border-radius: 8px;
-      border: 1px solid rgba(108,99,255,0.18); background: var(--bg-surface); display: block;
+      width: 88px; height: 124px; object-fit: cover; border-radius: 8px; display: block;
+      border: 1px solid rgba(108,99,255,0.2); background: var(--bg-surface);
     }
-    .rec-card-title {
+    .rec-ttl {
       font-size: 10px; font-weight: 700; color: var(--text); margin-top: 5px;
-      display: -webkit-box; -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical; overflow: hidden; line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; line-height: 1.4;
     }
 
-    /* ── Divider / Skeleton ──────────────────────────────── */
-    .section-divider { height: 1px; background: var(--border); margin: 2px 14px 14px; }
+    /* ── Divider / skeleton ───────────────────────────────── */
+    .divider { height: 1px; background: var(--border); margin: 0 0 16px; }
     .skel {
-      background: linear-gradient(90deg,var(--bg-card) 25%,var(--bg-surface) 50%,var(--bg-card) 75%);
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-surface) 50%, var(--bg-card) 75%);
       background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px;
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
     /* ── Toast ───────────────────────────────────────────── */
-    #toastMsg {
-      position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
-      background: rgba(20,20,30,0.95); color: #fff;
-      padding: 9px 20px; border-radius: 99px;
-      font-size: 13px; font-weight: 700;
-      z-index: 9999; opacity: 0; pointer-events: none;
-      transition: opacity 0.25s; white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+    .toast {
+      position: fixed; bottom: 76px; left: 50%;
+      transform: translateX(-50%) translateY(14px);
+      background: rgba(20,20,28,0.96); backdrop-filter: blur(10px);
+      color: #fff; padding: 10px 20px; border-radius: 99px;
+      font-size: 13px; font-weight: 700; z-index: 9999; white-space: nowrap;
+      border: 1px solid rgba(255,255,255,0.1);
+      opacity: 0; transition: all 0.25s ease; pointer-events: none;
     }
-    #toastMsg.show { opacity: 1; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   </style>
 </head>
 <body class="has-bottom-nav">
 
-<div id="toastMsg"></div>
-
 <header class="header">
-  <button onclick="history.back()" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">←</button>
-  <div style="flex:1;font-family:'Bangers',cursive;font-size:17px;letter-spacing:1px;color:var(--anime-accent2);padding-left:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" id="headerTitle">Detail Anime</div>
+  <button onclick="history.back()"
+    style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+    width:34px;height:34px;color:var(--text);font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    -webkit-tap-highlight-color:transparent;">←</button>
+  <div id="headerTitle"
+    style="flex:1;font-family:'Bangers',cursive;font-size:17px;letter-spacing:1px;
+    color:var(--anime-accent2);padding-left:8px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;">Detail Anime</div>
   <div class="header-right">
     <button onclick="toggleDarkMode()">🌙</button>
     <button onclick="toggleMenu()">👤</button>
   </div>
 </header>
 <div id="menuDropdown" class="dropdown"></div>
+<div class="toast" id="toast"></div>
 
+<!-- Skeleton awal -->
 <div id="detailContent">
-  <div style="padding:14px;">
-    <div style="height:240px;border-radius:12px;margin-bottom:12px;" class="skel"></div>
-    <div style="display:flex;gap:7px;margin-bottom:14px;">
-      <div class="skel" style="height:42px;border-radius:10px;flex:2;"></div>
-      <div class="skel" style="height:42px;border-radius:10px;flex:2;"></div>
-      <div class="skel" style="height:42px;width:44px;border-radius:10px;flex:0;"></div>
-    </div>
-    <div class="skel" style="height:14px;width:60%;margin-bottom:8px;"></div>
-    <div class="skel" style="height:14px;width:40%;margin-bottom:16px;"></div>
-    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
-    <div class="skel" style="height:52px;border-radius:10px;margin-bottom:6px;"></div>
+  <div style="height:220px;background:var(--bg-surface);"></div>
+  <div style="padding:12px 14px;display:flex;gap:8px;">
+    <div class="skel" style="height:44px;flex:1;"></div>
+    <div class="skel" style="height:44px;flex:1;"></div>
+    <div class="skel" style="height:44px;width:44px;flex:none;border-radius:10px;"></div>
   </div>
+  <div style="padding:0 14px;">
+    <div class="skel" style="height:13px;margin-bottom:8px;"></div>
+    <div class="skel" style="height:13px;width:70%;margin-bottom:20px;"></div>
+    <div class="skel" style="height:100px;border-radius:12px;margin-bottom:16px;"></div>
+  </div>
+  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
+  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
+  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
+  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
+  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
 </div>
 
 <nav class="bottom-nav">
@@ -311,323 +287,372 @@
   import { initAuthHeader } from "/auth-header.js";
   initAuthHeader();
 </script>
+
 <script type="module">
-import { getAnimeId, animeWatchURL, animeGenreURL, animeURL } from "/router.js";
-import { getCurrentUser, checkAnimeBookmark, addAnimeBookmark, removeAnimeBookmark } from "/supabase.js";
+/* ============================================================
+   Coba import dari router.js — kalau gagal, fallback ke URL manual
+   ============================================================ */
+let _routerLoaded = false;
+let _animeWatchURL = id => `/anime/watch/${id}`;
+let _animeGenreURL = id => `/anime/genre/${id}`;
+let _animeURL      = id => `/anime/detail/${id}`;
+
+try {
+  const r = await import("/router.js");
+  if (r.animeWatchURL) _animeWatchURL = r.animeWatchURL;
+  if (r.animeGenreURL) _animeGenreURL = r.animeGenreURL;
+  if (r.animeURL)      _animeURL      = r.animeURL;
+  _routerLoaded = true;
+} catch(e) {
+  console.warn("[anime-detail] router.js tidak tersedia, pakai fallback URL:", e.message);
+}
+
+/* Expose ke window untuk onclick inline */
+window._animeWatchURL = _animeWatchURL;
+window._animeGenreURL = _animeGenreURL;
+window._animeURL      = _animeURL;
+
+/* ── Baca slug anime dari URL — tidak bergantung router.js ── */
+function getSlugFromURL() {
+  const path   = window.location.pathname;
+  const search = new URLSearchParams(window.location.search);
+
+  /* Coba dari query param: ?slug=xxx atau ?id=xxx atau ?anime=xxx */
+  for (const key of ["slug","id","anime","animeId"]) {
+    const v = search.get(key);
+    if (v) return v.trim();
+  }
+
+  /* Coba dari path: /anime/detail/SLUG atau /anime/SLUG */
+  const parts = path.split("/").filter(Boolean);
+  // Cari segment setelah "detail" atau "anime"
+  for (let i = 0; i < parts.length - 1; i++) {
+    if (parts[i] === "detail" || parts[i] === "anime") {
+      const candidate = parts[i + 1];
+      // Pastikan bukan kata navigasi
+      if (candidate && !["watch","genre","search","episode","server"].includes(candidate)) {
+        return candidate;
+      }
+    }
+  }
+  // Ambil segment terakhir jika ada tanda "-"
+  const last = parts[parts.length - 1];
+  if (last && last.includes("-")) return last;
+
+  return null;
+}
+
+/* ── Import supabase ── */
+let _getCurrentUser, _addBookmark, _removeBookmark, _checkBookmark;
+try {
+  const s = await import("/supabase.js");
+  _getCurrentUser = s.getCurrentUser;
+  _addBookmark    = s.addBookmark;
+  _removeBookmark = s.removeBookmark;
+  _checkBookmark  = s.checkBookmark;
+} catch(e) {
+  console.warn("[anime-detail] supabase.js tidak tersedia:", e.message);
+  _getCurrentUser = async () => null;
+  _addBookmark    = async () => ({ error: new Error("no supabase") });
+  _removeBookmark = async () => ({ error: new Error("no supabase") });
+  _checkBookmark  = async () => ({ isBookmarked: false, kategori: null });
+}
 
 const API = "https://www.sankavollerei.com";
 
-window._animeWatchURL = animeWatchURL;
-window._animeGenreURL = animeGenreURL;
-window._animeURL      = animeURL;
-
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-/* ── Toast ─────────────────────────────────────────────── */
-function toast(msg, dur=2300) {
-  const el = document.getElementById("toastMsg");
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(el._t);
-  el._t = setTimeout(() => el.classList.remove("show"), dur);
+let currentUser = null;
+let animeData   = null;
+let bmKategori  = null;
+const animeSlug = getSlugFromURL();
+
+/* ── Toast ── */
+function showToast(msg, ms=2400) {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove("show"), ms);
 }
 
-/* ── Bookmark state ─────────────────────────────────────── */
-let _user        = null;
-let _animeSlug   = "";
-let _animeTitle  = "";
-let _animePoster = "";
-let _bmKategori  = null;  /* null = belum bookmark */
-let _bmOpen      = false;
-
-function getCategoryLabel(cat) {
-  return cat === "favorit" ? "❤️ Favorit"
-       : cat === "lagi_menonton" ? "📺 Nonton"
-       : cat === "selesai" ? "✅ Selesai"
-       : "＋ Simpan";
+/* ── Error state ── */
+function showError(msg, detail="") {
+  document.getElementById("detailContent").innerHTML = `
+    <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+      <p style="font-size:44px;margin-bottom:14px;">😕</p>
+      <p style="font-size:14px;font-weight:700;margin-bottom:6px;">${esc(msg)}</p>
+      ${detail ? `<p style="font-size:11px;color:#555;margin-bottom:20px;">${esc(detail)}</p>` : "<div style='margin-bottom:20px'></div>"}
+      <button onclick="location.reload()"
+        style="padding:10px 26px;background:var(--anime-accent);color:#fff;border:none;
+        border-radius:10px;cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;
+        font-size:14px;box-shadow:0 4px 14px var(--anime-glow);">
+        🔄 Coba Lagi
+      </button>
+    </div>`;
 }
 
-function renderBmBtn() {
-  const btn = document.getElementById("bmBtn");
-  const dd  = document.getElementById("bmDropdown");
-  if (!btn) return;
-  const saved = _bmKategori !== null;
-  btn.textContent = saved ? getCategoryLabel(_bmKategori) : "＋ Simpan";
-  btn.className   = `btn-action icon-only btn-bookmark${saved ? " saved" : ""}`;
-  /* Rebuild dropdown options (agar active class benar) */
-  if (dd) dd.innerHTML = `
-    <div class="bm-option${_bmKategori==='favorit'?' active':''}" onclick="selectBmCat('favorit')">❤️ Favorit</div>
-    <div class="bm-option${_bmKategori==='lagi_menonton'?' active':''}" onclick="selectBmCat('lagi_menonton')">📺 Lagi Nonton</div>
-    <div class="bm-option${_bmKategori==='selesai'?' active':''}" onclick="selectBmCat('selesai')">✅ Selesai</div>
-    ${saved ? `<div class="bm-remove" onclick="removeAnimeBm()">🗑️ Hapus Bookmark</div>` : ""}
-  `;
-}
-
-window.toggleBmDD = function(e) {
-  e.stopPropagation();
-  if (!_user) { toast("⚠️ Login dulu untuk bookmark!"); return; }
-  _bmOpen = !_bmOpen;
-  document.getElementById("bmDropdown")?.classList.toggle("show", _bmOpen);
-};
-
-window.selectBmCat = async function(kategori) {
-  document.getElementById("bmDropdown")?.classList.remove("show"); _bmOpen = false;
-  if (!_user) { toast("⚠️ Login dulu!"); return; }
-  const { error } = await addAnimeBookmark(_user.id, {
-    slug: _animeSlug, title: _animeTitle, poster: _animePoster, kategori
-  });
-  if (error) { toast("❌ Gagal simpan bookmark"); console.error(error); return; }
-  _bmKategori = kategori;
-  renderBmBtn();
-  const labels = { favorit:"Favorit", lagi_menonton:"Lagi Nonton", selesai:"Selesai" };
-  toast(`🔖 Ditambahkan ke ${labels[kategori] || kategori}!`);
-};
-
-window.removeAnimeBm = async function() {
-  document.getElementById("bmDropdown")?.classList.remove("show"); _bmOpen = false;
-  if (!_user) return;
-  await removeAnimeBookmark(_user.id, _animeSlug);
-  _bmKategori = null;
-  renderBmBtn();
-  toast("🗑️ Bookmark dihapus");
-};
-
-document.addEventListener("click", e => {
-  if (_bmOpen) {
-    const wrap = document.getElementById("bmWrap");
-    if (wrap && !wrap.contains(e.target)) {
-      document.getElementById("bmDropdown")?.classList.remove("show");
-      _bmOpen = false;
-    }
-  }
-});
-
-/* ═════════════════════════════════════════════════════════
-   LOAD DETAIL
-   ═════════════════════════════════════════════════════════ */
+/* ── Load ── */
 async function loadDetail() {
-  const animeSlug = getAnimeId();
-  if (!animeSlug) { window.location.href = "/anime/"; return; }
-  _animeSlug = animeSlug;
+  if (!animeSlug) {
+    showError("Anime tidak ditemukan.", "Slug tidak ada di URL.");
+    return;
+  }
 
   try {
-    /* Fetch data anime + user login secara paralel */
     const [res, user] = await Promise.all([
       fetch(`${API}/anime/anime/${animeSlug}`),
-      getCurrentUser().catch(() => null)
+      _getCurrentUser()
     ]);
-    _user = user;
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const json = await res.json();
-    if (!json.data) throw new Error("Data tidak ditemukan: " + animeSlug);
+    if (!json.data) throw new Error(json.message || "Data kosong dari API");
 
-    const d = json.data;
+    currentUser = user;
+    animeData   = json.data;
 
-    /* ── Parse fields ── */
-    const title    = d.title    || animeSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
-    const poster   = d.poster   || "";
-    const japanese = d.japanese || "";
-    const score    = d.score    || "";
-    const type     = d.type     || "";
-    const status   = d.status   || "";
-    const episodes = d.episodes != null ? String(d.episodes) : "";
-    const duration = d.duration || "";
-    const aired    = d.aired    || "";
-    const studios  = d.studios  || "";
-    const producers= d.producers|| "";
-    const batch    = d.batch;
-    const genreList   = d.genreList   || [];
-    const episodeList = d.episodeList || [];
-    const recList     = d.recommendedAnimeList || [];
-    const synopsis    = (d.synopsis?.paragraphs || []).join(" ");
-
-    _animeTitle  = title;
-    _animePoster = poster;
-
-    /* ── Check bookmark ── */
-    if (_user) {
+    if (currentUser) {
       try {
-        const bm = await checkAnimeBookmark(_user.id, animeSlug);
-        _bmKategori = bm?.isBookmarked ? (bm.kategori || "favorit") : null;
-      } catch { _bmKategori = null; }
+        const { kategori } = await _checkBookmark(currentUser.id, `anime:${animeSlug}`);
+        bmKategori = kategori;
+      } catch(e) { /* bookmark check optional */ }
     }
 
-    /* ── Episode shortcuts ── */
-    const ep1   = episodeList.length ? episodeList[episodeList.length - 1] : null;
-    const epNew = episodeList.length ? episodeList[0] : null;
-    const statusClass = status?.toLowerCase() === "ongoing" ? "orange" : "green";
+    renderDetail();
 
-    document.title = `${title} — Anime Pankomik`;
-    document.getElementById("headerTitle").textContent = title;
+  } catch(e) {
+    console.error("[anime-detail] loadDetail error:", e);
+    showError("Gagal memuat detail anime.", e.message || String(e));
+  }
+}
 
-    const bmSaved = _bmKategori !== null;
+/* ── Render ── */
+function renderDetail() {
+  const d = animeData;
+  const title     = d.title    || animeSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase());
+  const poster    = d.poster   || "";
+  const japanese  = d.japanese || "";
+  const score     = d.score    || "";
+  const type      = d.type     || "";
+  const status    = d.status   || "";
+  const episodes  = d.episodes || "";
+  const duration  = d.duration || "";
+  const aired     = d.aired    || "";
+  const studios   = d.studios  || "";
+  const producers = d.producers|| "";
+  const batch     = d.batch;
+  const genreList   = d.genreList   || [];
+  const episodeList = d.episodeList || [];
+  const recList     = d.recommendedAnimeList || [];
+  const synopsis    = (d.synopsis?.paragraphs || []).join(" ");
 
-    document.getElementById("detailContent").innerHTML = `
+  const ep1   = episodeList.length ? episodeList[episodeList.length - 1] : null;
+  const epNew = episodeList.length ? episodeList[0] : null;
+  const showLatest = ep1 && epNew && ep1.episodeId !== epNew.episodeId;
+  const stCls = status?.toLowerCase() === "ongoing" ? "c-orange" : "c-green";
 
-      <!-- HERO -->
-      <div class="detail-hero">
+  document.title = `${title} — Pankomik`;
+  document.getElementById("headerTitle").textContent = title;
+
+  document.getElementById("detailContent").innerHTML = `
+
+    <!-- Hero -->
+    <div class="detail-hero">
+      ${poster
+        ? `<div class="hero-blur-bg" style="background-image:url('${esc(poster)}')"></div>`
+        : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,99,255,0.25),rgba(0,0,0,0.7));"></div>`}
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
         ${poster
-          ? `<div class="hero-blur-bg" style="background-image:url('${esc(poster)}')"></div>`
-          : `<div style="position:absolute;inset:0;background:linear-gradient(135deg,#1a1a2e,#16213e);"></div>`}
-        <div class="hero-gradient"></div>
-        <div class="hero-content">
-          ${poster
-            ? `<img class="hero-poster" src="${esc(poster)}" alt="${esc(title)}"
-                onerror="this.style.background='var(--bg-surface)';this.src=''">`
-            : `<div class="hero-poster" style="display:flex;align-items:center;justify-content:center;font-size:44px;">⚡</div>`}
-          <div class="hero-info">
-            <div class="hero-title">${esc(title)}</div>
-            ${japanese ? `<div class="hero-japanese">${esc(japanese)}</div>` : ""}
-            <div class="hero-chips">
-              ${type     ? `<span class="hero-chip purple">${esc(type)}</span>` : ""}
-              ${status   ? `<span class="hero-chip ${statusClass}">${esc(status)}</span>` : ""}
-              ${episodes ? `<span class="hero-chip">${esc(episodes)} Ep</span>` : ""}
-              ${studios  ? `<span class="hero-chip">${esc(studios.split(",")[0].trim())}</span>` : ""}
-            </div>
-            ${score ? `<div class="hero-score">⭐ ${esc(score)}</div>` : ""}
+          ? `<img class="hero-poster" src="${esc(poster)}" alt="${esc(title)}"
+              onerror="this.outerHTML='<div class=\\"hero-poster-ph\\">⚡</div>'">`
+          : `<div class="hero-poster-ph">⚡</div>`}
+        <div class="hero-info">
+          <div class="hero-title">${esc(title)}</div>
+          ${japanese ? `<div class="hero-jp">${esc(japanese)}</div>` : ""}
+          <div class="hero-chips">
+            ${type    ? `<span class="hero-chip c-purple">${esc(type)}</span>` : ""}
+            ${status  ? `<span class="hero-chip ${stCls}">${esc(status)}</span>` : ""}
+            ${episodes? `<span class="hero-chip">${esc(String(episodes))} Ep</span>` : ""}
           </div>
+          ${score ? `<div class="hero-score">⭐ ${esc(score)}</div>` : ""}
         </div>
       </div>
+    </div>
 
-      <!-- ACTION ROW -->
-      <div class="action-row">
-        ${ep1  ? `<button class="btn-action primary" onclick="watchEp('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
-        ${epNew && ep1 && epNew.episodeId !== ep1.episodeId
-          ? `<button class="btn-action secondary" onclick="watchEp('${esc(epNew.episodeId)}')">⚡ Terbaru</button>` : ""}
-        <!-- Bookmark -->
-        <div class="bm-wrap" id="bmWrap">
-          <button id="bmBtn"
-            class="btn-action icon-only btn-bookmark${bmSaved ? " saved" : ""}"
-            onclick="toggleBmDD(event)">
-            ${bmSaved ? getCategoryLabel(_bmKategori) : "＋ Simpan"}
-          </button>
-          <div id="bmDropdown" class="bookmark-dropdown">
-            <div class="bm-option${_bmKategori==='favorit'?' active':''}" onclick="selectBmCat('favorit')">❤️ Favorit</div>
-            <div class="bm-option${_bmKategori==='lagi_menonton'?' active':''}" onclick="selectBmCat('lagi_menonton')">📺 Lagi Nonton</div>
-            <div class="bm-option${_bmKategori==='selesai'?' active':''}" onclick="selectBmCat('selesai')">✅ Selesai</div>
-            ${bmSaved ? `<div class="bm-remove" onclick="removeAnimeBm()">🗑️ Hapus Bookmark</div>` : ""}
-          </div>
-        </div>
-        <button class="btn-action icon-only" onclick="shareAnime('${esc(title)}')">🔗</button>
+    <!-- Actions -->
+    <div class="action-row">
+      ${ep1  ? `<button class="btn-a btn-watch"  onclick="watchEp('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
+      ${showLatest ? `<button class="btn-a btn-latest" onclick="watchEp('${esc(epNew.episodeId)}')">⚡ Terbaru</button>` : ""}
+      <button class="btn-bm ${bmKategori ? 'saved' : ''}" id="bmBtn" onclick="openBmModal()" title="Bookmark">🔖</button>
+    </div>
+
+    ${batch ? `<a href="${esc(batch.otakudesuUrl||"#")}" target="_blank" rel="noopener" class="batch-link">📦 Download Batch Tersedia</a>` : ""}
+
+    ${genreList.length ? `
+      <div class="genre-wrap">
+        ${genreList.map(g => `<span class="genre-tag" onclick="gotoGenre('${esc(g.genreId)}')">${esc(g.title)}</span>`).join("")}
+      </div>` : ""}
+
+    ${synopsis ? `
+      <div class="syn-box">
+        <div class="sec-ttl">📖 Sinopsis</div>
+        <p class="syn-text" id="synText">${esc(synopsis)}</p>
+        <button class="syn-btn" onclick="toggleSyn()">Baca Selengkapnya ▼</button>
       </div>
+      <div class="divider"></div>` : ""}
 
-      <!-- BATCH -->
-      ${batch ? `<a href="${esc(batch.otakudesuUrl||"#")}" target="_blank" rel="noopener" class="batch-badge">📦 Download Batch Tersedia</a>` : ""}
+    <div class="info-table">
+      ${aired     ? `<div class="info-row"><span class="info-lbl">Tayang</span><span class="info-val">${esc(aired)}</span></div>` : ""}
+      ${studios   ? `<div class="info-row"><span class="info-lbl">Studio</span><span class="info-val">${esc(studios)}</span></div>` : ""}
+      ${producers ? `<div class="info-row"><span class="info-lbl">Produser</span><span class="info-val">${esc(producers)}</span></div>` : ""}
+      ${duration  ? `<div class="info-row"><span class="info-lbl">Durasi</span><span class="info-val">${esc(duration)}</span></div>` : ""}
+      ${type      ? `<div class="info-row"><span class="info-lbl">Tipe</span><span class="info-val">${esc(type)}</span></div>` : ""}
+      ${episodes  ? `<div class="info-row"><span class="info-lbl">Total Ep</span><span class="info-val">${esc(String(episodes))}</span></div>` : ""}
+    </div>
 
-      <!-- GENRE -->
-      ${genreList.length ? `
-        <div class="genre-wrap">
-          ${genreList.map(g => `<span class="genre-tag" onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')">${esc(g.title)}</span>`).join("")}
-        </div>` : ""}
-
-      <!-- SYNOPSIS -->
-      ${synopsis ? `
-        <div class="synopsis-box">
-          <div class="section-heading">📖 Sinopsis</div>
-          <p class="synopsis-text" id="synText">${esc(synopsis)}</p>
-          <button class="synopsis-toggle" onclick="toggleSyn()">Baca Selengkapnya ▼</button>
-        </div>
-        <div class="section-divider"></div>` : ""}
-
-      <!-- INFO -->
-      <div class="info-section">
-        ${aired      ? `<div class="info-row"><span class="info-label">Tayang</span><span class="info-value">${esc(aired)}</span></div>` : ""}
-        ${studios    ? `<div class="info-row"><span class="info-label">Studio</span><span class="info-value">${esc(studios)}</span></div>` : ""}
-        ${producers  ? `<div class="info-row"><span class="info-label">Produser</span><span class="info-value">${esc(producers)}</span></div>` : ""}
-        ${duration   ? `<div class="info-row"><span class="info-label">Durasi</span><span class="info-value">${esc(duration)}</span></div>` : ""}
-        ${type       ? `<div class="info-row"><span class="info-label">Tipe</span><span class="info-value">${esc(type)}</span></div>` : ""}
-        ${episodes   ? `<div class="info-row"><span class="info-label">Total Episode</span><span class="info-value">${esc(episodes)}</span></div>` : ""}
+    <div class="ep-sec">
+      <div class="ep-head">
+        <div class="sec-ttl" style="margin-bottom:0;">📺 Daftar Episode</div>
+        <span class="ep-badge">${episodeList.length} ep</span>
       </div>
-      <div class="section-divider"></div>
-
-      <!-- EPISODE LIST -->
-      <div class="episode-section">
-        <div class="ep-header">
-          <div class="section-heading" style="margin-bottom:0;">📺 Daftar Episode</div>
-          <span class="ep-count-badge">${episodeList.length || "?"} ep</span>
-        </div>
+      <div style="margin-top:10px;">
         ${episodeList.length === 0
-          ? `<div style="text-align:center;padding:24px 0;color:var(--text-muted);">
+          ? `<div style="text-align:center;padding:24px;color:var(--text-muted);">
                <div style="font-size:32px;margin-bottom:8px;">📡</div>
-               <p style="font-size:13px;">Belum ada episode tersedia.</p>
-             </div>`
+               <p style="font-size:13px;">Belum ada episode tersedia.</p></div>`
           : episodeList.map(ep => `
             <div class="ep-item" onclick="watchEp('${esc(ep.episodeId)}')">
               <div class="ep-num">${ep.eps || ""}</div>
               <div class="ep-info">
-                <div class="ep-info-title">${esc(ep.title || `Episode ${ep.eps}`)}</div>
-                ${ep.date ? `<div class="ep-info-date">📅 ${esc(ep.date)}</div>` : ""}
+                <div class="ep-ttl">${esc(ep.title || `Episode ${ep.eps}`)}</div>
+                ${ep.date ? `<div class="ep-date">📅 ${esc(ep.date)}</div>` : ""}
               </div>
-              <div class="ep-play-icon">▶</div>
+              <div class="ep-play">▶</div>
             </div>`).join("")}
       </div>
+    </div>
 
-      <!-- REKOMENDASI -->
-      ${recList.length ? `
-        <div class="section-divider"></div>
-        <div class="rec-section">
-          <div class="section-heading">🔥 Rekomendasi</div>
-          <div class="rec-scroll">
-            ${recList.map(a => `
-              <div class="rec-card" onclick="window.location.href=window._animeURL('${esc(a.animeId)}')">
-                <img src="${esc(a.poster||"")}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'">
-                <div class="rec-card-title">${esc(a.title)}</div>
-              </div>`).join("")}
-          </div>
-        </div>` : ""}
-    `;
+    ${recList.length ? `
+      <div class="divider"></div>
+      <div class="rec-sec">
+        <div class="sec-ttl">🔥 Rekomendasi</div>
+        <div class="rec-scroll">
+          ${recList.map(a => `
+            <div class="rec-card" onclick="gotoAnime('${esc(a.animeId)}')">
+              <img src="${esc(a.poster||"")}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'">
+              <div class="rec-ttl">${esc(a.title)}</div>
+            </div>`).join("")}
+        </div>
+      </div>` : ""}
 
-  } catch(e) {
-    console.error("[detail]", e);
-    document.getElementById("detailContent").innerHTML = `
-      <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
-        <p style="font-size:40px;margin-bottom:12px;">😕</p>
-        <p style="margin-bottom:6px;">Gagal memuat detail anime.</p>
-        <p style="font-size:11px;color:#555;margin-bottom:16px;">${esc(String(e.message||e))}</p>
-        <button onclick="location.reload()"
-          style="padding:9px 22px;background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
-            cursor:pointer;font-weight:700;font-family:'Nunito',sans-serif;font-size:14px;">
-          🔄 Coba Lagi
-        </button>
-      </div>`;
-  }
+    <div style="height:24px;"></div>
+  `;
 }
 
-window.watchEp = id => {
-  const s = (id||"").trim();
-  if (!s) return;
-  window.location.href = window._animeWatchURL(s);
-};
-window.toggleSyn = () => {
+/* ── Navigasi ── */
+window.watchEp   = id => { if ((id||"").trim()) window.location.href = _animeWatchURL(id.trim()); };
+window.gotoGenre = id => { window.location.href = _animeGenreURL(id); };
+window.gotoAnime = id => { window.location.href = _animeURL(id); };
+
+/* ── Synopsis toggle ── */
+window.toggleSyn = function() {
   const t = document.getElementById("synText");
-  const b = document.querySelector(".synopsis-toggle");
+  const b = document.querySelector(".syn-btn");
   if (!t) return;
-  t.classList.toggle("expanded");
-  b.textContent = t.classList.contains("expanded") ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
-};
-window.shareAnime = async title => {
-  const url = window.location.href;
-  if (navigator.share) { try { await navigator.share({title,url}); return; } catch {} }
-  try { await navigator.clipboard.writeText(url); } catch {}
-  toast("🔗 Link disalin!");
+  t.classList.toggle("open");
+  b.textContent = t.classList.contains("open") ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
 };
 
+/* ── Bookmark ── */
+const BM_OPTS = [
+  { key:"favorit",     icon:"❤️", label:"Favorit",       desc:"Anime favoritmu" },
+  { key:"lagi_dibaca", icon:"▶️", label:"Lagi Ditonton",  desc:"Sedang kamu tonton" },
+  { key:"tamat",       icon:"✅", label:"Selesai",        desc:"Sudah selesai ditonton" },
+];
+
+window.openBmModal = function() {
+  if (!currentUser) {
+    showToast("🔑 Login dulu untuk bookmark anime");
+    setTimeout(() => window.location.href = "/masuk", 1600);
+    return;
+  }
+  document.getElementById("bmOverlay")?.remove();
+  const ov = document.createElement("div");
+  ov.id = "bmOverlay";
+  ov.className = "bm-overlay";
+  ov.onclick = e => { if (e.target === ov) ov.remove(); };
+  ov.innerHTML = `
+    <div class="bm-sheet">
+      <div class="bm-handle"></div>
+      <div class="bm-title">🔖 Simpan ke <span>Bookmark</span></div>
+      ${BM_OPTS.map(o => `
+        <div class="bm-opt ${bmKategori===o.key?"active":""}" onclick="saveBm('${o.key}')">
+          <span class="bm-opt-icon">${o.icon}</span>
+          <div>
+            <div class="bm-opt-label">${o.label}</div>
+            <div class="bm-opt-desc">${o.desc}</div>
+          </div>
+          ${bmKategori===o.key ? `<span style="margin-left:auto;color:var(--anime-accent);font-size:16px;">✓</span>` : ""}
+        </div>`).join("")}
+      ${bmKategori ? `<button class="bm-btn bm-remove" onclick="removeBm()">🗑️ Hapus dari Bookmark</button>` : ""}
+      <button class="bm-btn bm-cancel" onclick="document.getElementById('bmOverlay').remove()">Batal</button>
+    </div>`;
+  document.body.appendChild(ov);
+};
+
+window.saveBm = async function(kategori) {
+  document.getElementById("bmOverlay")?.remove();
+  if (!currentUser || !animeData) return;
+  const { error } = await _addBookmark(currentUser.id, {
+    slug: `anime:${animeSlug}`, title: animeData.title || animeSlug,
+    cover: animeData.poster || "", kategori
+  });
+  if (!error) {
+    bmKategori = kategori;
+    const btn = document.getElementById("bmBtn");
+    if (btn) btn.classList.add("saved");
+    showToast(`✅ Disimpan ke ${BM_OPTS.find(o=>o.key===kategori)?.label || kategori}`);
+  } else {
+    showToast("❌ Gagal menyimpan bookmark");
+  }
+};
+
+window.removeBm = async function() {
+  document.getElementById("bmOverlay")?.remove();
+  if (!currentUser) return;
+  const { error } = await _removeBookmark(currentUser.id, `anime:${animeSlug}`);
+  if (!error) {
+    bmKategori = null;
+    const btn = document.getElementById("bmBtn");
+    if (btn) btn.classList.remove("saved");
+    showToast("🗑️ Bookmark dihapus");
+  } else {
+    showToast("❌ Gagal menghapus bookmark");
+  }
+};
+
+/* ── Init ── */
 window.addEventListener("load", () => {
   if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
   loadDetail();
 });
+
 window.toggleDarkMode = () => {
   document.body.classList.toggle("light");
-  localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
 };
 window.toggleMenu = () => {
   const m = document.getElementById("menuDropdown");
-  if (m) m.style.display = m.style.display==="block"?"none":"block";
+  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
 };
 document.addEventListener("click", e => {
   const m = document.getElementById("menuDropdown");
   const b = document.querySelector('button[onclick="toggleMenu()"]');
-  if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display="none";
+  if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
 });
 </script>
 </body>
