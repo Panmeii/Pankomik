@@ -261,16 +261,18 @@ async function loadChapter() {
 
     updateNavButtons();
 
-    /* Chapter list */
-    if (d.komikInfo?.chapters?.length) {
+    /* Chapter list
+       Selalu trigger loadChapterListFromAPI() untuk merge dari 3 source,
+       kecuali allChapters sudah ada dari navigasi sebelumnya.
+       komikInfo.chapters hanya sebagai seed awal (bisa kurang lengkap). */
+    if (d.komikInfo?.chapters?.length && allChapters.length === 0) {
+      /* Seed dulu dengan apa yang ada agar panel tidak kosong saat loading */
       allChapters = d.komikInfo.chapters;
       renderChapterList();
       updateNavButtons();
-    } else if (allChapters.length === 0) {
-      loadChapterListFromAPI();
-    } else {
-      renderChapterList();
     }
+    /* Selalu re-fetch & merge dari 3 API untuk dapat chapter terlengkap */
+    loadChapterListFromAPI();
 
     /* Render gambar sesuai mode */
     if (readMode === "single") {
@@ -362,48 +364,83 @@ function updateNavButtons() {
 async function loadChapterListFromAPI() {
   if (!komikSlug) return;
   try {
-    /* Coba API 1: komikindo */
-    let chapters = null;
-    try {
-      const res  = await fetch(API_DETAIL + komikSlug);
-      const json = await res.json();
-      if (json.success && json.data?.chapters?.length) {
-        chapters = json.data.chapters;
-      } else throw new Error("API 1 no chapters");
-    } catch (e1) {
-      console.warn("[Reader] Chapter list API 1 gagal, coba API 2:", e1.message);
-      try {
-        /* Fallback ke API 2: mangakita */
-        const res2  = await fetch(API_DETAIL_2 + komikSlug);
-        const json2 = await res2.json();
-        if (json2.success && json2.details?.chapters?.length) {
-          chapters = json2.details.chapters.map(ch => ({
+    /* Fetch semua 3 API paralel — sama seperti detail.js agar chapter
+       yang belum masuk ke satu API tetap muncul dari API lain */
+    const [r1, r2, r3] = await Promise.allSettled([
+      fetch(API_DETAIL   + komikSlug).then(r => r.json()).catch(() => null),
+      fetch(API_DETAIL_2 + komikSlug).then(r => r.json()).catch(() => null),
+      fetch(API_DETAIL_3 + komikSlug).then(r => r.json()).catch(() => null),
+    ]);
+
+    /* Normalize tiap source jadi array chapter {title, slug, releaseTime} */
+    const j1 = r1.status === "fulfilled" ? r1.value : null;
+    const j2 = r2.status === "fulfilled" ? r2.value : null;
+    const j3 = r3.status === "fulfilled" ? r3.value : null;
+
+    /* Source prioritas: pakai currentApiSource agar slug reader-compatible */
+    const srcChapters = {
+      komikindo: (j1?.success && j1?.data?.chapters?.length)
+        ? j1.data.chapters
+        : [],
+      mangakita: (j2?.success && j2?.details?.chapters?.length)
+        ? j2.details.chapters.map(ch => ({
             title:       ch.title || "",
             slug:        (ch.slug || "").replace(/^https?:\/?\/?[^/]+\//, "").replace(/\/$/, ""),
             releaseTime: ch.date  || "",
-          }));
-        } else throw new Error("API 2 no chapters");
-      } catch (e2) {
-        console.warn("[Reader] Chapter list API 2 gagal, coba API 3:", e2.message);
-        /* Fallback ke API 3: bacakomik */
-        const res3  = await fetch(API_DETAIL_3 + komikSlug);
-        const json3 = await res3.json();
-        if (json3.success && json3.detail?.chapters?.length) {
-          chapters = json3.detail.chapters.map(ch => ({
+          }))
+        : [],
+      bacakomik: (j3?.success && j3?.detail?.chapters?.length)
+        ? j3.detail.chapters.map(ch => ({
             title:       ch.title || ch.slug || "",
             slug:        ch.slug  || "",
             releaseTime: ch.date  || "",
-          }));
-        }
+          }))
+        : [],
+    };
+
+    /* Merge: sama persis logika di detail.js
+       — key = nomor chapter (float), slug dari currentApiSource menang */
+    const chMap = new Map();
+    const _order = ["komikindo", "mangakita", "bacakomik"]
+      .filter(s => s !== currentApiSource);   /* best source diproses terakhir */
+    const processOrder = [..._order, currentApiSource];
+
+    for (const srcKey of processOrder) {
+      const isBest = srcKey === currentApiSource;
+      for (const ch of (srcChapters[srcKey] || [])) {
+        const label = ch.title || ch.slug || "";
+        const m = label.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
+               || label.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
+        if (!m) continue;
+        const num = parseFloat(m[1].replace(/[_,]/g, "."));
+        if (isNaN(num)) continue;
+        const existing = chMap.get(num);
+        chMap.set(num, {
+          title:       (isBest && ch.title) ? ch.title : (existing?.title || ch.title || ""),
+          slug:        (isBest && ch.slug)  ? ch.slug  : (existing?.slug  || ch.slug  || ""),
+          releaseTime: ch.releaseTime || existing?.releaseTime || "",
+          _num: num,
+        });
       }
     }
 
-    if (chapters?.length) {
+    /* Fallback: kalau merge kosong, pakai source terbaik langsung */
+    let chapters = Array.from(chMap.values()).sort((a, b) => b._num - a._num);
+    if (!chapters.length) {
+      const fallback = srcChapters[currentApiSource]
+        || srcChapters.komikindo
+        || srcChapters.mangakita
+        || srcChapters.bacakomik;
+      chapters = fallback || [];
+    }
+
+    const totalSrc = Object.values(srcChapters).map(a => a.length);
+    console.log(`[Reader] Chapter list merged: ${chapters.length} (src: ${totalSrc.join("/")})`);
+
+    if (chapters.length) {
       allChapters = chapters;
       renderChapterList();
-      /* Update nav buttons dan re-render bottom nav sekarang allChapters sudah ada */
       updateNavButtons();
-      /* Re-render bottom nav agar Prev/Next info terupdate */
       const oldNav = document.getElementById("bottomChapterNav");
       if (oldNav) { oldNav.remove(); }
       const readerEl = document.getElementById("reader");
