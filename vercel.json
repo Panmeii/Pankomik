@@ -1,98 +1,47 @@
 {
   "rewrites": [
-    {
-      "source": "/chat",
-      "destination": "/chat.html"
-    },
-    {
-      "source": "/chat/",
-      "destination": "/chat.html"
-    },
-    {
-      "source": "/admin",
-      "destination": "/admin.html"
-    },
-    {
-      "source": "/admin/",
-      "destination": "/admin.html"
-    },
-    {
-      "source": "/novel",
-      "destination": "/novel.html"
-    },
-    {
-      "source": "/novel/",
-      "destination": "/novel.html"
-    },
-    {
-      "source": "/genre",
-      "destination": "/genre.html"
-    },
-    {
-      "source": "/genre/",
-      "destination": "/genre.html"
-    },
-    {
-      "source": "/donatur",
-      "destination": "/donatur.html"
-    },
-    {
-      "source": "/donatur/",
-      "destination": "/donatur.html"
-    },
-    {
-      "source": "/profil",
-      "destination": "/profile.html"
-    },
-    {
-      "source": "/profil/",
-      "destination": "/profile.html"
-    },
-    {
-      "source": "/masuk",
-      "destination": "/auth.html"
-    },
-    {
-      "source": "/masuk/",
-      "destination": "/auth.html"
-    },
-    {
-      "source": "/komik/:komikSlug/:chapterSlug",
-      "destination": "/reader.html?slug=:chapterSlug&komik=:komikSlug"
-    },
-    {
-      "source": "/komik/:slug",
-      "destination": "/detail.html?slug=:slug"
-    },
-    {
-      "source": "/baca/:slug",
-      "destination": "/reader.html?slug=:slug"
-    },
-    {
-      "source": "/novel/:slug",
-      "destination": "/novel-detail.html?slug=:slug"
-    },
-    {
-      "source": "/baca-novel/:slug",
-      "destination": "/novel-reader.html?slug=:slug"
-    },
-    {
-      "source": "/genre/:slug",
-      "destination": "/genre.html?genre=:slug"
-    }
+    { "source": "/chat",   "destination": "/chat.html" },
+    { "source": "/chat/",  "destination": "/chat.html" },
+    { "source": "/admin",  "destination": "/admin.html" },
+    { "source": "/admin/", "destination": "/admin.html" },
+
+    { "source": "/novel",  "destination": "/novel.html" },
+    { "source": "/novel/", "destination": "/novel.html" },
+
+    { "source": "/anime",  "destination": "/anime.html" },
+    { "source": "/anime/", "destination": "/anime.html" },
+
+    { "source": "/genre",  "destination": "/genre.html" },
+    { "source": "/genre/", "destination": "/genre.html" },
+
+    { "source": "/donatur",  "destination": "/donatur.html" },
+    { "source": "/donatur/", "destination": "/donatur.html" },
+
+    { "source": "/profil",  "destination": "/profile.html" },
+    { "source": "/profil/", "destination": "/profile.html" },
+
+    { "source": "/masuk",  "destination": "/auth.html" },
+    { "source": "/masuk/", "destination": "/auth.html" },
+
+    { "source": "/komik/:komikSlug/:chapterSlug", "destination": "/reader.html?slug=:chapterSlug&komik=:komikSlug" },
+    { "source": "/komik/:slug",                   "destination": "/detail.html?slug=:slug" },
+    { "source": "/baca/:slug",                    "destination": "/reader.html?slug=:slug" },
+
+    { "source": "/novel/:slug",       "destination": "/novel-detail.html?slug=:slug" },
+    { "source": "/baca-novel/:slug",  "destination": "/novel-reader.html?slug=:slug" },
+
+    { "source": "/genre/:slug",       "destination": "/genre.html?genre=:slug" },
+
+    { "source": "/anime/:animeId",         "destination": "/anime-detail.html?id=:animeId" },
+    { "source": "/anime-watch/:epId",      "destination": "/anime-watch.html?ep=:epId" },
+    { "source": "/anime-genre/:genreId",   "destination": "/anime-genre.html?genre=:genreId" }
   ],
   "headers": [
     {
       "source": "/api/img",
       "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=86400, s-maxage=604800"
-        },
-        {
-          "key": "Access-Control-Allow-Origin",
-          "value": "*"
-        }
+        { "key": "Cache-Control",             "value": "public, max-age=86400, s-maxage=604800" },
+        { "key": "Access-Control-Allow-Origin","value": "*" }
       ]
     }
   ]
