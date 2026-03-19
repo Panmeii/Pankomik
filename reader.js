@@ -254,6 +254,11 @@ async function loadChapter() {
       renderScrollMode(allImages);
     }
 
+    /* Dispatch event agar comment-system.js tahu chapter sudah dimuat */
+    window.dispatchEvent(new CustomEvent("readerChapterLoaded", {
+      detail: { slug: currentChapterSlug, komikSlug }
+    }));
+
     /* Auto-save history */
     if (currentUser && !historyWasSaved) {
       historyWasSaved = true;
