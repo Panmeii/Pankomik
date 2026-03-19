@@ -344,7 +344,7 @@
       color: var(--accent);
     }
 
-    /* Skeleton for leaderboard */
+    /* ── Skeleton for leaderboard */
     .lb-skeleton {
       height: 64px; border-radius: 12px; margin-bottom: 6px;
       background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
@@ -352,6 +352,53 @@
       animation: shimmer 1.4s infinite;
     }
     @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── Komentar saya ── */
+    .my-comment-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s, transform 0.15s;
+      cursor: pointer;
+      text-decoration: none;
+      display: block;
+      color: inherit;
+    }
+    .my-comment-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .my-comment-location {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      padding: 2px 9px;
+      font-size: 10px; font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 7px;
+      max-width: 100%;
+    }
+    .my-comment-text {
+      font-size: 13px; line-height: 1.55; color: var(--text);
+      margin-bottom: 7px;
+      display: -webkit-box; -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .my-comment-footer {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .my-comment-likes { color: #ff4060; font-weight: 700; }
+    .my-comment-reply-badge {
+      background: rgba(142,68,173,0.12);
+      color: #8e44ad;
+      border-radius: 99px;
+      padding: 1px 7px;
+      font-size: 10px; font-weight: 700;
+    }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -379,7 +426,7 @@ import {
   getHistory, getProgress, syncProfileProgress, getTotalChaptersRead,
   getLeaderboard, getNovelLeaderboard,
   getNovelBookmarks, removeNovelBookmark,
-  getNovelHistory
+  getNovelHistory, getMyComments
 } from "/supabase.js";
 import { initAuthHeader } from "/auth-header.js";
 
@@ -481,6 +528,7 @@ async function loadProfile() {
       <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')">📊 Progress</button>
       <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')">🏅 Badge</button>
       <button class="profile-tab"        id="tab-leaderboard"    onclick="switchTab('leaderboard')">🏆 Top</button>
+      <button class="profile-tab"        id="tab-comments"       onclick="switchTab('comments')">💬 Komen</button>
       <button class="profile-tab"        id="tab-settings"       onclick="switchTab('settings')">⚙️ Profil</button>
     </div>
 
@@ -524,6 +572,11 @@ async function loadProfile() {
 
     <div class="tab-content" id="content-leaderboard">
       <div id="leaderboardContent"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <!-- Tab: Komentar Saya -->
+    <div class="tab-content" id="content-comments">
+      <div id="myCommentsList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
     <!-- ── Edit Profil ── -->
@@ -603,6 +656,7 @@ window.switchTab = function (tab) {
   if (tab === "progress")       loadProgressTab();
   if (tab === "badge")          loadBadgeTab();
   if (tab === "leaderboard")    loadLeaderboard();
+  if (tab === "comments")       loadMyComments();
 };
 
 /* ============================================================
@@ -1105,9 +1159,130 @@ async function loadNovelHistory() {
     </div>`).join("");
 }
 
-window.gotoNovelDetail = slug => window.location.href = `novel-detail.html?slug=${slug}`;
-window.gotoDetail   = slug => window.location.href = `detail.html?slug=${slug}`;
-window.goHome       = () => window.location.href = "index.html";
+/* ============================================================
+   KOMENTAR SAYA
+   ============================================================ */
+let _myCommentsLoaded = false;
+
+async function loadMyComments() {
+  if (_myCommentsLoaded) return; /* cache agar tidak re-fetch setiap klik tab */
+  const el = document.getElementById("myCommentsList");
+  if (!el) return;
+
+  el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat komentar...</p></div>`;
+
+  try {
+    const { comments, error } = await getMyComments(currentUser.id, 30);
+
+    if (error) throw error;
+
+    if (!comments || comments.length === 0) {
+      el.innerHTML = `
+        <div class="empty-state">
+          <p>💬</p>
+          <p>Kamu belum pernah berkomentar.</p>
+          <p style="font-size:11px;margin-top:4px;">Mulai baca komik dan tinggalkan komentar!</p>
+        </div>`;
+      _myCommentsLoaded = true;
+      return;
+    }
+
+    _myCommentsLoaded = true;
+    el.innerHTML = comments.map(c => renderMyComment(c)).join("");
+
+  } catch (err) {
+    console.error("loadMyComments error:", err);
+    el.innerHTML = `
+      <div class="empty-state">
+        <p>😕</p>
+        <p>Gagal memuat komentar.</p>
+        <button onclick="_myCommentsLoaded=false;loadMyComments()" style="
+          margin-top:10px;padding:7px 18px;background:var(--accent);
+          color:#fff;border:none;border-radius:8px;cursor:pointer;
+          font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;">
+          🔄 Coba Lagi
+        </button>
+      </div>`;
+  }
+}
+
+function resolveCommentLocation(komikSlug) {
+  /* Sama dengan fungsi di index.html — konversi slug ke { icon, label, url } */
+  if (!komikSlug) return { icon: "💬", label: "Pankomik", url: "/" };
+
+  if (komikSlug.startsWith("novel-chapter:")) {
+    const raw   = komikSlug.slice("novel-chapter:".length);
+    const label = raw.replace(/-chapter-[\d-]+$/i,"")
+                     .replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
+                     .trim().slice(0,26) || "Chapter Novel";
+    return { icon: "📖", label, url: `/baca-novel/${raw}` };
+  }
+  if (komikSlug.startsWith("novel:")) {
+    const raw   = komikSlug.slice("novel:".length);
+    const label = raw.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
+                     .trim().slice(0,26) || "Novel";
+    return { icon: "📖", label, url: `/novel/${raw}` };
+  }
+  if (komikSlug.startsWith("chapter:")) {
+    const raw   = komikSlug.slice("chapter:".length);
+    const label = raw.replace(/-chapter-[\d-]+$/i,"")
+                     .replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
+                     .trim().slice(0,26) || "Chapter Komik";
+    return { icon: "📚", label, url: `/baca/${raw}` };
+  }
+  /* Legacy: slug komik langsung */
+  const label = komikSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
+                          .trim().slice(0,26) || "Komik";
+  return { icon: "📚", label, url: `/komik/${komikSlug}` };
+}
+
+function escH(str) {
+  return String(str || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function renderMyComment(c) {
+  const loc     = resolveCommentLocation(c.komik_slug);
+  const likes   = c.like_count || 0;
+  const isReply = !!c.parent_id;
+  const text    = (c.content || "").slice(0, 200);
+  let   time    = "–";
+  try { time = new Date(c.created_at).toLocaleDateString("id-ID",
+    { day:"numeric", month:"short", year:"numeric" }); } catch {}
+
+  return `
+    <a class="my-comment-card" href="${escH(loc.url)}"
+       title="Komentar di: ${escH(loc.label)} — klik untuk melihat">
+
+      <!-- Lokasi komentar -->
+      <div class="my-comment-location">
+        <span>${escH(loc.icon)}</span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+          ${escH(loc.label)}
+        </span>
+      </div>
+
+      <!-- Isi komentar -->
+      <p class="my-comment-text">${escH(text)}${(c.content||"").length > 200 ? "…" : ""}</p>
+
+      <!-- Footer: waktu · like · badge reply -->
+      <div class="my-comment-footer">
+        <span>🕒 ${escH(time)}</span>
+        ${likes > 0 ? `<span class="my-comment-likes">❤️ ${likes}</span>` : ""}
+        ${isReply ? `<span class="my-comment-reply-badge">↩ Balasan</span>` : ""}
+        <span style="margin-left:auto;color:var(--accent);font-weight:700;font-size:10px;">
+          Lihat →
+        </span>
+      </div>
+    </a>`;
+}
+
+window.loadMyComments = loadMyComments; /* expose agar bisa dipanggil dari tombol retry */
+
+window.gotoNovelDetail = slug => window.location.href = `/novel/${slug}`;
+window.gotoDetail   = slug => window.location.href = `/komik/${slug}`;
+window.goHome       = () => window.location.href = "/";
 window.liveSearch   = () => {};
 window.toggleMenu   = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display === "block" ? "none" : "block"; };
 window.toggleDarkMode = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark"); };
