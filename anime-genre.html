@@ -161,9 +161,9 @@ let totalItems = 0;
 
 function getGenreSlug() { return getAnimeGenreId(); }
 
-function pImg(url, w=200) {
-  if (!url) return "";
-  return `https://images.weserv.nl/?url=${encodeURIComponent(url.replace(/^https?:\/\//,''))}&w=${w}&output=webp&q=80`;
+function pImg(url, w=300) {
+  return url || "";
+}&w=${w}&output=webp&q=80`;
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -172,9 +172,10 @@ function renderCard(a) {
   const id  = a.animeId || a.slug || "";
   return `
     <div class="anime-card" onclick="window.location.href=window._animeURL('${esc(id)}')">
-      ${img ? `<img src="${esc(img)}" alt="${esc(a.title)}" loading="lazy"
-        onerror="this.style.background='var(--bg-surface)';this.src=''">` :
-        `<div style="width:100%;aspect-ratio:3/4;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px;">⚡</div>`}
+      ${img
+        ? `<img src="${esc(img)}" alt="${esc(a.title)}" loading="lazy"
+            onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\'width:100%;aspect-ratio:3/4;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px\'>⚡</div>')">`
+        : `<div style="width:100%;aspect-ratio:3/4;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px;">⚡</div>`}
       ${a.episodes ? `<span class="anime-card-eps">Ep ${a.episodes}</span>` : ""}
       <div class="anime-card-info">
         <div class="anime-card-title">${esc(a.title)}</div>
