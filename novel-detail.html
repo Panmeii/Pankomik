@@ -285,6 +285,9 @@
   </div>
 </div>
 
+<!-- ── Komentar Novel Detail ────────────────────────────── -->
+<div id="novelDetailCommentSection"></div>
+
 <!-- Bottom Nav -->
 <nav class="bottom-nav">
   <button class="nav-item" onclick="window.location.href='/'">
@@ -311,6 +314,7 @@
     checkNovelBookmark, addNovelBookmark, removeNovelBookmark,
     getLastNovelRead, saveNovelHistory
   } from "/supabase.js";
+  import { initComments } from "/comment-system.js";
 
   initAuthHeader();
 
@@ -319,6 +323,17 @@
     getCurrentUser,
     checkNovelBookmark, addNovelBookmark, removeNovelBookmark,
     getLastNovelRead, saveNovelHistory
+  };
+
+  /* Init komentar setelah detail dimuat — dipanggil oleh loadDetail() via event */
+  window._initNovelComments = async function(novelSlug) {
+    const user = await getCurrentUser();
+    await initComments({
+      containerId : "novelDetailCommentSection",
+      contentSlug : `novel:${novelSlug}`,
+      accentColor : "#8e44ad",
+      user,
+    });
   };
 </script>
 
@@ -355,6 +370,11 @@ window.onload = async function () {
   if (window._supabase) currentUser = await window._supabase.getCurrentUser();
 
   await loadDetail();
+
+  /* Init komentar setelah detail selesai dimuat */
+  if (typeof window._initNovelComments === "function") {
+    window._initNovelComments(slug);
+  }
 };
 
 /* ── FETCH DETAIL ─────────────────────────────────────────── */
