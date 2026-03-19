@@ -414,6 +414,24 @@ async function loadDetail() {
 
 /* ── Placeholder saat gambar tidak muncul ─────────────── */
 function posterFallback(el, title) {
+  /* Multi-step: /api/img → weserv.nl → div placeholder */
+  var original = el.getAttribute("data-original") || "";
+  var step = parseInt(el.getAttribute("data-fb-step") || "0");
+  step++;
+  el.setAttribute("data-fb-step", step);
+
+  if (step === 1 && original) {
+    /* Step 1: weserv.nl */
+    var c = original.split("?")[0].replace(/^https?:\/\//, "");
+    el.src = "https://images.weserv.nl/?url=" + encodeURIComponent(c) + "&w=300&output=webp&q=80";
+    return;
+  }
+  if (step === 2 && original) {
+    /* Step 2: wsrv.nl */
+    el.src = "https://wsrv.nl/?url=" + encodeURIComponent(original.split("?")[0]) + "&w=300&output=webp&q=85&n=-1";
+    return;
+  }
+  /* Step 3+: placeholder div */
   const initials = (title || "N").slice(0, 2).toUpperCase();
   el.outerHTML = `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;
     background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;flex-direction:column;
@@ -426,31 +444,14 @@ function posterFallback(el, title) {
 /* ============================================================
    IMAGE PROXY — Multi-layer fallback bypass Cloudflare
    sakuranovel.id dilindungi Cloudflare Bot Protection
-   Strategi: /api/img (Vercel edge) → wsrv.nl+ref → weserv.nl → langsung
+   Strategi: coba images.weserv.nl → wsrv.nl → langsung (fallback)
    ============================================================ */
-/* _NOVEL_REF_MAP: referer per domain untuk wsrv.nl */
-var _NOVEL_REF_MAP = {
-  "sakuranovel": "https://sakuranovel.id",
-  "novelringan": "https://novelringan.com",
-  "gramedia":    "https://gramedia.com",
-  "wattpad":     "https://wattpad.com",
-};
-function _getNovelRef(url) {
-  if (!url) return "";
-  try {
-    var host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
-    for (var k in _NOVEL_REF_MAP) {
-      if (host.indexOf(k) !== -1) return _NOVEL_REF_MAP[k];
-    }
-    return "https://" + host;
-  } catch(e) { return ""; }
-}
-
 function proxyImg(url, width) {
   if (!url) return "";
-  if (url.includes("/api/img") || url.includes("sankavollerei")) return url;
+  if (url.includes("/api/img")) return url;
+  if (url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
   var clean = url.split("?")[0];
-  /* Pakai Vercel edge proxy /api/img — bypass Cloudflare hotlink */
+  /* Pakai /api/img — server otomatis redirect ke wsrv.nl jika Cloudflare blok */
   return "/api/img?url=" + encodeURIComponent(clean);
 }
 
@@ -458,42 +459,30 @@ function createProxiedImg(originalUrl, altText, cssText) {
   var img = document.createElement("img");
   img.alt = altText || "";
   if (cssText) img.style.cssText = cssText;
-  img.style.background = "var(--bg-surface, #1a1a2e)";
 
   var clean = (originalUrl || "").split("?")[0];
   var step  = 0;
 
   function getUrl(n) {
-    /* Step 0: wsrv.nl + &ref= Referer spoofing — paling andal bypass Cloudflare hotlink */
-    if (n === 0) {
-      var ref = _getNovelRef(clean);
-      return "https://wsrv.nl/?url=" + encodeURIComponent(clean)
-        + "&w=300&output=webp&q=85&n=-1"
-        + (ref ? "&ref=" + encodeURIComponent(ref) : "");
-    }
-    /* Step 1: weserv.nl (CDN berbeda) */
-    if (n === 1) {
-      var c1 = clean.replace(/^https?:\/\//, "");
-      return "https://images.weserv.nl/?url=" + encodeURIComponent(c1) + "&w=300&output=webp&q=80";
-    }
-    /* Step 2: Vercel /api/img (kalau ada) */
-    if (n === 2) return "/api/img?url=" + encodeURIComponent(clean);
-    return clean; /* Step 3: direct */
+    /* Step 0: /api/img — server proxy, redirect ke wsrv.nl jika Cloudflare blok */
+    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
+    /* Step 1: weserv.nl — CDN independen */
+    if (n === 1) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean.replace(/^https?:\/\//, "")) + "&w=300&output=webp&q=80";
+    /* Step 2: direct */
+    return originalUrl;
   }
 
   function onImgError() {
     step++;
     img.onerror = null;
-    if (step <= 3) {
+    console.warn("[Novel Detail] img error, trying step=" + step, clean.substring(0, 70));
+    if (step <= 2) {
       img.onerror = onImgError;
       img.src = getUrl(step);
     } else {
-      /* Semua proxy gagal → tampilkan fallback */
       img.style.display = "none";
       var sib = img.nextElementSibling;
-      if (sib && (sib.classList.contains("novel-card-fallback") || sib.tagName === "DIV")) {
-        sib.style.display = "flex";
-      }
+      if (sib) sib.style.display = "flex";
     }
   }
 
@@ -538,7 +527,7 @@ function renderDetail(d) {
       <div class="novel-hero-blur" id="heroBg"></div>
       <div class="novel-hero-content">
         ${d.poster
-          ? `<img class="novel-poster" src="${proxyImg(d.poster, 420)}" alt="${escHtml(d.title)}"
+          ? `<img class="novel-poster" src="${proxyImg(d.poster)}" alt="${escHtml(d.title)}"
                data-original="${escHtml(d.poster)}"
                onerror="posterFallback(this, '${escHtml(d.title)}')">`
           : `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;">
@@ -636,7 +625,7 @@ function renderDetail(d) {
   /* Set blur background */
   if (d.poster) {
     const bg = document.getElementById("heroBg");
-    if (bg) bg.style.backgroundImage = `url(${proxyImg(d.poster, 800)})`;
+    if (bg) bg.style.backgroundImage = `url(${proxyImg(d.poster)})`;
   }
 
   /* Render chapter list */
