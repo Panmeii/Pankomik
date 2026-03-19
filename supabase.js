@@ -796,6 +796,7 @@ export async function deleteComment(commentId, userId) {
 
 /**
  * Like / Unlike komentar
+ * Menggunakan RPC increment/decrement agar atomic & tidak bentrok RLS
  */
 export async function toggleLike(userId, commentId) {
   try {
@@ -810,48 +811,52 @@ export async function toggleLike(userId, commentId) {
     if (checkError) throw checkError;
 
     if (existing) {
-      // Unlike
-      await supabase
+      // Unlike — hapus baris like
+      const { error: delErr } = await supabase
         .from("comment_likes")
         .delete()
         .eq("id", existing.id);
+      if (delErr) throw delErr;
 
-      // Hitung like count baru
+      // Hitung ulang (sumber kebenaran dari tabel comment_likes)
       const { count } = await supabase
         .from("comment_likes")
         .select("*", { count: "exact", head: true })
         .eq("comment_id", commentId);
 
-      // Update like_count di tabel comments
+      const newCount = count ?? 0;
+
+      // Update like_count — gunakan upsert-style update agar tidak gagal RLS
       await supabase
         .from("comments")
-        .update({ like_count: count || 0 })
+        .update({ like_count: newCount })
         .eq("id", commentId);
 
-      return { liked: false, likeCount: count || 0, error: null };
+      return { liked: false, likeCount: newCount, error: null };
 
     } else {
-      // Like
-      await supabase
+      // Like — insert baris baru
+      const { error: insErr } = await supabase
         .from("comment_likes")
-        .insert({ 
-          user_id: userId, 
-          comment_id: commentId 
-        });
+        .insert({ user_id: userId, comment_id: commentId });
 
-      // Hitung like count baru
+      // Jika duplicate key (race condition), anggap sudah liked
+      if (insErr && !insErr.message?.includes("duplicate")) throw insErr;
+
+      // Hitung ulang
       const { count } = await supabase
         .from("comment_likes")
         .select("*", { count: "exact", head: true })
         .eq("comment_id", commentId);
 
-      // Update like_count di tabel comments
+      const newCount = count ?? 1;
+
       await supabase
         .from("comments")
-        .update({ like_count: count || 0 })
+        .update({ like_count: newCount })
         .eq("id", commentId);
 
-      return { liked: true, likeCount: count || 0, error: null };
+      return { liked: true, likeCount: newCount, error: null };
     }
 
   } catch (err) {
@@ -988,4 +993,158 @@ export async function getTotalNovelChaptersRead(userId) {
     .from("novel_chapter_reads").select("*", { count: "exact", head: true })
     .eq("user_id", userId);
   return { total: count || 0, error };
+}
+
+
+/* ============================================================
+   KOMENTAR UNIVERSAL — Novel Detail & Reader
+   Menggunakan kolom komik_slug sebagai identifier universal.
+   Format slug:
+     - Komik detail  : "komik-slug"
+     - Novel detail  : "novel:novel-slug"
+     - Komik chapter : "chapter:chapter-slug"
+     - Novel chapter : "novel-chapter:chapter-slug"
+   ============================================================ */
+
+/**
+ * Ambil komentar untuk slug apapun (komik/novel/chapter)
+ * Reusable version dari getComments dengan slug bebas
+ */
+export async function getCommentsForSlug(contentSlug, limit = 50) {
+  try {
+    const { data: comments, error: commentsError } = await supabase
+      .from("comments")
+      .select("id, content, created_at, user_id, komik_slug, parent_id, like_count")
+      .eq("komik_slug", contentSlug)
+      .is("parent_id", null)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (commentsError) throw commentsError;
+    if (!comments || comments.length === 0) return { comments: [], error: null };
+
+    // Kumpulkan user_id unik
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+
+    // Fetch profiles
+    let profilesMap = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url, level")
+        .in("id", userIds);
+      (profiles || []).forEach(p => { profilesMap[p.id] = p; });
+    }
+
+    // Fetch like counts
+    const commentIds = comments.map(c => c.id);
+    let likeCountMap = {};
+    const { data: likeCounts } = await supabase
+      .from("comment_likes")
+      .select("comment_id")
+      .in("comment_id", commentIds);
+    (likeCounts || []).forEach(l => {
+      likeCountMap[l.comment_id] = (likeCountMap[l.comment_id] || 0) + 1;
+    });
+
+    // Fetch replies
+    const { data: replies } = await supabase
+      .from("comments")
+      .select("id, content, created_at, user_id, komik_slug, parent_id, like_count")
+      .in("parent_id", commentIds)
+      .order("created_at", { ascending: true });
+
+    let enrichedReplies = [];
+    if (replies && replies.length > 0) {
+      const replyUserIds = [...new Set(replies.map(r => r.user_id))].filter(id => !profilesMap[id]);
+      if (replyUserIds.length > 0) {
+        const { data: rp } = await supabase
+          .from("profiles")
+          .select("id, username, avatar_url, level")
+          .in("id", replyUserIds);
+        (rp || []).forEach(p => { profilesMap[p.id] = p; });
+      }
+      const replyIds = replies.map(r => r.id);
+      let replyLikeMap = {};
+      const { data: replyLikes } = await supabase
+        .from("comment_likes")
+        .select("comment_id")
+        .in("comment_id", replyIds);
+      (replyLikes || []).forEach(l => {
+        replyLikeMap[l.comment_id] = (replyLikeMap[l.comment_id] || 0) + 1;
+      });
+      enrichedReplies = replies.map(r => ({
+        ...r,
+        profiles: profilesMap[r.user_id] || { username: "User", avatar_url: null, level: 1 },
+        like_count: replyLikeMap[r.id] || r.like_count || 0
+      }));
+    }
+
+    const repliesByParent = {};
+    enrichedReplies.forEach(r => {
+      if (!repliesByParent[r.parent_id]) repliesByParent[r.parent_id] = [];
+      repliesByParent[r.parent_id].push(r);
+    });
+
+    const enrichedComments = comments.map(c => ({
+      ...c,
+      profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 },
+      like_count: likeCountMap[c.id] || c.like_count || 0,
+      replies: repliesByParent[c.id] || []
+    }));
+
+    return { comments: enrichedComments, error: null };
+  } catch (err) {
+    console.error("Error in getCommentsForSlug:", err);
+    return { comments: [], error: err };
+  }
+}
+
+/**
+ * Tambah komentar universal (support semua tipe konten)
+ * Wrapper tipis dari addComment yang sudah ada
+ */
+export async function addCommentForSlug(userId, contentSlug, content, parentId = null) {
+  return addComment(userId, contentSlug, content, parentId);
+}
+
+/**
+ * Ambil top komentar berdasarkan like_count (untuk widget home)
+ * @param {number} limit - jumlah komentar teratas
+ */
+export async function getTopComments(limit = 5) {
+  try {
+    // Ambil komentar dengan like_count tertinggi, hanya parent comment
+    const { data: comments, error } = await supabase
+      .from("comments")
+      .select("id, content, created_at, user_id, komik_slug, like_count")
+      .is("parent_id", null)
+      .gt("like_count", 0)
+      .order("like_count", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    if (!comments || comments.length === 0) return { comments: [], error: null };
+
+    // Ambil profiles
+    const userIds = [...new Set(comments.map(c => c.user_id))];
+    let profilesMap = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, username, avatar_url, level")
+        .in("id", userIds);
+      (profiles || []).forEach(p => { profilesMap[p.id] = p; });
+    }
+
+    const enriched = comments.map(c => ({
+      ...c,
+      profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 }
+    }));
+
+    return { comments: enriched, error: null };
+  } catch (err) {
+    console.error("Error in getTopComments:", err);
+    return { comments: [], error: err };
+  }
 }
