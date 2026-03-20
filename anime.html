@@ -51,6 +51,7 @@
     .anime-search-wrap {
       padding: 12px 14px 0;
       position: relative;
+      z-index: 1900; /* pastikan di atas konten lain */
     }
     .anime-search {
       width: 100%;
@@ -69,6 +70,11 @@
       border-color: var(--anime-accent);
       box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
     }
+    .anime-search.has-results {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-color: var(--anime-accent);
+    }
     .anime-search-icon {
       position: absolute;
       left: 26px; top: 50%;
@@ -76,18 +82,37 @@
       font-size: 16px;
       pointer-events: none;
     }
+    /* Tombol clear (×) */
+    .anime-search-clear {
+      position: absolute;
+      right: 26px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 15px; cursor: pointer;
+      color: var(--text-muted); display: none;
+      padding: 4px; border-radius: 50%;
+      transition: color 0.15s, background 0.15s;
+      line-height: 1;
+    }
+    .anime-search-clear:hover { color: var(--text); background: var(--bg-surface); }
+    .anime-search-clear.visible { display: block; }
     #animeSearchResult {
-      position: fixed;
-      top: calc(var(--header-h) + 60px);
-      left: 10px; right: 10px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      max-height: 340px;
+      position: absolute;        /* absolute dalam .anime-search-wrap */
+      top: calc(100% - 1px);    /* tepat di bawah input */
+      left: 14px; right: 14px;
+      background: var(--bg-elevated, var(--bg-surface));
+      border: 1.5px solid var(--anime-accent);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      max-height: 360px;
       overflow-y: auto;
       display: none;
-      z-index: 1999;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      z-index: 2100;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
+      animation: searchDrop 0.15s ease;
+    }
+    @keyframes searchDrop {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
     .anime-search-item {
       display: flex; gap: 10px; padding: 10px 12px;
@@ -449,8 +474,9 @@
   <input class="anime-search" id="animeSearchInput"
     placeholder="Cari anime..." autocomplete="off"
     oninput="searchAnime(this.value)">
+  <span class="anime-search-clear" id="animeSearchClear" onclick="clearAnimeSearch()">✕</span>
+  <div id="animeSearchResult"></div>
 </div>
-<div id="animeSearchResult"></div>
 
 <!-- Tabs -->
 <div class="anime-tabs">
@@ -778,15 +804,24 @@ window.searchAnime = function(q) {
   const result = document.getElementById("animeSearchResult");
   const trimmed = q.trim();
 
+  const input = document.getElementById("animeSearchInput");
+  const clearBtn = document.getElementById("animeSearchClear");
+
   /* Sembunyikan jika kosong */
   if (!trimmed || trimmed.length < 2) {
     result.style.display = "none";
     lastQuery = "";
+    if (input) input.classList.remove("has-results");
+    if (clearBtn) clearBtn.classList.remove("visible");
     return;
   }
 
+  /* Tampilkan tombol clear */
+  if (clearBtn) clearBtn.classList.add("visible");
+
   /* Tampilkan skeleton sementara menunggu debounce */
   result.style.display = "block";
+  if (input) input.classList.add("has-results");
   result.innerHTML = `
     <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;color:var(--text-muted);font-size:13px;">
       <div class="spin-ring" style="width:18px;height:18px;border-width:2px;"></div>
@@ -862,17 +897,35 @@ window.searchAnime = function(q) {
   }, 400);
 };
 
+/* ── Clear search ── */
+window.clearAnimeSearch = function() {
+  const inp     = document.getElementById("animeSearchInput");
+  const res     = document.getElementById("animeSearchResult");
+  const clrBtn  = document.getElementById("animeSearchClear");
+  if (inp)    { inp.value = ""; inp.classList.remove("has-results"); inp.focus(); }
+  if (res)    { res.style.display = "none"; }
+  if (clrBtn) { clrBtn.classList.remove("visible"); }
+  lastQuery = "";
+};
+
 /* Tutup search result kalau klik di luar / tekan Escape */
 document.addEventListener("click", e => {
-  const inp = document.getElementById("animeSearchInput");
-  const res = document.getElementById("animeSearchResult");
-  if (res && !res.contains(e.target) && e.target !== inp) res.style.display = "none";
+  const wrap = document.querySelector(".anime-search-wrap");
+  const res  = document.getElementById("animeSearchResult");
+  const inp  = document.getElementById("animeSearchInput");
+  /* Klik di luar seluruh search-wrap → tutup */
+  if (res && wrap && !wrap.contains(e.target)) {
+    res.style.display = "none";
+    if (inp) inp.classList.remove("has-results");
+  }
 });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
-    const inp = document.getElementById("animeSearchInput");
-    const res = document.getElementById("animeSearchResult");
-    if (inp) { inp.value = ""; inp.blur(); }
+    const inp    = document.getElementById("animeSearchInput");
+    const res    = document.getElementById("animeSearchResult");
+    const clrBtn = document.getElementById("animeSearchClear");
+    if (inp) { inp.value = ""; inp.blur(); inp.classList.remove("has-results"); }
+    if (clrBtn) clrBtn.classList.remove("visible");
     if (res) res.style.display = "none";
     lastQuery = "";
   }
@@ -895,6 +948,5 @@ document.addEventListener("click", e => {
 });
 
 </script>
-  <script type="module" src="/global-chat.js"></script>
 </body>
 </html>
