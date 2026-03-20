@@ -597,7 +597,27 @@ async function loadProfile() {
           📧 Login sebagai <strong>${currentUser.email}</strong>
         </p>
 
-        <!-- Ganti Foto -->
+        <!-- Banner Support -->
+        <a href="/support" style="
+          display:flex;align-items:center;gap:12px;
+          padding:14px;margin-bottom:18px;
+          background:linear-gradient(135deg,rgba(232,82,42,0.12),rgba(245,166,35,0.08));
+          border:1.5px solid rgba(232,82,42,0.3);
+          border-radius:12px;text-decoration:none;
+          transition:transform 0.18s,box-shadow 0.18s;
+          -webkit-tap-highlight-color:transparent;
+        "
+        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(232,82,42,0.25)'"
+        onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <span style="font-size:28px;flex-shrink:0;">☕</span>
+          <div style="flex:1;min-width:0;">
+            <p style="font-size:13px;font-weight:900;color:var(--accent);margin:0 0 3px;">Dukung Pankomik</p>
+            <p style="font-size:11px;color:var(--text-muted);margin:0;line-height:1.5;">
+              Trakteer · Sociabuzz · Saweria · QRIS<br>Bantu kami tetap gratis untuk semua!
+            </p>
+          </div>
+          <span style="font-size:18px;color:var(--accent);">→</span>
+        </a>
         <div class="edit-form-row">
           <p class="edit-section-title">📷 Foto Profil</p>
           <div class="avatar-upload-area" onclick="document.getElementById('avatarInput').click()">
@@ -1406,8 +1426,8 @@ function getLevelTitle(level) {
   <button class="nav-item" onclick="window.location.href='novel.html'">
     <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='donatur.html'">
-    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  <button class="nav-item" onclick="window.location.href='/support'">
+    <span class="nav-icon">☕</span><span class="nav-label">Support</span>
   </button>
   <button class="nav-item active">
     <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
