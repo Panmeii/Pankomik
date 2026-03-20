@@ -17,6 +17,9 @@
     { "source": "/donatur",  "destination": "/donatur.html" },
     { "source": "/donatur/", "destination": "/donatur.html" },
 
+    { "source": "/support",  "destination": "/support.html" },
+{ "source": "/support/", "destination": "/support.html" },
+
     { "source": "/profil",  "destination": "/profile.html" },
     { "source": "/profil/", "destination": "/profile.html" },
 
