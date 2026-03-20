@@ -249,6 +249,92 @@
     }
     .btn-save-qr:hover { border-color: var(--accent); color: var(--accent); }
 
+    /* ── QRIS click-to-zoom ── */
+    .qris-frame {
+      cursor: zoom-in;
+      transition: transform 0.18s var(--ease), box-shadow 0.18s;
+    }
+    .qris-frame:hover {
+      transform: scale(1.03);
+      box-shadow: 0 8px 32px rgba(232,82,42,0.35);
+    }
+    .qris-frame:active { transform: scale(0.98); }
+
+    /* ── Modal overlay ── */
+    #qrisModal {
+      display: none;
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.88);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      align-items: center; justify-content: center;
+      padding: 24px;
+      animation: modalIn 0.2s var(--ease);
+    }
+    #qrisModal.open { display: flex; }
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .qris-modal-inner {
+      position: relative;
+      background: #fff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.7);
+      border: 3px solid var(--accent);
+      max-width: 340px; width: 100%;
+      animation: modalSlideUp 0.22s var(--ease);
+    }
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(24px) scale(0.95); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .qris-modal-inner::before {
+      content: 'QRIS';
+      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff;
+      font-family: 'Bangers', cursive; font-size: 14px; letter-spacing: 2px;
+      padding: 3px 14px; border-radius: 99px;
+    }
+    .qris-modal-img {
+      width: 100%; aspect-ratio: 1;
+      object-fit: contain; display: block;
+      border-radius: 10px;
+    }
+    .qris-modal-actions {
+      display: flex; gap: 8px; margin-top: 14px;
+    }
+    .qris-modal-btn {
+      flex: 1; padding: 11px 8px;
+      border: 1.5px solid #e0e0e0; border-radius: 10px;
+      background: #f8f8f8; color: #333;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 800;
+      cursor: pointer; text-align: center;
+      transition: all 0.15s; display: flex;
+      align-items: center; justify-content: center; gap: 5px;
+    }
+    .qris-modal-btn:hover { background: #efefef; border-color: #ccc; }
+    .qris-modal-btn.primary {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    .qris-modal-btn.primary:hover { background: var(--accent-dark); }
+    .qris-modal-close {
+      position: absolute; top: -14px; right: -14px;
+      width: 30px; height: 30px; border-radius: 50%;
+      background: #333; color: #fff; border: 2px solid #fff;
+      font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; line-height: 1;
+      transition: background 0.15s, transform 0.15s;
+    }
+    .qris-modal-close:hover { background: var(--accent); transform: scale(1.1); }
+    .qris-modal-label {
+      text-align: center; margin-top: 10px;
+      font-size: 11px; color: #888; font-weight: 700;
+    }
+
     /* ── Perks / benefit section ── */
     .perks-grid {
       display: grid; grid-template-columns: 1fr 1fr;
@@ -406,13 +492,16 @@
     </div>
   </div>
   <div class="qris-body">
-    <div class="qris-frame">
+    <div class="qris-frame" onclick="openQrisModal()" title="Klik untuk perbesar">
       <!-- Ganti src di bawah dengan URL gambar QRIS kamu -->
       <img id="qrisImg"
-           src="/assets/QRIS.png"
+           src="/assets/qris-pankomik.png"
            alt="QRIS Pankomik"
            onerror="this.parentNode.innerHTML='<div class=\'qris-placeholder\'></div>'">
     </div>
+    <p style="font-size:10px;color:var(--text-muted);margin-top:-6px;margin-bottom:4px;">
+      🔍 Ketuk untuk perbesar
+    </p>
     <p class="qris-note">
       Scan dengan aplikasi apapun yang mendukung <strong>QRIS</strong>.<br>
       Nominal bebas, minimum <strong>Rp 1.000</strong>
@@ -483,6 +572,22 @@
   </button>
 </nav>
 
+<!-- ── QRIS Modal ── -->
+<div id="qrisModal" onclick="closeQrisModal(event)">
+  <div class="qris-modal-inner" onclick="event.stopPropagation()">
+    <button class="qris-modal-close" onclick="closeQrisModal()" aria-label="Tutup">✕</button>
+    <img id="qrisModalImg"
+         class="qris-modal-img"
+         src="/assets/qris-pankomik.png"
+         alt="QRIS Pankomik">
+    <p class="qris-modal-label">Scan QR Code ini dengan kamera atau aplikasi dompet digitalmu</p>
+    <div class="qris-modal-actions">
+      <button class="qris-modal-btn" onclick="closeQrisModal()">✕ Tutup</button>
+      <button class="qris-modal-btn primary" onclick="saveQris()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { initAuthHeader } from "/auth-header.js";
   initAuthHeader();
@@ -490,17 +595,51 @@
 </script>
 
 <script>
+function openQrisModal() {
+  const src = document.getElementById("qrisImg")?.src;
+  if (!src) return;
+  const modal    = document.getElementById("qrisModal");
+  const modalImg = document.getElementById("qrisModalImg");
+  if (modalImg) modalImg.src = src;
+  modal.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeQrisModal(e) {
+  /* Jika dipanggil dari click overlay, pastikan klik di overlay bukan inner */
+  if (e && e.target !== document.getElementById("qrisModal")) return;
+  document.getElementById("qrisModal").classList.remove("open");
+  document.body.style.overflow = "";
+}
+
 function saveQris() {
   const img = document.getElementById("qrisImg");
   if (!img || img.tagName !== "IMG") {
     alert("Gambar QRIS tidak tersedia.");
     return;
   }
-  const a = document.createElement("a");
-  a.href = img.src;
-  a.download = "QRIS-Pankomik.png";
-  a.click();
+  /* Coba fetch → blob agar bisa di-download cross-origin */
+  fetch(img.src)
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "QRIS-Pankomik.png";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    })
+    .catch(() => {
+      /* Fallback direct link */
+      const a = document.createElement("a");
+      a.href = img.src; a.download = "QRIS-Pankomik.png";
+      a.click();
+    });
 }
+
+/* Tutup modal dengan tombol Back browser / Escape */
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeQrisModal();
+});
 </script>
 </body>
 </html>
