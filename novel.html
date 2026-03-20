@@ -160,24 +160,34 @@
       display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
       overflow:hidden;line-height:1.3;
     }
-    /* Search result card (tampil 1 kolom, lebih besar) */
+    /* Search result card (tampil 1 kolom, row layout) */
     .novel-card.search-card {
-      display:flex;gap:10px;flex-direction:row;
+      display:flex !important;gap:10px;flex-direction:row !important;
       padding:10px;border-radius:12px;align-items:flex-start;
+      overflow:visible;
     }
-    .novel-card.search-card img {
-      width:60px;height:85px;aspect-ratio:unset;flex-shrink:0;border-radius:7px;
+    /* Cover thumbnail wrapper */
+    .novel-card.search-card .search-cover {
+      width:60px;height:85px;flex-shrink:0;border-radius:7px;overflow:hidden;
+      background:var(--bg-surface);display:flex;align-items:center;justify-content:center;
     }
-    .novel-card.search-card .novel-card-fallback {
-      width:60px;height:85px;aspect-ratio:unset;flex-shrink:0;border-radius:7px;font-size:20px;
+    .novel-card.search-card .search-cover img {
+      width:60px !important;height:85px !important;
+      aspect-ratio:unset !important;object-fit:cover !important;
+      display:block !important;flex-shrink:0;border-radius:7px;
+    }
+    .novel-card.search-card .search-cover-fallback {
+      width:60px;height:85px;flex-shrink:0;border-radius:7px;
+      background:var(--bg-surface);display:flex;align-items:center;
+      justify-content:center;font-size:22px;color:var(--text-muted);
     }
     .novel-card.search-card .novel-badge { position:static;display:inline-block;margin-bottom:4px; }
     .novel-card.search-card .novel-rating { position:static;display:inline-block;margin-left:4px;border-radius:5px; }
     .novel-card.search-card .novel-title  { font-size:13px;-webkit-line-clamp:3; }
-    .novel-card.search-card .novel-status { position:static;background:none;padding:0;color:var(--text-muted); }
-    .novel-card.search-card .novel-info   { padding:0;flex:1; }
+    .novel-card.search-card .novel-status { position:static;background:none;padding:0;color:var(--text-muted);font-size:10px; }
+    .novel-card.search-card .novel-info   { padding:0;flex:1;min-width:0; }
     /* Search grid: 1 kolom */
-    .novel-grid.search-mode { grid-template-columns:1fr; }
+    .novel-grid.search-mode { grid-template-columns:1fr !important; }
 
     /* ── Skeleton ────────────────────────────────────────── */
     .novel-skeleton {
@@ -353,37 +363,12 @@ function _getNovelRef(url) {
   } catch(e) { return ""; }
 }
 
-
-/* ── WordPress Jetpack CDN — bypass Cloudflare untuk sakuranovel.id ──
-   i0.wp.com adalah CDN resmi WordPress.com yang bisa serve gambar
-   dari semua WordPress site tanpa hotlink protection / Cloudflare block.
-   Format: https://i0.wp.com/{domain}/{path}?w=300&ssl=1 */
-function toWpCdn(url, width) {
-  if (!url) return "";
-  try {
-    var clean = url.split("?")[0];
-    var m = clean.match(/^https?:\/\/([^/]+)(\/.+)$/);
-    if (!m) return "";
-    var domain = m[1];
-    var path   = m[2];
-    var w = width || 300;
-    return "https://i0.wp.com/" + domain + path + "?w=" + w + "&ssl=1&quality=85";
-  } catch(e) { return ""; }
-}
-
 function proxyImg(url, width) {
   if (!url) return "";
-  if (url.includes("/api/img") || url.includes("wp.com") ||
-      url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
-  var w = width || 300;
-  /* WordPress.com CDN — bypass Cloudflare sakuranovel tanpa proxy server */
-  try {
-    var u = new URL(url);
-    if (u.pathname.includes("/wp-content/")) {
-      return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=" + w + "&ssl=1&quality=85";
-    }
-  } catch(e) {}
+  if (url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
+  if (url.includes("/api/img")) return url;
   var clean = url.split("?")[0];
+  // Gunakan Vercel Edge proxy /api/img - bypass hotlink + Cloudflare
   return "/api/img?url=" + encodeURIComponent(clean);
 }
 
@@ -397,41 +382,30 @@ function createProxiedImg(originalUrl, altText, cssText) {
   var step  = 0;
 
   function getUrl(n) {
-    /* Step 0: WordPress.com CDN — tidak pakai Cloudflare, paling reliable */
-    if (n === 0) {
-      try {
-        var u = new URL(clean);
-        if (u.pathname.includes("/wp-content/")) {
-          return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=300&ssl=1&quality=85";
-        }
-      } catch(e) {}
-      return "/api/img?url=" + encodeURIComponent(clean);
+    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
+    if (n === 1) {
+      var ref = "";
+      try { var h = new URL(clean).hostname; for (var k in _NOVEL_REF_MAP) { if (h.indexOf(k)!==-1){ref=_NOVEL_REF_MAP[k];break;} } if(!ref)ref="https://"+h; } catch(e){}
+      return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1" + (ref?"&ref="+encodeURIComponent(ref):"");
     }
-    /* Step 1: /api/img dengan server-side fallback */
-    if (n === 1) return "/api/img?url=" + encodeURIComponent(clean);
-    /* Step 2: weserv.nl */
-    if (n === 2) {
-      var c2 = clean.replace(/^https?:\/\//, "");
-      return "https://images.weserv.nl/?url=" + encodeURIComponent(c2) + "&w=300&output=webp&q=80";
-    }
-    /* Step 3: direct */
-    return originalUrl;
+    return clean; // direct
   }
 
   function onImgError() {
     step++;
     img.onerror = null;
-    console.warn("[Novel] img error, trying step=" + step, clean.substring(0, 70));
-    if (step <= 3) {
+    console.log("[Pankomik Novel] img error step=" + step, "url was:", img.src.substring(0,80));
+    if (step <= 2) {
       img.onerror = onImgError;
       img.src = getUrl(step);
     } else {
-      /* Semua gagal - tampilkan fallback div */
+      /* Semua proxy gagal - tampilkan fallback div */
       var ph = document.createElement("div");
       ph.className = "novel-card-fallback";
       ph.style.cssText = "display:flex !important;width:100%;height:100%;";
       ph.textContent = "📖";
       if (img.parentNode) img.parentNode.replaceChild(ph, img);
+      /* Tampilkan sibling fallback jika ada */
       var sib = img.nextElementSibling;
       if (sib && sib.classList.contains("novel-card-fallback")) {
         sib.style.display = "flex";
@@ -610,24 +584,33 @@ function appendSearchCard(novel) {
   const rating  = novel.rating ? "⭐ " + novel.rating : "";
   const type    = novel.type || "Novel";
   const status  = novel.status && novel.status !== "Unknown" ? novel.status : "";
-  const initials = (title||"N").slice(0,2).toUpperCase();
 
   const card = document.createElement("div");
   card.className = "novel-card search-card";
 
-  const fallback = document.createElement("div");
-  fallback.style.cssText = "width:60px;height:85px;border-radius:7px;flex-shrink:0;background:var(--bg-surface);display:none;align-items:center;justify-content:center;font-size:18px;color:var(--text-muted);";
-  fallback.textContent = "📖";
+  /* ── Cover wrapper — penting agar CSS override tidak bentrok ── */
+  const coverWrap = document.createElement("div");
+  coverWrap.className = "search-cover";
 
   if (originalUrl) {
-    const img = createProxiedImg(originalUrl, title, "width:60px;height:85px;aspect-ratio:unset;flex-shrink:0;border-radius:7px;object-fit:cover;");
-    card.appendChild(img);
-    card.appendChild(fallback);
+    /* Buat img langsung (bukan createProxiedImg) agar style-nya terkontrol */
+    const img = createProxiedImg(
+      originalUrl, title,
+      "width:60px;height:85px;object-fit:cover;display:block;flex-shrink:0;border-radius:7px;"
+    );
+    /* Paksa dimensi via attribute juga agar tidak di-override CSS lain */
+    img.setAttribute("width", "60");
+    img.setAttribute("height", "85");
+    coverWrap.appendChild(img);
   } else {
-    fallback.style.display = "flex";
-    card.appendChild(fallback);
+    const fb = document.createElement("div");
+    fb.className = "search-cover-fallback";
+    fb.textContent = "📖";
+    coverWrap.appendChild(fb);
   }
+  card.appendChild(coverWrap);
 
+  /* ── Info section ── */
   const info = document.createElement("div");
   info.className = "novel-info";
   info.innerHTML =
