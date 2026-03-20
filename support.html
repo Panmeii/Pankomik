@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dukung Pankomik ❤️</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* ── Hero ── */
+    .support-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 48px 20px 36px;
+      text-align: center;
+    }
+    .support-hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(232,82,42,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 100%, rgba(245,166,35,0.10) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .hero-emoji {
+      font-size: 56px; line-height: 1;
+      margin-bottom: 14px;
+      display: block;
+      animation: heroFloat 3s ease-in-out infinite;
+    }
+    @keyframes heroFloat {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    .hero-title {
+      font-family: 'Bangers', cursive;
+      font-size: 34px; letter-spacing: 2px;
+      color: var(--text);
+      margin-bottom: 10px;
+      line-height: 1.1;
+    }
+    .hero-title span { color: var(--accent); }
+    .hero-desc {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.7; max-width: 320px; margin: 0 auto 20px;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      background: rgba(232,82,42,0.12);
+      border: 1px solid rgba(232,82,42,0.3);
+      border-radius: 99px;
+      font-size: 11px; font-weight: 800; color: var(--accent);
+    }
+
+    /* ── Stats strip ── */
+    .stats-strip {
+      display: flex;
+      margin: 0 14px 24px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .stat-item {
+      flex: 1; padding: 14px 10px; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat-item:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Bangers', cursive;
+      font-size: 22px; letter-spacing: 1px;
+      color: var(--accent); display: block; line-height: 1;
+    }
+    .stat-lbl {
+      font-size: 10px; font-weight: 700;
+      color: var(--text-muted); margin-top: 3px; display: block;
+    }
+
+    /* ── Section label ── */
+    .sec-label {
+      font-family: 'Bangers', cursive;
+      font-size: 16px; letter-spacing: 1.5px;
+      color: var(--text-muted);
+      padding: 0 14px 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sec-label::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Platform cards ── */
+    .platform-list {
+      display: flex; flex-direction: column;
+      gap: 10px; padding: 0 14px 24px;
+    }
+    .platform-card {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-lg);
+      cursor: pointer;
+      text-decoration: none; color: inherit;
+      transition: transform 0.18s var(--ease), border-color 0.18s, box-shadow 0.18s;
+      -webkit-tap-highlight-color: transparent;
+      position: relative; overflow: hidden;
+    }
+    .platform-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 60%, var(--card-accent, rgba(232,82,42,0.06)));
+      pointer-events: none;
+    }
+    .platform-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--card-border, var(--accent));
+      box-shadow: 0 8px 28px var(--card-glow, var(--accent-glow));
+    }
+    .platform-card:active { transform: scale(0.97); }
+
+    .platform-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; flex-shrink: 0;
+      background: var(--icon-bg, rgba(232,82,42,0.12));
+      border: 1.5px solid var(--icon-border, rgba(232,82,42,0.2));
+    }
+    .platform-icon img {
+      width: 32px; height: 32px; object-fit: contain; border-radius: 6px;
+    }
+    .platform-info { flex: 1; min-width: 0; }
+    .platform-name {
+      font-size: 15px; font-weight: 900;
+      color: var(--text); margin-bottom: 3px;
+    }
+    .platform-desc {
+      font-size: 11px; color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .platform-arrow {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: var(--bg-surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+      border: 1px solid var(--border);
+      transition: background 0.15s, transform 0.15s;
+    }
+    .platform-card:hover .platform-arrow {
+      background: var(--card-border, var(--accent));
+      color: #fff; border-color: transparent;
+      transform: translateX(2px);
+    }
+    .platform-badge {
+      position: absolute; top: 10px; right: 44px;
+      font-size: 9px; font-weight: 800;
+      padding: 2px 7px; border-radius: 99px;
+      background: var(--card-border, var(--accent));
+      color: #fff;
+    }
+
+    /* ── QRIS section ── */
+    .qris-section {
+      margin: 0 14px 24px;
+      background: var(--bg-card);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+    .qris-header {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .qris-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: linear-gradient(135deg, #e8522a, #f5a623);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; flex-shrink: 0;
+    }
+    .qris-title { font-size: 15px; font-weight: 900; color: var(--text); }
+    .qris-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .qris-body {
+      padding: 20px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .qris-frame {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      border: 3px solid var(--accent);
+    }
+    .qris-frame::before {
+      content: 'QRIS';
+      position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+      background: var(--accent); color: #fff;
+      font-family: 'Bangers', cursive; font-size: 13px; letter-spacing: 2px;
+      padding: 2px 12px; border-radius: 99px;
+    }
+    .qris-frame img {
+      width: 200px; height: 200px;
+      object-fit: contain; display: block;
+      border-radius: 8px;
+    }
+    /* Placeholder QR pattern jika gambar belum ada */
+    .qris-placeholder {
+      width: 200px; height: 200px;
+      background: repeating-conic-gradient(#000 0% 25%, #fff 0% 50%) 0 0/20px 20px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .qris-placeholder::after {
+      content: 'QR CODE\ADI SINI';
+      white-space: pre;
+      text-align: center;
+      background: rgba(255,255,255,0.92);
+      color: #000;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 800;
+      padding: 10px 16px; border-radius: 8px;
+    }
+    .qris-note {
+      font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.6;
+    }
+    .qris-note strong { color: var(--accent); }
+    .qris-apps {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+    }
+    .qris-app-chip {
+      padding: 4px 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 10px; font-weight: 700; color: var(--text-muted);
+    }
+    .btn-save-qr {
+      width: 100%;
+      padding: 11px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r-sm);
+      color: var(--text); font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.18s;
+    }
+    .btn-save-qr:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Perks / benefit section ── */
+    .perks-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; padding: 0 14px 24px;
+    }
+    .perk-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 12px;
+    }
+    .perk-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+    .perk-name { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .perk-desc { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── Quote / pesan ── */
+    .support-quote {
+      margin: 0 14px 28px;
+      padding: 18px 16px;
+      background: linear-gradient(135deg,
+        rgba(232,82,42,0.08) 0%,
+        rgba(245,166,35,0.06) 100%);
+      border: 1px solid rgba(232,82,42,0.2);
+      border-radius: var(--r-lg);
+      border-left: 3px solid var(--accent);
+      position: relative;
+    }
+    .support-quote::before {
+      content: '"'; position: absolute; top: 8px; left: 12px;
+      font-family: 'Bangers', cursive; font-size: 40px;
+      color: var(--accent); opacity: 0.3; line-height: 1;
+    }
+    .support-quote p {
+      font-size: 13px; color: var(--text); line-height: 1.7;
+      padding-left: 8px; font-style: italic;
+    }
+    .support-quote span {
+      font-size: 11px; color: var(--text-muted);
+      display: block; margin-top: 8px; padding-left: 8px;
+      font-style: normal; font-weight: 700;
+    }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="header">
+  <div class="logo" onclick="window.location.href='/'">Pankomik</div>
+  <div style="flex:1"></div>
+  <div class="header-right">
+    <button onclick="toggleDarkMode()">🌙</button>
+    <button onclick="toggleMenu()">👤</button>
+  </div>
+</header>
+<div id="menuDropdown" class="dropdown"></div>
+
+<!-- ── HERO ── -->
+<div class="support-hero">
+  <span class="hero-emoji">☕</span>
+  <h1 class="hero-title">Dukung<br><span>Pankomik</span></h1>
+  <p class="hero-desc">
+    Pankomik gratis untuk semua orang. Bantu kami tetap hidup dan terus berkembang dengan donasi kecil — seberapapun sangat berarti! 🙏
+  </p>
+  <span class="hero-badge">❤️ Dari komunitas, untuk komunitas</span>
+</div>
+
+<!-- ── STATS ── -->
+<div class="stats-strip">
+  <div class="stat-item">
+    <span class="stat-num">100%</span>
+    <span class="stat-lbl">Gratis</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">0</span>
+    <span class="stat-lbl">Iklan Mengganggu</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num">∞</span>
+    <span class="stat-lbl">Komik & Novel</span>
+  </div>
+</div>
+
+<!-- ── PLATFORM LINKS ── -->
+<div class="sec-label">💳 PILIH PLATFORM</div>
+
+<div class="platform-list">
+
+  <!-- Trakteer -->
+  <a class="platform-card" href="https://trakteer.id/pankomik" target="_blank" rel="noopener"
+     style="--card-border:#e8522a;--card-glow:rgba(232,82,42,0.25);--card-accent:rgba(232,82,42,0.06);">
+    <span class="platform-badge">Populer</span>
+    <div class="platform-icon"
+         style="--icon-bg:rgba(232,82,42,0.12);--icon-border:rgba(232,82,42,0.25);">
+      ☕
+    </div>
+    <div class="platform-info">
+      <div class="platform-name">Trakteer</div>
+      <div class="platform-desc">Platform dukungan kreator #1 Indonesia. Bayar pakai GoPay, OVO, DANA, kartu kredit.</div>
+    </div>
+    <div class="platform-arrow">→</div>
+  </a>
+
+  <!-- Sociabuzz -->
+  <a class="platform-card" href="https://sociabuzz.com/pankomik/tribe" target="_blank" rel="noopener"
+     style="--card-border:#9b59b6;--card-glow:rgba(155,89,182,0.25);--card-accent:rgba(155,89,182,0.06);">
+    <div class="platform-icon"
+         style="--icon-bg:rgba(155,89,182,0.12);--icon-border:rgba(155,89,182,0.25);">
+      🎁
+    </div>
+    <div class="platform-info">
+      <div class="platform-name">Sociabuzz</div>
+      <div class="platform-desc">Kirim tribe atau tip langsung. Dukung dengan berbagai metode pembayaran lokal.</div>
+    </div>
+    <div class="platform-arrow">→</div>
+  </a>
+
+  <!-- Saweria -->
+  <a class="platform-card" href="https://saweria.co/pankomik" target="_blank" rel="noopener"
+     style="--card-border:#f5a623;--card-glow:rgba(245,166,35,0.25);--card-accent:rgba(245,166,35,0.06);">
+    <div class="platform-icon"
+         style="--icon-bg:rgba(245,166,35,0.12);--icon-border:rgba(245,166,35,0.25);">
+      🪙
+    </div>
+    <div class="platform-info">
+      <div class="platform-name">Saweria</div>
+      <div class="platform-desc">Sawer langsung ke Pankomik. Bisa kirim pesan dukungan juga!</div>
+    </div>
+    <div class="platform-arrow">→</div>
+  </a>
+
+  <!-- Ko-fi -->
+  <a class="platform-card" href="https://ko-fi.com/pankomik" target="_blank" rel="noopener"
+     style="--card-border:#29abe0;--card-glow:rgba(41,171,224,0.25);--card-accent:rgba(41,171,224,0.06);">
+    <div class="platform-icon"
+         style="--icon-bg:rgba(41,171,224,0.12);--icon-border:rgba(41,171,224,0.25);">
+      ☕
+    </div>
+    <div class="platform-info">
+      <div class="platform-name">Ko-fi</div>
+      <div class="platform-desc">Belikan kami kopi virtual. Bayar pakai PayPal atau kartu kredit internasional.</div>
+    </div>
+    <div class="platform-arrow">→</div>
+  </a>
+
+</div>
+
+<!-- ── QRIS ── -->
+<div class="sec-label">📱 TRANSFER / QRIS</div>
+
+<div class="qris-section">
+  <div class="qris-header">
+    <div class="qris-icon">📲</div>
+    <div>
+      <div class="qris-title">Scan QRIS</div>
+      <div class="qris-subtitle">Semua e-wallet & mobile banking</div>
+    </div>
+  </div>
+  <div class="qris-body">
+    <div class="qris-frame">
+      <!-- Ganti src di bawah dengan URL gambar QRIS kamu -->
+      <img id="qrisImg"
+           src="/assets/qris-pankomik.png"
+           alt="QRIS Pankomik"
+           onerror="this.parentNode.innerHTML='<div class=\'qris-placeholder\'></div>'">
+    </div>
+    <p class="qris-note">
+      Scan dengan aplikasi apapun yang mendukung <strong>QRIS</strong>.<br>
+      Nominal bebas, minimum <strong>Rp 1.000</strong>
+    </p>
+    <div class="qris-apps">
+      <span class="qris-app-chip">GoPay</span>
+      <span class="qris-app-chip">OVO</span>
+      <span class="qris-app-chip">DANA</span>
+      <span class="qris-app-chip">LinkAja</span>
+      <span class="qris-app-chip">ShopeePay</span>
+      <span class="qris-app-chip">BCA Mobile</span>
+      <span class="qris-app-chip">Livin' Mandiri</span>
+      <span class="qris-app-chip">BSI Mobile</span>
+    </div>
+    <button class="btn-save-qr" onclick="saveQris()">
+      💾 Simpan Gambar QRIS
+    </button>
+  </div>
+</div>
+
+<!-- ── PERKS ── -->
+<div class="sec-label">🎁 KAMU DAPAT APA</div>
+<div class="perks-grid">
+  <div class="perk-card">
+    <span class="perk-icon">🚀</span>
+    <div class="perk-name">Server Lebih Cepat</div>
+    <div class="perk-desc">Donasi membantu bayar server agar loading lebih ngebut.</div>
+  </div>
+  <div class="perk-card">
+    <span class="perk-icon">🆕</span>
+    <div class="perk-name">Fitur Baru</div>
+    <div class="perk-desc">Mendukung pengembangan fitur baru yang kamu request.</div>
+  </div>
+  <div class="perk-card">
+    <span class="perk-icon">📚</span>
+    <div class="perk-name">Konten Lebih Banyak</div>
+    <div class="perk-desc">Lebih banyak komik, novel, dan anime yang bisa diakses.</div>
+  </div>
+  <div class="perk-card">
+    <span class="perk-icon">❤️</span>
+    <div class="perk-name">Rasa Puas</div>
+    <div class="perk-desc">Kamu jadi pahlawan komunitas Pankomik yang berkembang.</div>
+  </div>
+</div>
+
+<!-- ── QUOTE ── -->
+<div class="support-quote">
+  <p>Setiap donasi, sekecil apapun, membantu kami membayar server, mengembangkan fitur baru, dan menjaga Pankomik tetap gratis untuk semua orang.</p>
+  <span>— Tim Pankomik 🧡</span>
+</div>
+
+<!-- ── BOTTOM NAV ── -->
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/anime/'">
+    <span class="nav-icon">⚡</span><span class="nav-label">Anime</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/novel/'">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
+<script type="module">
+  import { initAuthHeader } from "/auth-header.js";
+  initAuthHeader();
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+</script>
+
+<script>
+function saveQris() {
+  const img = document.getElementById("qrisImg");
+  if (!img || img.tagName !== "IMG") {
+    alert("Gambar QRIS tidak tersedia.");
+    return;
+  }
+  const a = document.createElement("a");
+  a.href = img.src;
+  a.download = "QRIS-Pankomik.png";
+  a.click();
+}
+</script>
+</body>
+</html>
