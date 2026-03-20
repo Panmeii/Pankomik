@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fitur Pankomik — Baca Komik, Anime & Novel Gratis</title>
+  <meta name="description" content="Pankomik hadir dengan segudang fitur: baca komik manga manhwa manhua, nonton anime, baca novel, sistem level & badge, komentar, dark mode, dan masih banyak lagi — semua GRATIS!">
+  <!-- OG Tags untuk social share -->
+  <meta property="og:title" content="Fitur Pankomik 🔥">
+  <meta property="og:description" content="Platform baca komik, anime & novel terlengkap. Gratis, tanpa iklan mengganggu!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pankomik.vercel.app/fitur">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    :root {
+      --purple: #8e44ad;
+      --blue:   #2980b9;
+      --green:  #27ae60;
+      --gold:   #f5a623;
+    }
+
+    /* ── Hero ── */
+    .feat-hero {
+      position: relative; overflow: hidden;
+      padding: 52px 20px 40px;
+      text-align: center;
+    }
+    .feat-hero::before {
+      content: "";
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 90% 50% at 50% 0%,   rgba(232,82,42,.16) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 40% at 10% 100%,  rgba(142,68,173,.10) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 35% at 90% 80%,   rgba(245,166,35,.08) 0%, transparent 55%);
+    }
+    .feat-hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px;
+      background: rgba(232,82,42,0.12);
+      border: 1px solid rgba(232,82,42,0.25);
+      border-radius: 99px;
+      font-size: 10px; font-weight: 800;
+      color: var(--accent); letter-spacing: 1px;
+      text-transform: uppercase; margin-bottom: 14px;
+    }
+    .feat-hero h1 {
+      font-family: 'Bangers', cursive;
+      font-size: 40px; letter-spacing: 2px;
+      color: var(--text); line-height: 1.05;
+      margin-bottom: 12px;
+    }
+    .feat-hero h1 .hi { color: var(--accent); }
+    .feat-hero p {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.7; max-width: 300px; margin: 0 auto 22px;
+    }
+    .hero-cta-row {
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+    }
+    .hero-cta {
+      padding: 10px 20px; border-radius: 99px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 800;
+      cursor: pointer; text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+      display: inline-flex; align-items: center; gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .hero-cta:active { transform: scale(.95); }
+    .hero-cta.primary {
+      background: var(--accent); color: #fff; border: none;
+      box-shadow: 0 4px 16px rgba(232,82,42,.4);
+    }
+    .hero-cta.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,82,42,.5); }
+    .hero-cta.secondary {
+      background: var(--bg-card); color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+    .hero-cta.secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Stats bar ── */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      margin: 0 14px 28px;
+      background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 14px;
+      overflow: hidden;
+    }
+    .stat-cell {
+      padding: 14px 8px; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-val {
+      font-family: 'Bangers', cursive;
+      font-size: 26px; letter-spacing: 1px;
+      color: var(--accent); line-height: 1; display: block;
+    }
+    .stat-key {
+      font-size: 10px; font-weight: 700;
+      color: var(--text-muted); margin-top: 3px; display: block;
+    }
+
+    /* ── Section heading ── */
+    .sec-head {
+      padding: 4px 14px 12px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sec-head-icon {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; flex-shrink: 0;
+    }
+    .sec-head-text strong {
+      font-family: 'Bangers', cursive;
+      font-size: 18px; letter-spacing: 1.5px; color: var(--text);
+    }
+    .sec-head-text span {
+      font-size: 10px; color: var(--text-muted);
+      display: block; margin-top: 1px; font-weight: 700;
+    }
+
+    /* ── Feature card list ── */
+    .feat-list { padding: 0 14px 8px; display: flex; flex-direction: column; gap: 8px; }
+    .feat-card {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 13px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border); border-radius: 12px;
+      transition: border-color .15s, transform .15s;
+    }
+    .feat-card:hover { border-color: var(--card-accent, var(--accent)); transform: translateX(2px); }
+    .feat-card-icon {
+      font-size: 22px; flex-shrink: 0; margin-top: 1px;
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--icon-bg, rgba(232,82,42,.10));
+    }
+    .feat-card-body { flex: 1; min-width: 0; }
+    .feat-card-name {
+      font-size: 13px; font-weight: 900; color: var(--text);
+      margin-bottom: 3px;
+    }
+    .feat-card-desc {
+      font-size: 11px; color: var(--text-muted); line-height: 1.55;
+    }
+    .feat-card-badge {
+      flex-shrink: 0; align-self: center;
+      font-size: 9px; font-weight: 800; padding: 3px 8px;
+      border-radius: 99px; letter-spacing: .5px;
+      background: var(--badge-bg, rgba(232,82,42,.12));
+      color: var(--badge-color, var(--accent));
+      border: 1px solid var(--badge-border, rgba(232,82,42,.2));
+      white-space: nowrap;
+    }
+
+    /* ── 2-col grid cards ── */
+    .feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 14px 8px; }
+    .feat-mini {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 12px;
+      transition: border-color .15s, transform .15s;
+    }
+    .feat-mini:hover { border-color: var(--card-accent, var(--accent)); transform: translateY(-2px); }
+    .feat-mini-icon { font-size: 26px; margin-bottom: 8px; display: block; }
+    .feat-mini-name { font-size: 12px; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+    .feat-mini-desc { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+
+    /* ── Divider ── */
+    .feat-divider {
+      height: 1px; background: var(--border);
+      margin: 12px 14px 20px;
+    }
+
+    /* ── CTA bottom ── */
+    .feat-cta-bottom {
+      margin: 8px 14px 28px;
+      padding: 24px 18px;
+      background: linear-gradient(135deg,
+        rgba(232,82,42,0.10) 0%,
+        rgba(245,166,35,0.07) 50%,
+        rgba(142,68,173,0.07) 100%);
+      border: 1.5px solid rgba(232,82,42,0.2);
+      border-radius: 16px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .feat-cta-bottom::before {
+      content: "✦";
+      position: absolute; top: -12px; right: 14px;
+      font-size: 80px; color: rgba(232,82,42,.04);
+      font-family: serif; line-height: 1;
+    }
+    .feat-cta-bottom h3 {
+      font-family: 'Bangers', cursive;
+      font-size: 24px; letter-spacing: 1.5px; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .feat-cta-bottom p {
+      font-size: 12px; color: var(--text-muted);
+      line-height: 1.6; margin-bottom: 16px;
+    }
+    .cta-btns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .cta-btn {
+      padding: 10px 18px; border-radius: 99px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 800;
+      text-decoration: none; cursor: pointer; border: none;
+      transition: transform .15s, box-shadow .15s;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .cta-btn:active { transform: scale(.95); }
+    .cta-btn.orange { background: var(--accent); color: #fff; box-shadow: 0 3px 12px rgba(232,82,42,.4); }
+    .cta-btn.orange:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(232,82,42,.5); }
+    .cta-btn.ghost { background: var(--bg-card); color: var(--text); border: 1.5px solid var(--border); }
+    .cta-btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body class="has-bottom-nav">
+
+<header class="header">
+  <div class="logo" onclick="window.location.href='/'">Pankomik</div>
+  <div style="flex:1"></div>
+  <div class="header-right">
+    <button onclick="toggleDarkMode()">🌙</button>
+    <button onclick="toggleMenu()">👤</button>
+  </div>
+</header>
+<div id="menuDropdown" class="dropdown"></div>
+
+<!-- ── HERO ── -->
+<div class="feat-hero">
+  <div class="feat-hero-eyebrow">✦ Platform #1 Gratis Indonesia</div>
+  <h1>Semua yang<br>kamu butuhkan,<br><span class="hi">ada di sini.</span></h1>
+  <p>Komik, anime, novel — dalam satu aplikasi. Tanpa bayar, tanpa iklan mengganggu. Langsung baca!</p>
+  <div class="hero-cta-row">
+    <a class="hero-cta primary" href="/">🏠 Mulai Baca</a>
+    <a class="hero-cta secondary" href="/support">☕ Dukung Kami</a>
+  </div>
+</div>
+
+<!-- ── STATS ── -->
+<div class="stats-bar">
+  <div class="stat-cell">
+    <span class="stat-val">3-in-1</span>
+    <span class="stat-key">Komik·Anime·Novel</span>
+  </div>
+  <div class="stat-cell">
+    <span class="stat-val">100%</span>
+    <span class="stat-key">Gratis Selamanya</span>
+  </div>
+  <div class="stat-cell">
+    <span class="stat-val">0</span>
+    <span class="stat-key">Iklan Pop-up</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     KONTEN
+══════════════════════════════════════════════ -->
+<div class="sec-head">
+  <div class="sec-head-icon" style="background:rgba(232,82,42,.12);">📚</div>
+  <div class="sec-head-text">
+    <strong>KOMIK</strong>
+    <span>Manga · Manhwa · Manhua</span>
+  </div>
+</div>
+
+<div class="feat-list">
+  <div class="feat-card" style="--card-accent:var(--accent);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(232,82,42,.1);">🌍</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">3 Sumber Konten Sekaligus</div>
+      <div class="feat-card-desc">Ambil data dari 3 API berbeda (Komikindo, Mangakita, BacaKomik) secara paralel — chapter terbanyak yang selalu menang. Tidak ada lagi chapter hilang!</div>
+    </div>
+    <span class="feat-card-badge" style="--badge-bg:rgba(232,82,42,.1);--badge-color:var(--accent);--badge-border:rgba(232,82,42,.2);">SMART</span>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--accent);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(232,82,42,.1);">🔥</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Update Terbaru & Top Komik</div>
+      <div class="feat-card-desc">Halaman utama menampilkan komik yang baru update (real-time) dan daftar komik terpopuler. Ada infinite scroll — tinggal scroll terus!</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--accent);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(232,82,42,.1);">🔍</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Live Search dengan Debounce</div>
+      <div class="feat-card-desc">Ketik judul komik dan hasil muncul otomatis dalam 350ms. Highlight kata kunci, preview cover & chapter langsung di dropdown.</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--accent);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(232,82,42,.1);">🏷️</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Browse Genre & Rekomendasi</div>
+      <div class="feat-card-desc">Filter komik berdasarkan genre (Action, Romance, Fantasy, dll). Ada juga widget rekomendasi di halaman utama.</div>
+    </div>
+  </div>
+</div>
+
+<div class="feat-divider"></div>
+
+<!-- ── READER ── -->
+<div class="sec-head">
+  <div class="sec-head-icon" style="background:rgba(232,82,42,.12);">📖</div>
+  <div class="sec-head-text">
+    <strong>READER KOMIK</strong>
+    <span>Baca nyaman, kapan saja</span>
+  </div>
+</div>
+
+<div class="feat-list">
+  <div class="feat-card">
+    <div class="feat-card-icon">📜</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Mode Scroll (Webtoon) & Per Halaman (Manga)</div>
+      <div class="feat-card-desc">Ganti mode baca sesuai selera — scroll vertikal seperti webtoon, atau per halaman dengan navigasi ←→ seperti manga Jepang.</div>
+    </div>
+  </div>
+
+  <div class="feat-card">
+    <div class="feat-card-icon">⚡</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Auto Scroll & Lebar Gambar</div>
+      <div class="feat-card-desc">Aktifkan auto scroll untuk baca santai tanpa sentuh layar. Atur kecepatan dan lebar gambar (50–100%) sesuai kenyamanan.</div>
+    </div>
+  </div>
+
+  <div class="feat-card">
+    <div class="feat-card-icon">📋</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Panel Daftar Chapter Lengkap</div>
+      <div class="feat-card-desc">Geser panel kiri untuk lihat semua chapter. Data dari 3 source di-merge — jadi tidak ada chapter yang ketinggalan meski satu API belum update.</div>
+    </div>
+  </div>
+
+  <div class="feat-card">
+    <div class="feat-card-icon">⌨️</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Keyboard Shortcut</div>
+      <div class="feat-card-desc">Navigasi cepat pakai keyboard: A/← untuk prev, D/→ untuk next chapter/halaman, L untuk daftar chapter, S untuk share.</div>
+    </div>
+  </div>
+
+  <div class="feat-card">
+    <div class="feat-card-icon">📊</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Progress Bar Membaca</div>
+      <div class="feat-card-desc">Bar oranye di atas halaman menunjukkan seberapa jauh kamu sudah scroll. Berubah hijau saat hampir selesai!</div>
+    </div>
+  </div>
+</div>
+
+<div class="feat-divider"></div>
+
+<!-- ── ANIME ── -->
+<div class="sec-head">
+  <div class="sec-head-icon" style="background:rgba(108,99,255,.12);">⚡</div>
+  <div class="sec-head-text">
+    <strong>ANIME</strong>
+    <span>Streaming sub Indo gratis</span>
+  </div>
+</div>
+
+<div class="feat-list">
+  <div class="feat-card" style="--card-accent:#6c63ff;">
+    <div class="feat-card-icon" style="--icon-bg:rgba(108,99,255,.1);">📺</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Streaming Anime Sub Indo</div>
+      <div class="feat-card-desc">Tonton anime favorit dengan subtitle Indonesia langsung di browser. Kualitas HD, loading cepat.</div>
+    </div>
+    <span class="feat-card-badge" style="--badge-bg:rgba(108,99,255,.1);--badge-color:#a78bfa;--badge-border:rgba(108,99,255,.2);">SUB ID</span>
+  </div>
+
+  <div class="feat-card" style="--card-accent:#6c63ff;">
+    <div class="feat-card-icon" style="--icon-bg:rgba(108,99,255,.1);">📅</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Jadwal Tayang Mingguan</div>
+      <div class="feat-card-desc">Lihat anime yang tayang hari ini dan minggu ini, dikelompokkan per hari. Tidak perlu buka web lain untuk cek jadwal!</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:#6c63ff;">
+    <div class="feat-card-icon" style="--icon-bg:rgba(108,99,255,.1);">🎭</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Browse Genre Anime</div>
+      <div class="feat-card-desc">Filter anime berdasarkan genre (Action, Isekai, Romance, Slice of Life, dll) dengan halaman khusus per genre.</div>
+    </div>
+  </div>
+</div>
+
+<div class="feat-divider"></div>
+
+<!-- ── NOVEL ── -->
+<div class="sec-head">
+  <div class="sec-head-icon" style="background:rgba(142,68,173,.12);">📝</div>
+  <div class="sec-head-text">
+    <strong>NOVEL</strong>
+    <span>Light novel & web novel terjemahan</span>
+  </div>
+</div>
+
+<div class="feat-list">
+  <div class="feat-card" style="--card-accent:var(--purple);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(142,68,173,.1);">🎨</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Reader dengan 3 Tema</div>
+      <div class="feat-card-desc">Pilih tema Dark (hitam), Light (putih), atau Sepia (coklat hangat) sesuai kondisi cahaya. Preferensi disimpan otomatis.</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--purple);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(142,68,173,.1);">🔤</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Ukuran & Jenis Font Kustom</div>
+      <div class="feat-card-desc">Atur ukuran teks (12–24px) dan pilih font — Nunito (modern) atau Merriweather (serif klasik). Pas untuk baca berjam-jam.</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--purple);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(142,68,173,.1);">🏷️</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Filter Genre & Tag Novel</div>
+      <div class="feat-card-desc">Cari novel berdasarkan genre (Fantasy, Romance, System, dll) atau tag khusus. Search real-time dengan debounce.</div>
+    </div>
+  </div>
+</div>
+
+<div class="feat-divider"></div>
+
+<!-- ── AKUN & GAMIFIKASI ── -->
+<div class="sec-head">
+  <div class="sec-head-icon" style="background:rgba(245,166,35,.12);">👤</div>
+  <div class="sec-head-text">
+    <strong>AKUN & GAMIFIKASI</strong>
+    <span>Login, level up, koleksi badge</span>
+  </div>
+</div>
+
+<div class="feat-list">
+  <div class="feat-card" style="--card-accent:var(--gold);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(245,166,35,.1);">🎮</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Sistem Level & XP</div>
+      <div class="feat-card-desc">Setiap chapter yang kamu baca menambah XP. Naiki level dari Pemula 🌱 → Pecinta Komik 📚 → Pembaca Aktif 🔥 → Otaku Sejati ⭐ → Legenda Komik 👑</div>
+    </div>
+    <span class="feat-card-badge" style="--badge-bg:rgba(245,166,35,.12);--badge-color:#f5a623;--badge-border:rgba(245,166,35,.25);">5 LEVEL</span>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--gold);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(245,166,35,.1);">🏅</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Koleksi Badge Eksklusif</div>
+      <div class="feat-card-desc">Dapatkan badge unik berdasarkan pencapaian: Pembaca Pertama, Maraton Reader, Top Reader (1000 chapter), dan lainnya.</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--gold);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(245,166,35,.1);">🏆</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Leaderboard Global</div>
+      <div class="feat-card-desc">Lihat siapa pembaca paling aktif di Pankomik! Ada leaderboard terpisah untuk Komik dan Novel. Saingi teman dan naik peringkat!</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--gold);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(245,166,35,.1);">🔖</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Bookmark & Riwayat Baca</div>
+      <div class="feat-card-desc">Simpan komik, anime, dan novel favorit ke 3 kategori: Favorit ❤️, Sedang Dibaca 📖, dan Tamat ✅. Riwayat baca tersimpan otomatis.</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--gold);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(245,166,35,.1);">▶️</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Lanjut Baca Otomatis</div>
+      <div class="feat-card-desc">Buka halaman detail komik dan tombol "Lanjut Ch.XX" langsung muncul — langsung ke chapter terakhir yang kamu baca tanpa perlu scroll.</div>
+    </div>
+  </div>
+
+  <div class="feat-card" style="--card-accent:var(--gold);">
+    <div class="feat-card-icon" style="--icon-bg:rgba(245,166,35,.1);">📊</div>
+    <div class="feat-card-body">
+      <div class="feat-card-name">Progress Baca per Komik</div>
+      <div class="feat-card-desc">Lihat sudah berapa persen kamu menyelesaikan setiap komik. Visualisasi progress bar di halaman profil.</div>
+    </div>
+  </div>
+</div>
+
+<div class="feat-divider"></div>
+
+<!-- ── KOMUNITAS ── -->
+<div class="sec-head">
+  <div class="sec-head-icon" style="background:rgba(39,174,96,.12);">💬</div>
+  <div class="sec-head-text">
+    <strong>KOMUNITAS</strong>
+    <span>Ngobrol bareng pembaca lain</span>
+  </div>
+</div>
+
+<div class="feat-grid">
+  <div class="feat-mini" style="--card-accent:var(--green);">
+    <span class="feat-mini-icon">💬</span>
+    <div class="feat-mini-name">Komentar per Chapter</div>
+    <div class="feat-mini-desc">Komentari setiap chapter, balas komentar orang lain (threaded), dan like komentar favorit.</div>
+  </div>
+  <div class="feat-mini" style="--card-accent:var(--green);">
+    <span class="feat-mini-icon">🌐</span>
+    <div class="feat-mini-name">Global Chat Live</div>
+    <div class="feat-mini-desc">Obrolan real-time bareng semua pembaca Pankomik. Tampil di semua halaman!</div>
+  </div>
+  <div class="feat-mini" style="--card-accent:var(--green);">
+    <span class="feat-mini-icon">❤️</span>
+    <div class="feat-mini-name">Like Komentar</div>
+    <div class="feat-mini-desc">Komentar terpopuler ditampilkan di widget "Komentar Terbaru" di halaman utama.</div>
+  </div>
+  <div class="feat-mini" style="--card-accent:var(--green);">
+    <span class="feat-mini-icon">🔗</span>
+    <div class="feat-mini-name">Share Konten</div>
+    <div class="feat-mini-desc">Bagikan komik atau chapter ke WhatsApp, media sosial, atau salin link dengan satu ketuk.</div>
+  </div>
+</div>
+
+<div class="feat-divider"></div>
+
+<!-- ── UI/UX ── -->
+<div class="sec-head">
+  <div class="sec-head-icon" style="background:rgba(41,128,185,.12);">✨</div>
+  <div class="sec-head-text">
+    <strong>TAMPILAN & KENYAMANAN</strong>
+    <span>Desain yang enak dipandang</span>
+  </div>
+</div>
+
+<div class="feat-grid">
+  <div class="feat-mini">
+    <span class="feat-mini-icon">🌙</span>
+    <div class="feat-mini-name">Dark & Light Mode</div>
+    <div class="feat-mini-desc">Ganti tema gelap/terang kapan saja. Pilihan tersimpan otomatis.</div>
+  </div>
+  <div class="feat-mini">
+    <span class="feat-mini-icon">📱</span>
+    <div class="feat-mini-name">Mobile-First</div>
+    <div class="feat-mini-desc">Didesain khusus untuk HP. Navigasi bawah, touch-friendly.</div>
+  </div>
+  <div class="feat-mini">
+    <span class="feat-mini-icon">🖼️</span>
+    <div class="feat-mini-name">Gambar Tidak Gagal Muat</div>
+    <div class="feat-mini-desc">4-layer fallback proxy untuk gambar. Selalu ada cover meski server asal diblok.</div>
+  </div>
+  <div class="feat-mini">
+    <span class="feat-mini-icon">⚡</span>
+    <div class="feat-mini-name">Loading Cepat</div>
+    <div class="feat-mini-desc">Skeleton loading, lazy load gambar, prefetch chapter berikutnya.</div>
+  </div>
+  <div class="feat-mini">
+    <span class="feat-mini-icon">🔐</span>
+    <div class="feat-mini-name">Login Google / Email</div>
+    <div class="feat-mini-desc">Daftar & masuk pakai akun Google dalam 1 klik, atau email & password.</div>
+  </div>
+  <div class="feat-mini">
+    <span class="feat-mini-icon">🆓</span>
+    <div class="feat-mini-name">Gratis & Tanpa Iklan Pop-up</div>
+    <div class="feat-mini-desc">Tidak ada paywall, tidak ada iklan yang mengganggu baca. Selamanya.</div>
+  </div>
+</div>
+
+<!-- ── CTA BOTTOM ── -->
+<div class="feat-cta-bottom">
+  <h3>Udah siap?<br>Langsung cobain! 🚀</h3>
+  <p>Gratis, tanpa daftar dulu pun bisa langsung baca.<br>Daftar akun untuk unlock fitur level, badge & bookmark.</p>
+  <div class="cta-btns">
+    <a class="cta-btn orange" href="/">📚 Baca Sekarang</a>
+    <a class="cta-btn ghost" href="/support">☕ Dukung Kami</a>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/'">
+    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/anime/'">
+    <span class="nav-icon">⚡</span><span class="nav-label">Anime</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/novel/'">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  </button>
+  <button class="nav-item" onclick="window.location.href='/profil'">
+    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  </button>
+</nav>
+
+<script type="module">
+  import { initAuthHeader } from "/auth-header.js";
+  initAuthHeader();
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+</script>
+</body>
+</html>
