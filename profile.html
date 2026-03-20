@@ -5,461 +5,723 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Profil — Pankomik</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    /* ---- PROFIL HEADER ----------------------------------- */
-    .profile-header {
+    /* ═══════════════════════════════════════════════════════
+       PANKOMIK PROFILE — REDESIGN v2
+       Aesthetic: dark manga-editorial, neon-accent, glassmorphism
+    ═══════════════════════════════════════════════════════ */
+
+    :root {
+      --acc:       #e8522a;
+      --acc2:      #f5a623;
+      --acc-glow:  rgba(232,82,42,0.28);
+      --acc-soft:  rgba(232,82,42,0.10);
+      --glass:     rgba(255,255,255,0.04);
+      --glass-b:   rgba(255,255,255,0.08);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    /* ─── HERO BANNER ───────────────────────────────────── */
+    .profile-hero {
+      position: relative;
+      padding: 0 0 0;
+      overflow: hidden;
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(232,82,42,0.35) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 50% at 90% 30%, rgba(245,166,35,0.18) 0%, transparent 60%),
+        var(--bg-card, #1a1a24);
+      z-index: 0;
+    }
+
+    .hero-bg::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0; height: 60px;
+      background: linear-gradient(to bottom, transparent, var(--bg, #0e0e12));
+    }
+
+    /* Subtle dot grid texture */
+    .hero-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 22px 22px;
+      opacity: 0.5;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      padding: 32px 20px 28px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 28px 20px 20px;
-      gap: 10px;
+      gap: 0;
       text-align: center;
     }
 
-    /* Avatar wrapper + overlay upload */
-    .avatar-wrap {
+    /* ─── AVATAR ─────────────────────────────────────────── */
+    .avatar-ring {
       position: relative;
-      width: 86px;
-      height: 86px;
+      width: 96px; height: 96px;
+      margin-bottom: 14px;
       cursor: pointer;
+      flex-shrink: 0;
     }
-    .avatar-wrap img {
-      width: 86px;
-      height: 86px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 3px solid var(--accent);
-      transition: filter 0.2s;
-      display: block;
-    }
-    .avatar-overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.55);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2px;
-      opacity: 0;
-      transition: opacity 0.2s;
-      pointer-events: none;
-    }
-    .avatar-overlay span { font-size: 18px; }
-    .avatar-overlay p { font-size: 10px; font-weight: 700; color: #fff; margin: 0; line-height: 1; }
-    .avatar-wrap:hover .avatar-overlay { opacity: 1; }
-    .avatar-wrap:hover img { filter: brightness(0.7); }
 
-    /* Upload loading ring */
-    .avatar-uploading::after {
+    .avatar-ring::before {
       content: '';
       position: absolute;
-      inset: -4px;
+      inset: -3px;
       border-radius: 50%;
-      border: 3px solid transparent;
-      border-top-color: var(--accent);
-      animation: spin 0.8s linear infinite;
+      background: conic-gradient(var(--acc), var(--acc2), #ff6b35, var(--acc));
+      animation: spin-slow 5s linear infinite;
+      z-index: 0;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .profile-name {
-      font-size: 18px;
-      font-weight: 800;
+    @keyframes spin-slow { to { transform: rotate(360deg); } }
+
+    .avatar-ring::after {
+      content: '';
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      background: var(--bg, #0e0e12);
+      z-index: 1;
     }
-    .profile-level {
+
+    .avatar-ring img {
+      position: relative;
+      z-index: 2;
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+      margin: 3px auto;
+      transition: filter 0.2s, transform 0.2s;
+    }
+
+    .avatar-edit-icon {
+      position: absolute;
+      bottom: 4px; right: 4px;
+      z-index: 3;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--acc);
+      border: 2px solid var(--bg, #0e0e12);
+      display: flex; align-items: center; justify-content: center;
       font-size: 12px;
-      color: var(--accent);
-      font-weight: 700;
-      background: rgba(232,82,42,0.12);
-      padding: 3px 10px;
-      border-radius: 99px;
+      box-shadow: 0 2px 8px var(--acc-glow);
+      transition: transform 0.2s;
     }
-    .profile-stats {
-      display: flex;
-      gap: 28px;
-      margin-top: 4px;
-    }
-    .stat-item { text-align: center; }
-    .stat-item p:first-child { font-size: 20px; font-weight: 800; }
-    .stat-item p:last-child  { font-size: 11px; color: var(--text-muted); }
 
-    /* ---- BADGE CHIPS ------------------------------------- */
-    .badge-list {
+    .avatar-ring:hover img { filter: brightness(0.75); transform: scale(0.97); }
+    .avatar-ring:hover .avatar-edit-icon { transform: scale(1.15); }
+
+    .avatar-uploading::before {
+      animation: spin-slow 0.6s linear infinite !important;
+      background: conic-gradient(var(--acc), transparent 120deg) !important;
+    }
+
+    /* ─── NAME / LEVEL ROW ────────────────────────────────── */
+    .hero-name {
+      font-family: 'Nunito', sans-serif;
+      font-size: 22px; font-weight: 900;
+      color: var(--text, #eaeaf0);
+      line-height: 1.2;
+      margin-bottom: 6px;
+      letter-spacing: -0.3px;
+    }
+
+    .hero-level-pill {
+      display: inline-flex;
+      align-items: center; gap: 6px;
+      padding: 4px 13px;
+      background: var(--acc-soft);
+      border: 1px solid rgba(232,82,42,0.3);
+      border-radius: 99px;
+      font-size: 12px; font-weight: 800;
+      color: var(--acc);
+      margin-bottom: 18px;
+      letter-spacing: 0.2px;
+    }
+
+    .hero-level-pill .lv-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--acc);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.5; transform: scale(0.7); }
+    }
+
+    /* ─── STATS ROW ──────────────────────────────────────── */
+    .hero-stats {
+      display: flex;
+      gap: 0;
+      width: 100%;
+      max-width: 320px;
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      backdrop-filter: blur(12px);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .hero-stat {
+      flex: 1;
+      padding: 13px 10px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-stat + .hero-stat::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 20%; bottom: 20%;
+      width: 1px;
+      background: var(--glass-b);
+    }
+
+    .hero-stat-num {
+      font-size: 22px; font-weight: 900;
+      color: var(--text, #eaeaf0);
+      line-height: 1;
+      font-family: 'Bangers', cursive;
+      letter-spacing: 1px;
+    }
+
+    .hero-stat-label {
+      font-size: 10px;
+      color: var(--text-muted, #888);
+      font-weight: 700;
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ─── BADGE CHIPS ────────────────────────────────────── */
+    .hero-badges {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      padding: 0 16px 16px;
+      gap: 6px;
+      padding: 14px 16px 4px;
       justify-content: center;
     }
-    .badge-chip {
+
+    .hero-badge-chip {
+      display: inline-flex;
+      align-items: center; gap: 4px;
+      padding: 4px 10px;
+      background: linear-gradient(135deg, rgba(232,82,42,0.12), rgba(245,166,35,0.08));
+      border: 1px solid rgba(232,82,42,0.25);
+      border-radius: 99px;
+      font-size: 11px; font-weight: 800;
+      color: var(--acc2, #f5a623);
+      animation: badge-in 0.4s ease both;
+    }
+
+    @keyframes badge-in {
+      from { opacity: 0; transform: scale(0.8) translateY(4px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ─── TABS ───────────────────────────────────────────── */
+    .profile-tabs-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg-card, #1a1a24);
+      border-bottom: 1px solid var(--glass-b);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .profile-tabs {
+      display: flex;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding: 0 12px;
+      gap: 2px;
+    }
+    .profile-tabs::-webkit-scrollbar { display: none; }
+
+    .profile-tab {
       display: flex;
       align-items: center;
       gap: 5px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      padding: 4px 10px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    /* ---- TABS -------------------------------------------- */
-    .profile-tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border);
-      padding: 0 14px;
-      gap: 4px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .profile-tabs::-webkit-scrollbar { display: none; }
-    .profile-tab {
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
+      padding: 12px 12px;
+      font-size: 12px; font-weight: 800;
+      color: var(--text-muted, #666);
       cursor: pointer;
       border-bottom: 2px solid transparent;
       white-space: nowrap;
       background: none;
       border-top: none; border-left: none; border-right: none;
+      font-family: 'Nunito', sans-serif;
       transition: color 0.2s, border-color 0.2s;
+      letter-spacing: 0.2px;
     }
-    .profile-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-    /* ---- TAB CONTENT ------------------------------------- */
-    .tab-content { display: none; padding: 14px; }
+    .profile-tab .tab-icon { font-size: 14px; }
+
+    .profile-tab.active {
+      color: var(--acc);
+      border-bottom-color: var(--acc);
+    }
+
+    .profile-tab:hover:not(.active) { color: var(--text, #eaeaf0); }
+
+    /* ─── TAB CONTENT ────────────────────────────────────── */
+    .tab-content { display: none; padding: 16px; }
     .tab-content.active { display: block; }
 
-    /* ---- KATEGORI BOOKMARK ------------------------------- */
-    .kategori-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    /* ─── KATEGORI FILTER PILLS ──────────────────────────── */
+    .kategori-tabs {
+      display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
+    }
+
     .kategori-btn {
-      padding: 5px 12px; border-radius: 99px;
-      border: 1px solid var(--border); background: var(--bg-surface);
-      color: var(--text-muted); font-size: 12px; font-weight: 700;
-      cursor: pointer; transition: background 0.2s, color 0.2s;
+      padding: 6px 14px;
+      border-radius: 99px;
+      border: 1.5px solid var(--glass-b);
+      background: var(--glass);
+      color: var(--text-muted, #888);
+      font-size: 12px; font-weight: 700;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.18s;
     }
-    .kategori-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    /* ---- KARTU KOMIK ------------------------------------- */
+    .kategori-btn.active {
+      background: var(--acc);
+      border-color: var(--acc);
+      color: #fff;
+      box-shadow: 0 4px 12px var(--acc-glow);
+    }
+
+    .kategori-btn:hover:not(.active) {
+      border-color: var(--acc);
+      color: var(--acc);
+    }
+
+    /* ─── KOMIK LIST CARDS ───────────────────────────────── */
     .komik-list-item {
-      display: flex; gap: 12px; padding: 10px 0;
-      border-bottom: 1px solid var(--border); align-items: center;
+      display: flex; gap: 12px;
+      padding: 12px;
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      align-items: center;
+      transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
     }
-    .komik-list-item:last-child { border-bottom: none; }
-    .komik-list-item img { width: 50px; height: 68px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
-    .komik-list-info { flex: 1; }
-    .komik-list-info .title { font-weight: 700; font-size: 13px; margin-bottom: 3px; }
-    .komik-list-info p { font-size: 11px; color: var(--text-muted); margin: 2px 0; }
-    .komik-list-actions { display: flex; flex-direction: column; gap: 5px; flex-shrink: 0; }
+
+    .komik-list-item:hover {
+      border-color: rgba(232,82,42,0.35);
+      transform: translateX(3px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    }
+
+    .komik-list-item img {
+      width: 52px; height: 70px;
+      object-fit: cover;
+      border-radius: var(--radius-sm);
+      flex-shrink: 0;
+      border: 1px solid var(--glass-b);
+    }
+
+    .komik-list-info { flex: 1; min-width: 0; }
+    .komik-list-info .title {
+      font-weight: 800; font-size: 13px;
+      margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color: var(--text, #eaeaf0);
+    }
+    .komik-list-info p {
+      font-size: 11px; color: var(--text-muted, #888);
+      margin: 2px 0;
+    }
+
+    .komik-list-actions {
+      display: flex; flex-direction: column; gap: 5px; flex-shrink: 0;
+    }
+
     .btn-sm {
-      padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border);
-      background: var(--bg-surface); color: var(--text); font-size: 11px;
-      font-weight: 700; cursor: pointer; white-space: nowrap;
-      transition: background 0.15s, color 0.15s;
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--glass-b);
+      background: var(--glass);
+      color: var(--text, #eaeaf0);
+      font-size: 11px; font-weight: 800;
+      cursor: pointer; white-space: nowrap;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.15s;
     }
-    .btn-sm.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .btn-sm:hover { filter: brightness(1.15); }
 
-    /* ---- PROGRESS BAR ------------------------------------ */
-    .progress-bar-wrap { height: 4px; background: var(--bg-surface); border-radius: 99px; margin-top: 5px; overflow: hidden; }
-    .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.5s ease; }
+    .btn-sm.primary {
+      background: var(--acc);
+      border-color: var(--acc);
+      color: #fff;
+      box-shadow: 0 2px 8px var(--acc-glow);
+    }
 
-    /* ---- EMPTY STATE ------------------------------------- */
-    .empty-state { text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 13px; }
+    .btn-sm:hover { filter: brightness(1.2); transform: translateY(-1px); }
+
+    /* ─── PROGRESS BAR ───────────────────────────────────── */
+    .progress-bar-wrap {
+      height: 5px;
+      background: var(--glass);
+      border-radius: 99px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--acc), var(--acc2));
+      border-radius: 99px;
+      transition: width 0.7s cubic-bezier(.4,0,.2,1);
+      box-shadow: 0 0 8px var(--acc-glow);
+    }
+
+    /* ─── EMPTY STATE ────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--text-muted, #888);
+      font-size: 13px;
+    }
+    .empty-state .es-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.6; }
     .empty-state p:first-child { font-size: 32px; margin-bottom: 8px; }
 
-    /* ---- EDIT PROFIL FORM -------------------------------- */
-    .edit-section-title {
-      font-size: 12px; font-weight: 800; margin-bottom: 8px; color: var(--text);
-    }
-    .edit-form-row { margin-bottom: 18px; }
-    .edit-form input, .edit-form textarea {
-      width: 100%; padding: 10px 12px; margin-bottom: 0;
-      background: var(--bg-surface); border: 1.5px solid var(--border);
-      border-radius: 9px; color: var(--text); font-family: 'Nunito', sans-serif;
-      font-size: 14px; outline: none; box-sizing: border-box; transition: border-color 0.2s;
-    }
-    .edit-form input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,82,42,0.12); }
-    .input-hint { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
-    .char-counter { font-size: 11px; color: var(--text-muted); text-align: right; margin-top: 3px; }
-    .edit-btn {
-      width: 100%; padding: 11px 20px; background: var(--accent); color: #fff;
-      border: none; border-radius: 9px; font-family: 'Nunito', sans-serif;
-      font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .edit-btn:hover    { background: #c73f1c; }
-    .edit-btn:active   { transform: scale(0.97); }
-    .edit-btn:disabled { background: var(--bg-surface); color: var(--text-muted); cursor: not-allowed; }
-    .form-msg {
-      font-size: 12px; margin-top: 8px; padding: 8px 12px;
-      border-radius: 8px; display: none;
-    }
-    .form-msg.success { display: block; background: rgba(39,174,96,0.1); border: 1px solid rgba(39,174,96,0.3); color: #27ae60; }
-    .form-msg.error   { display: block; background: rgba(232,82,42,0.1); border: 1px solid rgba(232,82,42,0.3); color: var(--accent); }
-    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
-
-    /* ---- AVATAR UPLOAD AREA ------------------------------ */
-    .avatar-upload-area {
-      display: flex; align-items: center; gap: 14px;
-      padding: 14px; background: var(--bg-surface);
-      border: 1.5px dashed var(--border); border-radius: 12px;
-      cursor: pointer; transition: border-color 0.2s, background 0.2s;
-      margin-bottom: 4px;
-    }
-    .avatar-upload-area:hover { border-color: var(--accent); background: rgba(232,82,42,0.05); }
-    .avatar-upload-area img {
-      width: 54px; height: 54px; border-radius: 50%; object-fit: cover;
-      border: 2px solid var(--accent); flex-shrink: 0;
-    }
-    .avatar-upload-text p:first-child { font-size: 13px; font-weight: 700; color: var(--text); }
-    .avatar-upload-text p:last-child  { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
-
-    /* ---- LEVEL & BADGE ----------------------------------- */
-    .level-card {
-      background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(232,82,42,0.08) 100%);
-      border: 1px solid var(--border); border-radius: 12px; padding: 16px;
-    }
-    .level-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .level-number { font-size: 22px; font-weight: 800; color: var(--accent); line-height: 1; }
-    .level-title  { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
-    .level-total  { text-align: right; }
-    .level-total span  { font-size: 24px; font-weight: 800; color: var(--text); display: block; line-height: 1; }
-    .level-total small { font-size: 10px; color: var(--text-muted); }
-    .badge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .badge-card {
-      background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 14px 12px; text-align: center;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .badge-card.owned { border-color: var(--accent); background: rgba(232,82,42,0.06); }
-    .badge-card.locked { opacity: 0.55; }
-    .badge-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
-    .badge-icon   { font-size: 28px; margin-bottom: 6px; }
-    .badge-name   { font-size: 13px; font-weight: 800; margin-bottom: 3px; }
-    .badge-desc   { font-size: 10px; color: var(--text-muted); line-height: 1.4; }
-    .badge-status-owned  { margin-top: 6px; font-size: 11px; color: #27ae60; font-weight: 700; }
-    .badge-status-locked { margin-top: 6px; font-size: 11px; color: var(--text-muted); }
-
-    /* ---- LEADERBOARD ------------------------------------- */
-    .lb-header {
-      display: flex; align-items: center; justify-content: space-between;
+    /* ─── EDIT PROFIL ────────────────────────────────────── */
+    .edit-section-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: var(--radius-lg);
+      padding: 18px;
       margin-bottom: 14px;
     }
-    .lb-header h3 { font-size: 15px; font-weight: 800; }
-    .lb-refresh-btn {
-      padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--bg-surface); color: var(--text-muted);
-      font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+
+    .edit-section-title {
+      font-size: 11px; font-weight: 800;
+      color: var(--text-muted, #888);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 12px;
     }
-    .lb-refresh-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    .lb-row {
-      display: flex; align-items: center; gap: 12px;
-      padding: 11px 14px; border-radius: 14px;
-      margin-bottom: 8px; border: 1px solid var(--border);
-      background: var(--bg-card);
-      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
-      position: relative; overflow: hidden;
-    }
-    .lb-row:hover { background: var(--bg-surface); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,.2); }
-    .lb-row.me    { border-color: var(--accent); background: rgba(232,82,42,0.07); }
-
-    /* Shimmer untuk baris top 3 */
-    .lb-row.rank-1 { border-color: #f5a623; background: rgba(245,166,35,0.07); }
-    .lb-row.rank-2 { border-color: #b0b0c0; background: rgba(176,176,192,0.06); }
-    .lb-row.rank-3 { border-color: #cd7f32; background: rgba(205,127,50,0.06); }
-
-    .lb-rank {
-      font-size: 13px; font-weight: 800; min-width: 30px; text-align: center;
-      color: var(--text-muted); flex-shrink: 0; line-height: 1;
-    }
-    .lb-row.rank-1 .lb-rank { font-size: 22px; }
-    .lb-row.rank-2 .lb-rank { font-size: 20px; }
-    .lb-row.rank-3 .lb-rank { font-size: 18px; }
-
-    .lb-avatar {
-      width: 42px; height: 42px; border-radius: 50%; object-fit: cover;
-      border: 2px solid var(--border); flex-shrink: 0;
+    .edit-form input, .edit-form textarea {
+      width: 100%;
+      padding: 11px 14px;
+      background: rgba(0,0,0,0.25);
+      border: 1.5px solid var(--glass-b);
+      border-radius: var(--radius-md);
+      color: var(--text, #eaeaf0);
       font-family: 'Nunito', sans-serif;
-    }
-    .lb-row.rank-1 .lb-avatar { border-color: #f5a623; box-shadow: 0 0 10px rgba(245,166,35,.3); }
-    .lb-row.rank-2 .lb-avatar { border-color: #b0b0c0; }
-    .lb-row.rank-3 .lb-avatar { border-color: #cd7f32; }
-
-    .lb-info { flex: 1; min-width: 0; }
-    .lb-name {
-      font-weight: 700; font-size: 13px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .lb-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-    .lb-score {
-      text-align: right; flex-shrink: 0; min-width: 60px;
-    }
-    .lb-score-num { font-size: 20px; font-weight: 900; color: var(--accent); display: block; line-height: 1; font-family: 'Nunito', sans-serif; }
-    .lb-score-label { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
-
-    .lb-me-badge {
-      font-size: 10px; font-weight: 800; color: var(--accent);
-      background: rgba(232,82,42,0.15); padding: 2px 7px;
-      border-radius: 99px; margin-left: 5px; vertical-align: middle;
+      font-size: 14px;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    /* User's own rank card if not in top 20 */
-    .lb-my-rank {
-      margin-top: 12px; padding: 12px 14px; border-radius: 12px;
-      border: 1.5px dashed var(--accent); background: rgba(232,82,42,0.05);
-      font-size: 13px; color: var(--text-muted); text-align: center;
+    .edit-form input:focus {
+      border-color: var(--acc);
+      box-shadow: 0 0 0 3px var(--acc-glow);
     }
 
-    /* ── Leaderboard sub-tab toggle ──────────────────────── */
-    .lb-toggle {
-      display: flex; gap: 6px;
-      padding: 12px 0 8px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 10px;
-    }
-    .lb-toggle-btn {
-      flex: 1; padding: 9px 12px;
-      border-radius: 10px;
-      border: 1.5px solid var(--border);
-      background: var(--bg-surface);
-      color: var(--text-muted);
+    .input-hint { font-size: 11px; color: var(--text-muted, #888); margin-top: 6px; }
+    .char-counter { font-size: 11px; color: var(--text-muted, #888); text-align: right; margin-top: 4px; }
+
+    .edit-btn {
+      width: 100%; padding: 12px 20px;
+      background: linear-gradient(135deg, var(--acc), #c73f1c);
+      color: #fff; border: none;
+      border-radius: var(--radius-md);
       font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 800;
-      cursor: pointer;
+      font-size: 14px; font-weight: 800;
+      cursor: pointer; margin-top: 10px;
       transition: all 0.2s;
-    }
-    .lb-toggle-btn.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(232,82,42,0.3);
-    }
-    .lb-toggle-btn:not(.active):hover {
-      border-color: var(--accent);
-      color: var(--accent);
+      box-shadow: 0 4px 16px var(--acc-glow);
+      letter-spacing: 0.3px;
     }
 
-    /* ── Leaderboard header bar ── */
+    .edit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--acc-glow); }
+    .edit-btn:active { transform: scale(0.97); }
+    .edit-btn:disabled { background: var(--glass); color: var(--text-muted); box-shadow: none; cursor: not-allowed; }
+
+    .form-msg {
+      font-size: 12px; margin-top: 8px; padding: 9px 13px;
+      border-radius: var(--radius-sm); display: none;
+      font-weight: 700;
+    }
+    .form-msg.success { display: block; background: rgba(39,174,96,0.12); border: 1px solid rgba(39,174,96,0.3); color: #27ae60; }
+    .form-msg.error   { display: block; background: rgba(232,82,42,0.1); border: 1px solid rgba(232,82,42,0.3); color: var(--acc); }
+
+    /* ─── AVATAR UPLOAD AREA ─────────────────────────────── */
+    .avatar-upload-area {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px;
+      background: rgba(0,0,0,0.2);
+      border: 1.5px dashed rgba(255,255,255,0.12);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 4px;
+    }
+    .avatar-upload-area:hover {
+      border-color: var(--acc);
+      background: var(--acc-soft);
+    }
+    .avatar-upload-area img {
+      width: 52px; height: 52px;
+      border-radius: 50%; object-fit: cover;
+      border: 2px solid var(--acc); flex-shrink: 0;
+    }
+    .avatar-upload-text p:first-child { font-size: 13px; font-weight: 700; color: var(--text, #eaeaf0); }
+    .avatar-upload-text p:last-child  { font-size: 11px; color: var(--text-muted, #888); margin-top: 3px; }
+
+    /* ─── LEVEL & BADGE CARD ─────────────────────────────── */
+    .level-card {
+      background: linear-gradient(135deg, rgba(232,82,42,0.12), rgba(245,166,35,0.07));
+      border: 1px solid rgba(232,82,42,0.25);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .level-card::before {
+      content: attr(data-level);
+      position: absolute;
+      right: -8px; top: -12px;
+      font-family: 'Bangers', cursive;
+      font-size: 80px;
+      color: rgba(232,82,42,0.08);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: 2px;
+    }
+
+    .level-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .level-number { font-size: 28px; font-weight: 900; color: var(--acc); line-height: 1; font-family: 'Bangers', cursive; letter-spacing: 1px; }
+    .level-title  { font-size: 12px; color: var(--text-muted, #888); margin-top: 4px; font-weight: 700; }
+    .level-total  { text-align: right; }
+    .level-total span  { font-size: 28px; font-weight: 900; color: var(--text, #eaeaf0); display: block; line-height: 1; font-family: 'Bangers', cursive; }
+    .level-total small { font-size: 10px; color: var(--text-muted, #888); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* ─── BADGE GRID ─────────────────────────────────────── */
+    .badge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
+
+    .badge-card {
+      background: var(--glass);
+      border: 1.5px solid var(--glass-b);
+      border-radius: var(--radius-md);
+      padding: 16px 12px;
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .badge-card.owned {
+      border-color: rgba(232,82,42,0.4);
+      background: linear-gradient(135deg, rgba(232,82,42,0.08), rgba(245,166,35,0.04));
+      box-shadow: 0 0 20px rgba(232,82,42,0.08);
+    }
+
+    .badge-card.locked { opacity: 0.5; }
+    .badge-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.25); }
+
+    .badge-icon { font-size: 30px; margin-bottom: 7px; }
+    .badge-name { font-size: 13px; font-weight: 800; margin-bottom: 4px; color: var(--text, #eaeaf0); }
+    .badge-desc { font-size: 10px; color: var(--text-muted, #888); line-height: 1.4; }
+    .badge-status-owned  { margin-top: 7px; font-size: 11px; color: #27ae60; font-weight: 700; }
+    .badge-status-locked { margin-top: 7px; font-size: 11px; color: var(--text-muted, #888); }
+
+    /* ─── LEADERBOARD ────────────────────────────────────── */
     .lb-top-header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 12px; padding: 0 2px;
     }
     .lb-top-title {
       font-family: 'Bangers', cursive;
-      font-size: 16px; letter-spacing: 1.5px; color: var(--text);
+      font-size: 18px; letter-spacing: 2px;
+      color: var(--text, #eaeaf0);
     }
-    .lb-top-title span { color: var(--accent); }
+    .lb-top-title span { color: var(--acc); }
     .lb-top-right { display: flex; align-items: center; gap: 8px; }
-    .lb-updated {
-      font-size: 10px; color: var(--text-muted); font-weight: 600;
-    }
+    .lb-updated { font-size: 10px; color: var(--text-muted, #888); font-weight: 600; }
 
-    /* ── Rank bar (progress relative to #1) ── */
-    .lb-bar-wrap {
-      height: 3px; border-radius: 99px;
-      background: var(--bg-surface); margin-top: 5px; overflow: hidden;
+    .lb-toggle {
+      display: flex; gap: 6px;
+      padding: 4px 0 12px;
+      margin-bottom: 4px;
     }
-    .lb-bar-fill {
-      height: 100%; border-radius: 99px;
-      background: linear-gradient(90deg, var(--accent), #f5a623);
-      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    .lb-toggle-btn {
+      flex: 1; padding: 9px 12px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--glass-b);
+      background: var(--glass);
+      color: var(--text-muted, #666);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s;
     }
+    .lb-toggle-btn.active {
+      background: var(--acc);
+      border-color: var(--acc);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--acc-glow);
+    }
+    .lb-toggle-btn:not(.active):hover { border-color: var(--acc); color: var(--acc); }
+
+    .lb-refresh-btn {
+      padding: 6px 12px; border-radius: var(--radius-sm);
+      border: 1px solid var(--glass-b);
+      background: var(--glass);
+      color: var(--text-muted, #888);
+      font-size: 13px; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    .lb-refresh-btn:hover { background: var(--acc); border-color: var(--acc); color: #fff; }
+
+    .lb-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 14px; border-radius: var(--radius-md);
+      margin-bottom: 8px;
+      border: 1px solid var(--glass-b);
+      background: var(--glass);
+      transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+      position: relative; overflow: hidden;
+      animation: lbSlideIn 0.3s ease both;
+    }
+    .lb-row:hover { background: var(--glass-b); transform: translateX(3px); }
+    .lb-row.me    { border-color: rgba(232,82,42,0.4); background: rgba(232,82,42,0.07); }
+    .lb-row.rank-1 { border-color: rgba(245,166,35,0.4); background: rgba(245,166,35,0.07); }
+    .lb-row.rank-2 { border-color: rgba(176,176,192,0.3); background: rgba(176,176,192,0.05); }
+    .lb-row.rank-3 { border-color: rgba(205,127,50,0.35); background: rgba(205,127,50,0.06); }
+
+    @keyframes lbSlideIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+
+    .lb-rank { font-size: 13px; font-weight: 800; min-width: 30px; text-align: center; color: var(--text-muted, #888); flex-shrink: 0; line-height: 1; }
+    .lb-row.rank-1 .lb-rank { font-size: 22px; }
+    .lb-row.rank-2 .lb-rank { font-size: 20px; }
+    .lb-row.rank-3 .lb-rank { font-size: 18px; }
+
+    .lb-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--glass-b); flex-shrink: 0; font-family: 'Nunito', sans-serif; }
+    .lb-row.rank-1 .lb-avatar { border-color: #f5a623; box-shadow: 0 0 12px rgba(245,166,35,.35); }
+    .lb-row.rank-2 .lb-avatar { border-color: #b0b0c0; }
+    .lb-row.rank-3 .lb-avatar { border-color: #cd7f32; }
+
+    .lb-info { flex: 1; min-width: 0; }
+    .lb-name { font-weight: 800; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .lb-meta { font-size: 11px; color: var(--text-muted, #888); margin-top: 2px; }
+    .lb-score { text-align: right; flex-shrink: 0; min-width: 60px; }
+    .lb-score-num { font-size: 20px; font-weight: 900; color: var(--acc); display: block; line-height: 1; font-family: 'Bangers', cursive; letter-spacing: 1px; }
+    .lb-score-label { font-size: 10px; color: var(--text-muted, #888); white-space: nowrap; }
+    .lb-me-badge { font-size: 10px; font-weight: 800; color: var(--acc); background: var(--acc-soft); padding: 2px 7px; border-radius: 99px; margin-left: 5px; vertical-align: middle; }
+    .lb-my-rank { margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-md); border: 1.5px dashed rgba(232,82,42,0.35); background: var(--acc-soft); font-size: 12px; color: var(--text-muted, #888); text-align: center; line-height: 1.6; }
+    .lb-my-rank strong { color: var(--acc); }
+    .lb-bar-wrap { height: 3px; border-radius: 99px; background: var(--glass-b); margin-top: 5px; overflow: hidden; }
+    .lb-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--acc), var(--acc2)); transition: width 0.6s cubic-bezier(.4,0,.2,1); }
     .lb-row.rank-1 .lb-bar-fill { background: linear-gradient(90deg, #f5a623, #ffdd57); }
     .lb-row.rank-2 .lb-bar-fill { background: linear-gradient(90deg, #b0b0c0, #d0d0e0); }
     .lb-row.rank-3 .lb-bar-fill { background: linear-gradient(90deg, #cd7f32, #e8a050); }
+    .lb-show-more { width: 100%; margin-top: 6px; padding: 10px; border: 1.5px dashed var(--glass-b); border-radius: var(--radius-md); background: transparent; color: var(--text-muted, #888); font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .lb-show-more:hover { border-color: var(--acc); color: var(--acc); background: var(--acc-soft); }
+    .lb-footer { text-align: center; margin-top: 10px; font-size: 10px; color: var(--text-muted, #666); }
+    .lb-skeleton { height: 64px; border-radius: var(--radius-md); margin-bottom: 8px; background: linear-gradient(90deg, var(--glass) 0%, var(--glass-b) 50%, var(--glass) 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── Row entrance animation ── */
-    @keyframes lbSlideIn {
-      from { opacity: 0; transform: translateX(-12px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-    .lb-row { animation: lbSlideIn 0.3s ease both; }
-
-    /* ── "Lihat lebih" button ── */
-    .lb-show-more {
-      width: 100%; margin-top: 6px; padding: 10px;
-      border: 1.5px dashed var(--border); border-radius: 12px;
-      background: transparent; color: var(--text-muted);
-      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800;
-      cursor: pointer; transition: all 0.18s;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-    }
-    .lb-show-more:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,82,42,0.04); }
-
-    /* ── My rank banner ── */
-    .lb-my-rank {
-      margin-top: 10px; padding: 12px 14px; border-radius: 12px;
-      border: 1.5px dashed var(--accent); background: rgba(232,82,42,0.05);
-      font-size: 12px; color: var(--text-muted); text-align: center; line-height: 1.6;
-    }
-    .lb-my-rank strong { color: var(--accent); }
-
-    /* ── Last updated ── */
-    .lb-footer {
-      text-align: center; margin-top: 10px;
-      font-size: 10px; color: var(--text-dim);
-    }
-
-    /* ── Skeleton for leaderboard */
-    .lb-skeleton {
-      height: 64px; border-radius: 12px; margin-bottom: 6px;
-      background: linear-gradient(90deg, var(--bg-surface) 0%, var(--bg-card) 50%, var(--bg-surface) 100%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-    /* ── Komentar saya ── */
+    /* ─── KOMENTAR SAYA ──────────────────────────────────── */
     .my-comment-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px;
-      margin-bottom: 10px;
-      transition: border-color 0.2s, transform 0.15s;
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      border-radius: var(--radius-md);
+      padding: 13px;
+      margin-bottom: 9px;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.18s;
       cursor: pointer;
       text-decoration: none;
       display: block;
       color: inherit;
     }
     .my-comment-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-2px);
+      border-color: rgba(232,82,42,0.4);
+      transform: translateX(3px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
     .my-comment-location {
       display: inline-flex; align-items: center; gap: 4px;
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--glass-b);
       border-radius: 99px;
-      padding: 2px 9px;
+      padding: 3px 10px;
       font-size: 10px; font-weight: 700;
-      color: var(--text-muted);
-      margin-bottom: 7px;
+      color: var(--text-muted, #888);
+      margin-bottom: 8px;
       max-width: 100%;
     }
-    .my-comment-text {
-      font-size: 13px; line-height: 1.55; color: var(--text);
-      margin-bottom: 7px;
-      display: -webkit-box; -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .my-comment-footer {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 11px; color: var(--text-muted);
-    }
+    .my-comment-text { font-size: 13px; line-height: 1.55; color: var(--text, #eaeaf0); margin-bottom: 7px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .my-comment-footer { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-muted, #888); }
     .my-comment-likes { color: #ff4060; font-weight: 700; }
-    .my-comment-reply-badge {
-      background: rgba(142,68,173,0.12);
-      color: #8e44ad;
-      border-radius: 99px;
-      padding: 1px 7px;
-      font-size: 10px; font-weight: 700;
+    .my-comment-reply-badge { background: rgba(142,68,173,0.12); color: #a855f7; border-radius: 99px; padding: 2px 7px; font-size: 10px; font-weight: 700; }
+
+    /* ─── SECTION LABEL ──────────────────────────────────── */
+    .section-label {
+      font-size: 11px; font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted, #888);
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
     }
+    .section-label::after {
+      content: '';
+      flex: 1; height: 1px;
+      background: var(--glass-b);
+    }
+
+    /* ─── SPIN ───────────────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ─── LOADING SKELETON ───────────────────────────────── */
+    .skel { background: linear-gradient(90deg, var(--glass) 0%, var(--glass-b) 50%, var(--glass) 100%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: var(--radius-md); }
+
+    /* ─── USER EMAIL BADGE ───────────────────────────────── */
+    .email-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 13px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--glass-b);
+      border-radius: var(--radius-sm);
+      font-size: 12px; color: var(--text-muted, #888);
+      font-weight: 600;
+      margin-bottom: 16px;
+      word-break: break-all;
+    }
+
+    /* ─── AVATAR LOADING RING ────────────────────────────── */
+    .avatar-uploading { opacity: 0.7; pointer-events: none; }
+    .avatar-uploading::before { animation: spin 0.5s linear infinite !important; background: conic-gradient(var(--acc), transparent) !important; }
+
+    /* ─── MOBILE TOUCH ───────────────────────────────────── */
+    * { -webkit-tap-highlight-color: transparent; }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -476,7 +738,16 @@
 <div id="menuDropdown" class="dropdown"></div>
 
 <div id="profileContent">
-  <div class="empty-state"><p>⏳</p><p>Memuat profil...</p></div>
+  <!-- Loading state -->
+  <div class="profile-hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div style="width:96px;height:96px;border-radius:50%;margin-bottom:14px;" class="skel"></div>
+      <div style="width:130px;height:22px;margin-bottom:8px;" class="skel"></div>
+      <div style="width:100px;height:24px;border-radius:99px;margin-bottom:18px;" class="skel"></div>
+      <div style="width:280px;height:66px;border-radius:18px;" class="skel"></div>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -492,45 +763,40 @@ import {
 import { initAuthHeader } from "/auth-header.js";
 
 let currentUser    = null;
+let currentProfile = null;
+let bookmarkData   = {};
+let activeKategori = "favorit";
 
-/* Image proxy — bypass CORS/hotlink */
 function proxyImg(url, w) {
   if (!url) return "";
   if (url.includes("wsrv.nl") || url.includes("ui-avatars")) return url;
   return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=" + (w||200) + "&output=webp&q=80";
 }
-let currentProfile = null;
-let bookmarkData   = {};
-let activeKategori = "favorit";
 
-/* ============================================================
-   INIT
-   ============================================================ */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+/* ── INIT ─────────────────────────────────────────────── */
 window.onload = async function () {
   if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
   await initAuthHeader();
   currentUser = await getCurrentUser();
-  if (!currentUser) { window.location.href = "auth.html"; return; }
+  if (!currentUser) { window.location.href = "/masuk"; return; }
   await syncProfileProgress(currentUser.id);
   await loadProfile();
   const urlTab = new URLSearchParams(window.location.search).get("tab");
   if (urlTab) switchTab(urlTab);
 };
 
-/* ============================================================
-   LOAD PROFIL — render kerangka halaman
-   ============================================================ */
+/* ── LOAD PROFILE HTML ────────────────────────────────── */
 async function loadProfile() {
   const [{ profile }, { total: liveTotal }] = await Promise.all([
     getProfile(currentUser.id),
     getTotalChaptersRead(currentUser.id)
   ]);
 
-  /* Fallback nama & avatar dari Google user_metadata kalau profile belum ada */
   if (profile && !profile.username) {
     const meta = currentUser.user_metadata || {};
-    profile.username   = meta.full_name || meta.name || meta.preferred_username
-                         || currentUser.email?.split("@")[0] || "User";
+    profile.username   = meta.full_name || meta.name || meta.preferred_username || currentUser.email?.split("@")[0] || "User";
     profile.avatar_url = profile.avatar_url || meta.avatar_url || meta.picture || null;
   }
   currentProfile = profile;
@@ -549,62 +815,88 @@ async function loadProfile() {
 
   const ownedChips = BADGE_DEFS
     .filter(b => liveTotal >= b.min_chapters)
-    .map(b => `<div class="badge-chip">${b.icon} ${b.name}</div>`)
+    .map((b,i) => `<div class="hero-badge-chip" style="animation-delay:${i*60}ms">${b.icon} ${b.name}</div>`)
     .join("");
 
   const displayName = profile?.username || currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email?.split("@")[0] || "User";
-  const avatarSrc   = profile?.avatar_url
-    || currentUser.user_metadata?.avatar_url
-    || currentUser.user_metadata?.picture
+  const avatarSrc   = profile?.avatar_url || currentUser.user_metadata?.avatar_url || currentUser.user_metadata?.picture
     || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=e8522a&color=fff&bold=true`;
 
   document.getElementById("profileContent").innerHTML = `
-    <!-- ── Header Profil ── -->
-    <div class="profile-header">
-      <div class="avatar-wrap" id="avatarWrap" onclick="document.getElementById('avatarInput').click()" title="Klik untuk ganti foto">
-        <img id="avatarImg" src="${avatarSrc}" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=U&background=e8522a&color=fff&bold=true'">
-        <div class="avatar-overlay">
-          <span>📷</span>
-          <p>Ganti Foto</p>
+
+    <!-- ══ HERO BANNER ══ -->
+    <div class="profile-hero">
+      <div class="hero-bg"></div>
+      <div class="hero-inner">
+
+        <!-- Avatar -->
+        <div class="avatar-ring" id="avatarRing" onclick="document.getElementById('avatarInput').click()" title="Ganti foto profil">
+          <img id="avatarImg" src="${esc(avatarSrc)}" alt="Avatar"
+            onerror="this.src='https://ui-avatars.com/api/?name=U&background=e8522a&color=fff&bold=true'">
+          <div class="avatar-edit-icon">✏️</div>
         </div>
-      </div>
-      <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleAvatarUpload(event)">
+        <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="handleAvatarUpload(event)">
 
-      <div class="profile-name" id="profileNameDisplay">${displayName}</div>
-      <div class="profile-level">Level ${liveLevel} — ${levelTitle}</div>
-      <div class="profile-stats">
-        <div class="stat-item"><p id="statChapters">${liveTotal}</p><p>Chapter Dibaca</p></div>
-        <div class="stat-item"><p>${badgeCount}</p><p>Badge</p></div>
+        <!-- Name -->
+        <div class="hero-name" id="profileNameDisplay">${esc(displayName)}</div>
+
+        <!-- Level pill -->
+        <div class="hero-level-pill">
+          <span class="lv-dot"></span>
+          Level ${liveLevel} — ${esc(levelTitle)}
+        </div>
+
+        <!-- Stats -->
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-num" id="statChapters">${liveTotal}</div>
+            <div class="hero-stat-label">Chapter</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">${badgeCount}</div>
+            <div class="hero-stat-label">Badge</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-num">${liveLevel}</div>
+            <div class="hero-stat-label">Level</div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    ${badgeCount > 0 ? `<div class="badge-list">${ownedChips}</div>` : ""}
+    <!-- Badge chips -->
+    ${badgeCount > 0 ? `<div class="hero-badges">${ownedChips}</div>` : ""}
 
-    <!-- ── Tab Navigasi ── -->
-    <div class="profile-tabs">
-      <button class="profile-tab active" id="tab-bookmark"       onclick="switchTab('bookmark')">🔖 Komik</button>
-      <button class="profile-tab"        id="tab-anime-bookmark" onclick="switchTab('anime-bookmark')">⚡ Anime</button>
-      <button class="profile-tab"        id="tab-novel-bookmark" onclick="switchTab('novel-bookmark')">📚 Novel</button>
-      <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')">📖 Riwayat</button>
-      <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')">📝 Novel</button>
-      <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')">📊 Progress</button>
-      <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')">🏅 Badge</button>
-      <button class="profile-tab"        id="tab-leaderboard"    onclick="switchTab('leaderboard')">🏆 Top</button>
-      <button class="profile-tab"        id="tab-comments"       onclick="switchTab('comments')">💬 Komen</button>
-      <button class="profile-tab"        id="tab-settings"       onclick="switchTab('settings')">⚙️ Profil</button>
+    <!-- ══ TABS ══ -->
+    <div class="profile-tabs-wrap">
+      <div class="profile-tabs">
+        <button class="profile-tab active" id="tab-bookmark"       onclick="switchTab('bookmark')"><span class="tab-icon">🔖</span>Komik</button>
+        <button class="profile-tab"        id="tab-anime-bookmark" onclick="switchTab('anime-bookmark')"><span class="tab-icon">⚡</span>Anime</button>
+        <button class="profile-tab"        id="tab-novel-bookmark" onclick="switchTab('novel-bookmark')"><span class="tab-icon">📚</span>Novel</button>
+        <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')"><span class="tab-icon">📖</span>Riwayat</button>
+        <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')"><span class="tab-icon">📝</span>Nov. Hist</button>
+        <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')"><span class="tab-icon">📊</span>Progress</button>
+        <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')"><span class="tab-icon">🏅</span>Badge</button>
+        <button class="profile-tab"        id="tab-leaderboard"    onclick="switchTab('leaderboard')"><span class="tab-icon">🏆</span>Top</button>
+        <button class="profile-tab"        id="tab-comments"       onclick="switchTab('comments')"><span class="tab-icon">💬</span>Komen</button>
+        <button class="profile-tab"        id="tab-settings"       onclick="switchTab('settings')"><span class="tab-icon">⚙️</span>Edit</button>
+      </div>
     </div>
 
-    <!-- ── Konten Tab ── -->
+    <!-- ══ TAB CONTENTS ══ -->
+
+    <!-- Bookmark Komik -->
     <div class="tab-content active" id="content-bookmark">
       <div class="kategori-tabs">
         <button class="kategori-btn active" onclick="filterKategori('favorit',this)">❤️ Favorit</button>
-        <button class="kategori-btn" onclick="filterKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
+        <button class="kategori-btn" onclick="filterKategori('lagi_dibaca',this)">📖 Dibaca</button>
         <button class="kategori-btn" onclick="filterKategori('tamat',this)">✅ Tamat</button>
       </div>
       <div id="bookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
-    <!-- Tab: Bookmark Anime -->
+    <!-- Bookmark Anime -->
     <div class="tab-content" id="content-anime-bookmark">
       <div class="kategori-tabs">
         <button class="kategori-btn active" onclick="filterAnimeKategori('favorit',this)">❤️ Favorit</button>
@@ -614,55 +906,58 @@ async function loadProfile() {
       <div id="animeBookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
-    <!-- Tab: Bookmark Novel -->
+    <!-- Bookmark Novel -->
     <div class="tab-content" id="content-novel-bookmark">
       <div class="kategori-tabs">
         <button class="kategori-btn active" onclick="filterNovelKategori('favorit',this)">❤️ Favorit</button>
-        <button class="kategori-btn" onclick="filterNovelKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
+        <button class="kategori-btn" onclick="filterNovelKategori('lagi_dibaca',this)">📖 Dibaca</button>
         <button class="kategori-btn" onclick="filterNovelKategori('tamat',this)">✅ Tamat</button>
       </div>
       <div id="novelBookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
-    <!-- Tab: Riwayat Novel -->
+    <!-- Riwayat Novel -->
     <div class="tab-content" id="content-novel-history">
       <div id="novelHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
-    <!-- Tab: Riwayat Komik -->
+    <!-- Riwayat Komik -->
     <div class="tab-content" id="content-history">
       <div id="historyList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
+    <!-- Progress -->
     <div class="tab-content" id="content-progress">
       <div id="progressList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
+    <!-- Badge & Level -->
     <div class="tab-content" id="content-badge">
       <div id="badgeContent"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
+    <!-- Leaderboard -->
     <div class="tab-content" id="content-leaderboard">
       <div id="leaderboardContent"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
-    <!-- Tab: Komentar Saya -->
+    <!-- Komentar Saya -->
     <div class="tab-content" id="content-comments">
       <div id="myCommentsList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
-    <!-- ── Edit Profil ── -->
+    <!-- Edit Profil -->
     <div class="tab-content" id="content-settings">
       <div class="edit-form">
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:18px;">
-          📧 Login sebagai <strong>${currentUser.email}</strong>
-        </p>
+
+        <div class="email-badge">📧 ${esc(currentUser.email)}</div>
 
         <!-- Ganti Foto -->
-        <div class="edit-form-row">
+        <div class="edit-section-card">
           <p class="edit-section-title">📷 Foto Profil</p>
           <div class="avatar-upload-area" onclick="document.getElementById('avatarInput').click()">
-            <img id="avatarImgSettings" src="${avatarSrc}" alt="Avatar" onerror="this.src='https://ui-avatars.com/api/?name=U&background=e8522a&color=fff&bold=true'">
+            <img id="avatarImgSettings" src="${esc(avatarSrc)}" alt="Avatar"
+              onerror="this.src='https://ui-avatars.com/api/?name=U&background=e8522a&color=fff&bold=true'">
             <div class="avatar-upload-text">
               <p>Klik untuk ganti foto</p>
               <p>JPG, PNG, atau WebP · Maks 2MB</p>
@@ -671,32 +966,25 @@ async function loadProfile() {
           <div id="uploadMsg" class="form-msg"></div>
         </div>
 
-        <hr class="divider">
-
         <!-- Ganti Username -->
-        <div class="edit-form-row">
+        <div class="edit-section-card">
           <p class="edit-section-title">👤 Username</p>
-          <input
-            type="text"
-            id="usernameInput"
+          <input type="text" id="usernameInput"
             placeholder="Masukkan username baru"
-            value="${displayName !== 'User' ? displayName : (profile?.username || '')}"
+            value="${esc(displayName !== 'User' ? displayName : (profile?.username || ''))}"
             maxlength="30"
-            oninput="document.getElementById('usernameCounter').textContent = this.value.length + '/30'"
-          >
+            oninput="document.getElementById('usernameCounter').textContent = this.value.length + '/30'">
           <div class="char-counter"><span id="usernameCounter">${(displayName !== "User" ? displayName : (profile?.username || "")).length}/30</span></div>
           <p class="input-hint">3–30 karakter. Huruf, angka, underscore, dan strip saja.</p>
           <button class="edit-btn" onclick="saveProfile()" id="saveUsernameBtn">💾 Simpan Username</button>
           <div id="saveMsg" class="form-msg"></div>
         </div>
 
-        <hr class="divider">
-
         <!-- Ganti Password -->
-        <div class="edit-form-row">
+        <div class="edit-section-card">
           <p class="edit-section-title">🔐 Password</p>
           ${isOAuth ? `
-            <div style="padding:14px;background:var(--bg-surface);border-radius:10px;border:1px solid var(--border);text-align:center;">
+            <div style="padding:14px;background:rgba(0,0,0,0.2);border-radius:10px;border:1px solid var(--glass-b);text-align:center;">
               <p style="font-size:13px;color:var(--text-muted);">Login via Google — password tidak bisa diubah di sini.</p>
             </div>
           ` : `
@@ -706,16 +994,26 @@ async function loadProfile() {
             <div id="passwordMsg" class="form-msg"></div>
           `}
         </div>
+
+        <!-- Danger Zone -->
+        <div class="edit-section-card" style="border-color:rgba(232,82,42,0.2);">
+          <p class="edit-section-title" style="color:var(--acc);">⚠️ Keluar</p>
+          <button class="edit-btn" onclick="handleLogout()"
+            style="background:transparent;border:1.5px solid rgba(232,82,42,0.35);
+            color:var(--acc);box-shadow:none;margin-top:0;">
+            🚪 Logout dari Akun
+          </button>
+        </div>
+
       </div>
     </div>
+
   `;
 
   await loadBookmarks();
 }
 
-/* ============================================================
-   SWITCH TAB
-   ============================================================ */
+/* ── SWITCH TAB ───────────────────────────────────────── */
 window.switchTab = function (tab) {
   document.querySelectorAll(".profile-tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
@@ -732,15 +1030,9 @@ window.switchTab = function (tab) {
   if (tab === "comments")       loadMyComments();
 };
 
-/* ============================================================
-   BOOKMARK
-   ============================================================ */
-/* ============================================================
-   BOOKMARK KOMIK — hanya slug yang TIDAK ber-prefix "anime:"
-   ============================================================ */
+/* ── BOOKMARKS ────────────────────────────────────────── */
 async function loadBookmarks() {
   const { bookmarks } = await getBookmarks(currentUser.id);
-  /* Saring: hapus entry yang slug-nya mulai dengan "anime:" */
   bookmarkData = {
     favorit:     (bookmarks.favorit     || []).filter(b => !b.komik_slug?.startsWith("anime:")),
     lagi_dibaca: (bookmarks.lagi_dibaca || []).filter(b => !b.komik_slug?.startsWith("anime:")),
@@ -749,17 +1041,11 @@ async function loadBookmarks() {
   renderBookmarks(activeKategori);
 }
 
-/* ============================================================
-   ANIME BOOKMARK — hanya slug yang ber-prefix "anime:"
-   ============================================================ */
-let animeBookmarkData    = {};
-let activeAnimeKategori  = "favorit";
-let _animeBookmarkLoaded = false;
+let animeBookmarkData = {}, activeAnimeKategori = "favorit", _animeBookmarkLoaded = false;
 
 async function loadAnimeBookmarks() {
   if (!_animeBookmarkLoaded) {
     const { bookmarks } = await getBookmarks(currentUser.id);
-    /* Saring: hanya entry yang slug-nya mulai dengan "anime:" */
     animeBookmarkData = {
       favorit:     (bookmarks.favorit     || []).filter(b => b.komik_slug?.startsWith("anime:")),
       lagi_dibaca: (bookmarks.lagi_dibaca || []).filter(b => b.komik_slug?.startsWith("anime:")),
@@ -775,50 +1061,40 @@ function renderAnimeBookmarks(kategori) {
   const el   = document.getElementById("animeBookmarkList");
   if (!el) return;
   if (!list.length) {
-    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada anime di kategori ini.</p>
-      <p style="font-size:11px;margin-top:4px;color:var(--text-muted);">
-        Buka halaman detail anime dan tap tombol bookmark untuk menambahkan.
-      </p></div>`;
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada anime di kategori ini.</p></div>`;
     return;
   }
   el.innerHTML = list.map(bm => {
-    /* Slug bersih tanpa prefix "anime:" untuk navigasi */
     const cleanSlug = bm.komik_slug.replace(/^anime:/, "");
-    return `
-      <div class="komik-list-item">
-        ${bm.komik_cover
-          ? `<img src="${bm.komik_cover}" alt="${bm.komik_title}"
-              style="width:50px;height:68px;object-fit:cover;border-radius:6px;
-                     flex-shrink:0;cursor:pointer;border:1px solid rgba(108,99,255,0.2);"
-              onclick="gotoAnimeDetail('${cleanSlug}')"
-              onerror="this.style.display='none'">`
-          : `<div style="width:50px;height:68px;background:rgba(108,99,255,0.08);
-              border-radius:6px;flex-shrink:0;display:flex;align-items:center;
-              justify-content:center;font-size:22px;">⚡</div>`}
-        <div class="komik-list-info" onclick="gotoAnimeDetail('${cleanSlug}')" style="cursor:pointer">
-          <div class="title">${bm.komik_title || cleanSlug}</div>
-          <p style="color:#a78bfa;font-size:11px;">⚡ Anime</p>
-          <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID")}</p>
-        </div>
-        <div class="komik-list-actions">
-          <button class="btn-sm primary" onclick="gotoAnimeDetail('${cleanSlug}')">Buka</button>
-          <button class="btn-sm" onclick="hapusAnimeBookmark('${bm.komik_slug}',this)">Hapus</button>
-        </div>
-      </div>`;
+    return `<div class="komik-list-item">
+      ${bm.komik_cover
+        ? `<img src="${esc(bm.komik_cover)}" alt="${esc(bm.komik_title)}"
+            style="border:1px solid rgba(108,99,255,0.2);"
+            onclick="gotoAnimeDetail('${esc(cleanSlug)}')"
+            onerror="this.style.display='none'">`
+        : `<div style="width:52px;height:70px;background:rgba(108,99,255,0.08);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;">⚡</div>`}
+      <div class="komik-list-info" onclick="gotoAnimeDetail('${esc(cleanSlug)}')" style="cursor:pointer">
+        <div class="title">${esc(bm.komik_title || cleanSlug)}</div>
+        <p style="color:#a78bfa;">⚡ Anime</p>
+        <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID")}</p>
+      </div>
+      <div class="komik-list-actions">
+        <button class="btn-sm primary" onclick="gotoAnimeDetail('${esc(cleanSlug)}')">Buka</button>
+        <button class="btn-sm" onclick="hapusAnimeBookmark('${esc(bm.komik_slug)}',this)">Hapus</button>
+      </div>
+    </div>`;
   }).join("");
 }
 
 window.filterAnimeKategori = function(kategori, btn) {
   activeAnimeKategori = kategori;
-  document.querySelectorAll("#content-anime-bookmark .kategori-btn")
-    .forEach(b => b.classList.remove("active"));
+  document.querySelectorAll("#content-anime-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   renderAnimeBookmarks(kategori);
 };
 
 window.hapusAnimeBookmark = async function(fullSlug, btn) {
   btn.textContent = "..."; btn.disabled = true;
-  /* fullSlug sudah mengandung prefix "anime:", langsung pakai removeBookmark */
   await removeBookmark(currentUser.id, fullSlug);
   _animeBookmarkLoaded = false;
   await loadAnimeBookmarks();
@@ -835,21 +1111,21 @@ function renderBookmarks(kategori) {
   }
   el.innerHTML = list.map(bm => `
     <div class="komik-list-item">
-      <img src="${bm.komik_cover || ''}" alt="${bm.komik_title}" onclick="gotoDetail('${bm.komik_slug}')" style="cursor:pointer">
-      <div class="komik-list-info" onclick="gotoDetail('${bm.komik_slug}')" style="cursor:pointer">
-        <div class="title">${bm.komik_title}</div>
+      <img src="${esc(bm.komik_cover || '')}" alt="${esc(bm.komik_title)}" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer">
+      <div class="komik-list-info" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer">
+        <div class="title">${esc(bm.komik_title)}</div>
         <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
       </div>
       <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="gotoDetail('${bm.komik_slug}')">Buka</button>
-        <button class="btn-sm" onclick="hapusBookmark('${bm.komik_slug}',this)">Hapus</button>
+        <button class="btn-sm primary" onclick="gotoDetail('${esc(bm.komik_slug)}')">Buka</button>
+        <button class="btn-sm" onclick="hapusBookmark('${esc(bm.komik_slug)}',this)">Hapus</button>
       </div>
     </div>`).join("");
 }
 
 window.filterKategori = function (kategori, btn) {
   activeKategori = kategori;
-  document.querySelectorAll(".kategori-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll("#content-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   renderBookmarks(kategori);
 };
@@ -860,42 +1136,32 @@ window.hapusBookmark = async function (slug, btn) {
   await loadBookmarks();
 };
 
-/* ============================================================
-   RIWAYAT BACA
-   ============================================================ */
+/* ── RIWAYAT KOMIK ────────────────────────────────────── */
 async function loadHistory() {
   const { history } = await getHistory(currentUser.id);
   const el = document.getElementById("historyList");
-  if (!history.length) {
-    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p></div>`;
-    return;
-  }
+  if (!history.length) { el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p></div>`; return; }
   el.innerHTML = history.map(h => `
     <div class="komik-list-item">
-      <img src="${h.komik_cover || ''}" alt="${h.komik_title}" onclick="gotoDetail('${h.komik_slug}')" style="cursor:pointer">
+      <img src="${esc(h.komik_cover || '')}" alt="${esc(h.komik_title)}" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
       <div class="komik-list-info">
-        <div class="title">${h.komik_title}</div>
-        <p>📖 Chapter ${h.chapter_number || '?'}</p>
+        <div class="title">${esc(h.komik_title)}</div>
+        <p>📖 Chapter ${esc(String(h.chapter_number || '?'))}</p>
         <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
       </div>
       <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="window.location.href='reader.html?slug=${h.chapter_slug}'">Lanjut</button>
-        <button class="btn-sm" onclick="gotoDetail('${h.komik_slug}')">Detail</button>
+        <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">Lanjut</button>
+        <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
       </div>
     </div>`).join("");
 }
 
-/* ============================================================
-   PROGRESS
-   ============================================================ */
+/* ── PROGRESS ─────────────────────────────────────────── */
 async function loadProgressTab() {
   const el = document.getElementById("progressList");
   el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
   const { progress } = await getProgress(currentUser.id);
-  if (!progress.length) {
-    el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`;
-    return;
-  }
+  if (!progress.length) { el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`; return; }
   el.innerHTML = progress.map(p => {
     const pct      = p.total_chapters > 0 ? Math.min(100, Math.round((p.read_chapters / p.total_chapters) * 100)) : 0;
     const pctLabel = p.total_chapters > 0 ? `${pct}%` : "—";
@@ -905,439 +1171,225 @@ async function loadProgressTab() {
       <div class="komik-list-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
         <div style="display:flex;gap:12px;align-items:center;width:100%;">
           <div style="flex:1;min-width:0;">
-            <div class="title" style="cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" onclick="gotoDetail('${p.komik_slug}')">${p.komik_title}</div>
-            <p style="font-size:11px;color:var(--text-muted);margin:0;">📖 ${chapLabel} &nbsp;·&nbsp; 🕒 ${updated}</p>
+            <div class="title" style="cursor:pointer;" onclick="gotoDetail('${esc(p.komik_slug)}')">${esc(p.komik_title)}</div>
+            <p style="font-size:11px;color:var(--text-muted);margin:0;">📖 ${esc(chapLabel)} · 🕒 ${esc(updated)}</p>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <span style="font-size:16px;font-weight:800;color:var(--accent);">${pctLabel}</span>
+            <span style="font-size:18px;font-weight:900;color:var(--acc);font-family:'Bangers',cursive;letter-spacing:1px;">${esc(pctLabel)}</span>
           </div>
         </div>
         ${p.total_chapters > 0 ? `<div class="progress-bar-wrap" style="width:100%;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>` : ""}
         <div style="display:flex;gap:6px;width:100%;">
-          ${p.last_chapter_slug ? `<button class="btn-sm primary" onclick="window.location.href='reader.html?slug=${p.last_chapter_slug}'">▶️ Lanjut Baca</button>` : ""}
-          <button class="btn-sm" onclick="gotoDetail('${p.komik_slug}')">Detail</button>
+          ${p.last_chapter_slug ? `<button class="btn-sm primary" onclick="window.location.href='/baca/${esc(p.last_chapter_slug)}'">▶️ Lanjut</button>` : ""}
+          <button class="btn-sm" onclick="gotoDetail('${esc(p.komik_slug)}')">Detail</button>
         </div>
       </div>`;
   }).join("");
 }
 
-/* ============================================================
-   BADGE & LEVEL
-   ============================================================ */
+/* ── BADGE & LEVEL ────────────────────────────────────── */
 async function loadBadgeTab() {
   const el = document.getElementById("badgeContent");
   const { total: liveTotal } = await getTotalChaptersRead(currentUser.id);
-  const level         = Math.floor(liveTotal / 50) + 1;
-  const title         = getLevelTitle(level);
-  const xpInLevel     = liveTotal % 50;
-  const xpPct         = Math.round((xpInLevel / 50) * 100);
-  const ownedBadges   = currentProfile?.user_badges || [];
-  const ownedIds      = new Set(ownedBadges.map(b => b.badge_id));
-  const ownedNames    = new Set(ownedBadges.map(b => b.badges?.name).filter(Boolean));
+  const level     = Math.floor(liveTotal / 50) + 1;
+  const title     = getLevelTitle(level);
+  const xpInLevel = liveTotal % 50;
+  const xpPct     = Math.round((xpInLevel / 50) * 100);
+  const ownedBadges = currentProfile?.user_badges || [];
+  const ownedIds    = new Set(ownedBadges.map(b => b.badge_id));
+  const ownedNames  = new Set(ownedBadges.map(b => b.badges?.name).filter(Boolean));
   const allBadges = [
-    { id:"pemula",        name:"Pemula",        icon:"📖", desc:"Baca 1 chapter pertama",  min_chapters:1    },
-    { id:"pembaca_aktif", name:"Pembaca Aktif",  icon:"🔥", desc:"Sudah baca 50 chapter",   min_chapters:50   },
-    { id:"otaku",         name:"Otaku",          icon:"⭐", desc:"Sudah baca 200 chapter",  min_chapters:200  },
-    { id:"legenda",       name:"Legenda",        icon:"👑", desc:"Sudah baca 500 chapter",  min_chapters:500  },
-    { id:"top_reader",    name:"Top Reader",     icon:"🏆", desc:"Sudah baca 1000 chapter", min_chapters:1000 },
-    { id:"komentator",    name:"Komentator",     icon:"💬", desc:"Sudah buat 10 komentar",  min_chapters:0    },
+    { id:"pemula",        name:"Pemula",       icon:"📖", desc:"Baca 1 chapter pertama",  min_chapters:1    },
+    { id:"pembaca_aktif", name:"Pembaca Aktif", icon:"🔥", desc:"Sudah baca 50 chapter",   min_chapters:50   },
+    { id:"otaku",         name:"Otaku",         icon:"⭐", desc:"Sudah baca 200 chapter",  min_chapters:200  },
+    { id:"legenda",       name:"Legenda",       icon:"👑", desc:"Sudah baca 500 chapter",  min_chapters:500  },
+    { id:"top_reader",    name:"Top Reader",    icon:"🏆", desc:"Sudah baca 1000 chapter", min_chapters:1000 },
+    { id:"komentator",    name:"Komentator",    icon:"💬", desc:"Buat 10 komentar",         min_chapters:0    },
   ];
   const countOwned = allBadges.filter(b => b.min_chapters > 0 && b.min_chapters <= liveTotal).length;
 
   el.innerHTML = `
-    <div class="level-card">
+    <div class="level-card" data-level="${level}">
       <div class="level-top">
-        <div><div class="level-number">Level ${level}</div><div class="level-title">${title}</div></div>
-        <div class="level-total"><span>${liveTotal}</span><small>Chapter Dibaca</small></div>
+        <div>
+          <div class="level-number">LV.${level}</div>
+          <div class="level-title">${esc(title)}</div>
+        </div>
+        <div class="level-total">
+          <span>${liveTotal}</span>
+          <small>Chapter Dibaca</small>
+        </div>
       </div>
-      <div style="margin-top:10px;">
-        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:5px;">
+      <div style="margin-top:12px;">
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:700;">
           <span>XP Level ${level}</span>
-          <span>${xpInLevel}/50 — ${50-xpInLevel} lagi ke Level ${level+1}</span>
+          <span>${xpInLevel}/50 — ${50-xpInLevel} lagi ke Lv.${level+1}</span>
         </div>
         <div class="progress-bar-wrap">
-          <div class="progress-bar-fill" style="width:${xpPct}%;background:linear-gradient(90deg,var(--accent),#f5a623);"></div>
+          <div class="progress-bar-fill" style="width:${xpPct}%"></div>
         </div>
       </div>
     </div>
-    <div style="margin-top:16px;">
-      <p style="font-size:13px;font-weight:800;margin-bottom:10px;">
-        🏅 Koleksi Badge
-        <span style="font-weight:400;font-size:12px;color:var(--text-muted)">(${countOwned}/${allBadges.filter(b=>b.min_chapters>0).length} didapat)</span>
-      </p>
-      <div class="badge-grid">
-        ${allBadges.map(b => {
-          const owned    = b.min_chapters > 0 ? (ownedIds.has(b.id) || ownedNames.has(b.name) || liveTotal >= b.min_chapters) : (ownedIds.has(b.id) || ownedNames.has(b.name));
-          const progress = b.min_chapters > 0 ? Math.min(100, Math.round((liveTotal / b.min_chapters) * 100)) : 0;
-          return `<div class="badge-card ${owned ? "owned" : "locked"}">
-            <div class="badge-icon">${b.icon}</div>
-            <div class="badge-name">${b.name}</div>
-            <div class="badge-desc">${b.desc}</div>
-            ${owned ? `<div class="badge-status-owned">✅ Didapat</div>` : b.min_chapters > 0 ? `
-              <div style="margin-top:6px;">
-                <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:3px;text-align:center;">${liveTotal}/${b.min_chapters}</div>
-              </div>` : `<div class="badge-status-locked">🔒 Terkunci</div>`}
-          </div>`;
-        }).join("")}
-      </div>
+
+    <p class="section-label">🏅 Koleksi Badge (${countOwned}/${allBadges.filter(b=>b.min_chapters>0).length})</p>
+    <div class="badge-grid">
+      ${allBadges.map(b => {
+        const owned = b.min_chapters > 0 ? (ownedIds.has(b.id) || ownedNames.has(b.name) || liveTotal >= b.min_chapters) : (ownedIds.has(b.id) || ownedNames.has(b.name));
+        const progress = b.min_chapters > 0 ? Math.min(100, Math.round((liveTotal / b.min_chapters) * 100)) : 0;
+        return `<div class="badge-card ${owned ? "owned" : "locked"}">
+          <div class="badge-icon">${b.icon}</div>
+          <div class="badge-name">${esc(b.name)}</div>
+          <div class="badge-desc">${esc(b.desc)}</div>
+          ${owned ? `<div class="badge-status-owned">✅ Didapat</div>` : b.min_chapters > 0 ? `
+            <div style="margin-top:7px;">
+              <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${progress}%"></div></div>
+              <div style="font-size:10px;color:var(--text-muted);margin-top:3px;text-align:center;">${liveTotal}/${b.min_chapters}</div>
+            </div>` : `<div class="badge-status-locked">🔒 Terkunci</div>`}
+        </div>`;
+      }).join("")}
     </div>`;
 }
 
-/* ============================================================
-   LEADERBOARD
-   ============================================================ */
-/* ── Leaderboard helpers ──────────────────────────────── */
-const rankEmoji = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`;
-const rankClass = i => i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "";
+/* ── LEADERBOARD ──────────────────────────────────────── */
+const rankEmoji = i => i===0?"🥇":i===1?"🥈":i===2?"🥉":`#${i+1}`;
+const rankClass = i => i===0?"rank-1":i===1?"rank-2":i===2?"rank-3":"";
 
-function buildLbRows(list, scoreField, scoreLabel, userId, showAll = false) {
+function buildLbRows(list, scoreField, scoreLabel, userId, showAll=false) {
   if (!list.length) return `<div class="empty-state"><p>📭</p><p>Belum ada data. Jadilah yang pertama!</p></div>`;
-
-  /* Top 10 default, bisa expand ke semua */
   const SHOW_DEFAULT = 10;
   const displayList  = showAll ? list : list.slice(0, SHOW_DEFAULT);
   const hasMore      = !showAll && list.length > SHOW_DEFAULT;
-  const maxScore     = list[0]?.[scoreField] || 1; /* untuk progress bar relatif */
-
+  const maxScore     = list[0]?.[scoreField] || 1;
   const myRankIndex  = list.findIndex(u => u.id === userId);
   const myRankInTop  = displayList.findIndex(u => u.id === userId) >= 0;
 
-  /* Baris user sendiri jika tidak masuk top yang ditampilkan */
   let myRankCard = "";
   if (!myRankInTop) {
     if (myRankIndex >= 0) {
-      const u     = list[myRankIndex];
-      const score = (u[scoreField] || 0).toLocaleString("id-ID");
-      myRankCard = `
-        <div class="lb-my-rank">
-          Kamu di <strong>#${myRankIndex + 1}</strong> dengan
-          <strong>${score} ${scoreLabel}</strong> — terus baca untuk naik! 🚀
-        </div>`;
+      const u = list[myRankIndex];
+      const score = (u[scoreField]||0).toLocaleString("id-ID");
+      myRankCard = `<div class="lb-my-rank">Kamu di <strong>#${myRankIndex+1}</strong> dengan <strong>${score} ${scoreLabel}</strong> — terus baca! 🚀</div>`;
     } else {
-      myRankCard = `<div class="lb-my-rank">Kamu belum masuk top ${SHOW_DEFAULT}. Terus baca untuk naik peringkat! 🚀</div>`;
+      myRankCard = `<div class="lb-my-rank">Kamu belum masuk top ${SHOW_DEFAULT}. Terus baca untuk naik! 🚀</div>`;
     }
   }
 
   const rows = displayList.map((u, i) => {
-    const isMe   = u.id === userId;
-    const name   = u.username || "Anonim";
-    const avatar = u.avatar_url || null;
-    const level  = u.level || 1;
-    const rawScore = u[scoreField] || 0;
-    const score  = rawScore.toLocaleString("id-ID");
-    const barPct = maxScore > 0 ? Math.round((rawScore / maxScore) * 100) : 0;
-    const delay  = i * 45; /* staggered animation */
-
+    const isMe    = u.id === userId;
+    const name    = u.username || "Anonim";
+    const avatar  = u.avatar_url || null;
+    const level   = u.level || 1;
+    const rawScore= u[scoreField] || 0;
+    const score   = rawScore.toLocaleString("id-ID");
+    const barPct  = maxScore > 0 ? Math.round((rawScore/maxScore)*100) : 0;
     const avatarHtml = avatar
-      ? `<img class="lb-avatar" src="${avatar}" alt="${name}" loading="lazy"
-             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
-      + `<div class="lb-avatar" style="display:none;align-items:center;justify-content:center;
-             background:linear-gradient(135deg,#e8522a,#c73f1c);font-weight:800;font-size:14px;color:#fff;">
-             ${name[0]?.toUpperCase() || "?"}</div>`
+      ? `<img class="lb-avatar" src="${esc(avatar)}" alt="${esc(name)}" loading="lazy"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+         <div class="lb-avatar" style="display:none;align-items:center;justify-content:center;
+           background:linear-gradient(135deg,#e8522a,#c73f1c);font-weight:800;font-size:14px;color:#fff;">
+           ${name[0]?.toUpperCase()||"?"}</div>`
       : `<div class="lb-avatar" style="display:flex;align-items:center;justify-content:center;
-             background:linear-gradient(135deg,#e8522a,#c73f1c);font-weight:800;font-size:14px;color:#fff;">
-             ${name[0]?.toUpperCase() || "?"}</div>`;
-
+          background:linear-gradient(135deg,#e8522a,#c73f1c);font-weight:800;font-size:14px;color:#fff;">
+          ${name[0]?.toUpperCase()||"?"}</div>`;
     return `
-      <div class="lb-row ${rankClass(i)} ${isMe ? "me" : ""}"
-           style="animation-delay:${delay}ms">
+      <div class="lb-row ${rankClass(i)} ${isMe?"me":""}" style="animation-delay:${i*45}ms">
         <div class="lb-rank">${rankEmoji(i)}</div>
         ${avatarHtml}
         <div class="lb-info">
-          <div class="lb-name">${name}${isMe ? `<span class="lb-me-badge">Kamu</span>` : ""}</div>
-          <div class="lb-meta">Level ${level} · ${getLevelTitle(level)}</div>
-          <div class="lb-bar-wrap">
-            <div class="lb-bar-fill" style="width:${barPct}%"></div>
-          </div>
+          <div class="lb-name">${esc(name)}${isMe?`<span class="lb-me-badge">Kamu</span>`:""}</div>
+          <div class="lb-meta">Level ${level} · ${esc(getLevelTitle(level))}</div>
+          <div class="lb-bar-wrap"><div class="lb-bar-fill" style="width:${barPct}%"></div></div>
         </div>
         <div class="lb-score">
-          <span class="lb-score-num">${score}</span>
-          <span class="lb-score-label">${scoreLabel}</span>
+          <span class="lb-score-num">${esc(score)}</span>
+          <span class="lb-score-label">${esc(scoreLabel)}</span>
         </div>
       </div>`;
   }).join("");
 
-  const showMoreBtn = hasMore
-    ? `<button class="lb-show-more" onclick="expandLbTab()">
-        ▼ Lihat ${list.length - SHOW_DEFAULT} lainnya (Top ${list.length})
-      </button>`
-    : "";
-
-  const footer = `<div class="lb-footer">Update otomatis setiap kamu selesai baca</div>`;
-
-  return rows + showMoreBtn + myRankCard + footer;
+  const showMoreBtn = hasMore ? `<button class="lb-show-more" onclick="expandLbTab()">▼ Lihat ${list.length-SHOW_DEFAULT} lainnya</button>` : "";
+  return rows + showMoreBtn + myRankCard + `<div class="lb-footer">Update otomatis setiap kamu selesai baca</div>`;
 }
 
-let _lbTab = "komik"; /* active leaderboard sub-tab */
-
-let _lbExpanded = false; /* apakah sedang tampil semua */
+let _lbTab = "komik", _lbExpanded = false;
+let _lbData = { komik: [], novel: [] };
 
 async function loadLeaderboard(forceRefresh = false) {
   const el = document.getElementById("leaderboardContent");
   _lbExpanded = false;
 
   el.innerHTML = `
-    <!-- Header -->
     <div class="lb-top-header">
-      <div class="lb-top-title">🏆 TOP <span>10</span></div>
+      <div class="lb-top-title">🏆 TOP <span>READER</span></div>
       <div class="lb-top-right">
         <span class="lb-updated" id="lbUpdatedAt"></span>
         <button class="lb-refresh-btn" onclick="loadLeaderboard(true)">🔄</button>
       </div>
     </div>
-    <!-- Sub-tab toggle -->
     <div class="lb-toggle" id="lbToggle">
       <button class="lb-toggle-btn active" id="lbBtnKomik" onclick="switchLbTab('komik')">📚 Komik</button>
       <button class="lb-toggle-btn"        id="lbBtnNovel" onclick="switchLbTab('novel')">📖 Novel</button>
     </div>
-    <div id="lbBody">${Array(10).fill('<div class="lb-skeleton"></div>').join("")}</div>
-  `;
+    <div id="lbBody">${Array(8).fill('<div class="lb-skeleton"></div>').join("")}</div>`;
 
-  /* Fetch keduanya paralel — ambil top 20 agar bisa expand */
   const [{ leaderboard: komikLb }, { leaderboard: novelLb }] = await Promise.all([
     getLeaderboard(20),
     getNovelLeaderboard(20)
   ]);
 
-  window._lbKomik = komikLb;
-  window._lbNovel = novelLb;
+  _lbData.komik = komikLb || [];
+  _lbData.novel = novelLb || [];
 
-  /* Update timestamp */
-  const ts = document.getElementById("lbUpdatedAt");
-  if (ts) ts.textContent = "🕐 " + new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-
-  renderLbTab(_lbTab);
-
-  document.getElementById("lbBtnKomik")?.classList.toggle("active", _lbTab === "komik");
-  document.getElementById("lbBtnNovel")?.classList.toggle("active", _lbTab === "novel");
+  document.getElementById("lbUpdatedAt").textContent = "Baru diperbarui";
+  document.getElementById("lbBody").innerHTML = buildLbRows(_lbData.komik, "chapters_read", "chapter", currentUser.id, false);
 }
 
 window.switchLbTab = function(tab) {
-  _lbTab = tab;
-  _lbExpanded = false;
-  document.getElementById("lbBtnKomik")?.classList.toggle("active", tab === "komik");
-  document.getElementById("lbBtnNovel")?.classList.toggle("active", tab === "novel");
-  renderLbTab(tab);
+  _lbTab = tab; _lbExpanded = false;
+  document.getElementById("lbBtnKomik")?.classList.toggle("active", tab==="komik");
+  document.getElementById("lbBtnNovel")?.classList.toggle("active", tab==="novel");
+  const data = tab === "komik" ? _lbData.komik : _lbData.novel;
+  const field = tab === "komik" ? "chapters_read" : "novels_read";
+  const label = tab === "komik" ? "chapter" : "novel";
+  document.getElementById("lbBody").innerHTML = buildLbRows(data, field, label, currentUser.id, false);
 };
 
 window.expandLbTab = function() {
   _lbExpanded = true;
-  /* Update title */
-  const titleSpan = document.querySelector(".lb-top-title span");
-  if (titleSpan) titleSpan.textContent = "20";
-  renderLbTab(_lbTab);
+  const data  = _lbTab === "komik" ? _lbData.komik : _lbData.novel;
+  const field = _lbTab === "komik" ? "chapters_read" : "novels_read";
+  const label = _lbTab === "komik" ? "chapter" : "novel";
+  document.getElementById("lbBody").innerHTML = buildLbRows(data, field, label, currentUser.id, true);
 };
 
-function renderLbTab(tab) {
-  const body = document.getElementById("lbBody");
-  if (!body) return;
-  if (tab === "komik") {
-    body.innerHTML = buildLbRows(window._lbKomik || [], "total_chapters_read", "chapter komik", currentUser.id, _lbExpanded);
-  } else {
-    body.innerHTML = buildLbRows(window._lbNovel || [], "total_novel_chapters_read", "chapter novel", currentUser.id, _lbExpanded);
-  }
-}
-
-window.loadLeaderboard = loadLeaderboard;
-
-/* ============================================================
-   UPLOAD AVATAR — FIXED
-   ============================================================ */
-window.handleAvatarUpload = async function (event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  // Reset input agar bisa upload file sama lagi
-  event.target.value = "";
-
-  // Validasi tipe
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowed.includes(file.type)) {
-    showUploadMsg("❌ Format tidak didukung. Gunakan JPG, PNG, atau WebP.", "error");
-    return;
-  }
-
-  // Validasi ukuran (2MB)
-  if (file.size > 2 * 1024 * 1024) {
-    showUploadMsg("❌ Ukuran foto maksimal 2MB.", "error");
-    return;
-  }
-
-  // Tunjukkan preview lokal + loading state
-  const reader = new FileReader();
-  reader.onload = e => {
-    const src = e.target.result;
-    ["avatarImg", "avatarImgSettings"].forEach(id => {
-      const img = document.getElementById(id);
-      if (img) img.src = src;
-    });
-  };
-  reader.readAsDataURL(file);
-
-  const wrap = document.getElementById("avatarWrap");
-  wrap?.classList.add("avatar-uploading");
-  showUploadMsg("⏳ Mengupload foto...", "");
-
-  // Upload ke Supabase Storage
-  const { url, error } = await uploadAvatar(currentUser.id, file);
-
-  wrap?.classList.remove("avatar-uploading");
-
-  if (error) {
-    console.error("Upload error:", error);
-    showUploadMsg(`❌ Gagal upload: ${error.message || "Coba lagi."}`, "error");
-    // Kembalikan avatar lama
-    const oldSrc = currentProfile?.avatar_url
-      || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentProfile?.username || 'U')}&background=e8522a&color=fff`;
-    ["avatarImg", "avatarImgSettings"].forEach(id => {
-      const img = document.getElementById(id); if (img) img.src = oldSrc;
-    });
-    return;
-  }
-
-  // Simpan URL baru ke profil
-  const { error: updateErr } = await updateProfile(currentUser.id, { avatar_url: url });
-  if (updateErr) {
-    showUploadMsg("⚠️ Foto terupload tapi gagal disimpan ke profil. Coba muat ulang.", "error");
-    return;
-  }
-
-  if (currentProfile) currentProfile.avatar_url = url;
-  // Pastikan kedua gambar tampilkan URL final (bukan blob)
-  ["avatarImg", "avatarImgSettings"].forEach(id => {
-    const img = document.getElementById(id); if (img) img.src = url + "?t=" + Date.now();
-  });
-
-  showUploadMsg("✅ Foto profil berhasil diperbarui!", "success");
-};
-
-function showUploadMsg(text, type) {
-  const el = document.getElementById("uploadMsg");
-  if (!el) return;
-  el.textContent  = text;
-  el.className    = `form-msg ${type}`;
-  el.style.display = "block";
-  if (type === "success") setTimeout(() => { el.style.display = "none"; }, 4000);
-}
-
-/* ============================================================
-   SIMPAN USERNAME — FIXED
-   ============================================================ */
-window.saveProfile = async function () {
-  const input    = document.getElementById("usernameInput");
-  const btn      = document.getElementById("saveUsernameBtn");
-  const username = input.value.trim();
-
-  if (!username) { showFormMsg("saveMsg", "❌ Username tidak boleh kosong.", "error"); return; }
-  if (username.length < 3) { showFormMsg("saveMsg", "❌ Username minimal 3 karakter.", "error"); return; }
-  if (username.length > 30) { showFormMsg("saveMsg", "❌ Username maksimal 30 karakter.", "error"); return; }
-
-  // Validasi karakter: huruf, angka, underscore, dash
-  if (!/^[a-zA-Z0-9_\-]+$/.test(username)) {
-    showFormMsg("saveMsg", "❌ Hanya huruf, angka, underscore (_), dan dash (-) yang diizinkan.", "error");
-    return;
-  }
-
-  btn.disabled    = true;
-  btn.textContent = "⏳ Menyimpan...";
-
-  const { profile: updated, error } = await updateProfile(currentUser.id, { username });
-
-  btn.disabled    = false;
-  btn.textContent = "💾 Simpan Username";
-
-  if (error) {
-    const isDuplicate = error.message?.includes("duplicate") || error.message?.includes("unique") || error.code === "23505";
-    showFormMsg("saveMsg", isDuplicate ? "❌ Username sudah dipakai orang lain." : `❌ Gagal: ${error.message}`, "error");
-    return;
-  }
-
-  // Verifikasi dengan fetch ulang dari DB
-  const { profile: verified } = await getProfile(currentUser.id);
-  const savedUsername = verified?.username || updated?.username || username;
-
-  // Update semua tampilan nama
-  const nameEl = document.getElementById("profileNameDisplay");
-  if (nameEl) nameEl.textContent = savedUsername;
-  if (currentProfile) currentProfile.username = savedUsername;
-  input.value = savedUsername;
-
-  showFormMsg("saveMsg", "✅ Username berhasil diperbarui!", "success");
-};
-
-/* ============================================================
-   GANTI PASSWORD
-   ============================================================ */
-window.savePassword = async function () {
-  const newPass     = document.getElementById("newPasswordInput")?.value;
-  const confirmPass = document.getElementById("confirmPasswordInput")?.value;
-  const btn         = document.getElementById("savePasswordBtn");
-
-  if (!newPass) { showFormMsg("passwordMsg", "❌ Password baru tidak boleh kosong.", "error"); return; }
-  if (newPass.length < 6) { showFormMsg("passwordMsg", "❌ Password minimal 6 karakter.", "error"); return; }
-  if (newPass !== confirmPass) { showFormMsg("passwordMsg", "❌ Konfirmasi password tidak cocok.", "error"); return; }
-
-  btn.disabled = true; btn.textContent = "⏳ Menyimpan...";
-  const { error } = await updatePassword(newPass);
-  btn.disabled = false; btn.textContent = "🔒 Ganti Password";
-
-  if (!error) {
-    document.getElementById("newPasswordInput").value     = "";
-    document.getElementById("confirmPasswordInput").value = "";
-    showFormMsg("passwordMsg", "✅ Password berhasil diubah!", "success");
-  } else {
-    const msg = error.message?.includes("same password")
-      ? "❌ Password baru tidak boleh sama dengan yang lama."
-      : "❌ Gagal mengubah password. Coba lagi.";
-    showFormMsg("passwordMsg", msg, "error");
-  }
-};
-
-/* Tampilkan pesan form dengan auto-hide */
-function showFormMsg(id, text, type) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.textContent = text;
-  el.className   = `form-msg ${type}`;
-  if (type === "success") setTimeout(() => { el.className = "form-msg"; el.textContent = ""; }, 5000);
-}
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
-/* ============================================================
-   NOVEL BOOKMARK
-   ============================================================ */
-let novelBookmarkData   = {};
-let activeNovelKategori = "favorit";
+/* ── NOVEL BOOKMARK ───────────────────────────────────── */
+let novelBookmarkData = {}, activeNovelKategori = "favorit";
 
 async function loadNovelBookmarks() {
   const { bookmarks } = await getNovelBookmarks(currentUser.id);
-  novelBookmarkData = bookmarks;
+  novelBookmarkData = bookmarks || {};
   renderNovelBookmarks(activeNovelKategori);
 }
 
 function renderNovelBookmarks(kategori) {
   const list = novelBookmarkData[kategori] || [];
   const el   = document.getElementById("novelBookmarkList");
+  if (!el) return;
   if (!list.length) {
-    el.innerHTML = '<div class="empty-state"><p>📭</p><p>Belum ada novel di kategori ini.</p></div>';
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada novel di kategori ini.</p></div>`;
     return;
   }
   el.innerHTML = list.map(bm => `
     <div class="komik-list-item">
-      <div style="width:50px;height:68px;background:var(--bg-surface);border-radius:6px;
-        display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;
-        ${bm.novel_cover ? 'display:none' : ''}">📖</div>
-      ${bm.novel_cover ? `<img src="${proxyImg(bm.novel_cover,120)}" alt="${bm.novel_title}" style="width:50px;height:68px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer" onclick="gotoNovelDetail('${bm.novel_slug}')">` : ''}
-      <div class="komik-list-info" onclick="gotoNovelDetail('${bm.novel_slug}')" style="cursor:pointer">
-        <div class="title">${bm.novel_title}</div>
+      <div style="width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);">📖</div>
+      <div class="komik-list-info" onclick="gotoNovelDetail('${esc(bm.novel_slug)}')" style="cursor:pointer">
+        <div class="title">${esc(bm.novel_title || bm.novel_slug)}</div>
+        <p style="color:#a5b4fc;">📚 Novel</p>
         <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
       </div>
       <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="gotoNovelDetail('${bm.novel_slug}')">Buka</button>
-        <button class="btn-sm" onclick="hapusNovelBookmark('${bm.novel_slug}',this)">Hapus</button>
+        <button class="btn-sm primary" onclick="gotoNovelDetail('${esc(bm.novel_slug)}')">Buka</button>
+        <button class="btn-sm" onclick="hapusNovelBookmark('${esc(bm.novel_slug)}',this)">Hapus</button>
       </div>
     </div>`).join("");
 }
@@ -1355,159 +1407,159 @@ window.hapusNovelBookmark = async function (slug, btn) {
   await loadNovelBookmarks();
 };
 
+/* ── NOVEL HISTORY ────────────────────────────────────── */
 async function loadNovelHistory() {
   const { history } = await getNovelHistory(currentUser.id);
   const el = document.getElementById("novelHistoryList");
-  if (!history?.length) {
-    el.innerHTML = '<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca novel.</p></div>';
-    return;
-  }
+  if (!history?.length) { el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca novel.</p></div>`; return; }
   el.innerHTML = history.map(h => `
     <div class="komik-list-item">
-      <div style="width:50px;height:68px;background:var(--bg-surface);border-radius:6px;
-        display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📖</div>
+      <div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--glass-b);">📖</div>
       <div class="komik-list-info">
-        <div class="title">${h.novel_title || h.novel_slug || '–'}</div>
-        <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">
-          ${h.chapter_title || h.chapter_slug || ''}
-        </p>
+        <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
+        <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${esc(h.chapter_title || h.chapter_slug || '')}</p>
         <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
       </div>
       <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="window.location.href='novel-reader.html?slug=${h.chapter_slug}'">Lanjut</button>
-        <button class="btn-sm" onclick="gotoNovelDetail('${h.novel_slug}')">Detail</button>
+        <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">Lanjut</button>
+        <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
       </div>
     </div>`).join("");
 }
 
-/* ============================================================
-   KOMENTAR SAYA
-   ============================================================ */
+/* ── KOMENTAR SAYA ────────────────────────────────────── */
 let _myCommentsLoaded = false;
 
 async function loadMyComments() {
-  if (_myCommentsLoaded) return; /* cache agar tidak re-fetch setiap klik tab */
+  if (_myCommentsLoaded) return;
   const el = document.getElementById("myCommentsList");
   if (!el) return;
-
   el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat komentar...</p></div>`;
 
   try {
     const { comments, error } = await getMyComments(currentUser.id, 30);
-
     if (error) throw error;
-
     if (!comments || comments.length === 0) {
-      el.innerHTML = `
-        <div class="empty-state">
-          <p>💬</p>
-          <p>Kamu belum pernah berkomentar.</p>
-          <p style="font-size:11px;margin-top:4px;">Mulai baca komik dan tinggalkan komentar!</p>
-        </div>`;
+      el.innerHTML = `<div class="empty-state"><p>💬</p><p>Kamu belum pernah berkomentar.</p></div>`;
       _myCommentsLoaded = true;
       return;
     }
-
     _myCommentsLoaded = true;
     el.innerHTML = comments.map(c => renderMyComment(c)).join("");
-
   } catch (err) {
-    console.error("loadMyComments error:", err);
-    el.innerHTML = `
-      <div class="empty-state">
-        <p>😕</p>
-        <p>Gagal memuat komentar.</p>
-        <button onclick="_myCommentsLoaded=false;loadMyComments()" style="
-          margin-top:10px;padding:7px 18px;background:var(--accent);
-          color:#fff;border:none;border-radius:8px;cursor:pointer;
-          font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;">
-          🔄 Coba Lagi
-        </button>
-      </div>`;
+    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat komentar.</p><button onclick="_myCommentsLoaded=false;loadMyComments()" style="margin-top:10px;padding:7px 18px;background:var(--acc);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;">🔄 Coba Lagi</button></div>`;
   }
 }
 
 function resolveCommentLocation(komikSlug) {
-  /* Sama dengan fungsi di index.html — konversi slug ke { icon, label, url } */
-  if (!komikSlug) return { icon: "💬", label: "Pankomik", url: "/" };
-
+  if (!komikSlug) return { icon:"💬", label:"Pankomik", url:"/" };
   if (komikSlug.startsWith("novel-chapter:")) {
-    const raw   = komikSlug.slice("novel-chapter:".length);
-    const label = raw.replace(/-chapter-[\d-]+$/i,"")
-                     .replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
-                     .trim().slice(0,26) || "Chapter Novel";
-    return { icon: "📖", label, url: `/baca-novel/${raw}` };
+    const raw = komikSlug.slice("novel-chapter:".length);
+    const label = raw.replace(/-chapter-[\d-]+$/i,"").replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).trim().slice(0,26) || "Chapter Novel";
+    return { icon:"📖", label, url:`/baca-novel/${raw}` };
   }
   if (komikSlug.startsWith("novel:")) {
-    const raw   = komikSlug.slice("novel:".length);
-    const label = raw.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
-                     .trim().slice(0,26) || "Novel";
-    return { icon: "📖", label, url: `/novel/${raw}` };
+    const raw = komikSlug.slice("novel:".length);
+    const label = raw.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).trim().slice(0,26) || "Novel";
+    return { icon:"📖", label, url:`/novel/${raw}` };
   }
   if (komikSlug.startsWith("chapter:")) {
-    const raw   = komikSlug.slice("chapter:".length);
-    const label = raw.replace(/-chapter-[\d-]+$/i,"")
-                     .replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
-                     .trim().slice(0,26) || "Chapter Komik";
-    return { icon: "📚", label, url: `/baca/${raw}` };
+    const raw = komikSlug.slice("chapter:".length);
+    const label = raw.replace(/-chapter-[\d-]+$/i,"").replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).trim().slice(0,26) || "Chapter Komik";
+    return { icon:"📚", label, url:`/baca/${raw}` };
   }
-  /* Legacy: slug komik langsung */
-  const label = komikSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase())
-                          .trim().slice(0,26) || "Komik";
-  return { icon: "📚", label, url: `/komik/${komikSlug}` };
-}
-
-function escH(str) {
-  return String(str || "")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  const label = komikSlug.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).trim().slice(0,26) || "Komik";
+  return { icon:"📚", label, url:`/komik/${komikSlug}` };
 }
 
 function renderMyComment(c) {
-  const loc     = resolveCommentLocation(c.komik_slug);
-  const likes   = c.like_count || 0;
+  const loc   = resolveCommentLocation(c.komik_slug);
+  const likes = c.like_count || 0;
   const isReply = !!c.parent_id;
-  const text    = (c.content || "").slice(0, 200);
-  let   time    = "–";
-  try { time = new Date(c.created_at).toLocaleDateString("id-ID",
-    { day:"numeric", month:"short", year:"numeric" }); } catch {}
-
+  const text  = (c.content || "").slice(0, 200);
+  let   time  = "–";
+  try { time = new Date(c.created_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"}); } catch {}
   return `
-    <a class="my-comment-card" href="${escH(loc.url)}"
-       title="Komentar di: ${escH(loc.label)} — klik untuk melihat">
-
-      <!-- Lokasi komentar -->
+    <a class="my-comment-card" href="${esc(loc.url)}" title="Komentar di: ${esc(loc.label)}">
       <div class="my-comment-location">
-        <span>${escH(loc.icon)}</span>
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-          ${escH(loc.label)}
-        </span>
+        <span>${esc(loc.icon)}</span>
+        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(loc.label)}</span>
       </div>
-
-      <!-- Isi komentar -->
-      <p class="my-comment-text">${escH(text)}${(c.content||"").length > 200 ? "…" : ""}</p>
-
-      <!-- Footer: waktu · like · badge reply -->
+      <p class="my-comment-text">${esc(text)}${(c.content||"").length>200?"…":""}</p>
       <div class="my-comment-footer">
-        <span>🕒 ${escH(time)}</span>
-        ${likes > 0 ? `<span class="my-comment-likes">❤️ ${likes}</span>` : ""}
-        ${isReply ? `<span class="my-comment-reply-badge">↩ Balasan</span>` : ""}
-        <span style="margin-left:auto;color:var(--accent);font-weight:700;font-size:10px;">
-          Lihat →
-        </span>
+        <span>🕒 ${esc(time)}</span>
+        ${likes>0?`<span class="my-comment-likes">❤️ ${likes}</span>`:""}
+        ${isReply?`<span class="my-comment-reply-badge">↩ Balasan</span>`:""}
+        <span style="margin-left:auto;color:var(--acc);font-weight:700;font-size:10px;">Lihat →</span>
       </div>
     </a>`;
 }
 
-window.loadMyComments = loadMyComments; /* expose agar bisa dipanggil dari tombol retry */
+/* ── SAVE PROFILE ─────────────────────────────────────── */
+window.saveProfile = async function () {
+  const btn  = document.getElementById("saveUsernameBtn");
+  const msg  = document.getElementById("saveMsg");
+  const val  = document.getElementById("usernameInput")?.value.trim();
+  if (!val || val.length < 3) { showMsg(msg,"Username minimal 3 karakter.","error"); return; }
+  if (!/^[a-zA-Z0-9_-]+$/.test(val)) { showMsg(msg,"Hanya huruf, angka, _ dan -","error"); return; }
+  btn.disabled = true; btn.textContent = "⏳ Menyimpan...";
+  const { error } = await updateProfile(currentUser.id, { username: val });
+  if (error) showMsg(msg, "Gagal menyimpan. Coba lagi.", "error");
+  else {
+    showMsg(msg,"✅ Username berhasil disimpan!","success");
+    document.getElementById("profileNameDisplay").textContent = val;
+  }
+  btn.disabled = false; btn.textContent = "💾 Simpan Username";
+};
 
-window.gotoNovelDetail = slug => window.location.href = `/novel/${slug}`;
-window.gotoDetail   = slug => window.location.href = `/komik/${slug}`;
-window.goHome       = () => window.location.href = "/";
-window.liveSearch   = () => {};
-window.toggleMenu   = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display === "block" ? "none" : "block"; };
-window.toggleDarkMode = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark"); };
+window.savePassword = async function () {
+  const btn  = document.getElementById("savePasswordBtn");
+  const msg  = document.getElementById("passwordMsg");
+  const np   = document.getElementById("newPasswordInput")?.value;
+  const cp   = document.getElementById("confirmPasswordInput")?.value;
+  if (!np || np.length < 6) { showMsg(msg,"Password minimal 6 karakter.","error"); return; }
+  if (np !== cp) { showMsg(msg,"Konfirmasi password tidak cocok.","error"); return; }
+  btn.disabled = true; btn.textContent = "⏳ Menyimpan...";
+  const { error } = await updatePassword(np);
+  if (error) showMsg(msg,"Gagal ganti password.","error");
+  else showMsg(msg,"✅ Password berhasil diubah!","success");
+  btn.disabled = false; btn.textContent = "🔒 Ganti Password";
+};
 
+function showMsg(el, text, type) {
+  if (!el) return;
+  el.textContent = text;
+  el.className = `form-msg ${type}`;
+}
+
+/* ── AVATAR UPLOAD ────────────────────────────────────── */
+window.handleAvatarUpload = async function (event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    const msg = document.getElementById("uploadMsg");
+    showMsg(msg, "File terlalu besar. Maks 2MB.", "error");
+    return;
+  }
+  const ring = document.getElementById("avatarRing");
+  ring?.classList.add("avatar-uploading");
+
+  const { url, error } = await uploadAvatar(currentUser.id, file);
+  ring?.classList.remove("avatar-uploading");
+
+  if (!error && url) {
+    document.getElementById("avatarImg").src = url;
+    const si = document.getElementById("avatarImgSettings");
+    if (si) si.src = url;
+    const msg = document.getElementById("uploadMsg");
+    showMsg(msg, "✅ Foto profil berhasil diperbarui!", "success");
+  } else {
+    const msg = document.getElementById("uploadMsg");
+    showMsg(msg, "Gagal upload foto. Coba lagi.", "error");
+  }
+};
+
+/* ── HELPERS ──────────────────────────────────────────── */
 function getLevelTitle(level) {
   if (level >= 20) return "Legenda Komik 👑";
   if (level >= 10) return "Otaku Sejati ⭐";
@@ -1515,21 +1567,30 @@ function getLevelTitle(level) {
   if (level >= 2)  return "Pecinta Komik 📚";
   return "Pemula 🌱";
 }
+
+window.loadMyComments   = loadMyComments;
+window.gotoNovelDetail  = slug => window.location.href = `/novel/${slug}`;
+window.gotoDetail       = slug => window.location.href = `/komik/${slug}`;
+window.goHome           = () => window.location.href = "/";
+window.liveSearch       = () => {};
+window.toggleMenu       = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display==="block"?"none":"block"; };
+window.toggleDarkMode   = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark"); };
+
 </script>
 
 <!-- ── Bottom Navigation ── -->
 <nav class="bottom-nav">
-  <button class="nav-item" onclick="window.location.href='index.html'">
+  <button class="nav-item" onclick="window.location.href='/'">
     <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='index.html'">
+  <button class="nav-item" onclick="window.location.href='/'">
     <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='novel.html'">
-    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  <button class="nav-item" onclick="window.location.href='/anime/'">
+    <span class="nav-icon">⚡</span><span class="nav-label">Anime</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='donatur.html'">
-    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
+  <button class="nav-item" onclick="window.location.href='/novel/'">
+    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
   </button>
   <button class="nav-item active">
     <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
