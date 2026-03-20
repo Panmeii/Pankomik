@@ -437,7 +437,7 @@
   </a>
 
   <!-- Sociabuzz -->
-  <a class="platform-card" href="https://sociabuzz.com/pankomik/tribe" target="_blank" rel="noopener"
+  <a class="platform-card" href="https://sociabuzz.com/risji/tribe" target="_blank" rel="noopener"
      style="--card-border:#9b59b6;--card-glow:rgba(155,89,182,0.25);--card-accent:rgba(155,89,182,0.06);">
     <div class="platform-icon"
          style="--icon-bg:rgba(155,89,182,0.12);--icon-border:rgba(155,89,182,0.25);">
@@ -451,7 +451,7 @@
   </a>
 
   <!-- Saweria -->
-  <a class="platform-card" href="https://saweria.co/pankomik" target="_blank" rel="noopener"
+  <a class="platform-card" href="https://saweria.co/Risji" target="_blank" rel="noopener"
      style="--card-border:#f5a623;--card-glow:rgba(245,166,35,0.25);--card-accent:rgba(245,166,35,0.06);">
     <div class="platform-icon"
          style="--icon-bg:rgba(245,166,35,0.12);--icon-border:rgba(245,166,35,0.25);">
@@ -465,7 +465,7 @@
   </a>
 
   <!-- Ko-fi -->
-  <a class="platform-card" href="https://ko-fi.com/pankomik" target="_blank" rel="noopener"
+  <a class="platform-card" href="#" target="_blank" rel="noopener"
      style="--card-border:#29abe0;--card-glow:rgba(41,171,224,0.25);--card-accent:rgba(41,171,224,0.06);">
     <div class="platform-icon"
          style="--icon-bg:rgba(41,171,224,0.12);--icon-border:rgba(41,171,224,0.25);">
@@ -495,7 +495,7 @@
     <div class="qris-frame" onclick="openQrisModal()" title="Klik untuk perbesar">
       <!-- Ganti src di bawah dengan URL gambar QRIS kamu -->
       <img id="qrisImg"
-           src="/assets/qris-pankomik.png"
+           src="/assets/QRIS.png"
            alt="QRIS Pankomik"
            onerror="this.parentNode.innerHTML='<div class=\'qris-placeholder\'></div>'">
     </div>
@@ -624,14 +624,14 @@ function saveQris() {
     .then(blob => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "QRIS-Pankomik.png";
+      a.href = url; a.download = "QRIS.png";
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     })
     .catch(() => {
       /* Fallback direct link */
       const a = document.createElement("a");
-      a.href = img.src; a.download = "QRIS-Pankomik.png";
+      a.href = img.src; a.download = "QRIS.png";
       a.click();
     });
 }
