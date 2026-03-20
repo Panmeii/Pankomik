@@ -344,6 +344,67 @@
       color: var(--accent);
     }
 
+    /* ── Leaderboard header bar ── */
+    .lb-top-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; padding: 0 2px;
+    }
+    .lb-top-title {
+      font-family: 'Bangers', cursive;
+      font-size: 16px; letter-spacing: 1.5px; color: var(--text);
+    }
+    .lb-top-title span { color: var(--accent); }
+    .lb-top-right { display: flex; align-items: center; gap: 8px; }
+    .lb-updated {
+      font-size: 10px; color: var(--text-muted); font-weight: 600;
+    }
+
+    /* ── Rank bar (progress relative to #1) ── */
+    .lb-bar-wrap {
+      height: 3px; border-radius: 99px;
+      background: var(--bg-surface); margin-top: 5px; overflow: hidden;
+    }
+    .lb-bar-fill {
+      height: 100%; border-radius: 99px;
+      background: linear-gradient(90deg, var(--accent), #f5a623);
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    }
+    .lb-row.rank-1 .lb-bar-fill { background: linear-gradient(90deg, #f5a623, #ffdd57); }
+    .lb-row.rank-2 .lb-bar-fill { background: linear-gradient(90deg, #b0b0c0, #d0d0e0); }
+    .lb-row.rank-3 .lb-bar-fill { background: linear-gradient(90deg, #cd7f32, #e8a050); }
+
+    /* ── Row entrance animation ── */
+    @keyframes lbSlideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .lb-row { animation: lbSlideIn 0.3s ease both; }
+
+    /* ── "Lihat lebih" button ── */
+    .lb-show-more {
+      width: 100%; margin-top: 6px; padding: 10px;
+      border: 1.5px dashed var(--border); border-radius: 12px;
+      background: transparent; color: var(--text-muted);
+      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 800;
+      cursor: pointer; transition: all 0.18s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .lb-show-more:hover { border-color: var(--accent); color: var(--accent); background: rgba(232,82,42,0.04); }
+
+    /* ── My rank banner ── */
+    .lb-my-rank {
+      margin-top: 10px; padding: 12px 14px; border-radius: 12px;
+      border: 1.5px dashed var(--accent); background: rgba(232,82,42,0.05);
+      font-size: 12px; color: var(--text-muted); text-align: center; line-height: 1.6;
+    }
+    .lb-my-rank strong { color: var(--accent); }
+
+    /* ── Last updated ── */
+    .lb-footer {
+      text-align: center; margin-top: 10px;
+      font-size: 10px; color: var(--text-dim);
+    }
+
     /* ── Skeleton for leaderboard */
     .lb-skeleton {
       height: 64px; border-radius: 12px; margin-bottom: 6px;
@@ -597,27 +658,7 @@ async function loadProfile() {
           📧 Login sebagai <strong>${currentUser.email}</strong>
         </p>
 
-        <!-- Banner Support -->
-        <a href="/support" style="
-          display:flex;align-items:center;gap:12px;
-          padding:14px;margin-bottom:18px;
-          background:linear-gradient(135deg,rgba(232,82,42,0.12),rgba(245,166,35,0.08));
-          border:1.5px solid rgba(232,82,42,0.3);
-          border-radius:12px;text-decoration:none;
-          transition:transform 0.18s,box-shadow 0.18s;
-          -webkit-tap-highlight-color:transparent;
-        "
-        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(232,82,42,0.25)'"
-        onmouseout="this.style.transform='';this.style.boxShadow=''">
-          <span style="font-size:28px;flex-shrink:0;">☕</span>
-          <div style="flex:1;min-width:0;">
-            <p style="font-size:13px;font-weight:900;color:var(--accent);margin:0 0 3px;">Dukung Pankomik</p>
-            <p style="font-size:11px;color:var(--text-muted);margin:0;line-height:1.5;">
-              Trakteer · Sociabuzz · Saweria · QRIS<br>Bantu kami tetap gratis untuk semua!
-            </p>
-          </div>
-          <span style="font-size:18px;color:var(--accent);">→</span>
-        </a>
+        <!-- Ganti Foto -->
         <div class="edit-form-row">
           <p class="edit-section-title">📷 Foto Profil</p>
           <div class="avatar-upload-area" onclick="document.getElementById('avatarInput').click()">
@@ -950,16 +991,44 @@ async function loadBadgeTab() {
 const rankEmoji = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `#${i + 1}`;
 const rankClass = i => i === 0 ? "rank-1" : i === 1 ? "rank-2" : i === 2 ? "rank-3" : "";
 
-function buildLbRows(list, scoreField, scoreLabel, userId) {
+function buildLbRows(list, scoreField, scoreLabel, userId, showAll = false) {
   if (!list.length) return `<div class="empty-state"><p>📭</p><p>Belum ada data. Jadilah yang pertama!</p></div>`;
-  const myRankIndex = list.findIndex(u => u.id === userId);
-  const myRankCard  = myRankIndex < 0
-    ? `<div class="lb-my-rank">Kamu belum masuk top 20. Terus baca untuk naik peringkat! 🚀</div>`
-    : "";
-  const rows = list.map((u, i) => {
+
+  /* Top 10 default, bisa expand ke semua */
+  const SHOW_DEFAULT = 10;
+  const displayList  = showAll ? list : list.slice(0, SHOW_DEFAULT);
+  const hasMore      = !showAll && list.length > SHOW_DEFAULT;
+  const maxScore     = list[0]?.[scoreField] || 1; /* untuk progress bar relatif */
+
+  const myRankIndex  = list.findIndex(u => u.id === userId);
+  const myRankInTop  = displayList.findIndex(u => u.id === userId) >= 0;
+
+  /* Baris user sendiri jika tidak masuk top yang ditampilkan */
+  let myRankCard = "";
+  if (!myRankInTop) {
+    if (myRankIndex >= 0) {
+      const u     = list[myRankIndex];
+      const score = (u[scoreField] || 0).toLocaleString("id-ID");
+      myRankCard = `
+        <div class="lb-my-rank">
+          Kamu di <strong>#${myRankIndex + 1}</strong> dengan
+          <strong>${score} ${scoreLabel}</strong> — terus baca untuk naik! 🚀
+        </div>`;
+    } else {
+      myRankCard = `<div class="lb-my-rank">Kamu belum masuk top ${SHOW_DEFAULT}. Terus baca untuk naik peringkat! 🚀</div>`;
+    }
+  }
+
+  const rows = displayList.map((u, i) => {
     const isMe   = u.id === userId;
     const name   = u.username || "Anonim";
     const avatar = u.avatar_url || null;
+    const level  = u.level || 1;
+    const rawScore = u[scoreField] || 0;
+    const score  = rawScore.toLocaleString("id-ID");
+    const barPct = maxScore > 0 ? Math.round((rawScore / maxScore) * 100) : 0;
+    const delay  = i * 45; /* staggered animation */
+
     const avatarHtml = avatar
       ? `<img class="lb-avatar" src="${avatar}" alt="${name}" loading="lazy"
              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
@@ -969,15 +1038,18 @@ function buildLbRows(list, scoreField, scoreLabel, userId) {
       : `<div class="lb-avatar" style="display:flex;align-items:center;justify-content:center;
              background:linear-gradient(135deg,#e8522a,#c73f1c);font-weight:800;font-size:14px;color:#fff;">
              ${name[0]?.toUpperCase() || "?"}</div>`;
-    const level  = u.level || 1;
-    const score  = (u[scoreField] || 0).toLocaleString("id-ID");
+
     return `
-      <div class="lb-row ${rankClass(i)} ${isMe ? "me" : ""}">
+      <div class="lb-row ${rankClass(i)} ${isMe ? "me" : ""}"
+           style="animation-delay:${delay}ms">
         <div class="lb-rank">${rankEmoji(i)}</div>
         ${avatarHtml}
         <div class="lb-info">
           <div class="lb-name">${name}${isMe ? `<span class="lb-me-badge">Kamu</span>` : ""}</div>
           <div class="lb-meta">Level ${level} · ${getLevelTitle(level)}</div>
+          <div class="lb-bar-wrap">
+            <div class="lb-bar-fill" style="width:${barPct}%"></div>
+          </div>
         </div>
         <div class="lb-score">
           <span class="lb-score-num">${score}</span>
@@ -985,25 +1057,44 @@ function buildLbRows(list, scoreField, scoreLabel, userId) {
         </div>
       </div>`;
   }).join("");
-  return rows + myRankCard;
+
+  const showMoreBtn = hasMore
+    ? `<button class="lb-show-more" onclick="expandLbTab()">
+        ▼ Lihat ${list.length - SHOW_DEFAULT} lainnya (Top ${list.length})
+      </button>`
+    : "";
+
+  const footer = `<div class="lb-footer">Update otomatis setiap kamu selesai baca</div>`;
+
+  return rows + showMoreBtn + myRankCard + footer;
 }
 
 let _lbTab = "komik"; /* active leaderboard sub-tab */
 
+let _lbExpanded = false; /* apakah sedang tampil semua */
+
 async function loadLeaderboard(forceRefresh = false) {
   const el = document.getElementById("leaderboardContent");
+  _lbExpanded = false;
 
   el.innerHTML = `
+    <!-- Header -->
+    <div class="lb-top-header">
+      <div class="lb-top-title">🏆 TOP <span>10</span></div>
+      <div class="lb-top-right">
+        <span class="lb-updated" id="lbUpdatedAt"></span>
+        <button class="lb-refresh-btn" onclick="loadLeaderboard(true)">🔄</button>
+      </div>
+    </div>
     <!-- Sub-tab toggle -->
     <div class="lb-toggle" id="lbToggle">
       <button class="lb-toggle-btn active" id="lbBtnKomik" onclick="switchLbTab('komik')">📚 Komik</button>
       <button class="lb-toggle-btn"        id="lbBtnNovel" onclick="switchLbTab('novel')">📖 Novel</button>
     </div>
-    <div id="lbBody">${Array(8).fill('<div class="lb-skeleton"></div>').join("")}</div>
-    <button class="lb-refresh-btn" onclick="loadLeaderboard(true)" style="margin:10px auto;display:flex;">🔄 Refresh</button>
+    <div id="lbBody">${Array(10).fill('<div class="lb-skeleton"></div>').join("")}</div>
   `;
 
-  /* Fetch keduanya paralel */
+  /* Fetch keduanya paralel — ambil top 20 agar bisa expand */
   const [{ leaderboard: komikLb }, { leaderboard: novelLb }] = await Promise.all([
     getLeaderboard(20),
     getNovelLeaderboard(20)
@@ -1012,28 +1103,39 @@ async function loadLeaderboard(forceRefresh = false) {
   window._lbKomik = komikLb;
   window._lbNovel = novelLb;
 
-  /* Render tab yang aktif */
+  /* Update timestamp */
+  const ts = document.getElementById("lbUpdatedAt");
+  if (ts) ts.textContent = "🕐 " + new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+
   renderLbTab(_lbTab);
 
-  /* Restore active tab button */
   document.getElementById("lbBtnKomik")?.classList.toggle("active", _lbTab === "komik");
   document.getElementById("lbBtnNovel")?.classList.toggle("active", _lbTab === "novel");
 }
 
 window.switchLbTab = function(tab) {
   _lbTab = tab;
+  _lbExpanded = false;
   document.getElementById("lbBtnKomik")?.classList.toggle("active", tab === "komik");
   document.getElementById("lbBtnNovel")?.classList.toggle("active", tab === "novel");
   renderLbTab(tab);
+};
+
+window.expandLbTab = function() {
+  _lbExpanded = true;
+  /* Update title */
+  const titleSpan = document.querySelector(".lb-top-title span");
+  if (titleSpan) titleSpan.textContent = "20";
+  renderLbTab(_lbTab);
 };
 
 function renderLbTab(tab) {
   const body = document.getElementById("lbBody");
   if (!body) return;
   if (tab === "komik") {
-    body.innerHTML = buildLbRows(window._lbKomik || [], "total_chapters_read", "chapter komik", currentUser.id);
+    body.innerHTML = buildLbRows(window._lbKomik || [], "total_chapters_read", "chapter komik", currentUser.id, _lbExpanded);
   } else {
-    body.innerHTML = buildLbRows(window._lbNovel || [], "total_novel_chapters_read", "chapter novel", currentUser.id);
+    body.innerHTML = buildLbRows(window._lbNovel || [], "total_novel_chapters_read", "chapter novel", currentUser.id, _lbExpanded);
   }
 }
 
@@ -1426,8 +1528,8 @@ function getLevelTitle(level) {
   <button class="nav-item" onclick="window.location.href='novel.html'">
     <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='/support'">
-    <span class="nav-icon">☕</span><span class="nav-label">Support</span>
+  <button class="nav-item" onclick="window.location.href='donatur.html'">
+    <span class="nav-icon">💛</span><span class="nav-label">Donatur</span>
   </button>
   <button class="nav-item active">
     <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
