@@ -262,6 +262,58 @@ if (document.readyState === "complete") {
 }
 </script>
 
+<!-- ── Support floating button ── -->
+<style>
+#supportFloat {
+  position: fixed;
+  bottom: calc(var(--nav-h) + 60px + env(safe-area-inset-bottom));
+  left: 14px;
+  z-index: 700;
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 14px 9px 11px;
+  background: linear-gradient(135deg, #e8522a, #f5a623);
+  color: #fff; border: none; border-radius: 99px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px; font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(232,82,42,0.45);
+  transition: transform 0.18s, box-shadow 0.18s, opacity 0.18s;
+  -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+  animation: supportPulse 3s ease-in-out 4s infinite;
+}
+#supportFloat:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 8px 28px rgba(232,82,42,0.55); }
+#supportFloat:active { transform: scale(0.93); }
+#supportFloat.hidden { opacity: 0; pointer-events: none; }
+@keyframes supportPulse {
+  0%,100% { box-shadow: 0 4px 18px rgba(232,82,42,0.45); }
+  50%      { box-shadow: 0 4px 28px rgba(232,82,42,0.75), 0 0 0 6px rgba(232,82,42,0.12); }
+}
+</style>
+
+<a id="supportFloat" href="/support">
+  ☕ <span>Dukung Kami</span>
+</a>
+
+<script>
+/* Sembunyikan support button saat scroll ke bawah, tampilkan saat ke atas */
+(function() {
+  const btn = document.getElementById("supportFloat");
+  let lastY = 0, ticking = false;
+  window.addEventListener("scroll", function() {
+    if (!ticking) {
+      requestAnimationFrame(function() {
+        const y = window.scrollY;
+        if (y > lastY + 80) btn.classList.add("hidden");
+        else if (y < lastY - 40) btn.classList.remove("hidden");
+        lastY = y; ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+})();
+</script>
+
 <script type="module" src="/global-chat.js"></script>
 </body>
 </html>
