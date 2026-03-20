@@ -83,12 +83,14 @@ function renderDropdown(user) {
       <p onclick="window.location.href='/profil'">👤 Profil Saya</p>
       <p onclick="window.location.href='/profil?tab=bookmark'">🔖 Bookmark</p>
       <p onclick="window.location.href='/profil?tab=history'">📖 Riwayat Baca</p>
+      <p onclick="window.location.href='/fitur'">🚀 Fitur Pankomik</p>
       <p onclick="window.location.href='/support'" style="color:#f5a623;font-weight:800;">☕ Dukung Pankomik</p>
       <p onclick="handleLogout()" style="color:var(--accent);border-top:1px solid rgba(255,255,255,0.07);">🚪 Keluar</p>`;
   } else {
     menu.innerHTML = `
       <p onclick="window.location.href='/masuk'">🔑 Masuk</p>
       <p onclick="window.location.href='/masuk'">📝 Daftar</p>
+      <p onclick="window.location.href='/fitur'">🚀 Fitur Pankomik</p>
       <p onclick="window.location.href='/support'" style="color:#f5a623;font-weight:800;">☕ Dukung Pankomik</p>`;
   }
 }
