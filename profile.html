@@ -1312,7 +1312,6 @@ function buildLbRows(list, scoreField, scoreLabel, userId, showAll=false) {
 }
 
 let _lbTab = "komik", _lbExpanded = false;
-let _lbData = { komik: [], novel: [] };
 
 async function loadLeaderboard(forceRefresh = false) {
   const el = document.getElementById("leaderboardContent");
@@ -1337,29 +1336,40 @@ async function loadLeaderboard(forceRefresh = false) {
     getNovelLeaderboard(20)
   ]);
 
-  _lbData.komik = komikLb || [];
-  _lbData.novel = novelLb || [];
+  /* Simpan ke window agar switchLbTab & expandLbTab bisa akses */
+  window._lbKomik = komikLb || [];
+  window._lbNovel = novelLb || [];
 
-  document.getElementById("lbUpdatedAt").textContent = "Baru diperbarui";
-  document.getElementById("lbBody").innerHTML = buildLbRows(_lbData.komik, "chapters_read", "chapter", currentUser.id, false);
+  const ts = document.getElementById("lbUpdatedAt");
+  if (ts) ts.textContent = "🕐 " + new Date().toLocaleTimeString("id-ID", { hour:"2-digit", minute:"2-digit" });
+
+  renderLbTab(_lbTab);
+  document.getElementById("lbBtnKomik")?.classList.toggle("active", _lbTab === "komik");
+  document.getElementById("lbBtnNovel")?.classList.toggle("active", _lbTab === "novel");
+}
+
+function renderLbTab(tab) {
+  const body = document.getElementById("lbBody");
+  if (!body) return;
+  if (tab === "komik") {
+    body.innerHTML = buildLbRows(window._lbKomik || [], "total_chapters_read", "chapter komik", currentUser.id, _lbExpanded);
+  } else {
+    body.innerHTML = buildLbRows(window._lbNovel || [], "total_novel_chapters_read", "chapter novel", currentUser.id, _lbExpanded);
+  }
 }
 
 window.switchLbTab = function(tab) {
   _lbTab = tab; _lbExpanded = false;
   document.getElementById("lbBtnKomik")?.classList.toggle("active", tab==="komik");
   document.getElementById("lbBtnNovel")?.classList.toggle("active", tab==="novel");
-  const data = tab === "komik" ? _lbData.komik : _lbData.novel;
-  const field = tab === "komik" ? "chapters_read" : "novels_read";
-  const label = tab === "komik" ? "chapter" : "novel";
-  document.getElementById("lbBody").innerHTML = buildLbRows(data, field, label, currentUser.id, false);
+  renderLbTab(tab);
 };
 
 window.expandLbTab = function() {
   _lbExpanded = true;
-  const data  = _lbTab === "komik" ? _lbData.komik : _lbData.novel;
-  const field = _lbTab === "komik" ? "chapters_read" : "novels_read";
-  const label = _lbTab === "komik" ? "chapter" : "novel";
-  document.getElementById("lbBody").innerHTML = buildLbRows(data, field, label, currentUser.id, true);
+  const titleSpan = document.querySelector(".lb-top-title span");
+  if (titleSpan) titleSpan.textContent = "20";
+  renderLbTab(_lbTab);
 };
 
 /* ── NOVEL BOOKMARK ───────────────────────────────────── */
