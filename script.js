@@ -322,7 +322,12 @@ function renderTopKomik(list, container) {
       if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type, 175), ph);
     }
 
-    card.onclick = () => { window.location.href = komikURL(komik.slug); };
+    card.onclick = () => {
+      /* Top komik dari bacakomik API — simpan source agar detail & reader konsisten */
+      sessionStorage.setItem("komikSrcHint", "bacakomik");
+      sessionStorage.setItem("komikSrcSlug", komik.slug);
+      window.location.href = komikURL(komik.slug);
+    };
     container.appendChild(card);
     animateIn(card, i * 40);
   });
@@ -425,7 +430,10 @@ function renderLatest(list, container) {
     }
 
     card.onclick = () => {
-      if (komik._src) sessionStorage.setItem("komikSrcHint", komik._src);
+      /* Selalu simpan source agar detail.js & reader.js tahu API yang benar.
+         _src ada untuk mangakita/komikstation; komikindo tidak punya _src → default "komikindo" */
+      const src = komik._src || "komikindo";
+      sessionStorage.setItem("komikSrcHint", src);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
@@ -569,7 +577,12 @@ function renderRekomen(list) {
       }
     }
 
-    card.onclick = () => { window.location.href = komikURL(komik.slug); };
+    card.onclick = () => {
+      /* Rekomendasi dari bacakomik API */
+      sessionStorage.setItem("komikSrcHint", "bacakomik");
+      sessionStorage.setItem("komikSrcSlug", komik.slug);
+      window.location.href = komikURL(komik.slug);
+    };
     container.appendChild(card);
     animateIn(card, i * 45);
   });
