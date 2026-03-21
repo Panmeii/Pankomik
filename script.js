@@ -24,7 +24,7 @@ const API_SEARCH_KI   = "https://www.sankavollerei.com/comic/komikindo/search/";
 const API_SEARCH_MK   = "https://www.sankavollerei.com/comic/mangakita/search/";
 
 /* ── URL BUILDERS ───────────────────────────────────────── */
-function komikURL(slug)               { return `/komik/${slug}`; }
+function komikURL(slug, src)          { return src ? `/komik/${slug}?src=${src}` : `/komik/${slug}`; }
 function readerURL(chSlug, komikSlug) { return komikSlug ? `/komik/${komikSlug}/${chSlug}` : `/baca/${chSlug}`; }
 
 /* ── IMAGE PROXY ────────────────────────────────────────── */
@@ -198,7 +198,8 @@ function formatChapterLabel(chTitle, chSlug) {
 
 /* ── Merge dua list latest, deduplicate by slug.
    Jika slug sama, ambil yang chapter number-nya LEBIH BESAR
-   agar update terbaru selalu menang meski dari API berbeda. ── */
+   agar update terbaru selalu menang meski dari API berbeda.
+   _src ikut sumber dengan chapter terbaru (untuk hint ke detail page). ── */
 function mergeLatestLists(list1, list2) {
   const map = new Map();
 
@@ -212,17 +213,16 @@ function mergeLatestLists(list1, list2) {
     if (!map.has(k.slug)) {
       map.set(k.slug, k);
     } else {
-      /* Sudah ada entri untuk slug ini — bandingkan chapter number */
       const existing = map.get(k.slug);
       const numExist = getLatestChNum(existing);
       const numNew   = getLatestChNum(k);
-      /* Ganti dengan yang chapter-nya lebih tinggi */
       if (numNew > numExist) {
+        /* Chapter lebih tinggi → pakai chapters + _src dari yang baru */
         map.set(k.slug, {
-          ...existing,         /* pertahankan cover/type dari entri lama jika baru kosong */
-          image: k.image || existing.image,
+          ...existing,
+          image:    k.image    || existing.image,
           chapters: k.chapters,
-          _src: k._src,
+          _src:     k._src,          /* PENTING: _src ikut sumber yang lebih update */
         });
       }
     }
@@ -328,8 +328,9 @@ async function getKomikLatest() {
   const data1 = res1.status === "fulfilled" ? res1.value : null;
   const data2 = res2.status === "fulfilled" ? res2.value : null;
 
-  /* List dari komikindo */
-  const list1 = (data1?.komikList || data1?.data || data1?.comics || []);
+  /* List dari komikindo — tandai _src */
+  const list1 = (data1?.komikList || data1?.data || data1?.comics || [])
+    .map(k => ({ ...k, _src: k._src || "komikindo" }));
 
   /* List dari mangakita: pakai latestReleases */
   const list2mk = (data2?.latestReleases || []).map(normalizeMKLatest);
@@ -399,7 +400,7 @@ function renderLatest(list, container) {
       if (ph) ph.parentNode.replaceChild(makeGeneratedCover(title, type, 155), ph);
     }
 
-    card.onclick = () => { window.location.href = komikURL(komik.slug); };
+    card.onclick = () => { window.location.href = komikURL(komik.slug, komik._src); };
     container.appendChild(card);
     animateIn(card, baseDelay + i * 30);
   });
