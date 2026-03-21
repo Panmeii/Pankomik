@@ -93,34 +93,11 @@ function initProgressBar() {
 }
 
 /* ============================================================
-   HEADER AUTO-HIDE (dipindah ke fungsi tersendiri agar
-   tidak dipanggil lebih dari sekali / tidak menumpuk listener)
+   HEADER AUTO-HIDE — dikelola oleh inline script di reader.html
+   (pakai class .hidden + CSS transition, bukan JS manual)
    ============================================================ */
 function initHeaderAutoHide() {
-  const header = document.querySelector(".reader-header");
-  if (!header) return;
-
-  let scrollTimer = null;
-  let lastY       = window.scrollY;
-
-  window.addEventListener("scroll", () => {
-    const currentY = window.scrollY;
-    /* Sembunyikan saat scroll ke bawah, tampilkan saat ke atas */
-    if (currentY > lastY + 10) {
-      header.classList.add("hide");
-    } else if (currentY < lastY - 10) {
-      header.classList.remove("hide");
-    }
-    lastY = currentY;
-
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => header.classList.remove("hide"), 2000);
-  }, { passive: true });
-
-  /* Tap pada area gambar untuk toggle header */
-  document.getElementById("reader")?.addEventListener("click", () => {
-    header.classList.toggle("hide");
-  });
+  /* No-op: scroll behavior sekarang di-handle inline script HTML */
 }
 
 /* ============================================================
@@ -356,29 +333,42 @@ function showError(msg) {
     </div>`;
 }
 
-/* ── Update tombol prev/next di header ─────────────────── */
+/* ── Update tombol prev/next di header + bottom nav ────── */
 function updateNavButtons() {
-  /* Jika nextSlug/prevSlug null dari API, fallback ke chapter list */
   const navFromList = getNavFromChapterList(currentChapterSlug);
   const effectivePrev = prevSlug || navFromList.prev || null;
   const effectiveNext = nextSlug || navFromList.next || null;
 
-  /* Update state global jika dapat dari chapter list */
   if (!prevSlug && navFromList.prev) prevSlug = navFromList.prev;
   if (!nextSlug && navFromList.next) nextSlug = navFromList.next;
 
+  /* ── Header pill buttons ── */
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
-
   if (prevBtn) {
-    prevBtn.disabled            = !effectivePrev;
-    prevBtn.style.opacity       = effectivePrev ? "1" : "0.3";
-    prevBtn.style.pointerEvents = effectivePrev ? "auto" : "none";
+    prevBtn.disabled      = !effectivePrev;
+    prevBtn.style.opacity = effectivePrev ? "1" : "0.22";
   }
   if (nextBtn) {
-    nextBtn.disabled            = !effectiveNext;
-    nextBtn.style.opacity       = effectiveNext ? "1" : "0.3";
-    nextBtn.style.pointerEvents = effectiveNext ? "auto" : "none";
+    nextBtn.disabled      = !effectiveNext;
+    nextBtn.style.opacity = effectiveNext ? "1" : "0.22";
+  }
+
+  /* ── Floating bottom nav ── */
+  const fbnPrev = document.getElementById("fbnPrev");
+  const fbnNext = document.getElementById("fbnNext");
+  const fbnInfo = document.getElementById("fbnInfo");
+
+  if (fbnPrev) fbnPrev.disabled = !effectivePrev;
+  if (fbnNext) fbnNext.disabled = !effectiveNext;
+
+  /* Show chapter label in info slot */
+  if (fbnInfo) {
+    const titleEl = document.getElementById("title");
+    const chTitle = titleEl?.innerText || "";
+    /* Extract "Ch.X" pattern from title */
+    const m = chTitle.match(/chapter\s*([\d.]+)/i);
+    fbnInfo.textContent = m ? `Ch.${m[1]}` : chTitle.slice(0, 12) || "—";
   }
 }
 
