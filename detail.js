@@ -44,7 +44,7 @@ function proxyImg(url, w = 300) {
   if (!url) return "";
   if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("wsrv.nl")) return url;
   const clean = url.split("?")[0];
-  return `https://images.weserv.nl/?url=${encodeURIComponent(clean.replace(/^https?:\/\//, ""))}&w=${w}&output=webp&q=82`;
+  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=82&n=-1`;
 }
 
 function escHtml(str) {
@@ -376,19 +376,28 @@ function injectStyles() {
       border:2px solid rgba(255,255,255,0.15);
       border-top-color:var(--accent);
       border-radius:50%; animation:detSpin 0.6s linear infinite;
+      flex-shrink:0;
     }
     @keyframes detSpin { to{transform:rotate(360deg)} }
+    /* Override style.css search-result agar bisa scroll dan tampil benar */
     .search-result {
       border-radius:16px !important;
       border:1px solid rgba(232,82,42,0.15) !important;
       box-shadow:0 20px 60px rgba(0,0,0,0.7) !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      max-height: 76vh !important;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(232,82,42,0.3) transparent;
     }
+    .search-result::-webkit-scrollbar { width: 3px; }
+    .search-result::-webkit-scrollbar-thumb { background:rgba(232,82,42,0.3);border-radius:99px; }
     .sr-header {
       display:flex; align-items:center; justify-content:space-between;
       padding:10px 14px 8px;
       border-bottom:1px solid rgba(255,255,255,0.05);
-      background:rgba(232,82,42,0.06);
-      position:sticky; top:0; z-index:2;
+      background:var(--bg-elevated, #1f1f2a);
+      position:sticky; top:0; z-index:10;
     }
     .sr-label { font-size:11px; font-weight:700; color:var(--text-muted); }
     .sr-label strong { color:var(--accent); }
@@ -414,43 +423,77 @@ function injectStyles() {
       background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-surface) 50%,var(--bg-card) 75%);
       background-size:200% 100%; animation:detShim 1.4s infinite;
     }
-    .search-item {
-      display:flex !important; gap:12px; padding:10px 14px !important;
-      cursor:pointer; align-items:center;
+    /* Override style.css .search-item yang tidak punya si-cover dll */
+    .search-result .search-item {
+      display:flex !important; gap:12px !important;
+      padding:10px 14px !important;
+      cursor:pointer; align-items:center !important;
       border-bottom:1px solid rgba(255,255,255,0.04) !important;
       transition:background 0.13s, transform 0.1s;
       animation:siIn 0.2s ease both;
+      background:transparent !important;
     }
     @keyframes siIn { from{opacity:0;transform:translateX(-6px)} to{opacity:1;transform:translateX(0)} }
-    .search-item:hover { background:rgba(232,82,42,0.06) !important; transform:translateX(3px); }
+    .search-result .search-item:hover { background:rgba(232,82,42,0.06) !important; transform:translateX(3px); }
+    .search-result .search-item:last-child { border-bottom:none !important; }
+    /* Cover — override style.css img sizing */
     .si-cover {
       position:relative; flex-shrink:0;
-      width:44px; height:60px; border-radius:8px; overflow:hidden;
-      background:var(--bg-surface); border:1px solid rgba(255,255,255,0.06);
+      width:44px !important; height:60px !important;
+      min-width:44px; min-height:60px;
+      border-radius:8px; overflow:hidden !important;
+      background:var(--bg-surface);
+      border:1px solid rgba(255,255,255,0.06);
+      display:block !important;
     }
-    .si-cover img { width:100%;height:100%;object-fit:cover;display:block; }
-    .si-cover-ph { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px; }
+    /* Override style.css .search-item img rule (width:40px;height:56px) */
+    .search-result .search-item img,
+    .si-cover img {
+      width:44px !important; height:60px !important;
+      object-fit:cover !important; display:block !important;
+      border-radius:0 !important;
+      flex-shrink:0 !important;
+    }
+    .si-cover-ph {
+      width:100%; height:100%;
+      display:flex !important; align-items:center; justify-content:center;
+      font-size:20px;
+    }
     .si-type-badge {
       position:absolute; bottom:2px; left:2px; right:2px;
-      background:rgba(0,0,0,0.75); color:#fff;
+      background:rgba(0,0,0,0.8); color:#fff;
       font-size:7px; font-weight:800; text-align:center;
-      border-radius:3px; padding:1px 2px; text-transform:uppercase; letter-spacing:0.3px;
+      border-radius:3px; padding:1px 2px;
+      text-transform:uppercase; letter-spacing:0.3px;
     }
     .si-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
     .si-title {
-      font-weight:800; font-size:13px; color:var(--text);
-      display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+      font-weight:800 !important; font-size:13px !important; color:var(--text) !important;
+      display:-webkit-box !important; -webkit-line-clamp:2 !important;
+      -webkit-box-orient:vertical !important; overflow:hidden !important;
+      margin:0 !important; white-space:normal !important;
     }
     .si-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .si-rating { font-size:11px; color:var(--accent2); font-weight:700; }
-    .si-genre { font-size:10px; font-weight:700; background:rgba(255,255,255,0.07); border-radius:4px; padding:1px 6px; color:var(--text-muted); }
+    .si-rating { font-size:11px; color:var(--accent2) !important; font-weight:700; margin:0; }
+    .si-genre {
+      font-size:10px; font-weight:700;
+      background:rgba(255,255,255,0.07); border-radius:4px;
+      padding:1px 6px; color:var(--text-muted);
+    }
     .si-arrow { font-size:10px; color:var(--accent); font-weight:800; opacity:0; transition:opacity 0.13s; }
-    .search-item:hover .si-arrow { opacity:1; }
-    .sr-empty { display:flex; flex-direction:column; align-items:center; padding:28px 20px; gap:6px; text-align:center; color:var(--text-muted); }
-    .sr-empty p { font-size:13px; font-weight:700; }
+    .search-result .search-item:hover .si-arrow { opacity:1; }
+    .sr-empty {
+      display:flex; flex-direction:column; align-items:center;
+      padding:28px 20px; gap:6px; text-align:center; color:var(--text-muted);
+    }
+    .sr-empty p { font-size:13px; font-weight:700; margin:0; }
     .sr-empty strong { color:var(--text); }
     .sr-hint { font-size:11px; color:var(--text-dim); }
-    .sr-more { text-align:center; padding:10px; font-size:12px; font-weight:700; color:var(--text-muted); border-top:1px solid rgba(255,255,255,0.05); }
+    .sr-more {
+      text-align:center; padding:10px;
+      font-size:12px; font-weight:700; color:var(--text-muted);
+      border-top:1px solid rgba(255,255,255,0.05);
+    }
 
     /* ── Spinner tombol ── */
     .btn-spinner {
@@ -628,50 +671,73 @@ async function getDetail() {
     let komikDataRaw = best.data;
 
     /* ── Merge chapter dari SEMUA source ──────────────────────
-       Masalah: API A belum update Ch.06, tapi API B sudah ada.
-       Solusi:  Kumpulkan chapter dari semua source, deduplicate
-                berdasarkan nomor chapter (bukan slug mentah),
-                lalu urutkan terbaru di atas.
-       Slug untuk reader: source terkuat (best) menang. */
-    const allChapterMaps = new Map();
+       PRINSIP BARU (fix bug index Ch.20 vs detail Ch.10):
+       1. Kumpulkan SEMUA chapter unik dari semua source, deduplicate by nomor
+       2. Untuk setiap nomor chapter, slug yang dipakai ikut source yang punya:
+          prioritas: best source > source lain (urutan candidates)
+       3. Jangan buang chapter dari source non-best — chapter eksklusif tetap masuk
+       4. Urutkan: nomor terbesar (terbaru) di atas
+    ── */
+    const allChapterMaps = new Map(); // key: nomor chapter (float)
 
-    /* Proses dari source TERLEMAH dulu → source terkuat (best) diproses terakhir
-       sehingga slug milik best source menimpa slug source lain.
-       Ini penting agar reader.js bisa load chapter dengan API yang benar. */
-    const _srcOrder = [...candidates].reverse(); /* terlemah → terkuat */
+    // Pass 1 — masukkan semua chapter dari SEMUA source
+    // Source dengan prioritas lebih rendah dulu, lalu best source timpa
+    const _srcOrder = [...candidates].sort((a, b) => a.count - b.count); // lemah dulu
     for (const c of _srcOrder) {
       const isBest = c.source === source;
       for (const ch of c.data.chapters) {
         const label = ch.title || ch.slug || "";
+        // Coba ekstrak nomor chapter
         const m = label.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
                || label.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
-        if (!m) continue;
+        if (!m) {
+          // Chapter tanpa nomor yang bisa di-parse: simpan pakai key string unik
+          const fallbackKey = `_${c.source}_${ch.slug || ch.title || Math.random()}`;
+          if (!allChapterMaps.has(fallbackKey)) {
+            allChapterMaps.set(fallbackKey, { ...ch, _num: -9999, _fallback: true });
+          }
+          continue;
+        }
         const num = parseFloat(m[1].replace(/[_,]/g, "."));
         if (isNaN(num)) continue;
+
         const existing = allChapterMaps.get(num);
-        allChapterMaps.set(num, {
-          /* Title: pakai yang ada dulu, best source menimpa */
-          title: (isBest && ch.title) ? ch.title : (existing?.title || ch.title || ""),
-          /* Slug: best source WAJIB menang untuk kompatibilitas reader */
-          slug:  (isBest && ch.slug)  ? ch.slug  : (existing?.slug  || ch.slug  || ""),
-          /* releaseTime: ambil yang paling informatif */
-          releaseTime: ch.releaseTime || ch.date || existing?.releaseTime || "",
-          _num: num,
-        });
+        if (!existing) {
+          // Chapter baru, langsung masuk
+          allChapterMaps.set(num, {
+            title:       ch.title       || "",
+            slug:        ch.slug        || "",
+            releaseTime: ch.releaseTime || ch.date || "",
+            _num:        num,
+          });
+        } else {
+          // Sudah ada — best source menang untuk slug (agar reader bisa load)
+          // tapi chapter tetap ada (tidak dibuang)
+          allChapterMaps.set(num, {
+            title:       isBest && ch.title       ? ch.title       : (existing.title       || ch.title       || ""),
+            slug:        isBest && ch.slug        ? ch.slug        : (existing.slug        || ch.slug        || ""),
+            releaseTime: isBest && ch.releaseTime ? ch.releaseTime : (existing.releaseTime || ch.releaseTime || ch.date || ""),
+            _num:        num,
+          });
+        }
       }
     }
 
-    /* Fallback: kalau merge kosong (semua chapter tak berformat angka),
-       gunakan chapter dari best source langsung */
+    /* Fallback: kalau merge kosong, pakai chapter best source langsung */
     if (allChapterMaps.size === 0) {
       best.data.chapters.forEach((ch, i) => {
         allChapterMaps.set(-(i), { ...ch, _num: -(i) });
       });
     }
 
-    /* Urutkan: nomor chapter terbesar (terbaru) di atas */
+    /* Urutkan: nomor chapter terbesar (terbaru) di atas, fallback di bawah */
     const mergedChapters = Array.from(allChapterMaps.values())
+      .filter(ch => !ch._fallback)
       .sort((a, b) => b._num - a._num);
+
+    // Append fallback chapters (tanpa nomor) di paling bawah
+    const fallbackChapters = Array.from(allChapterMaps.values()).filter(ch => ch._fallback);
+    mergedChapters.push(...fallbackChapters);
 
     /* Ganti chapter list dengan hasil merge dari semua source */
     komikDataRaw = {
