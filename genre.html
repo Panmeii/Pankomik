@@ -980,7 +980,7 @@ function renderGenreGrid(list) {
     const placeholder = `<div class="genre-card-placeholder" style="${cover ? "display:none" : ""}">📚</div>`;
 
     return `
-      <div class="genre-card" onclick="gotoKomik('${escHtml(k.slug)}','${escHtml(k._src || "")}')"
+      <div class="genre-card" onclick="gotoKomik('${escHtml(k.slug)}','${escHtml(k._src || "")}',this)"
            style="animation-delay:${Math.min(i, 8) * 35}ms">
         <div class="genre-card-img-wrap">
           ${imgHtml}${placeholder}
@@ -996,13 +996,31 @@ function renderGenreGrid(list) {
   }).join("");
 }
 
-/* Klik kartu → simpan source hint dulu baru navigasi */
-function gotoKomik(slug, src) {
+/* Klik kartu → cek KomikStation dulu, baru navigasi */
+const _ksCache = new Map();
+
+async function resolveSourceGenre(slug, originalSrc) {
+  if (_ksCache.has(slug)) return _ksCache.get(slug);
+  if (originalSrc === "komikstation") { _ksCache.set(slug, "komikstation"); return "komikstation"; }
+  try {
+    const res  = await fetch(
+      `https://www.sankavollerei.com/comic/komikstation/manga/${slug}`,
+      { signal: AbortSignal.timeout(4000) }
+    );
+    const json = await res.json();
+    const has  = json?.success && Array.isArray(json?.chapters) && json.chapters.length > 0;
+    const src  = has ? "komikstation" : (originalSrc || "bacakomik");
+    _ksCache.set(slug, src);
+    return src;
+  } catch { _ksCache.set(slug, originalSrc || "bacakomik"); return originalSrc || "bacakomik"; }
+}
+
+async function gotoKomik(slug, src, cardEl) {
   if (!slug) return;
-  if (src) {
-    sessionStorage.setItem("komikSrcHint", src);
-    sessionStorage.setItem("komikSrcSlug", slug);
-  }
+  if (cardEl) { cardEl.style.opacity = "0.7"; cardEl.style.pointerEvents = "none"; }
+  const resolved = await resolveSourceGenre(slug, src);
+  sessionStorage.setItem("komikSrcHint", resolved);
+  sessionStorage.setItem("komikSrcSlug", slug);
   window.location.href = "/komik/" + slug;
 }
 
