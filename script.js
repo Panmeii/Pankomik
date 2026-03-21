@@ -13,18 +13,15 @@
    ============================================================ */
 
 /* ── API ENDPOINTS ──────────────────────────────────────── */
-const API_TOP         = "https://www.sankavollerei.com/comic/bacakomik/top";
-const API_LATEST      = "https://www.sankavollerei.com/comic/komikindo/latest";
-const API_LATEST_MK   = "https://www.sankavollerei.com/comic/mangakita/home";
-const API_REKOM       = "https://www.sankavollerei.com/comic/bacakomik/recomen";
-const API_GENRES      = "https://www.sankavollerei.com/comic/komikindo/genres";
-/* ── Search: 3 sumber ── */
-const API_SEARCH_BK   = "https://www.sankavollerei.com/comic/bacakomik/search/";
-const API_SEARCH_KI   = "https://www.sankavollerei.com/comic/komikindo/search/";
-const API_SEARCH_MK   = "https://www.sankavollerei.com/comic/mangakita/search/";
+const API_TOP       = "https://www.sankavollerei.com/comic/bacakomik/top";
+const API_LATEST    = "https://www.sankavollerei.com/comic/komikindo/latest";
+const API_LATEST_MK = "https://www.sankavollerei.com/comic/mangakita/home"; /* mangakita latest */
+const API_REKOM     = "https://www.sankavollerei.com/comic/bacakomik/recomen";
+const API_SEARCH    = "https://www.sankavollerei.com/comic/bacakomik/search/";
+const API_GENRES    = "https://www.sankavollerei.com/comic/komikindo/genres";
 
 /* ── URL BUILDERS ───────────────────────────────────────── */
-function komikURL(slug, src)          { return src ? `/komik/${slug}?src=${src}` : `/komik/${slug}`; }
+function komikURL(slug)               { return `/komik/${slug}`; }
 function readerURL(chSlug, komikSlug) { return komikSlug ? `/komik/${komikSlug}/${chSlug}` : `/baca/${chSlug}`; }
 
 /* ── IMAGE PROXY ────────────────────────────────────────── */
@@ -198,8 +195,7 @@ function formatChapterLabel(chTitle, chSlug) {
 
 /* ── Merge dua list latest, deduplicate by slug.
    Jika slug sama, ambil yang chapter number-nya LEBIH BESAR
-   agar update terbaru selalu menang meski dari API berbeda.
-   _src ikut sumber dengan chapter terbaru (untuk hint ke detail page). ── */
+   agar update terbaru selalu menang meski dari API berbeda. ── */
 function mergeLatestLists(list1, list2) {
   const map = new Map();
 
@@ -213,16 +209,17 @@ function mergeLatestLists(list1, list2) {
     if (!map.has(k.slug)) {
       map.set(k.slug, k);
     } else {
+      /* Sudah ada entri untuk slug ini — bandingkan chapter number */
       const existing = map.get(k.slug);
       const numExist = getLatestChNum(existing);
       const numNew   = getLatestChNum(k);
+      /* Ganti dengan yang chapter-nya lebih tinggi, _src ikut sumber yang lebih update */
       if (numNew > numExist) {
-        /* Chapter lebih tinggi → pakai chapters + _src dari yang baru */
         map.set(k.slug, {
           ...existing,
-          image:    k.image    || existing.image,
+          image:    k.image || existing.image,
           chapters: k.chapters,
-          _src:     k._src,          /* PENTING: _src ikut sumber yang lebih update */
+          _src:     k._src,
         });
       }
     }
@@ -400,7 +397,12 @@ function renderLatest(list, container) {
       if (ph) ph.parentNode.replaceChild(makeGeneratedCover(title, type, 155), ph);
     }
 
-    card.onclick = () => { window.location.href = komikURL(komik.slug, komik._src); };
+    card.onclick = () => {
+      /* Simpan source hint ke sessionStorage — detail.js akan baca ini */
+      if (komik._src) sessionStorage.setItem("komikSrcHint", komik._src);
+      sessionStorage.setItem("komikSrcSlug", komik.slug); /* validasi: hanya berlaku untuk slug ini */
+      window.location.href = komikURL(komik.slug);
+    };
     container.appendChild(card);
     animateIn(card, baseDelay + i * 30);
   });
@@ -603,38 +605,10 @@ async function getGenreChips() {
 }
 
 /* ============================================================
-   LIVE SEARCH — 3 API: bacakomik + komikindo + mangakita
+   LIVE SEARCH
    ============================================================ */
 let searchDebounce = null;
 let lastQuery      = "";
-
-/* Merge hasil search dari 3 API, deduplicate by slug */
-function mergeSearchResults(lists) {
-  const map = new Map();
-  for (const list of lists) {
-    for (const k of (list || [])) {
-      const slug = k.slug || k.komikSlug || "";
-      if (!slug) continue;
-      if (!map.has(slug)) {
-        /* Normalisasi field berbeda antar API */
-        map.set(slug, {
-          slug,
-          title:  k.title  || k.name  || "Untitled",
-          image:  k.image  || k.cover || k.thumbnail || "",
-          rating: k.rating || k.score || "–",
-          type:   k.type   || k.format || "",
-        });
-      } else {
-        /* Lengkapi field kosong dari duplikat */
-        const ex = map.get(slug);
-        if (!ex.image  && (k.image  || k.cover))      ex.image  = k.image  || k.cover;
-        if (!ex.rating && k.rating)                    ex.rating = k.rating;
-        if (!ex.type   && k.type)                      ex.type   = k.type;
-      }
-    }
-  }
-  return Array.from(map.values());
-}
 
 window.liveSearch = async function () {
   const input     = document.getElementById("searchInput");
@@ -642,47 +616,26 @@ window.liveSearch = async function () {
   if (!input || !resultBox) return;
 
   const query = input.value.trim();
-  if (!query) {
-    resultBox.style.display = "none";
-    resultBox.innerHTML = "";
-    lastQuery = "";
-    return;
-  }
+  if (!query) { resultBox.style.display = "none"; lastQuery = ""; return; }
   if (query === lastQuery) return;
   lastQuery = query;
 
   clearTimeout(searchDebounce);
 
-  /* Loading state dengan skeleton cards */
-  resultBox.innerHTML = `
-    <div class="sr-header">
-      <span class="sr-label">Mencari "<strong>${escHtml(query)}</strong>"</span>
-      <div class="sr-spinner"></div>
-    </div>
-    ${Array(3).fill(`
-      <div class="search-item-skel">
-        <div class="skel-img"></div>
-        <div class="skel-lines">
-          <div class="skel-line" style="width:75%"></div>
-          <div class="skel-line" style="width:45%"></div>
-        </div>
-      </div>`).join("")}`;
+  /* Loading placeholder */
+  resultBox.innerHTML = `<div style="padding:12px 14px;color:var(--text-muted);font-size:13px;display:flex;align-items:center;gap:8px;"><div class="search-spinner"></div> Mencari...</div>`;
   resultBox.style.display = "block";
 
   searchDebounce = setTimeout(async () => {
-    const enc = encodeURIComponent(query);
-    const [r1, r2, r3] = await Promise.allSettled([
-      fetch(API_SEARCH_BK + enc).then(r => r.json()).catch(() => null),
-      fetch(API_SEARCH_KI + enc).then(r => r.json()).catch(() => null),
-      fetch(API_SEARCH_MK + enc).then(r => r.json()).catch(() => null),
-    ]);
-
-    const list1 = (r1.value?.komikList || r1.value?.data  || []);
-    const list2 = (r2.value?.komikList || r2.value?.data  || []);
-    const list3 = (r3.value?.komikList || r3.value?.data  || r3.value?.results || []);
-
-    const merged = mergeSearchResults([list1, list2, list3]);
-    renderSearch(merged, query);
+    try {
+      const res  = await fetch(API_SEARCH + encodeURIComponent(query));
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      renderSearch(data.komikList || [], query);
+    } catch (err) {
+      console.error("[Search] Gagal:", err);
+      resultBox.innerHTML = `<div style="padding:12px;color:var(--text-muted);font-size:13px;">😕 Pencarian gagal. Coba lagi.</div>`;
+    }
   }, 350);
 };
 
@@ -691,83 +644,39 @@ function renderSearch(list, query) {
   if (!resultBox) return;
 
   if (!list?.length) {
-    resultBox.innerHTML = `
-      <div class="sr-empty">
-        <span style="font-size:28px;">🔍</span>
-        <p>Tidak ada hasil untuk <strong>"${escHtml(query)}"</strong></p>
-        <span class="sr-hint">Coba kata kunci lain</span>
-      </div>`;
+    resultBox.innerHTML = `<div style="padding:12px 14px;color:var(--text-muted);font-size:13px;">Tidak ada hasil untuk "<strong>${escHtml(query)}</strong>"</div>`;
     resultBox.style.display = "block";
     return;
   }
 
-  const total = list.length;
-  resultBox.innerHTML = `
-    <div class="sr-header">
-      <span class="sr-label"><strong>${total}</strong> hasil untuk "${escHtml(query)}"</span>
-      <button class="sr-close-btn" onclick="document.getElementById('searchResult').style.display='none'">✕</button>
-    </div>`;
-
-  list.slice(0, 8).forEach((komik, i) => {
+  resultBox.innerHTML = "";
+  list.slice(0, 6).forEach(komik => {
     if (!komik?.slug) return;
-    const rawUrl  = (komik.image || "").split("?")[0];
-    const cover   = rawUrl ? proxyImg(rawUrl, 120) : "";   /* proxyImg — ada referer */
-    const hl      = highlightText(komik.title || "Untitled", query);
-    const type    = komik.type   || "";
-    const rating  = komik.rating || "";
+    const origUrl = (komik.image || komik.cover || "").split("?")[0];
+    const cover   = origUrl ? proxyImg(origUrl, 80) : "";
+    const item    = document.createElement("div");
+    item.className = "search-item";
 
-    const item = document.createElement("div");
-    item.style.cssText = `
-      display:flex; gap:12px; padding:10px 14px;
-      cursor:pointer; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05);
-      transition:background 0.13s; animation:siSlideIn 0.2s ease ${i*40}ms both;
-      background:transparent;
-    `;
-
-    /* Cover — semua inline style agar tidak bisa di-override style.css */
-    const coverHtml = cover
-      ? `<div style="position:relative;flex-shrink:0;width:44px;height:60px;border-radius:8px;overflow:hidden;background:var(--bg-surface);border:1px solid rgba(255,255,255,0.08);">
-           <img src="${cover}" alt="" loading="lazy"
-             style="width:44px;height:60px;object-fit:cover;display:block;border-radius:0;"
-             onerror="this.parentElement.innerHTML='<div style=width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px>📚</div>'">
-           ${type ? `<span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.8);color:#fff;font-size:7px;font-weight:800;text-align:center;border-radius:3px;padding:1px 2px;text-transform:uppercase;">${escHtml(type)}</span>` : ""}
-         </div>`
-      : `<div style="flex-shrink:0;width:44px;height:60px;border-radius:8px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(255,255,255,0.08);">📚</div>`;
+    /* Highlight kata kunci dalam judul */
+    const hl = highlightText(komik.title || "Untitled", query);
 
     item.innerHTML = `
-      ${coverHtml}
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
-        <p style="font-weight:800;font-size:13px;color:var(--text);margin:0;
-          display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;">
-          ${hl}
-        </p>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-          ${rating ? `<span style="font-size:11px;color:#f5a623;font-weight:700;">⭐ ${escHtml(rating)}</span>` : ""}
-          ${type   ? `<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,0.07);border-radius:4px;padding:1px 6px;color:var(--text-muted);">${escHtml(type)}</span>` : ""}
-        </div>
-        <span style="font-size:10px;color:var(--accent);font-weight:800;opacity:0;transition:opacity 0.13s;" class="si-arr">Lihat Detail →</span>
+      ${cover
+        ? `<img src="${cover}" alt="" loading="lazy" style="background:var(--bg-surface);">`
+        : `<div style="width:44px;height:60px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">📚</div>`}
+      <div>
+        <p>${hl}</p>
+        <p style="color:var(--accent2);">⭐ ${komik.rating || "–"} &nbsp;·&nbsp; ${escHtml(komik.type || "")}</p>
       </div>`;
 
-    item.addEventListener("mouseenter", () => {
-      item.style.background = "rgba(232,82,42,0.06)";
-      const a = item.querySelector(".si-arr");
-      if (a) a.style.opacity = "1";
-    });
-    item.addEventListener("mouseleave", () => {
-      item.style.background = "transparent";
-      const a = item.querySelector(".si-arr");
-      if (a) a.style.opacity = "0";
-    });
+    if (cover && origUrl) {
+      const img = item.querySelector("img");
+      if (img) imgFallback(img, origUrl);
+    }
+
     item.onclick = () => { window.location.href = komikURL(komik.slug); };
     resultBox.appendChild(item);
   });
-
-  if (total > 8) {
-    const more = document.createElement("div");
-    more.style.cssText = "text-align:center;padding:10px;font-size:12px;font-weight:700;color:var(--text-muted);border-top:1px solid rgba(255,255,255,0.05);";
-    more.textContent = `+${total - 8} hasil lainnya`;
-    resultBox.appendChild(more);
-  }
 
   resultBox.style.display = "block";
 }
@@ -840,16 +749,17 @@ function escHtml(str) {
   s.id = id;
   s.textContent = `
     /* Spinner kecil di dalam tombol/search */
-    .btn-spinner, .search-spinner, .sr-spinner {
+    .btn-spinner, .search-spinner {
       display:inline-block;
       width:13px;height:13px;
-      border:2px solid rgba(255,255,255,0.2);
-      border-top-color:var(--accent);
+      border:2px solid rgba(255,255,255,0.3);
+      border-top-color:currentColor;
       border-radius:50%;
       animation:pkSpin 0.6s linear infinite;
       vertical-align:middle;
       flex-shrink:0;
     }
+    .search-spinner { border-top-color:var(--text-muted); }
     @keyframes pkSpin { to{transform:rotate(360deg)} }
 
     /* Fallback image placeholder */
@@ -859,162 +769,20 @@ function escHtml(str) {
       display:flex;align-items:center;justify-content:center;
       font-size:32px;color:var(--text-muted);
     }
+
+    /* Back to top — tambah z-index agar tidak tertutup bottom nav */
     #backToTop {
       z-index:1100;
       bottom:calc(70px + env(safe-area-inset-bottom));
     }
+
+    /* Card title truncate */
     .card .card-title {
       display:-webkit-box;
       -webkit-line-clamp:2;
       -webkit-box-orient:vertical;
       overflow:hidden;
       white-space:normal !important;
-    }
-
-    /* ══════════════════════════════════
-       SEARCH RESULT — Redesain Premium
-       ══════════════════════════════════ */
-    .search-result {
-      max-height: 76vh !important;
-      border-radius: 16px !important;
-      border: 1px solid rgba(232,82,42,0.15) !important;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04) !important;
-      backdrop-filter: blur(24px) saturate(1.4) !important;
-      -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
-      overflow-y: auto !important;
-      overflow-x: hidden !important;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(232,82,42,0.3) transparent;
-    }
-    .search-result::-webkit-scrollbar { width: 3px; }
-    .search-result::-webkit-scrollbar-thumb { background: rgba(232,82,42,0.3); border-radius: 99px; }
-
-    /* Header baris */
-    .sr-header {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:10px 14px 8px;
-      border-bottom:1px solid rgba(255,255,255,0.05);
-      background: var(--bg-elevated, #1f1f2a);
-      flex-shrink:0;
-      position:sticky; top:0; z-index:10;
-    }
-    .sr-label {
-      font-size:11px; font-weight:700;
-      color:var(--text-muted); letter-spacing:0.2px;
-    }
-    .sr-label strong { color:var(--accent); }
-    .sr-close-btn {
-      width:24px;height:24px;border-radius:50%;
-      background:rgba(255,255,255,0.07); border:none;
-      color:var(--text-muted); font-size:11px; cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      transition:all 0.15s;
-    }
-    .sr-close-btn:hover { background:rgba(232,82,42,0.2); color:var(--accent); }
-
-    /* Skeleton loading cards */
-    .search-item-skel {
-      display:flex; gap:10px; padding:10px 14px;
-      border-bottom:1px solid rgba(255,255,255,0.04);
-    }
-    .skel-img {
-      width:44px;height:60px;border-radius:8px;flex-shrink:0;
-      background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-surface) 50%,var(--bg-card) 75%);
-      background-size:200% 100%;animation:pkShimmer 1.4s infinite;
-    }
-    .skel-lines { flex:1;display:flex;flex-direction:column;gap:8px;padding-top:4px; }
-    .skel-line {
-      height:11px;border-radius:5px;
-      background:linear-gradient(90deg,var(--bg-card) 25%,var(--bg-surface) 50%,var(--bg-card) 75%);
-      background-size:200% 100%;animation:pkShimmer 1.4s infinite;
-    }
-    @keyframes pkShimmer { 0%{background-position:200% 0}100%{background-position:-200% 0} }
-
-    /* Search Item — redesain */
-    .search-item {
-      display:flex !important; gap:12px; padding:10px 14px !important;
-      cursor:pointer; align-items:center !important;
-      border-bottom:1px solid rgba(255,255,255,0.04) !important;
-      transition:background 0.14s, transform 0.1s;
-      animation:siSlideIn 0.2s ease both;
-      position:relative;
-      background:transparent !important;
-    }
-    @keyframes siSlideIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
-    .search-item:hover { background:rgba(232,82,42,0.06) !important; transform:translateX(3px); }
-    .search-item:active { transform:scale(0.98); }
-    .search-item:last-of-type { border-bottom:none !important; }
-
-    /* Cover container — override style.css .search-item img sizing */
-    .si-cover {
-      position:relative; flex-shrink:0;
-      width:44px !important; height:60px !important;
-      min-width:44px; min-height:60px;
-      border-radius:8px; overflow:hidden !important;
-      background:var(--bg-surface);
-      border:1px solid rgba(255,255,255,0.06);
-      display:block !important;
-    }
-    /* style.css sets .search-item img to width:40px;height:56px — override it */
-    .search-item img,
-    .si-cover img {
-      width:44px !important; height:60px !important;
-      object-fit:cover !important; display:block !important;
-      border-radius:0 !important;
-      flex-shrink:0 !important;
-    }
-    .si-cover-ph {
-      width:100%;height:100%;display:flex;align-items:center;justify-content:center;
-      font-size:20px;
-    }
-    .si-type-badge {
-      position:absolute; bottom:2px; left:2px; right:2px;
-      background:rgba(0,0,0,0.75); color:#fff;
-      font-size:7px; font-weight:800; text-align:center;
-      border-radius:3px; padding:1px 2px;
-      text-transform:uppercase; letter-spacing:0.3px;
-      line-height:1.4;
-    }
-
-    /* Body */
-    .si-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:3px; }
-    .si-title {
-      font-weight:800; font-size:13px; color:var(--text);
-      display:-webkit-box; -webkit-line-clamp:2;
-      -webkit-box-orient:vertical; overflow:hidden;
-      line-height:1.35;
-    }
-    .si-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-    .si-rating {
-      font-size:11px; color:var(--accent2); font-weight:700;
-    }
-    .si-genre {
-      font-size:10px; font-weight:700;
-      background:rgba(255,255,255,0.07); border-radius:4px;
-      padding:1px 6px; color:var(--text-muted);
-    }
-    .si-arrow {
-      font-size:10px; color:var(--accent); font-weight:800;
-      opacity:0; transition:opacity 0.14s;
-    }
-    .search-item:hover .si-arrow { opacity:1; }
-
-    /* Empty state */
-    .sr-empty {
-      display:flex; flex-direction:column; align-items:center;
-      padding:28px 20px; gap:6px; text-align:center;
-      color:var(--text-muted);
-    }
-    .sr-empty p { font-size:13px; font-weight:700; }
-    .sr-empty strong { color:var(--text); }
-    .sr-hint { font-size:11px; color:var(--text-dim); }
-
-    /* Footer "+N lainnya" */
-    .sr-more {
-      text-align:center; padding:10px;
-      font-size:12px; font-weight:700; color:var(--text-muted);
-      border-top:1px solid rgba(255,255,255,0.05);
-      background:rgba(255,255,255,0.02);
     }
   `;
   document.head.appendChild(s);
