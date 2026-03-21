@@ -5,12 +5,63 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Komik — Pankomik</title>
   <link rel="stylesheet" href="/style.css">
+  <style>
+    /* ── Header search field polish untuk detail page ── */
+    #searchInput {
+      font-size: 13px;
+    }
+
+    /* ── Search result panel — full width luxury ── */
+    .search-result {
+      position: fixed;
+      top: calc(var(--header-h) + 6px);
+      left: 10px; right: 10px;
+      background: rgba(14, 14, 22, 0.97);
+      border: 1px solid rgba(232,82,42,0.18);
+      border-radius: 18px;
+      max-height: 480px;
+      overflow-y: auto;
+      display: none;
+      z-index: 1900;
+      box-shadow:
+        0 24px 64px rgba(0,0,0,0.75),
+        0 0 0 1px rgba(255,255,255,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.05);
+      backdrop-filter: blur(28px) saturate(1.4);
+      -webkit-backdrop-filter: blur(28px) saturate(1.4);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(232,82,42,0.3) transparent;
+    }
+    .search-result::-webkit-scrollbar { width: 3px; }
+    .search-result::-webkit-scrollbar-thumb { background: rgba(232,82,42,0.3); border-radius: 99px; }
+
+    body.light .search-result {
+      background: rgba(255,255,255,0.97);
+      border-color: rgba(232,82,42,0.2);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+    }
+
+    /* ── Detail komik: no padding-top ── */
+    #detailKomik {
+      /* Backdrop hero butuh flush ke atas */
+      padding-top: 0;
+    }
+
+    /* ── Toast container z-index boost ── */
+    .toast-container { z-index: 9999; }
+  </style>
 </head>
 <body class="has-bottom-nav">
 
 <header class="header">
   <div class="logo" onclick="goHome()">Pankomik</div>
-  <input type="text" id="searchInput" placeholder="Cari komik..." oninput="liveSearch()" autocomplete="off">
+  <input
+    type="text"
+    id="searchInput"
+    placeholder="Cari komik..."
+    oninput="liveSearch()"
+    autocomplete="off"
+  >
   <div class="header-right">
     <button onclick="toggleDarkMode()">🌙</button>
     <button onclick="toggleMenu()">👤</button>
@@ -30,10 +81,10 @@
 <script type="module" src="/detail.js"></script>
 
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="window.location.href='/'">
+  <button class="nav-item" onclick="window.location.href='/'">
     <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='/'">
+  <button class="nav-item active" onclick="window.location.href='/'">
     <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
   </button>
   <button class="nav-item" onclick="window.location.href='/anime/'">
@@ -46,6 +97,7 @@
     <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
   </button>
 </nav>
+
 <script type="module" src="/global-chat.js"></script>
 </body>
 </html>
