@@ -709,44 +709,65 @@ function renderSearch(list, query) {
 
   list.slice(0, 8).forEach((komik, i) => {
     if (!komik?.slug) return;
-    const origUrl = (komik.image || "").split("?")[0];
-    const cover   = origUrl ? proxyImg(origUrl, 100) : "";
+    const rawUrl  = (komik.image || "").split("?")[0];
+    /* Pakai wsrv.nl langsung — sama dengan detail.js */
+    const cover   = rawUrl
+      ? `https://wsrv.nl/?url=${encodeURIComponent(rawUrl)}&w=120&output=webp&q=85&n=-1`
+      : "";
     const hl      = highlightText(komik.title || "Untitled", query);
-    const type    = komik.type || "";
+    const type    = komik.type   || "";
     const rating  = komik.rating || "";
-    const item    = document.createElement("div");
-    item.className = "search-item";
-    item.style.animationDelay = `${i * 40}ms`;
+
+    const item = document.createElement("div");
+    item.style.cssText = `
+      display:flex; gap:12px; padding:10px 14px;
+      cursor:pointer; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05);
+      transition:background 0.13s; animation:siSlideIn 0.2s ease ${i*40}ms both;
+      background:transparent;
+    `;
+
+    /* Cover — semua inline style agar tidak bisa di-override style.css */
+    const coverHtml = cover
+      ? `<div style="position:relative;flex-shrink:0;width:44px;height:60px;border-radius:8px;overflow:hidden;background:var(--bg-surface);border:1px solid rgba(255,255,255,0.08);">
+           <img src="${cover}" alt="" loading="lazy"
+             style="width:44px;height:60px;object-fit:cover;display:block;border-radius:0;"
+             onerror="this.parentElement.innerHTML='<div style=width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px>📚</div>'">
+           ${type ? `<span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.8);color:#fff;font-size:7px;font-weight:800;text-align:center;border-radius:3px;padding:1px 2px;text-transform:uppercase;">${escHtml(type)}</span>` : ""}
+         </div>`
+      : `<div style="flex-shrink:0;width:44px;height:60px;border-radius:8px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(255,255,255,0.08);">📚</div>`;
 
     item.innerHTML = `
-      <div class="si-cover">
-        ${cover
-          ? `<img src="${cover}" alt="" loading="lazy">`
-          : `<div class="si-cover-ph">📚</div>`}
-        ${type ? `<span class="si-type-badge">${escHtml(type)}</span>` : ""}
-      </div>
-      <div class="si-body">
-        <p class="si-title">${hl}</p>
-        <div class="si-meta">
-          ${rating ? `<span class="si-rating">⭐ ${escHtml(rating)}</span>` : ""}
-          ${type   ? `<span class="si-genre">${escHtml(type)}</span>`   : ""}
+      ${coverHtml}
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+        <p style="font-weight:800;font-size:13px;color:var(--text);margin:0;
+          display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;">
+          ${hl}
+        </p>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          ${rating ? `<span style="font-size:11px;color:#f5a623;font-weight:700;">⭐ ${escHtml(rating)}</span>` : ""}
+          ${type   ? `<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,0.07);border-radius:4px;padding:1px 6px;color:var(--text-muted);">${escHtml(type)}</span>` : ""}
         </div>
-        <span class="si-arrow">Lihat Detail →</span>
+        <span style="font-size:10px;color:var(--accent);font-weight:800;opacity:0;transition:opacity 0.13s;" class="si-arr">Lihat Detail →</span>
       </div>`;
 
-    if (cover && origUrl) {
-      const img = item.querySelector("img");
-      if (img) imgFallback(img, origUrl);
-    }
-
+    item.addEventListener("mouseenter", () => {
+      item.style.background = "rgba(232,82,42,0.06)";
+      const a = item.querySelector(".si-arr");
+      if (a) a.style.opacity = "1";
+    });
+    item.addEventListener("mouseleave", () => {
+      item.style.background = "transparent";
+      const a = item.querySelector(".si-arr");
+      if (a) a.style.opacity = "0";
+    });
     item.onclick = () => { window.location.href = komikURL(komik.slug); };
     resultBox.appendChild(item);
   });
 
   if (total > 8) {
     const more = document.createElement("div");
-    more.className = "sr-more";
-    more.innerHTML = `+${total - 8} hasil lainnya`;
+    more.style.cssText = "text-align:center;padding:10px;font-size:12px;font-weight:700;color:var(--text-muted);border-top:1px solid rgba(255,255,255,0.05);";
+    more.textContent = `+${total - 8} hasil lainnya`;
     resultBox.appendChild(more);
   }
 
