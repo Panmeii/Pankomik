@@ -204,27 +204,24 @@ async function loadChapter() {
     }
 
     /* ── Tentukan source API ─────────────────────────────────
-       LOGIKA PINTAR — konsisten dengan detail.js:
+       LOGIKA PINTAR — KomikStation sebagai SUMBER PRIMER:
 
-       detail.js sudah menyimpan "komikSource" dan "komikSrcHint" di sessionStorage
-       dengan source yang benar. Reader HARUS pakai source yang sama agar:
-       - Slug chapter compatible dengan API
-       - Tidak ada gambar 404 atau chapter tidak ditemukan
+       detail.js sudah menyimpan "komikSource" di sessionStorage.
+       Kalau ada → pakai itu (konsisten dengan halaman detail).
+       Kalau tidak ada (buka reader langsung dari URL) →
+         coba KomikStation dulu, lalu fallback ke lainnya.
 
        Urutan priority:
-       1. komikSource (diset oleh detail.js) — PALING DIPERCAYA
-       2. komikSrcHint (diset saat klik kartu) — backup
-       3. currentApiSource — kalau navigasi antar chapter
-       4. Fallback ke API lain kalau semua di atas gagal (last resort)
-
-       CATATAN: Fallback ke API lain masih diizinkan agar reader tidak
-       pernah kosong total, tapi dicatat sebagai warning di console.
+       1. komikSource (dari detail.js) — PALING DIPERCAYA
+       2. komikSrcHint (dari klik kartu) — backup
+       3. KomikStation — sumber primer kalau tidak ada hint
+       4. Sisa API lain — last resort
     ── */
     const _komikSrc  = sessionStorage.getItem("komikSource")  || "";
     const _srcHint   = sessionStorage.getItem("komikSrcHint") || "";
 
-    /* Pilih source utama: komikSource > srcHint > currentApiSource */
-    const _primarySrc = _komikSrc || _srcHint || currentApiSource;
+    /* Primary: ikut sessionStorage. Kalau kosong → KomikStation dulu */
+    const _primarySrc = _komikSrc || _srcHint || "komikstation";
 
     let d = null;
     let _apiSource = _primarySrc;
@@ -236,14 +233,14 @@ async function loadChapter() {
       komikstation:{ fetch: (s) => fetch(API_CHAPTER_4 + s).then(r=>r.json()) },
     };
 
-    /* Susun urutan: primary source duluan, sisanya sebagai last-resort fallback.
-       Deduplicate, jaga urutan insertion. */
-    const _allSources = ["komikindo", "komikstation", "mangakita", "bacakomik"];
+    /* Susun urutan: primary source duluan, KomikStation selalu di awal fallback,
+       sisanya sebagai last-resort. Deduplicate, jaga urutan insertion. */
+    const _allSources = ["komikstation", "komikindo", "mangakita", "bacakomik"];
     const _ordered = [
-      _primarySrc,         /* 1. source dari detail.js — PALING DIPERCAYA */
-      _srcHint,            /* 2. hint dari index (backup kalau komikSource kosong) */
+      _primarySrc,         /* 1. source dari detail.js / sessionStorage */
+      _srcHint,            /* 2. hint dari index */
       currentApiSource,    /* 3. source chapter terakhir berhasil */
-      ..._allSources,      /* 4. semua sisanya sebagai last-resort */
+      ..._allSources,      /* 4. komikstation duluan, lalu sisanya */
     ]
       .filter(Boolean)
       .filter((v, i, a) => a.indexOf(v) === i); /* deduplicate, jaga urutan */
@@ -256,7 +253,32 @@ async function loadChapter() {
         const json = await _APIs[key].fetch(currentChapterSlug);
         if (key === "komikindo") {
           if (!json.success || !json.data) throw new Error("no data");
-          d = json.data;
+          /* Komikindo: json.data.images = [{id, url}], json.data.navigation = {prev, next, allChapterSlug} */
+          const raw = json.data;
+          /* Normalisasi ke format internal yang sama */
+          const nav  = raw.navigation || {};
+          const imgs = (raw.images || []).map(img => ({
+            id:  img.id  ?? img.index ?? 0,
+            url: String(img.url || img.src || img || ""),
+          })).filter(img => img.url && img.url !== "undefined");
+
+          if (!imgs.length) throw new Error("komikindo: images kosong");
+
+          d = {
+            title:      raw.title || "",
+            images:     imgs,
+            navigation: {
+              prev:           (nav.prev  && nav.prev  !== "#prev"  ? nav.prev  : null),
+              next:           (nav.next  && nav.next  !== "#next"  ? nav.next  : null),
+              allChapterSlug: nav.allChapterSlug || raw.allChapterSlug || null,
+            },
+            komikInfo: {
+              title:    raw.komikInfo?.title || (raw.title || "").replace(/\s*chapter\s*[\d.]+.*/i, "").trim(),
+              chapters: raw.komikInfo?.chapters || [],
+            },
+            thumbnail: { url: raw.thumbnail?.url || "", title: raw.thumbnail?.title || "" },
+            _source: "komikindo",
+          };
         } else {
           if (!json.success || !json.images?.length) throw new Error("no images");
           d = _normalizeChapter(json, key);
@@ -279,6 +301,12 @@ async function loadChapter() {
     /* Update sessionStorage agar navigasi chapter berikutnya tetap konsisten dengan source yang sama */
     sessionStorage.setItem("komikSource", _apiSource);
     sessionStorage.setItem("komikSrcHint", _apiSource);
+
+    /* ── Debug: log struktur data agar mudah diagnosa masalah gambar ── */
+    console.log(`[Reader] d.title=${d.title}`);
+    console.log(`[Reader] d.images type=${typeof d.images}, isArray=${Array.isArray(d.images)}, length=${d.images?.length}`);
+    console.log(`[Reader] d.images[0]=`, d.images?.[0]);
+    console.log(`[Reader] d.navigation=`, d.navigation);
 
     /* Reset progress bar */
     const bar = document.getElementById("readingProgressBar");
@@ -479,12 +507,12 @@ async function loadChapterListFromAPI() {
     const srcHintStored  = sessionStorage.getItem("komikSrcHint") || "";
     const srcSlugStored  = sessionStorage.getItem("komikSrcSlug") || "";
 
-    /* Single source valid kalau:
-       1. Ada source yang di-set dari detail.js (komikSource), DAN
-       2. Slug cocok dengan komik yang sedang dibuka, ATAU source sama dengan currentApiSource */
+    /* Single source valid kalau ada source di session DAN slug cocok */
     const useSingleSrc = (srcFromSession || srcHintStored) &&
       (srcSlugStored === komikSlug || currentApiSource === (srcFromSession || srcHintStored));
-    const singleSrc = srcFromSession || srcHintStored || currentApiSource;
+
+    /* Kalau tidak ada hint sama sekali → default ke komikstation sebagai primer */
+    const singleSrc = srcFromSession || srcHintStored || "komikstation";
 
     /* ── Fetch detail API untuk mendapatkan chapter list ──────
        Kalau single source: hanya fetch API yang relevan, sisanya skip
