@@ -36,6 +36,7 @@ if (!slug) window.location.href = "/";
 const API_DETAIL   = `https://www.sankavollerei.com/comic/komikindo/detail/${slug}`;
 const API_DETAIL_2 = `https://www.sankavollerei.com/comic/mangakita/detail/${slug}`;
 const API_DETAIL_3 = `https://www.sankavollerei.com/comic/bacakomik/detail/${slug}`;
+const API_DETAIL_4 = `https://www.sankavollerei.com/comic/komikstation/manga/${slug}`;
 
 /* ── IMAGE PROXY ────────────────────────────────────────── */
 function proxyImg(url, w = 300) {
@@ -289,21 +290,61 @@ function normalizeFromBacakomik(det) {
   };
 }
 
+/* Normalize data dari API komikstation ke format internal */
+function normalizeFromKomikstation(det) {
+  /* JSON structure:
+     { title, alternative, imageSrc, rating, synopsis, type, author,
+       status, updatedOn, genres:[{name,slug}],
+       chapters:[{title:"Chapter 179", slug:"solo-leveling-chapter-179", date}] }
+  */
+  const genres = (det.genres || []).map(g => ({
+    name: g.name  || g.title || "",
+    slug: g.slug  || (g.name || "").toLowerCase().replace(/\s+/g, "-"),
+  }));
+  const chapters = (det.chapters || []).map(ch => ({
+    title:       ch.title || "",
+    slug:        ch.slug  || "",
+    releaseTime: ch.date  || "",
+  }));
+  /* imageSrc bisa SVG placeholder — skip */
+  const rawImg = det.imageSrc || "";
+  const cover  = rawImg.startsWith("data:image/svg") ? "" : rawImg;
+  return {
+    title:          cleanTitle(det.title),
+    cover,
+    rating:         det.rating   || "–",
+    votes:          "",
+    status:         det.status   || "–",
+    type:           det.type     || "–",
+    author:         det.author   || "–",
+    illustrator:    det.artist   || "",
+    theme:          "",
+    altTitle:       det.alternative || "",
+    synopsis:       det.synopsis || "",
+    genres,
+    chapters,
+    firstChapter:   chapters.length ? chapters[chapters.length - 1] : null,
+    latestChapter:  chapters.length ? chapters[0] : null,
+    allChapterSlug: slug,
+    _source:        "komikstation",
+  };
+}
+
 async function getDetail() {
   const container = document.getElementById("detailKomik");
 
   /* Baca source hint dari sessionStorage (di-set oleh script.js saat klik kartu) */
   const storedSlug = sessionStorage.getItem("komikSrcSlug") || "";
   const storedSrc  = sessionStorage.getItem("komikSrcHint") || "";
-  /* Hint hanya valid kalau slug-nya cocok dengan halaman ini */
-  const srcHint = (storedSlug === slug) ? storedSrc : "";
+  const srcHint    = (storedSlug === slug) ? storedSrc : "";
 
   try {
-    /* ── Fetch semua 3 API paralel, pilih yang chapter-nya TERBANYAK ── */
-    const [r1, r2, r3] = await Promise.allSettled([
+    /* ── Fetch 4 API paralel ── */
+    const [r1, r2, r3, r4] = await Promise.allSettled([
       fetch(API_DETAIL).then(r => r.json()).catch(() => null),
       fetch(API_DETAIL_2).then(r => r.json()).catch(() => null),
       fetch(API_DETAIL_3).then(r => r.json()).catch(() => null),
+      fetch(API_DETAIL_4).then(r => r.json()).catch(() => null),
     ]);
 
     const candidates = [];
@@ -323,15 +364,18 @@ async function getDetail() {
       const d = normalizeFromBacakomik(j3.detail);
       candidates.push({ data: d, source: "bacakomik", count: d.chapters.length });
     }
+    /* komikstation: response langsung object (success + chapters di root) */
+    const j4 = r4.status === "fulfilled" ? r4.value : null;
+    if (j4?.success && j4?.chapters) {
+      const d = normalizeFromKomikstation(j4);
+      candidates.push({ data: d, source: "komikstation", count: d.chapters.length });
+    }
 
     if (!candidates.length) throw new Error("Semua API gagal");
 
-    /* ── Pilih best source ───────────────────────────────────
-       Prioritas:
-       1. Kalau ada hint dari index (sessionStorage) → pakai itu
-       2. Kalau tidak ada hint → pakai yang chapter terbanyak
-       Ini memastikan kalau di index tampil Ch.20 dari mangakita,
-       di detail juga pakai mangakita → tetap 20 chapter.
+    /* ── Pilih best source ──────────────────────────────────
+       1. Hint dari sessionStorage (klik kartu index) → prioritas
+       2. Fallback: source dengan chapter TERBANYAK (biasanya komikstation)
     ── */
     candidates.sort((a, b) => b.count - a.count);
     const hinted = srcHint ? candidates.find(c => c.source === srcHint) : null;
@@ -339,7 +383,7 @@ async function getDetail() {
     const source = best.source;
     let komikDataRaw = best.data;
 
-    console.log(`[Detail] hint=${srcHint||"none"} → best=${source} (${best.count}ch), all:`,
+    console.log(`[Detail] hint=${srcHint||"none"} → best=${source} (${best.count}ch) | all:`,
       candidates.map(c => `${c.source}=${c.count}`).join(", "));
 
     /* ── Merge chapter dari SEMUA source ──────────────────────
