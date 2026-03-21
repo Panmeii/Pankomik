@@ -457,59 +457,37 @@ let isSearchMode  = false;
 
 /* ============================================================
    IMAGE PROXY — proxy.sankavolereii.my.id
+   Format: https://proxy.sankavolereii.my.id/{original_url_tanpa_encode}
    ============================================================ */
 function proxyImg(url) {
   if (!url) return "";
   if (url.startsWith("data:")) return url;
-  var clean = url.split("?")[0];
-  return "https://proxy.sankavolereii.my.id/" + clean;
-}
-
-/* ── IntersectionObserver untuk lazy load semua cover ── */
-var _lazyObserver = null;
-
-function getLazyObserver() {
-  if (_lazyObserver) return _lazyObserver;
-  _lazyObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (!entry.isIntersecting) return;
-      var img = entry.target;
-      var src = img.getAttribute("data-src");
-      if (src) {
-        img.src = src;
-        img.removeAttribute("data-src");
-      }
-      _lazyObserver.unobserve(img);
-    });
-  }, { rootMargin: "200px 0px" }); /* preload 200px sebelum masuk viewport */
-  return _lazyObserver;
+  /* Jangan strip query params — kirim URL asli ke proxy */
+  return "https://proxy.sankavolereii.my.id/" + url;
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
   var img = document.createElement("img");
   img.alt = altText || "";
   if (cssText) img.style.cssText = cssText;
-  img.style.background = "var(--bg-surface)";
-  var clean = (originalUrl || "").split("?")[0];
-  var proxiedUrl = clean ? "https://proxy.sankavolereii.my.id/" + clean : "";
+  img.style.background = "var(--ink3, #1c1829)";
+
+  if (!originalUrl) return img;
+
+  var proxiedUrl = "https://proxy.sankavolereii.my.id/" + originalUrl;
 
   img.onerror = function () {
     img.onerror = null;
     var ph = document.createElement("div");
     ph.className = "novel-card-fallback";
-    ph.style.cssText = "display:flex !important;width:100%;height:100%;";
+    ph.style.cssText = "display:flex !important;width:100%;height:100%;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(135deg,#1c1829,rgba(124,58,237,0.2));";
     ph.textContent = "📖";
     if (img.parentNode) img.parentNode.replaceChild(ph, img);
     var sib = img.nextElementSibling;
     if (sib && sib.classList.contains("novel-card-fallback")) sib.style.display = "flex";
   };
 
-  if (proxiedUrl) {
-    /* Simpan URL di data-src, load saat masuk viewport */
-    img.setAttribute("data-src", proxiedUrl);
-    img.src = ""; /* placeholder kosong — tidak ada request ke proxy */
-    getLazyObserver().observe(img);
-  }
+  img.src = proxiedUrl;
   return img;
 }
 
