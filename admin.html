@@ -26,100 +26,65 @@
     }
     *,*::before,*::after { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior:smooth; }
-    body {
-      font-family:'Nunito',sans-serif;
-      background:var(--bg); color:var(--text);
-      min-height:100vh; overflow-x:hidden;
-    }
+    body { font-family:'Nunito',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; overflow-x:hidden; }
 
-    /* ── SCROLLBAR ──────────────────────────────────────────── */
     ::-webkit-scrollbar { width:4px; height:4px; }
     ::-webkit-scrollbar-track { background:transparent; }
     ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:99px; }
     ::-webkit-scrollbar-thumb:hover { background:rgba(232,82,42,0.4); }
 
-    /* ── AUTH GATE ──────────────────────────────────────────── */
+    /* ── AUTH GATE ── */
     #authGate {
       position:fixed; inset:0; z-index:9999;
-      display:flex; align-items:center; justify-content:center;
-      background:var(--bg);
+      display:flex; align-items:center; justify-content:center; background:var(--bg);
     }
     .gate-card {
       width:100%; max-width:340px;
-      background:var(--bg-card);
-      border:1px solid var(--border);
+      background:var(--bg-card); border:1px solid var(--border);
       border-radius:20px; padding:36px 28px; text-align:center;
     }
-    .gate-logo {
-      font-family:'Bebas Neue',cursive; font-size:44px;
-      letter-spacing:3px; color:var(--accent); margin-bottom:2px;
-    }
-    .gate-sub { font-size:12px; color:var(--text-muted); margin-bottom:24px; letter-spacing:2px; text-transform:uppercase; }
+    .gate-logo { font-family:'Bebas Neue',cursive; font-size:44px; letter-spacing:3px; color:var(--accent); margin-bottom:2px; }
+    .gate-sub  { font-size:12px; color:var(--text-muted); margin-bottom:24px; letter-spacing:2px; text-transform:uppercase; }
     .gate-spinner {
       width:36px; height:36px; margin:0 auto 14px;
-      border:3px solid rgba(232,82,42,0.15);
-      border-top-color:var(--accent);
+      border:3px solid rgba(232,82,42,0.15); border-top-color:var(--accent);
       border-radius:50%; animation:spin .7s linear infinite; display:none;
     }
     .gate-spinner.show { display:block; }
     .gate-err {
-      display:none; background:rgba(231,76,60,0.1);
-      border:1px solid rgba(231,76,60,0.25);
-      color:var(--red); border-radius:10px;
-      padding:10px 14px; font-size:13px; margin-bottom:14px;
+      display:none; background:rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.25);
+      color:var(--red); border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:14px;
     }
     .gate-err.show { display:block; }
     .gate-label { font-size:13px; color:var(--text-muted); font-weight:700; }
     @keyframes spin { to{transform:rotate(360deg)} }
 
-    /* ── APP SHELL ──────────────────────────────────────────── */
+    /* ── APP SHELL ── */
     #adminApp { display:none; }
     #adminApp.show { display:flex; min-height:100vh; }
 
-    /* ── SIDEBAR ────────────────────────────────────────────── */
+    /* ── SIDEBAR ── */
     .sidebar {
       width:var(--sidebar-w); flex-shrink:0;
-      background:var(--bg-card);
-      border-right:1px solid var(--border);
+      background:var(--bg-card); border-right:1px solid var(--border);
       display:flex; flex-direction:column;
-      position:fixed; top:0; left:0; height:100vh;
-      z-index:200; overflow-y:auto;
-      transition:transform .3s cubic-bezier(.4,0,.2,1);
+      position:fixed; top:0; left:0; height:100vh; z-index:200;
+      overflow-y:auto; transition:transform .3s cubic-bezier(.4,0,.2,1);
     }
-    .sidebar-head {
-      padding:22px 20px 14px;
-      border-bottom:1px solid var(--border-s);
-    }
-    .sidebar-logo {
-      font-family:'Bebas Neue',cursive; font-size:24px;
-      letter-spacing:2px; color:var(--accent); line-height:1;
-    }
-    .sidebar-role {
-      font-size:10px; font-weight:800; letter-spacing:2px;
-      color:var(--text-muted); text-transform:uppercase; margin-top:3px;
-    }
-    .nav-section {
-      font-size:9px; font-weight:900; letter-spacing:2px;
-      color:var(--text-muted); text-transform:uppercase;
-      padding:16px 20px 6px;
-    }
+    .sidebar-head { padding:22px 20px 14px; border-bottom:1px solid var(--border-s); }
+    .sidebar-logo { font-family:'Bebas Neue',cursive; font-size:24px; letter-spacing:2px; color:var(--accent); line-height:1; }
+    .sidebar-role { font-size:10px; font-weight:800; letter-spacing:2px; color:var(--text-muted); text-transform:uppercase; margin-top:3px; }
+    .nav-section { font-size:9px; font-weight:900; letter-spacing:2px; color:var(--text-muted); text-transform:uppercase; padding:16px 20px 6px; }
     .nav-item {
-      display:flex; align-items:center; gap:10px;
-      padding:10px 20px; cursor:pointer;
-      font-size:13px; font-weight:700;
-      color:var(--text-soft);
-      border-left:3px solid transparent;
-      transition:all .15s; user-select:none;
+      display:flex; align-items:center; gap:10px; padding:10px 20px; cursor:pointer;
+      font-size:13px; font-weight:700; color:var(--text-soft);
+      border-left:3px solid transparent; transition:all .15s; user-select:none;
     }
     .nav-item:hover { background:var(--bg-hover); color:var(--text); }
-    .nav-item.active {
-      background:var(--accent-dim); color:var(--accent);
-      border-left-color:var(--accent);
-    }
+    .nav-item.active { background:var(--accent-dim); color:var(--accent); border-left-color:var(--accent); }
     .nav-item .ni { font-size:15px; width:18px; text-align:center; flex-shrink:0; }
     .sidebar-footer {
-      margin-top:auto; padding:14px 18px;
-      border-top:1px solid var(--border-s);
+      margin-top:auto; padding:14px 18px; border-top:1px solid var(--border-s);
       display:flex; align-items:center; gap:10px;
     }
     .admin-av {
@@ -130,39 +95,26 @@
     }
     .admin-av img { width:100%; height:100%; object-fit:cover; }
     .admin-info { flex:1; min-width:0; }
-    .admin-name { font-size:13px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .admin-name  { font-size:13px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .admin-email { font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-    /* ── OVERLAY (mobile) ───────────────────────────────────── */
-    #sidebarOverlay {
-      display:none; position:fixed; inset:0; z-index:199;
-      background:rgba(0,0,0,.6); backdrop-filter:blur(4px);
-    }
+    #sidebarOverlay { display:none; position:fixed; inset:0; z-index:199; background:rgba(0,0,0,.6); backdrop-filter:blur(4px); }
     #sidebarOverlay.show { display:block; }
 
-    /* ── MAIN ───────────────────────────────────────────────── */
-    .main {
-      flex:1; min-width:0;
-      margin-left:var(--sidebar-w);
-      display:flex; flex-direction:column; min-height:100vh;
-    }
+    /* ── MAIN ── */
+    .main { flex:1; min-width:0; margin-left:var(--sidebar-w); display:flex; flex-direction:column; min-height:100vh; }
 
-    /* ── TOPBAR ─────────────────────────────────────────────── */
+    /* ── TOPBAR ── */
     .topbar {
       position:sticky; top:0; z-index:100;
-      display:flex; align-items:center; gap:12px;
-      padding:0 24px; height:58px;
-      background:rgba(7,7,15,.92); backdrop-filter:blur(16px);
-      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:12px; padding:0 24px; height:58px;
+      background:rgba(7,7,15,.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border);
     }
-    .topbar-menu {
-      display:none; background:none; border:none; color:var(--text-soft);
-      cursor:pointer; font-size:20px; padding:4px; flex-shrink:0;
-    }
+    .topbar-menu { display:none; background:none; border:none; color:var(--text-soft); cursor:pointer; font-size:20px; padding:4px; flex-shrink:0; }
     .topbar-title { font-size:17px; font-weight:800; flex:1; }
     .topbar-actions { display:flex; gap:8px; }
 
-    /* ── BUTTONS ────────────────────────────────────────────── */
+    /* ── BUTTONS ── */
     .btn {
       padding:8px 16px; border:none; border-radius:9px;
       font-family:'Nunito',sans-serif; font-weight:700; font-size:13px;
@@ -172,63 +124,36 @@
     .btn:active { transform:scale(.95); }
     .btn-primary { background:var(--accent); color:#fff; }
     .btn-primary:hover { background:#c73f1c; }
-    .btn-ghost {
-      background:rgba(255,255,255,.06); color:var(--text);
-      border:1px solid var(--border);
-    }
-    .btn-ghost:hover { background:rgba(255,255,255,.1); }
-    .btn-danger {
-      background:rgba(231,76,60,.12); color:var(--red);
-      border:1px solid rgba(231,76,60,.25);
-    }
+    .btn-ghost  { background:rgba(255,255,255,.06); color:var(--text); border:1px solid var(--border); }
+    .btn-ghost:hover  { background:rgba(255,255,255,.1); }
+    .btn-danger { background:rgba(231,76,60,.12); color:var(--red); border:1px solid rgba(231,76,60,.25); }
     .btn-danger:hover { background:rgba(231,76,60,.22); }
-    .btn-success {
-      background:rgba(46,204,113,.12); color:var(--green);
-      border:1px solid rgba(46,204,113,.25);
-    }
+    .btn-success { background:rgba(46,204,113,.12); color:var(--green); border:1px solid rgba(46,204,113,.25); }
     .btn-success:hover { background:rgba(46,204,113,.22); }
     .btn-sm { padding:5px 11px; font-size:12px; border-radius:7px; }
     .btn-xs { padding:3px 8px; font-size:11px; border-radius:6px; }
 
-    /* ── PAGES ──────────────────────────────────────────────── */
+    /* ── PAGES ── */
     .page { display:none; padding:22px; animation:fadeUp .2s ease; }
     .page.active { display:block; }
-    @keyframes fadeUp {
-      from{opacity:0;transform:translateY(6px)}
-      to  {opacity:1;transform:translateY(0)}
-    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ── STAT GRID ──────────────────────────────────────────── */
-    .stats-grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-      gap:12px; margin-bottom:22px;
-    }
+    /* ── STAT GRID ── */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:22px; }
     .stat-card {
-      background:var(--bg-card); border:1px solid var(--border);
-      border-radius:14px; padding:16px 18px;
-      display:flex; flex-direction:column; gap:4px;
-      position:relative; overflow:hidden;
-      transition:border-color .2s, transform .2s;
+      background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+      padding:16px 18px; display:flex; flex-direction:column; gap:4px;
+      position:relative; overflow:hidden; transition:border-color .2s, transform .2s;
+      cursor:default;
     }
     .stat-card:hover { transform:translateY(-2px); }
-    .stat-card::after {
-      content:''; position:absolute; inset:0;
-      background:linear-gradient(135deg,var(--c1,.1) 0%,transparent 60%);
-      opacity:.06; pointer-events:none;
-    }
-    .stat-card.green  { border-color:rgba(46,204,113,.18); --c1:#2ecc71; }
-    .stat-card.blue   { border-color:rgba(52,152,219,.18); --c1:#3498db; }
-    .stat-card.orange { border-color:rgba(232,82,42,.18);  --c1:#e8522a; }
-    .stat-card.yellow { border-color:rgba(245,200,66,.18); --c1:#f5c842; }
+    .stat-card.green  { border-color:rgba(46,204,113,.18); }
+    .stat-card.blue   { border-color:rgba(52,152,219,.18); }
+    .stat-card.orange { border-color:rgba(232,82,42,.18); }
+    .stat-card.yellow { border-color:rgba(245,200,66,.18); }
     .stat-icon { font-size:22px; margin-bottom:2px; }
-    .stat-label {
-      font-size:10px; font-weight:800; letter-spacing:.8px;
-      text-transform:uppercase; color:var(--text-muted);
-    }
-    .stat-value {
-      font-family:'Bebas Neue',cursive; font-size:32px; line-height:1;
-    }
+    .stat-label { font-size:10px; font-weight:800; letter-spacing:.8px; text-transform:uppercase; color:var(--text-muted); }
+    .stat-value { font-family:'Bebas Neue',cursive; font-size:32px; line-height:1; }
     .stat-card.green  .stat-value { color:var(--green); }
     .stat-card.blue   .stat-value { color:var(--blue); }
     .stat-card.orange .stat-value { color:var(--accent); }
@@ -237,45 +162,34 @@
     .stat-loading { animation:gcShim 1.4s ease infinite; }
     @keyframes gcShim { 0%,100%{opacity:.4}50%{opacity:.9} }
 
-    /* ── CARD BOX ───────────────────────────────────────────── */
-    .card-box {
-      background:var(--bg-card); border:1px solid var(--border);
-      border-radius:14px; overflow:hidden; margin-bottom:18px;
-    }
+    /* ── CARD BOX ── */
+    .card-box { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:18px; }
     .card-head {
-      padding:13px 18px;
-      border-bottom:1px solid var(--border-s);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      flex-wrap:wrap; gap:8px;
+      padding:13px 18px; border-bottom:1px solid var(--border-s);
+      display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
     }
     .card-head h3 { font-size:14px; font-weight:800; }
     .search-input {
-      padding:7px 12px; border-radius:8px;
-      border:1px solid var(--border); background:var(--bg-surface);
-      color:var(--text); font-family:'Nunito',sans-serif; font-size:13px;
+      padding:7px 12px; border-radius:8px; border:1px solid var(--border);
+      background:var(--bg-surface); color:var(--text);
+      font-family:'Nunito',sans-serif; font-size:13px;
       outline:none; width:190px; transition:border .2s;
     }
     .search-input:focus { border-color:var(--accent); }
 
-    /* ── TABLE ──────────────────────────────────────────────── */
+    /* ── TABLE ── */
     .tbl-wrap { overflow-x:auto; }
     table { width:100%; border-collapse:collapse; min-width:520px; }
     thead th {
-      padding:9px 16px; font-size:10px; font-weight:900;
-      text-transform:uppercase; letter-spacing:.6px;
-      color:var(--text-muted); background:var(--bg-surface); text-align:left;
-      white-space:nowrap;
+      padding:9px 16px; font-size:10px; font-weight:900; text-transform:uppercase;
+      letter-spacing:.6px; color:var(--text-muted); background:var(--bg-surface); text-align:left; white-space:nowrap;
     }
     tbody tr { border-top:1px solid var(--border-s); transition:background .12s; }
     tbody tr:hover { background:var(--bg-hover); }
     td { padding:10px 16px; font-size:13px; vertical-align:middle; }
     .td-actions { display:flex; gap:6px; flex-wrap:wrap; }
 
-    /* Avatars */
-    .av-sm {
-      width:30px; height:30px; border-radius:50%;
-      object-fit:cover; flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:8px;
-    }
+    .av-sm { width:30px; height:30px; border-radius:50%; object-fit:cover; flex-shrink:0; display:inline-block; vertical-align:middle; margin-right:8px; }
     .av-placeholder {
       width:30px; height:30px; border-radius:50%; flex-shrink:0;
       background:var(--accent-dim); border:1px solid rgba(232,82,42,.2);
@@ -286,12 +200,8 @@
     .user-cell-name { font-weight:700; }
     .user-cell-id { font-size:10px; color:var(--text-muted); font-family:'JetBrains Mono',monospace; }
 
-    /* Badges */
-    .badge {
-      display:inline-flex; align-items:center; gap:3px;
-      padding:3px 9px; border-radius:99px;
-      font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.3px;
-    }
+    /* ── BADGES ── */
+    .badge { display:inline-flex; align-items:center; gap:3px; padding:3px 9px; border-radius:99px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.3px; }
     .badge-admin  { background:rgba(232,82,42,.14); color:var(--accent);  border:1px solid rgba(232,82,42,.25); }
     .badge-user   { background:rgba(52,152,219,.12); color:var(--blue);   border:1px solid rgba(52,152,219,.22); }
     .badge-banned { background:rgba(231,76,60,.12);  color:var(--red);    border:1px solid rgba(231,76,60,.22); }
@@ -300,132 +210,102 @@
     .badge-pin    { background:rgba(245,200,66,.14); color:var(--accent2); border:1px solid rgba(245,200,66,.25); }
     .badge-ann    { background:var(--accent-dim); color:var(--accent); border:1px solid rgba(232,82,42,.2); }
 
-    /* ── EMPTY / LOADING STATE ──────────────────────────────── */
-    .state-row td {
-      text-align:center; padding:36px; color:var(--text-muted);
-      font-size:13px;
-    }
-    .empty-box {
-      text-align:center; padding:40px 20px;
-      color:var(--text-muted); font-size:13px;
-    }
+    /* ── EMPTY / LOADING STATE ── */
+    .state-row td { text-align:center; padding:36px; color:var(--text-muted); font-size:13px; }
+    .empty-box { text-align:center; padding:40px 20px; color:var(--text-muted); font-size:13px; }
     .empty-box .ei { font-size:36px; margin-bottom:10px; }
 
-    /* ── CHAT CARDS ─────────────────────────────────────────── */
+    /* ── CHAT CARDS ── */
     .chat-card {
-      background:var(--bg-surface); border-radius:10px;
-      border:1px solid var(--border-s);
-      padding:11px 14px; margin-bottom:8px;
-      transition:border-color .15s;
+      background:var(--bg-surface); border-radius:10px; border:1px solid var(--border-s);
+      padding:11px 14px; margin-bottom:8px; transition:border-color .15s;
     }
     .chat-card:hover { border-color:rgba(255,255,255,.1); }
-    .chat-card-meta {
-      display:flex; align-items:center; gap:6px; flex-wrap:wrap;
-      margin-bottom:5px;
-    }
+    .chat-card-meta { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:5px; }
     .chat-meta-name { font-size:12px; font-weight:800; color:var(--text); }
     .chat-meta-time { font-size:11px; color:var(--text-muted); }
     .chat-content { font-size:13px; color:var(--text-soft); line-height:1.5; word-break:break-word; }
     .chat-url { font-size:11px; color:var(--blue); margin-top:4px; }
     .chat-actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
 
-    /* ── ANNOUNCE CARD ──────────────────────────────────────── */
+    /* ── ANNOUNCE CARD ── */
     .ann-card {
-      background:var(--bg-surface); border-radius:12px;
-      border:1px solid var(--border-s); padding:14px;
-      margin-bottom:10px; display:flex; gap:12px;
-      transition:border-color .15s;
+      background:var(--bg-surface); border-radius:12px; border:1px solid var(--border-s);
+      padding:14px; margin-bottom:10px; display:flex; gap:12px; transition:border-color .15s;
     }
     .ann-card:hover { border-color:rgba(232,82,42,.2); }
-    .ann-card-icon { font-size:20px; flex-shrink:0; margin-top:1px; }
-    .ann-card-body { flex:1; min-width:0; }
+    .ann-card-icon  { font-size:20px; flex-shrink:0; margin-top:1px; }
+    .ann-card-body  { flex:1; min-width:0; }
     .ann-card-title { font-size:14px; font-weight:800; margin-bottom:3px; }
-    .ann-card-msg { font-size:13px; color:var(--text-soft); line-height:1.5; }
-    .ann-card-meta { font-size:11px; color:var(--text-muted); margin-top:5px; font-family:'JetBrains Mono',monospace; }
+    .ann-card-msg   { font-size:13px; color:var(--text-soft); line-height:1.5; }
+    .ann-card-meta  { font-size:11px; color:var(--text-muted); margin-top:5px; font-family:'JetBrains Mono',monospace; }
     .ann-card-actions { display:flex; gap:6px; margin-top:8px; }
 
-    /* ── FORM ───────────────────────────────────────────────── */
+    /* ── FORM ── */
     .form-group { margin-bottom:14px; }
-    .form-label {
-      display:block; font-size:11px; font-weight:800;
-      text-transform:uppercase; letter-spacing:.6px;
-      color:var(--text-muted); margin-bottom:5px;
-    }
+    .form-label { display:block; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); margin-bottom:5px; }
     .form-input, .form-select, .form-textarea {
-      width:100%; padding:10px 13px;
-      background:var(--bg-surface); border:1px solid var(--border);
-      border-radius:9px; color:var(--text);
-      font-family:'Nunito',sans-serif; font-size:14px;
+      width:100%; padding:10px 13px; background:var(--bg-surface); border:1px solid var(--border);
+      border-radius:9px; color:var(--text); font-family:'Nunito',sans-serif; font-size:14px;
       outline:none; transition:border .2s, background .2s;
     }
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      border-color:var(--accent); background:var(--bg-hover);
-    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--accent); background:var(--bg-hover); }
     .form-textarea { min-height:100px; resize:vertical; line-height:1.5; }
     .form-select option { background:var(--bg-card); }
 
-    /* ── MODAL ──────────────────────────────────────────────── */
-    .modal-overlay {
-      display:none; position:fixed; inset:0; z-index:1000;
-      background:rgba(0,0,0,.65); backdrop-filter:blur(8px);
-      align-items:center; justify-content:center; padding:20px;
-    }
+    /* ── MODAL ── */
+    .modal-overlay { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,.65); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:20px; }
     .modal-overlay.open { display:flex; }
     .modal {
-      background:var(--bg-card); border:1px solid var(--border);
-      border-radius:18px; padding:24px 22px;
-      width:100%; max-width:420px;
+      background:var(--bg-card); border:1px solid var(--border); border-radius:18px;
+      padding:24px 22px; width:100%; max-width:420px;
       animation:modalIn .22s cubic-bezier(.34,1.56,.64,1);
     }
-    @keyframes modalIn {
-      from{opacity:0;transform:scale(.9) translateY(10px)}
-      to  {opacity:1;transform:scale(1)  translateY(0)}
-    }
-    .modal-title { font-size:16px; font-weight:800; margin-bottom:18px; }
+    @keyframes modalIn { from{opacity:0;transform:scale(.9) translateY(10px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    .modal-title   { font-size:16px; font-weight:800; margin-bottom:18px; }
     .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
 
-    /* ── TOAST ──────────────────────────────────────────────── */
-    #adminToast {
-      position:fixed; bottom:20px; right:20px; z-index:9999;
-      display:flex; flex-direction:column; gap:8px; pointer-events:none;
-    }
+    /* ── TOAST ── */
+    #adminToast { position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
     .toast-item {
-      padding:11px 18px; border-radius:11px;
-      font-size:13px; font-weight:700;
-      animation:toastIn .25s ease;
-      box-shadow:0 4px 20px rgba(0,0,0,.4);
-      max-width:300px;
+      padding:11px 18px; border-radius:11px; font-size:13px; font-weight:700;
+      animation:toastIn .25s ease; box-shadow:0 4px 20px rgba(0,0,0,.4); max-width:300px;
     }
     .toast-item.success { background:#27ae60; color:#fff; }
     .toast-item.error   { background:var(--red); color:#fff; }
     .toast-item.info    { background:var(--blue); color:#fff; }
     @keyframes toastIn { from{opacity:0;transform:translateY(8px) scale(.95)} to{opacity:1;transform:translateY(0) scale(1)} }
 
-    /* ── GRID LAYOUTS ───────────────────────────────────────── */
+    /* ── LAYOUT ── */
     .two-col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
     .scrollbox { max-height:480px; overflow-y:auto; padding:12px; }
 
-    /* ── REALTIME INDICATOR ─────────────────────────────────── */
-    .live-dot {
-      display:inline-flex; align-items:center; gap:5px;
-      font-size:11px; color:var(--green); font-weight:700;
-    }
-    .live-dot::before {
-      content:''; width:7px; height:7px; border-radius:50%;
-      background:var(--green);
-      animation:gcPulse 2s ease infinite;
-    }
-    @keyframes gcPulse {
-      0%,100%{opacity:1;transform:scale(1)}
-      50%    {opacity:.5;transform:scale(.75)}
-    }
+    .live-dot { display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--green); font-weight:700; }
+    .live-dot::before { content:''; width:7px; height:7px; border-radius:50%; background:var(--green); animation:gcPulse 2s ease infinite; }
+    @keyframes gcPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.75)} }
 
-    /* ── MOBILE ─────────────────────────────────────────────── */
+    /* ── PAGINATION ── */
+    .pagination {
+      display:flex; align-items:center; gap:8px; padding:12px 18px;
+      border-top:1px solid var(--border-s);
+    }
+    .pagination-btn {
+      padding:5px 10px; border-radius:7px; border:1px solid var(--border);
+      background:var(--bg-surface); color:var(--text); font-size:12px; font-weight:700;
+      cursor:pointer; font-family:'Nunito',sans-serif; transition:all .15s;
+    }
+    .pagination-btn:hover:not(:disabled) { border-color:var(--accent); color:var(--accent); }
+    .pagination-btn:disabled { opacity:.35; cursor:not-allowed; }
+    .pagination-btn.active   { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .page-info-label { font-size:12px; color:var(--text-muted); font-weight:700; flex:1; text-align:center; }
+
+    /* ── SKELETON ── */
+    .lb-skeleton { height:64px; border-radius:10px; margin-bottom:8px; background:linear-gradient(90deg,rgba(255,255,255,.04) 0%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 100%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
     @media(max-width:768px) {
       :root { --sidebar-w:240px; }
-      .sidebar {
-        transform:translateX(-100%);
-      }
+      .sidebar { transform:translateX(-100%); }
       .sidebar.open { transform:translateX(0); }
       .main { margin-left:0; }
       .topbar-menu { display:flex; }
@@ -452,48 +332,30 @@
 
 <!-- ADMIN APP -->
 <div id="adminApp">
-
-  <!-- SIDEBAR OVERLAY (mobile) -->
   <div id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-head">
       <div class="sidebar-logo">Pankomik</div>
       <div class="sidebar-role" id="sidebarRole">Admin Panel</div>
     </div>
-
     <div class="nav-section">Dashboard</div>
-    <div class="nav-item active" data-page="overview" onclick="switchPage('overview')">
-      <span class="ni">📊</span> Overview
-    </div>
-
+    <div class="nav-item active" data-page="overview" onclick="switchPage('overview')"><span class="ni">📊</span> Overview</div>
     <div class="nav-section">Manajemen</div>
-    <div class="nav-item" data-page="users" onclick="switchPage('users')">
-      <span class="ni">👥</span> Pengguna
-    </div>
-    <div class="nav-item" data-page="chats" onclick="switchPage('chats')">
-      <span class="ni">💬</span> Global Chat
-    </div>
-    <div class="nav-item" data-page="announce" onclick="switchPage('announce')">
-      <span class="ni">📢</span> Pengumuman
-    </div>
-
+    <div class="nav-item" data-page="users"    onclick="switchPage('users')"><span class="ni">👥</span> Pengguna</div>
+    <div class="nav-item" data-page="chats"    onclick="switchPage('chats')"><span class="ni">💬</span> Global Chat</div>
+    <div class="nav-item" data-page="announce" onclick="switchPage('announce')"><span class="ni">📢</span> Pengumuman</div>
     <div class="nav-section">Akun</div>
-    <div class="nav-item" onclick="handleLogout()">
-      <span class="ni">🚪</span> Keluar
-    </div>
-
+    <div class="nav-item" onclick="handleLogout()"><span class="ni">🚪</span> Keluar</div>
     <div class="sidebar-footer">
       <div class="admin-av" id="adminAv">?</div>
       <div class="admin-info">
-        <div class="admin-name" id="adminName">–</div>
+        <div class="admin-name"  id="adminName">–</div>
         <div class="admin-email" id="adminEmail">–</div>
       </div>
     </div>
   </aside>
 
-  <!-- MAIN -->
   <div class="main">
     <div class="topbar">
       <button class="topbar-menu" onclick="openSidebar()">☰</button>
@@ -505,7 +367,7 @@
       </div>
     </div>
 
-    <!-- ── OVERVIEW ────────────────────────────────────────── -->
+    <!-- OVERVIEW -->
     <div class="page active" id="page-overview">
       <div class="stats-grid">
         <div class="stat-card green">
@@ -533,7 +395,6 @@
           <span class="stat-sub">Aktif di chat</span>
         </div>
       </div>
-
       <div class="two-col">
         <div class="card-box">
           <div class="card-head">
@@ -542,21 +403,11 @@
           </div>
           <div class="tbl-wrap">
             <table>
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Bergabung</th>
-                </tr>
-              </thead>
-              <tbody id="recentUsersTable">
-                <tr class="state-row"><td colspan="4">⏳ Memuat...</td></tr>
-              </tbody>
+              <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Bergabung</th></tr></thead>
+              <tbody id="recentUsersTable"><tr class="state-row"><td colspan="4">⏳ Memuat...</td></tr></tbody>
             </table>
           </div>
         </div>
-
         <div class="card-box">
           <div class="card-head">
             <h3>💬 Chat Terbaru</h3>
@@ -569,55 +420,59 @@
       </div>
     </div>
 
-    <!-- ── USERS ───────────────────────────────────────────── -->
+    <!-- USERS -->
     <div class="page" id="page-users">
       <div class="card-box">
         <div class="card-head">
           <h3>👥 Semua Pengguna <span id="userCount" style="font-size:12px;color:var(--text-muted);font-weight:700;"></span></h3>
-          <input class="search-input" placeholder="🔍 Cari nama / id..." id="userSearch" oninput="filterUsers()">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <select id="roleFilter" class="search-input" style="width:120px;" onchange="renderUsers(filterUsersData())">
+              <option value="">Semua Role</option>
+              <option value="admin">Admin</option>
+              <option value="user">User</option>
+            </select>
+            <select id="statusFilter" class="search-input" style="width:130px;" onchange="renderUsers(filterUsersData())">
+              <option value="">Semua Status</option>
+              <option value="online">Online</option>
+              <option value="banned">Banned</option>
+            </select>
+            <input class="search-input" placeholder="🔍 Cari nama / id..." id="userSearch" oninput="renderUsers(filterUsersData())">
+          </div>
         </div>
         <div class="tbl-wrap">
           <table>
             <thead>
-              <tr>
-                <th>User</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Bergabung</th>
-                <th>Last Seen</th>
-                <th>Aksi</th>
-              </tr>
+              <tr><th>User</th><th>Role</th><th>Status</th><th>Bergabung</th><th>Last Seen</th><th>Aksi</th></tr>
             </thead>
-            <tbody id="usersTable">
-              <tr class="state-row"><td colspan="6">⏳ Memuat data...</td></tr>
-            </tbody>
+            <tbody id="usersTable"><tr class="state-row"><td colspan="6">⏳ Memuat data...</td></tr></tbody>
           </table>
+        </div>
+        <div class="pagination" id="usersPagination" style="display:none;">
+          <button class="pagination-btn" id="prevPageBtn" onclick="usersPageChange(-1)">← Prev</button>
+          <span class="page-info-label" id="usersPageLabel">Hal 1</span>
+          <button class="pagination-btn" id="nextPageBtn" onclick="usersPageChange(1)">Next →</button>
         </div>
       </div>
     </div>
 
-    <!-- ── CHATS ───────────────────────────────────────────── -->
+    <!-- CHATS -->
     <div class="page" id="page-chats">
       <div class="two-col">
         <div class="card-box">
-          <div class="card-head"><h3>📌 Pesan Dipin</h3></div>
-          <div class="scrollbox" id="pinnedChatsBox">
-            <div class="empty-box"><div class="ei">⏳</div>Memuat...</div>
-          </div>
+          <div class="card-head"><h3>📌 Pesan Dipin</h3><button class="btn btn-ghost btn-sm" onclick="loadChats()">🔄</button></div>
+          <div class="scrollbox" id="pinnedChatsBox"><div class="empty-box"><div class="ei">⏳</div>Memuat...</div></div>
         </div>
         <div class="card-box">
           <div class="card-head">
             <h3>💬 Semua Pesan</h3>
             <input class="search-input" style="width:140px;" placeholder="🔍 Cari..." id="chatSearch" oninput="filterChats()">
           </div>
-          <div class="scrollbox" id="allChatsBox">
-            <div class="empty-box"><div class="ei">⏳</div>Memuat...</div>
-          </div>
+          <div class="scrollbox" id="allChatsBox"><div class="empty-box"><div class="ei">⏳</div>Memuat...</div></div>
         </div>
       </div>
     </div>
 
-    <!-- ── ANNOUNCE ────────────────────────────────────────── -->
+    <!-- ANNOUNCE -->
     <div class="page" id="page-announce">
       <div class="two-col">
         <div class="card-box">
@@ -656,17 +511,14 @@
             <h3>📋 Riwayat Pengumuman</h3>
             <button class="btn btn-ghost btn-sm" onclick="loadAnnouncements()">🔄</button>
           </div>
-          <div class="scrollbox" id="announceHistory">
-            <div class="empty-box"><div class="ei">⏳</div>Memuat...</div>
-          </div>
+          <div class="scrollbox" id="announceHistory"><div class="empty-box"><div class="ei">⏳</div>Memuat...</div></div>
         </div>
       </div>
     </div>
+  </div>
+</div>
 
-  </div><!-- .main -->
-</div><!-- #adminApp -->
-
-<!-- ── MODALS ────────────────────────────────────────────────── -->
+<!-- MODALS -->
 <div class="modal-overlay" id="userModal">
   <div class="modal">
     <p class="modal-title" id="userModalTitle">Edit Pengguna</p>
@@ -712,35 +564,34 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase     = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const ADMIN_EMAILS = ["pankomik@gmail.com","riankampank@pankomik.com","rian.samuji@gmail.com"];
 
 let currentAdmin  = null;
 let allUsers      = [];
 let allChats      = [];
+let profCache     = {};  /* ── FIX: global profile cache ── */
 let editingUserId = null;
 
-/* ── TOAST ──────────────────────────────────────────────────── */
-window.showToast = (msg, type="info") => {
+/* Pagination state */
+const USERS_PER_PAGE = 20;
+let usersPage = 1;
+
+/* ── TOAST ── */
+window.showToast = (msg, type = "info") => {
   const el = document.createElement("div");
   el.className = `toast-item ${type}`;
   el.textContent = msg;
   document.getElementById("adminToast").appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), 3200);
 };
 
-/* ── SIDEBAR MOBILE ─────────────────────────────────────────── */
-window.openSidebar = () => {
-  document.getElementById("sidebar").classList.add("open");
-  document.getElementById("sidebarOverlay").classList.add("show");
-};
-window.closeSidebar = () => {
-  document.getElementById("sidebar").classList.remove("open");
-  document.getElementById("sidebarOverlay").classList.remove("show");
-};
+/* ── SIDEBAR ── */
+window.openSidebar  = () => { document.getElementById("sidebar").classList.add("open"); document.getElementById("sidebarOverlay").classList.add("show"); };
+window.closeSidebar = () => { document.getElementById("sidebar").classList.remove("open"); document.getElementById("sidebarOverlay").classList.remove("show"); };
 
-/* ── AUTH ───────────────────────────────────────────────────── */
+/* ── AUTH ── */
 async function init() {
   const spinner = document.getElementById("gateSpinner");
   const errEl   = document.getElementById("gateErr");
@@ -762,12 +613,9 @@ async function init() {
   const user  = session.user;
   const email = user.email || "";
 
-  /* Gunakan maybeSingle() agar tidak error kalau row belum ada */
   const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, username, avatar_url")
-    .eq("id", user.id)
-    .maybeSingle();
+    .from("profiles").select("role, username, avatar_url")
+    .eq("id", user.id).maybeSingle();
 
   const isAdmin = ADMIN_EMAILS.includes(email) || profile?.role === "admin";
 
@@ -781,41 +629,33 @@ async function init() {
 
   currentAdmin = { ...user, profile };
 
-  /* Tampilkan app */
   document.getElementById("authGate").style.display = "none";
   document.getElementById("adminApp").classList.add("show");
 
-  const name = profile?.username
-    || user.user_metadata?.full_name
-    || user.user_metadata?.name
-    || email.split("@")[0];
-
+  const name = profile?.username || user.user_metadata?.full_name || user.user_metadata?.name || email.split("@")[0];
   document.getElementById("adminName").textContent  = name;
   document.getElementById("adminEmail").textContent = email;
   document.getElementById("sidebarRole").textContent = "⚡ " + (profile?.role || "admin").toUpperCase();
 
-  /* Avatar */
   const avEl  = document.getElementById("adminAv");
   const avUrl = profile?.avatar_url || user.user_metadata?.avatar_url;
   if (avUrl) {
-    avEl.innerHTML = `<img src="${avUrl}" onerror="this.parentElement.textContent='${name[0].toUpperCase()}'">`;
+    avEl.innerHTML = `<img src="${esc(avUrl)}" onerror="this.parentElement.textContent='${esc(name[0].toUpperCase())}'">`;
   } else {
     avEl.textContent = name[0].toUpperCase();
   }
 
+  /* Seed profile cache dengan admin sendiri */
+  profCache[user.id] = { username: name, avatar_url: avUrl };
+
   await Promise.all([loadStats(), loadRecentUsers(), loadRecentChats()]);
 
-  /* Auto-refresh stats setiap 30 detik */
-  setInterval(loadStats, 30000);
+  /* Auto-refresh stats setiap 30 detik — gunakan arrow fn agar tidak stale closure */
+  setInterval(() => loadStats(), 30000);
 }
 
-/* ── NAVIGATION ─────────────────────────────────────────────── */
-const PAGE_TITLES = {
-  overview: "📊 Overview",
-  users:    "👥 Kelola Pengguna",
-  chats:    "💬 Kelola Global Chat",
-  announce: "📢 Pengumuman",
-};
+/* ── NAVIGATION ── */
+const PAGE_TITLES = { overview:"📊 Overview", users:"👥 Kelola Pengguna", chats:"💬 Kelola Global Chat", announce:"📢 Pengumuman" };
 
 window.switchPage = (page) => {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -824,7 +664,6 @@ window.switchPage = (page) => {
   document.querySelector(`[data-page="${page}"]`)?.classList.add("active");
   document.getElementById("pageTitle").textContent = PAGE_TITLES[page] || page;
   closeSidebar();
-
   if (page === "users")    loadUsers();
   if (page === "chats")    loadChats();
   if (page === "announce") loadAnnouncements();
@@ -839,13 +678,12 @@ window.refreshPage = async () => {
   showToast("Diperbarui ✓", "success");
 };
 
-/* ── STATS ──────────────────────────────────────────────────── */
+/* ── STATS ── */
 async function loadStats() {
   const setVal = (id, val) => {
     const el = document.getElementById(id);
-    if (el) { el.textContent = val; el.classList.remove("stat-loading"); }
+    if (el) { el.textContent = String(val); el.classList.remove("stat-loading"); }
   };
-
   const [
     { count: uCount },
     { count: onlineCount },
@@ -853,26 +691,35 @@ async function loadStats() {
     { count: pinnedCount },
   ] = await Promise.all([
     supabase.from("profiles").select("*", { count:"exact", head:true }),
-    supabase.from("profiles").select("*", { count:"exact", head:true })
-      .gte("last_seen", new Date(Date.now() - 5*60*1000).toISOString()),
+    supabase.from("profiles").select("*", { count:"exact", head:true }).gte("last_seen", new Date(Date.now()-5*60*1000).toISOString()),
     supabase.from("global_chat").select("*", { count:"exact", head:true }),
     supabase.from("global_chat").select("*", { count:"exact", head:true }).eq("is_pinned", true),
   ]);
-
-  setVal("statUsers",  uCount    || 0);
-  setVal("statOnline", onlineCount || 0);
-  setVal("statChats",  chatCount  || 0);
-  setVal("statPinned", pinnedCount || 0);
+  setVal("statUsers",  uCount    ?? 0);
+  setVal("statOnline", onlineCount ?? 0);
+  setVal("statChats",  chatCount  ?? 0);
+  setVal("statPinned", pinnedCount ?? 0);
 }
 
-/* ── RECENT USERS ────────────────────────────────────────────── */
+/* ── BATCH PROFILES ── FIX: global cache, single query, no duplicates ── */
+async function batchProfiles(ids) {
+  const unique  = [...new Set((ids||[]).filter(Boolean))];
+  const missing = unique.filter(id => !profCache[id]);
+  if (missing.length) {
+    const { data } = await supabase.from("profiles").select("id, username, avatar_url").in("id", missing);
+    (data||[]).forEach(p => { profCache[p.id] = p; });
+  }
+  const map = {};
+  unique.forEach(id => { if (profCache[id]) map[id] = profCache[id]; });
+  return map;
+}
+
+/* ── RECENT USERS ── */
 async function loadRecentUsers() {
   const tbody = document.getElementById("recentUsersTable");
-  const { data, error } = await supabase
-    .from("profiles")
+  const { data, error } = await supabase.from("profiles")
     .select("id, username, avatar_url, role, is_banned, last_seen, created_at")
-    .order("created_at", { ascending:false })
-    .limit(5);
+    .order("created_at", { ascending:false }).limit(5);
 
   if (error || !data?.length) {
     tbody.innerHTML = `<tr class="state-row"><td colspan="4">Belum ada pengguna</td></tr>`;
@@ -886,17 +733,16 @@ async function loadRecentUsers() {
       <td>${roleBadge(u.role)}</td>
       <td>${onlineBadge(u.last_seen)} ${u.is_banned ? `<span class="badge badge-banned">Banned</span>` : ""}</td>
       <td style="font-size:12px;color:var(--text-muted);">${fmtDate(u.created_at)}</td>
-    </tr>
-  `).join("");
+    </tr>`).join("");
 }
 
-/* ── ALL USERS ───────────────────────────────────────────────── */
+/* ── ALL USERS — with pagination ── */
 async function loadUsers() {
   const tbody = document.getElementById("usersTable");
   tbody.innerHTML = `<tr class="state-row"><td colspan="6">⏳ Memuat...</td></tr>`;
+  usersPage = 1;
 
-  const { data, error } = await supabase
-    .from("profiles")
+  const { data, error } = await supabase.from("profiles")
     .select("id, username, avatar_url, role, is_banned, last_seen, created_at")
     .order("created_at", { ascending:false });
 
@@ -904,19 +750,43 @@ async function loadUsers() {
     tbody.innerHTML = `<tr class="state-row"><td colspan="6">❌ Gagal: ${esc(error.message)}</td></tr>`;
     return;
   }
-
   allUsers = data || [];
   document.getElementById("userCount").textContent = `(${allUsers.length})`;
   renderUsers(allUsers);
 }
 
+/* ── FIX: filter dengan role + status + search ── */
+window.filterUsersData = function() {
+  const q      = (document.getElementById("userSearch")?.value || "").toLowerCase();
+  const role   = document.getElementById("roleFilter")?.value || "";
+  const status = document.getElementById("statusFilter")?.value || "";
+
+  return allUsers.filter(u => {
+    const matchQ = !q || (u.username||"").toLowerCase().includes(q) || u.id.toLowerCase().includes(q);
+    const matchR = !role   || u.role === role;
+    const matchS = !status ||
+      (status === "banned" && u.is_banned) ||
+      (status === "online" && Date.now() - new Date(u.last_seen||0).getTime() < 5*60*1000);
+    return matchQ && matchR && matchS;
+  });
+};
+
 function renderUsers(list) {
-  const tbody = document.getElementById("usersTable");
+  const tbody   = document.getElementById("usersTable");
+  const pagWrap = document.getElementById("usersPagination");
+
   if (!list.length) {
     tbody.innerHTML = `<tr class="state-row"><td colspan="6">Tidak ada pengguna</td></tr>`;
+    pagWrap.style.display = "none";
     return;
   }
-  tbody.innerHTML = list.map(u => `
+
+  const totalPages = Math.ceil(list.length / USERS_PER_PAGE);
+  if (usersPage > totalPages) usersPage = totalPages;
+  const start   = (usersPage-1) * USERS_PER_PAGE;
+  const pageData = list.slice(start, start + USERS_PER_PAGE);
+
+  tbody.innerHTML = pageData.map(u => `
     <tr>
       <td>
         <div class="user-cell">
@@ -928,33 +798,39 @@ function renderUsers(list) {
         </div>
       </td>
       <td>${roleBadge(u.role)}</td>
-      <td>
-        ${onlineBadge(u.last_seen)}
-        ${u.is_banned ? `<span class="badge badge-banned">Banned</span>` : ""}
-      </td>
+      <td>${onlineBadge(u.last_seen)} ${u.is_banned ? `<span class="badge badge-banned">Banned</span>` : ""}</td>
       <td style="font-size:12px;color:var(--text-muted);">${fmtDate(u.created_at)}</td>
       <td style="font-size:12px;color:var(--text-muted);">${fmtAgo(u.last_seen)}</td>
       <td>
         <div class="td-actions">
-          <button class="btn btn-ghost btn-xs" onclick="openUserEdit('${u.id}','${u.role || "user"}','${!!u.is_banned}')">✏️</button>
+          <button class="btn btn-ghost btn-xs" onclick="openUserEdit('${u.id}','${u.role||'user'}','${!!u.is_banned}')">✏️</button>
           ${u.is_banned
             ? `<button class="btn btn-success btn-xs" onclick="unbanUser('${u.id}')">✅ Unban</button>`
             : `<button class="btn btn-danger btn-xs" onclick="banUser('${u.id}')">🚫 Ban</button>`
           }
         </div>
       </td>
-    </tr>
-  `).join("");
+    </tr>`).join("");
+
+  /* Pagination */
+  if (totalPages <= 1) {
+    pagWrap.style.display = "none";
+  } else {
+    pagWrap.style.display = "flex";
+    document.getElementById("prevPageBtn").disabled = usersPage <= 1;
+    document.getElementById("nextPageBtn").disabled = usersPage >= totalPages;
+    document.getElementById("usersPageLabel").textContent = `Hal ${usersPage} / ${totalPages} (${list.length} user)`;
+  }
 }
 
-window.filterUsers = () => {
-  const q = document.getElementById("userSearch").value.toLowerCase();
-  renderUsers(allUsers.filter(u =>
-    (u.username||"").toLowerCase().includes(q) || u.id.toLowerCase().includes(q)
-  ));
+window.usersPageChange = function(dir) {
+  usersPage += dir;
+  renderUsers(filterUsersData());
+  /* Scroll ke atas tabel */
+  document.getElementById("usersTable")?.closest(".tbl-wrap")?.scrollIntoView({ behavior:"smooth", block:"start" });
 };
 
-/* ── USER ACTIONS ────────────────────────────────────────────── */
+/* ── USER ACTIONS ── */
 window.openUserEdit = (id, role, banned) => {
   editingUserId = id;
   document.getElementById("editRole").value   = role;
@@ -967,13 +843,13 @@ window.saveUserEdit = async () => {
   if (!editingUserId) return;
   const role   = document.getElementById("editRole").value;
   const banned = document.getElementById("editBanned").value === "true";
-  const { error } = await supabase.from("profiles")
-    .update({ role, is_banned:banned })
-    .eq("id", editingUserId);
+  const { error } = await supabase.from("profiles").update({ role, is_banned:banned }).eq("id", editingUserId);
   if (error) { showToast("Gagal: " + error.message, "error"); return; }
   showToast("Disimpan ✓", "success");
   closeModal("userModal");
-  loadUsers();
+  /* Invalidate cache untuk user ini */
+  delete profCache[editingUserId];
+  await loadUsers();
 };
 
 window.banUser = async (id) => {
@@ -981,33 +857,30 @@ window.banUser = async (id) => {
   const { error } = await supabase.from("profiles").update({ is_banned:true }).eq("id", id);
   if (error) { showToast("Gagal ban", "error"); return; }
   showToast("Pengguna di-ban", "info");
-  loadUsers();
+  delete profCache[id];
+  await loadUsers();
 };
 window.unbanUser = async (id) => {
   const { error } = await supabase.from("profiles").update({ is_banned:false }).eq("id", id);
   if (error) { showToast("Gagal unban", "error"); return; }
   showToast("Pengguna di-unban ✓", "success");
-  loadUsers();
+  delete profCache[id];
+  await loadUsers();
 };
 
-/* ── CHATS ───────────────────────────────────────────────────── */
+/* ── CHATS ── FIX: profMap dipakai dengan benar di filterChats ── */
 async function loadRecentChats() {
   const box = document.getElementById("recentChatsBox");
-
-  /* Ambil chat, lalu batch fetch profiles */
-  const { data: chatData } = await supabase
-    .from("global_chat")
+  const { data: chatData } = await supabase.from("global_chat")
     .select("id, user_id, message, is_pinned, is_announcement, page_url, created_at")
-    .order("created_at", { ascending:false })
-    .limit(8);
+    .order("created_at", { ascending:false }).limit(8);
 
   if (!chatData?.length) {
     box.innerHTML = `<div class="empty-box"><div class="ei">💬</div>Belum ada chat</div>`;
     return;
   }
-
-  const profileMap = await batchProfiles(chatData.map(c => c.user_id));
-  box.innerHTML = chatData.map(c => chatCardHtml(c, profileMap, false)).join("");
+  const profMap = await batchProfiles(chatData.map(c => c.user_id));
+  box.innerHTML = chatData.map(c => chatCardHtml(c, profMap, false)).join("");
 }
 
 async function loadChats() {
@@ -1026,7 +899,8 @@ async function loadChats() {
   ]);
 
   allChats = all || [];
-  const allIds  = [...new Set([...(pinned||[]), ...allChats].map(c => c.user_id))];
+  /* Batch fetch semua profile sekaligus */
+  const allIds  = [...new Set([...(pinned||[]), ...allChats].map(c => c.user_id).filter(Boolean))];
   const profMap = await batchProfiles(allIds);
 
   pinnedBox.innerHTML = (pinned||[]).length
@@ -1039,12 +913,19 @@ async function loadChats() {
 }
 
 function chatCardHtml(c, profMap, showActions) {
-  const name = profMap[c.user_id]?.username || "–";
-  const avatar = profMap[c.user_id]?.avatar_url;
+  /* FIX: profMap sekarang selalu terisi dengan benar */
+  const prof   = profMap[c.user_id] || {};
+  const name   = prof.username || "–";
+  const avatar = prof.avatar_url;
+
   const badges = [
     c.is_pinned       ? `<span class="badge badge-pin">📌 Pin</span>` : "",
     c.is_announcement ? `<span class="badge badge-ann">📢</span>`     : "",
   ].filter(Boolean).join(" ");
+
+  const avatarEl = avatar
+    ? `<img src="${esc(avatar)}" style="width:22px;height:22px;border-radius:50%;margin-right:5px;flex-shrink:0;" onerror="this.style.display='none'">`
+    : `<span style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--accent);flex-shrink:0;margin-right:5px;">${(name[0]||"?").toUpperCase()}</span>`;
 
   const actions = showActions ? `
     <div class="chat-actions">
@@ -1058,10 +939,7 @@ function chatCardHtml(c, profMap, showActions) {
   return `
     <div class="chat-card">
       <div class="chat-card-meta">
-        ${avatar
-          ? `<img src="${esc(avatar)}" class="av-sm" style="width:22px;height:22px;margin-right:5px;" onerror="this.style.display='none'">`
-          : `<span style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--accent);flex-shrink:0;margin-right:5px;">${(name[0]||"?").toUpperCase()}</span>`
-        }
+        ${avatarEl}
         <span class="chat-meta-name">${esc(name)}</span>
         <span class="chat-meta-time">${fmtAgo(c.created_at)}</span>
         ${badges}
@@ -1072,49 +950,45 @@ function chatCardHtml(c, profMap, showActions) {
     </div>`;
 }
 
+/* FIX: filterChats sekarang menggunakan profCache yang terisi ── */
 window.filterChats = () => {
   const q = document.getElementById("chatSearch").value.toLowerCase();
   const filtered = allChats.filter(c => (c.message||"").toLowerCase().includes(q));
-  document.getElementById("allChatsBox").innerHTML = filtered.length
-    ? filtered.map(c => chatCardHtml(c, {}, true)).join("")
-    : `<div class="empty-box"><div class="ei">🔍</div>Tidak ditemukan</div>`;
+  const box = document.getElementById("allChatsBox");
+  if (!filtered.length) {
+    box.innerHTML = `<div class="empty-box"><div class="ei">🔍</div>Tidak ditemukan</div>`;
+    return;
+  }
+  /* Pakai profCache yang sudah ada — tidak perlu fetch ulang */
+  const profMap = {};
+  filtered.forEach(c => { if (profCache[c.user_id]) profMap[c.user_id] = profCache[c.user_id]; });
+  box.innerHTML = filtered.map(c => chatCardHtml(c, profMap, true)).join("");
 };
 
-window.pinChat = async (id) => {
-  const { error } = await supabase.from("global_chat").update({ is_pinned:true }).eq("id", id);
-  if (error) { showToast("Gagal pin", "error"); return; }
-  showToast("Dipin ✓", "success"); loadChats();
-};
-window.unpinChat = async (id) => {
-  const { error } = await supabase.from("global_chat").update({ is_pinned:false }).eq("id", id);
-  if (error) { showToast("Gagal", "error"); return; }
-  showToast("Pin dicabut", "info"); loadChats();
-};
+window.pinChat   = async (id) => { const { error } = await supabase.from("global_chat").update({ is_pinned:true }).eq("id",id); if(error){showToast("Gagal pin","error");return;} showToast("Dipin ✓","success"); loadChats(); };
+window.unpinChat = async (id) => { const { error } = await supabase.from("global_chat").update({ is_pinned:false }).eq("id",id); if(error){showToast("Gagal","error");return;} showToast("Pin dicabut","info"); loadChats(); };
 window.deleteChat = async (id) => {
   if (!confirm("Hapus pesan ini?")) return;
   const { error } = await supabase.from("global_chat").delete().eq("id", id);
   if (error) { showToast("Gagal hapus: " + error.message, "error"); return; }
-  showToast("Dihapus", "info"); loadChats(); loadStats();
+  showToast("Dihapus", "info");
+  loadChats(); loadStats();
 };
 
-/* ── ANNOUNCEMENTS ───────────────────────────────────────────── */
+/* ── ANNOUNCEMENTS ── */
 async function loadAnnouncements() {
   const box = document.getElementById("announceHistory");
-  const { data, error } = await supabase
-    .from("global_chat")
+  box.innerHTML = `<div class="empty-box"><div class="ei">⏳</div>Memuat...</div>`;
+  const { data, error } = await supabase.from("global_chat")
     .select("id, user_id, message, ann_title, ann_type, is_pinned, created_at")
-    .eq("is_announcement", true)
-    .order("created_at", { ascending:false })
-    .limit(20);
+    .eq("is_announcement", true).order("created_at", { ascending:false }).limit(20);
 
   if (error || !data?.length) {
     box.innerHTML = `<div class="empty-box"><div class="ei">📋</div>Belum ada pengumuman</div>`;
     return;
   }
-
   const profMap = await batchProfiles(data.map(a => a.user_id));
   const icons   = { info:"ℹ️", warning:"⚠️", success:"✅", update:"🚀" };
-
   box.innerHTML = data.map(a => `
     <div class="ann-card">
       <div class="ann-card-icon">${icons[a.ann_type] || "📢"}</div>
@@ -1133,8 +1007,7 @@ async function loadAnnouncements() {
           }
         </div>
       </div>
-    </div>
-  `).join("");
+    </div>`).join("");
 }
 
 window.sendAnnouncement = async () => {
@@ -1143,22 +1016,14 @@ window.sendAnnouncement = async () => {
   const type    = document.getElementById("annType").value;
   const doPin   = document.getElementById("annPin").checked;
   const btn     = document.getElementById("annSendBtn");
-
   if (!content) { showToast("Isi pesan tidak boleh kosong", "error"); return; }
-
   btn.disabled = true; btn.textContent = "Mengirim...";
-
   const { error } = await supabase.from("global_chat").insert({
-    user_id:         currentAdmin.id,
-    message:         content,
-    is_pinned:       doPin,
-    is_announcement: true,
-    ann_title:       title || "Pengumuman",
-    ann_type:        type,
+    user_id: currentAdmin.id, message: content,
+    is_pinned: doPin, is_announcement: true,
+    ann_title: title || "Pengumuman", ann_type: type,
   });
-
   btn.disabled = false; btn.textContent = "📢 Kirim ke Global Chat";
-
   if (error) { showToast("Gagal: " + error.message, "error"); return; }
   showToast("Pengumuman terkirim ✓", "success");
   document.getElementById("annTitle").value = "";
@@ -1171,9 +1036,8 @@ window.sendQuickAnnouncement = async () => {
   const content = document.getElementById("quickAnnContent").value.trim();
   if (!content) return;
   const { error } = await supabase.from("global_chat").insert({
-    user_id:currentAdmin.id, message:content,
-    is_pinned:true, is_announcement:true, ann_type:"info",
-    ann_title:"Pengumuman",
+    user_id: currentAdmin.id, message: content,
+    is_pinned: true, is_announcement: true, ann_type: "info", ann_title: "Pengumuman",
   });
   if (error) { showToast("Gagal: " + error.message, "error"); return; }
   showToast("Terkirim ✓", "success");
@@ -1182,38 +1046,24 @@ window.sendQuickAnnouncement = async () => {
   loadStats();
 };
 
-/* ── MODAL ───────────────────────────────────────────────────── */
+/* ── MODAL ── */
 window.openModal  = id => document.getElementById(id)?.classList.add("open");
 window.closeModal = id => document.getElementById(id)?.classList.remove("open");
 document.querySelectorAll(".modal-overlay").forEach(o =>
   o.addEventListener("click", e => { if (e.target === o) o.classList.remove("open"); })
 );
 
-/* ── LOGOUT ──────────────────────────────────────────────────── */
+/* ── FIX LOGOUT: gunakan supabase.auth.signOut() secara eksplisit ── */
 window.handleLogout = async () => {
   if (!confirm("Keluar dari panel admin?")) return;
   await supabase.auth.signOut();
   window.location.href = "/";
 };
 
-/* ── HELPERS ─────────────────────────────────────────────────── */
-
-/* Batch fetch profiles — 1 query untuk semua user_id */
-async function batchProfiles(ids) {
-  const unique = [...new Set((ids||[]).filter(Boolean))];
-  if (!unique.length) return {};
-  const { data } = await supabase
-    .from("profiles").select("id, username, avatar_url")
-    .in("id", unique);
-  const map = {};
-  (data||[]).forEach(p => { map[p.id] = p; });
-  return map;
-}
-
+/* ── HELPERS ── */
 function avHtml(u) {
   const name = u.username || "?";
-  if (u.avatar_url)
-    return `<img src="${esc(u.avatar_url)}" class="av-sm" onerror="this.style.display='none'">`;
+  if (u.avatar_url) return `<img src="${esc(u.avatar_url)}" class="av-sm" onerror="this.style.display='none'">`;
   return `<div class="av-placeholder">${name[0].toUpperCase()}</div>`;
 }
 function roleBadge(role) {
@@ -1229,7 +1079,7 @@ function onlineBadge(lastSeen) {
 }
 function fmtDate(d) {
   if (!d) return "–";
-  return new Date(d).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"});
+  return new Date(d).toLocaleDateString("id-ID", {day:"2-digit",month:"short",year:"numeric"});
 }
 function fmtAgo(d) {
   if (!d) return "–";
