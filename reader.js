@@ -183,26 +183,46 @@ async function loadChapter() {
       if (btn) { btn.textContent = "▶️ Mulai Auto Scroll"; btn.classList.remove("running"); }
     }
 
-    /* ── Load chapter: coba API sesuai source terakhir, fallback ke yang lain ── */
+    /* ── Tentukan source API yang dipakai ──────────────────
+       Prioritas:
+       1. komikSrcHint dari sessionStorage (di-set saat klik kartu di index)
+          → gunakan source itu SAJA, tanpa fallback ke API lain
+          → agar slug chapter konsisten index → detail → reader
+       2. Tidak ada hint → coba urutan berdasarkan currentApiSource,
+          fallback ke API lain kalau gagal
+    ── */
+    const _srcHint     = sessionStorage.getItem("komikSrcHint") || "";
+    const _srcSlugHint = sessionStorage.getItem("komikSrcSlug") || "";
+    /* Hint valid kalau:
+       - currentApiSource sudah cocok (navigasi dalam reader yang sama)
+       - ATAU komikSrcSlug cocok dengan komikSlug yang sedang dibaca */
+    const _hintValid = _srcHint && (
+      currentApiSource === _srcHint ||
+      (komikSlug && _srcSlugHint === komikSlug)
+    );
+    const _pinnedSource = _hintValid ? _srcHint : "";
+
     let d = null;
     let _apiSource = currentApiSource;
 
-    /* Urutkan API berdasarkan source yang terakhir berhasil */
     const _APIs = {
-      komikindo:   { fetch: (s) => fetch(API_CHAPTER  + s).then(r=>r.json()), norm: null           },
-      mangakita:   { fetch: (s) => fetch(API_CHAPTER_2 + s).then(r=>r.json()), norm: "mangakita"   },
-      bacakomik:   { fetch: (s) => fetch(API_CHAPTER_3 + s).then(r=>r.json()), norm: "bacakomik"   },
-      komikstation:{ fetch: (s) => fetch(API_CHAPTER_4 + s).then(r=>r.json()), norm: "komikstation"},
+      komikindo:   { fetch: (s) => fetch(API_CHAPTER  + s).then(r=>r.json()) },
+      mangakita:   { fetch: (s) => fetch(API_CHAPTER_2 + s).then(r=>r.json()) },
+      bacakomik:   { fetch: (s) => fetch(API_CHAPTER_3 + s).then(r=>r.json()) },
+      komikstation:{ fetch: (s) => fetch(API_CHAPTER_4 + s).then(r=>r.json()) },
     };
 
-    /* Komikstation dulukan kalau source hint dari detail page adalah komikstation */
-    const _order = currentApiSource === "komikstation"
-      ? ["komikstation", "komikindo", "mangakita", "bacakomik"]
-      : currentApiSource === "mangakita"
-      ? ["mangakita", "komikstation", "bacakomik", "komikindo"]
-      : currentApiSource === "bacakomik"
-      ? ["bacakomik", "komikstation", "komikindo", "mangakita"]
-      : ["komikindo", "komikstation", "mangakita", "bacakomik"];
+    /* Urutan: kalau ada hint → source itu saja (tidak fallback)
+               kalau tidak ada hint → source terbaik duluan, fallback ke yang lain */
+    const _order = _pinnedSource
+      ? [_pinnedSource]   /* HANYA source yang dipilih user, tidak ada fallback */
+      : currentApiSource === "komikstation"
+        ? ["komikstation", "komikindo", "mangakita", "bacakomik"]
+        : currentApiSource === "mangakita"
+        ? ["mangakita", "komikstation", "bacakomik", "komikindo"]
+        : currentApiSource === "bacakomik"
+        ? ["bacakomik", "komikstation", "komikindo", "mangakita"]
+        : ["komikindo", "komikstation", "mangakita", "bacakomik"];
 
     for (const key of _order) {
       try {
@@ -211,7 +231,6 @@ async function loadChapter() {
           if (!json.success || !json.data) throw new Error("no data");
           d = json.data;
         } else {
-          /* komikstation, mangakita, bacakomik: success + images langsung di root */
           if (!json.success || !json.images?.length) throw new Error("no images");
           d = _normalizeChapter(json, key);
         }
@@ -219,12 +238,16 @@ async function loadChapter() {
         break;
       } catch(e) {
         console.warn(`[Reader] ${key} gagal:`, e.message);
+        /* Kalau source pinned gagal, jangan fallback — tampilkan error */
+        if (_pinnedSource) throw new Error(`API ${key} gagal memuat chapter ini`);
       }
     }
     if (!d) throw new Error("Semua API gagal");
-    console.log("[Reader] Loaded from:", _apiSource);
-    currentApiSource = _apiSource; /* simpan untuk navigasi next/prev */
-    sessionStorage.setItem("komikSource", _apiSource);
+    console.log(`[Reader] source=${_apiSource} pinned=${_pinnedSource||"no"} chapter=${currentChapterSlug}`);
+    /* Simpan source — kalau pinned, pastikan currentApiSource ikut source tersebut
+       agar navigasi next/prev chapter tetap pakai API yang sama */
+    currentApiSource = _pinnedSource || _apiSource;
+    sessionStorage.setItem("komikSource", currentApiSource);
 
     /* Reset progress bar */
     const bar = document.getElementById("readingProgressBar");
