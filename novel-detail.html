@@ -195,13 +195,6 @@
     }
     .ch-read-btn:hover { background: #7d3c98; }
 
-    /* Last-read highlight */
-    .novel-chapter-item.chapter-last-read {
-      background: rgba(124,58,237,0.08);
-      border-left: 3px solid rgba(124,58,237,0.5);
-      padding-left: 11px;
-    }
-
     /* Sort toggle */
     .ch-sort-btn {
       padding: 4px 10px; border-radius: 6px;
@@ -211,6 +204,29 @@
       transition: border-color 0.15s, color 0.15s;
     }
     .ch-sort-btn:hover { border-color: var(--purple); color: var(--purple); }
+
+    /* ── Last-read chapter highlight ─────────────────────── */
+    .novel-chapter-item.chapter-last-read {
+      background: rgba(124,58,237,0.08);
+      border-left: 3px solid rgba(124,58,237,0.45);
+      padding-left: 11px;
+    }
+
+    /* ── Chapter search input ─────────────────────────────── */
+    .chapter-search-wrap { padding: 0 16px 8px; }
+    .chapter-search-input {
+      width: 100%; padding: 9px 14px;
+      border-radius: 99px;
+      border: 1px solid rgba(124,58,237,0.25);
+      background: rgba(124,58,237,0.08);
+      color: var(--text); font-family: 'Nunito', sans-serif; font-size: 13px;
+      outline: none; box-sizing: border-box; transition: border-color 0.2s, background 0.2s;
+    }
+    .chapter-search-input:focus {
+      border-color: rgba(124,58,237,0.5);
+      background: rgba(124,58,237,0.12);
+    }
+    .chapter-search-input::placeholder { color: var(--muted, #7a6e8a); }
 
     /* ── Loading skeleton ─────────────────────────────────── */
     .skel {
@@ -393,16 +409,28 @@ async function loadDetail() {
     novelDataCache = json.data;
     renderDetail(json.data);
 
-    /* Setelah render, cek bookmark & last read secara paralel */
+    /* Setelah render, cek bookmark & last read secara terpisah.
+       getLastNovelRead pakai .single() yg throw error kalau tidak ada data —
+       pisahkan agar error-nya tidak merusak flow utama */
     if (currentUser && window._supabase) {
-      const [bmStatus, lastRead] = await Promise.all([
-        window._supabase.checkNovelBookmark(currentUser.id, slug),
-        window._supabase.getLastNovelRead(currentUser.id, slug)
-      ]);
-      isBookmarked    = bmStatus.isBookmarked;
-      currentKategori = bmStatus.kategori || "favorit";
-      updateBookmarkUI();
-      if (lastRead) updateLastReadUI(lastRead);
+      /* Bookmark */
+      try {
+        const bmStatus  = await window._supabase.checkNovelBookmark(currentUser.id, slug);
+        isBookmarked    = bmStatus.isBookmarked;
+        currentKategori = bmStatus.kategori || "favorit";
+        updateBookmarkUI();
+      } catch(e) { console.warn("[Detail] bookmark check error:", e); }
+
+      /* Last read */
+      try {
+        const lastRead = await window._supabase.getLastNovelRead(currentUser.id, slug);
+        if (lastRead && lastRead.chapter_slug) {
+          updateLastReadUI(lastRead);
+        }
+      } catch(e) {
+        /* Normal jika user belum pernah baca novel ini */
+        console.info("[Detail] Belum ada riwayat baca:", e?.message || e);
+      }
     }
   } catch (err) {
     console.error("Gagal load detail:", err);
@@ -421,128 +449,44 @@ async function loadDetail() {
 
 /* ── Placeholder saat gambar tidak muncul ─────────────── */
 function posterFallback(el, title) {
-  var original = el.getAttribute("data-original") || el.src || "";
-  var clean = original.split("?")[0];
-  var step = parseInt(el.getAttribute("data-fb-step") || "0");
-  step++;
-  el.setAttribute("data-fb-step", step);
-
-  if (step === 1) {
-    /* Step 1: WordPress Jetpack CDN — bypass Cloudflare untuk sakuranovel */
-    try {
-      var u = new URL(clean);
-      if (u.pathname.includes("/wp-content/")) {
-        el.src = "https://i0.wp.com/" + u.hostname + u.pathname + "?w=300&ssl=1&quality=85";
-        return;
-      }
-    } catch(e) {}
-    /* Bukan WP → langsung ke /api/img */
-    el.src = "/api/img?url=" + encodeURIComponent(clean);
-    return;
-  }
-  if (step === 2) {
-    /* Step 2: /api/img */
-    el.src = "/api/img?url=" + encodeURIComponent(clean);
-    return;
-  }
-  if (step === 3) {
-    /* Step 3: weserv.nl */
-    var c = clean.replace(/^https?:\/\//, "");
-    el.src = "https://images.weserv.nl/?url=" + encodeURIComponent(c) + "&w=300&output=webp&q=80";
-    return;
-  }
-  /* Step 4+: placeholder div */
-  const initials = (title || "N").slice(0, 2).toUpperCase();
-  el.outerHTML = `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;
-    background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:4px;">
-    <span style="font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;letter-spacing:2px;">${initials}</span>
-    <span style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Novel</span>
-  </div>`;
+  /* Proxy gagal → langsung placeholder */
+  el.onerror = null;
+  var initials = (title || "N").slice(0, 2).toUpperCase();
+  el.outerHTML = '<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;' +
+    'background:linear-gradient(135deg,#2d1b4e,#7c3aed);display:flex;flex-direction:column;' +
+    'align-items:center;justify-content:center;gap:4px;">' +
+    '<span style="font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;letter-spacing:2px;">' + initials + '</span>' +
+    '<span style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Novel</span>' +
+    '</div>';
 }
 
 /* ============================================================
-   IMAGE PROXY — Multi-layer fallback bypass Cloudflare
-   sakuranovel.id dilindungi Cloudflare Bot Protection
-   Strategi: coba images.weserv.nl → wsrv.nl → langsung (fallback)
+   IMAGE PROXY — proxy.sankavolereii.my.id
+   Format: https://proxy.sankavolereii.my.id/{url_asli_lengkap}
+   JANGAN encode URL — append langsung setelah slash
    ============================================================ */
-
-/* ── WordPress Jetpack CDN — bypass Cloudflare untuk sakuranovel.id ──
-   i0.wp.com adalah CDN resmi WordPress.com yang bisa serve gambar
-   dari semua WordPress site tanpa hotlink protection / Cloudflare block.
-   Format: https://i0.wp.com/{domain}/{path}?w=300&ssl=1 */
-function toWpCdn(url, width) {
+function proxyImg(url) {
   if (!url) return "";
-  try {
-    var clean = url.split("?")[0];
-    var m = clean.match(/^https?:\/\/([^/]+)(\/.+)$/);
-    if (!m) return "";
-    var domain = m[1];
-    var path   = m[2];
-    var w = width || 300;
-    return "https://i0.wp.com/" + domain + path + "?w=" + w + "&ssl=1&quality=85";
-  } catch(e) { return ""; }
-}
-
-function proxyImg(url, width) {
-  if (!url) return "";
-  if (url.includes("/api/img") || url.includes("wp.com") ||
-      url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
-  var w = width || 300;
-  /* WordPress.com CDN — bypass Cloudflare sakuranovel.id */
-  try {
-    var u = new URL(url);
-    if (u.pathname.includes("/wp-content/")) {
-      return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=" + w + "&ssl=1&quality=85";
-    }
-  } catch(e) {}
-  var clean = url.split("?")[0];
-  return "/api/img?url=" + encodeURIComponent(clean);
+  if (url.startsWith("data:")) return url;
+  if (url.includes("proxy.sankavolereii.my.id")) return url;
+  if (url.startsWith("/")) url = "https://sakuranovel.id" + url;
+  if (!url.startsWith("http")) url = "https://" + url;
+  return "https://proxy.sankavolereii.my.id/" + url;
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
   var img = document.createElement("img");
   img.alt = altText || "";
   if (cssText) img.style.cssText = cssText;
+  if (!originalUrl) return img;
 
-  var clean = (originalUrl || "").split("?")[0];
-  var step  = 0;
-
-  function getUrl(n) {
-    /* Step 0: WordPress.com CDN — bypass Cloudflare */
-    if (n === 0) {
-      try {
-        var u = new URL(clean);
-        if (u.pathname.includes("/wp-content/")) {
-          return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=300&ssl=1&quality=85";
-        }
-      } catch(e) {}
-      return "/api/img?url=" + encodeURIComponent(clean);
-    }
-    /* Step 1: /api/img */
-    if (n === 1) return "/api/img?url=" + encodeURIComponent(clean);
-    /* Step 2: weserv.nl */
-    if (n === 2) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean.replace(/^https?:\/\//, "")) + "&w=300&output=webp&q=80";
-    /* Step 3: direct */
-    return originalUrl;
-  }
-
-  function onImgError() {
-    step++;
+  img.onerror = function() {
     img.onerror = null;
-    console.warn("[Novel Detail] img error, trying step=" + step, clean.substring(0, 70));
-    if (step <= 3) {
-      img.onerror = onImgError;
-      img.src = getUrl(step);
-    } else {
-      img.style.display = "none";
-      var sib = img.nextElementSibling;
-      if (sib) sib.style.display = "flex";
-    }
-  }
-
-  img.onerror = onImgError;
-  img.src = getUrl(0);
+    img.style.display = "none";
+    var sib = img.nextElementSibling;
+    if (sib) sib.style.display = "flex";
+  };
+  img.src = proxyImg(originalUrl);
   return img;
 }
 
@@ -551,7 +495,7 @@ function renderDetail(d) {
   document.title = `${d.title} — Pankomik`;
   allChapters    = d.chapters || [];
   const info     = d.info || {};
-  const poster   = proxyImg(d.poster || "", 420);
+  const poster   = proxyImg(d.poster || "");
 
   /* Status chip color */
   const statusClass = (d.status || "").toLowerCase() === "completed"
@@ -583,9 +527,8 @@ function renderDetail(d) {
       <div class="novel-hero-content">
         ${d.poster
           ? `<img class="novel-poster" src="${proxyImg(d.poster)}" alt="${escHtml(d.title)}"
-               data-original="${escHtml(d.poster)}"
                onerror="posterFallback(this, '${escHtml(d.title)}')">`
-          : `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;">
+          : `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#2d1b4e,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;">
               ${(d.title||"N").slice(0,2).toUpperCase()}
              </div>`
         }
@@ -662,23 +605,24 @@ function renderDetail(d) {
     <!-- ── Chapter list ── -->
     <div class="section-head">
       <h3>📚 Daftar Chapter
-        <span style="font-size:12px;font-weight:400;color:var(--muted,#7a6e8a);margin-left:4px;">(${allChapters.length})</span>
+        <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:4px;">(${allChapters.length})</span>
       </h3>
       ${allChapters.length > 1
         ? `<button class="ch-sort-btn" id="sortBtn" onclick="toggleSort()">↑↓ Terlama dulu</button>`
         : ""
       }
     </div>
-    ${allChapters.length > 8 ? `
-      <div style="padding:0 16px 8px;">
-        <input type="text" class="chapter-search-input"
-          placeholder="🔍 Cari chapter..."
-          oninput="filterChapterList(this.value)"
-          style="width:100%;padding:8px 14px;border-radius:99px;border:1px solid rgba(124,58,237,0.25);background:rgba(124,58,237,0.08);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;outline:none;box-sizing:border-box;">
-      </div>` : ""}
+    ${allChapters.length > 8
+      ? `<div class="chapter-search-wrap">
+           <input type="text" class="chapter-search-input"
+             placeholder="🔍 Cari chapter..."
+             oninput="filterChapterList(this.value)">
+         </div>`
+      : ""
+    }
     ${allChapters.length > 0
       ? `<div class="novel-chapter-list" id="chapterList"></div>`
-      : `<p style="padding:0 16px 12px;font-size:13px;color:var(--muted,#7a6e8a);">Belum ada chapter tersedia.</p>`
+      : `<p style="padding:0 16px 12px;font-size:13px;color:var(--text-muted);">Belum ada chapter tersedia.</p>`
     }
 
     <div class="page-bottom"></div>
@@ -695,8 +639,6 @@ function renderDetail(d) {
 }
 
 /* ── RENDER CHAPTER LIST ──────────────────────────────────── */
-let _lastReadSlug = "";
-
 function renderChapterList(filterQ) {
   const list = document.getElementById("chapterList");
   if (!list) return;
@@ -706,26 +648,28 @@ function renderChapterList(filterQ) {
   const filtered = q ? ordered.filter(ch => (ch.title || "").toLowerCase().includes(q)) : ordered;
 
   if (!filtered.length) {
-    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted,#7a6e8a);font-size:13px;">Tidak ada chapter yang cocok.</div>`;
+    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted,#7a6e8a);font-size:13px;">Tidak ada chapter yang cocok.</div>`;
     return;
   }
 
   list.innerHTML = filtered.map((ch) => {
-    const idx   = ordered.indexOf(ch);
-    const num   = chaptersAsc ? idx + 1 : allChapters.length - idx;
-    const title = ch.title || `Chapter ${num}`;
-    const date  = ch.date  || "";
-    const cSlug = ch.slug  || "";
-    const isLR  = _lastReadSlug && cSlug === _lastReadSlug;
-    const short = title.length > 55 ? title.slice(0, 52) + "…" : title;
+    const idx      = ordered.indexOf(ch);
+    const num      = chaptersAsc ? idx + 1 : allChapters.length - idx;
+    const title    = ch.title || `Chapter ${num}`;
+    const date     = ch.date  || "";
+    const cSlug    = ch.slug  || "";
+    const isLR     = _lastReadSlug && cSlug === _lastReadSlug;
+    const short    = title.length > 55 ? title.slice(0, 52) + "…" : title;
 
     return `
-      <div class="novel-chapter-item ${isLR ? "chapter-last-read" : ""}"
+      <div class="novel-chapter-item${isLR ? " chapter-last-read" : ""}"
            onclick="readChapter('${escHtml(cSlug)}')">
-        <div class="ch-num" ${isLR ? 'style="background:rgba(124,58,237,0.25);color:#c4a0ff;"' : ""}>${num}</div>
+        <div class="ch-num"${isLR ? ' style="background:rgba(124,58,237,0.25);color:#c4a0ff;"' : ""}>${num}</div>
         <div class="ch-info">
-          <div class="ch-title" ${isLR ? 'style="color:#c4a0ff;"' : ""}>${escHtml(short)}
-            ${isLR ? `<span style="font-size:9px;background:rgba(124,58,237,0.2);color:#c4a0ff;padding:1px 6px;border-radius:4px;margin-left:5px;font-weight:800;vertical-align:middle;">▶ Terakhir</span>` : ""}
+          <div class="ch-title"${isLR ? ' style="color:#c4a0ff;"' : ""}>
+            ${escHtml(short)}
+            ${isLR ? `<span style="font-size:9px;background:rgba(124,58,237,0.2);color:#c4a0ff;
+              padding:1px 6px;border-radius:4px;margin-left:5px;font-weight:800;vertical-align:middle;">▶ Terakhir</span>` : ""}
           </div>
           ${date ? `<div class="ch-date">📅 ${escHtml(date)}</div>` : ""}
         </div>
@@ -736,8 +680,7 @@ function renderChapterList(filterQ) {
   /* Auto-scroll ke chapter terakhir dibaca */
   if (_lastReadSlug && !q) {
     setTimeout(() => {
-      list.querySelector(".chapter-last-read")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      list.querySelector(".chapter-last-read")?.scrollIntoView({ behavior:"smooth", block:"center" });
     }, 300);
   }
 }
@@ -786,41 +729,48 @@ function updateBookmarkUI() {
   }
 }
 
+let _lastReadSlug = "";
+
 function updateLastReadUI(lastRead) {
   const bar = document.getElementById("lastReadBar");
-  if (!bar || !lastRead) return;
+  if (!bar || !lastRead || !lastRead.chapter_slug) return;
 
-  const title = lastRead.chapter_title || lastRead.chapter_slug || "Chapter";
-  const short = title.length > 48 ? title.slice(0, 45) + "…" : title;
+  const title    = lastRead.chapter_title || lastRead.chapter_slug || "Chapter";
+  const short    = title.length > 48 ? title.slice(0, 45) + "…" : title;
   const readDate = lastRead.read_at
-    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", {day:"numeric",month:"short",year:"numeric"})
+    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"})
     : "";
 
   bar.innerHTML = `
     <div class="last-read-bar" style="cursor:pointer;" onclick="readChapter('${escHtml(lastRead.chapter_slug)}')">
       <div style="flex:1;min-width:0;">
-        <p style="font-size:10px;color:var(--muted,#7a6e8a);font-weight:700;margin:0 0 2px;text-transform:uppercase;letter-spacing:0.5px;">
-          📍 Terakhir Dibaca${readDate ? ` · ${readDate}` : ""}
+        <p style="font-size:10px;color:var(--muted,#7a6e8a);font-weight:700;margin:0 0 2px;
+           text-transform:uppercase;letter-spacing:0.5px;">
+          📍 Terakhir Dibaca${readDate ? " · " + readDate : ""}
         </p>
-        <p style="font-size:13px;font-weight:700;color:var(--text);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">
+        <p style="font-size:13px;font-weight:700;color:var(--text,#ede8f5);margin:0;
+           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
           ${escHtml(short)}
         </p>
       </div>
-      <button class="btn-lanjut-novel" onclick="event.stopPropagation();readChapter('${escHtml(lastRead.chapter_slug)}')">
+      <button class="btn-lanjut-novel"
+        onclick="event.stopPropagation();readChapter('${escHtml(lastRead.chapter_slug)}')">
         ▶ Lanjut
       </button>
     </div>`;
   bar.style.display = "block";
-  _lastReadSlug = lastRead.chapter_slug; /* untuk highlight di chapter list */
 
-  /* Update tombol utama ke "Lanjut Baca" */
+  /* Set slug untuk highlight di chapter list */
+  _lastReadSlug = lastRead.chapter_slug;
+
+  /* Update tombol utama */
   const btnMain = document.getElementById("btnReadMain");
   if (btnMain) {
-    btnMain.innerHTML = `▶ Lanjut Baca`;
-    btnMain.title = `Lanjut dari: ${title}`;
+    btnMain.innerHTML = "▶ Lanjut Baca";
+    btnMain.title = "Lanjut dari: " + title;
   }
 
-  /* Re-render chapter list agar highlight muncul */
+  /* Re-render chapter list agar highlight langsung muncul */
   if (allChapters.length > 0) renderChapterList();
 }
 
