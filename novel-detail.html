@@ -5,254 +5,179 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Novel — Pankomik</title>
   <link rel="stylesheet" href="/style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
   <style>
-    /* ═══════════════════════════════════════════════════════
-       NOVEL DETAIL — INK & PARCHMENT LUXURY
-    ═══════════════════════════════════════════════════════ */
-    :root {
-      --ink:    #0a0812;
-      --ink2:   #120f1e;
-      --ink3:   #1c1829;
-      --gold:   #c9a84c;
-      --gold2:  rgba(201,168,76,0.15);
-      --violet: #7c3aed;
-      --violet2: rgba(124,58,237,0.18);
-      --text:   #ede8f5;
-      --muted:  #7a6e8a;
-      --border: rgba(255,255,255,0.07);
-      --purple: #7c3aed;
-      --purple-light: rgba(124,58,237,0.15);
-      --r: 12px;
-    }
+    :root { --purple: #8e44ad; --purple-light: rgba(142,68,173,0.12); }
 
-    /* ── Hero poster blur ─────────────────────────────────── */
+    /* ── Hero poster blur background ─────────────────────── */
     .novel-hero-bg {
-      position: relative; overflow: hidden;
-      min-height: 210px;
+      position: relative;
+      overflow: hidden;
+      min-height: 200px;
     }
     .novel-hero-blur {
       position: absolute; inset: 0;
       background-size: cover; background-position: center;
-      filter: blur(28px) brightness(0.28) saturate(1.4);
-      transform: scale(1.15);
-    }
-    /* Gold top-border accent */
-    .novel-hero-bg::before {
-      content: ''; position: absolute; top: 0; left: 0; right: 0;
-      height: 2px; z-index: 2;
-      background: linear-gradient(90deg, transparent 0%, var(--gold) 40%, rgba(201,168,76,0.5) 60%, transparent 100%);
+      filter: blur(22px) brightness(0.35);
+      transform: scale(1.1);
     }
     .novel-hero-content {
       position: relative; z-index: 1;
-      display: flex; gap: 16px;
-      padding: 24px 16px 18px;
+      display: flex; gap: 14px;
+      padding: 20px 16px 16px;
       align-items: flex-end;
     }
     .novel-poster {
-      width: 112px; height: 158px; object-fit: cover;
-      border-radius: 10px; flex-shrink: 0;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.2);
+      width: 110px; height: 156px;
+      object-fit: cover; border-radius: 10px; flex-shrink: 0;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      border: 2px solid rgba(255,255,255,0.12);
     }
-    .novel-hero-info { flex: 1; min-width: 0; padding-bottom: 2px; }
+    .novel-hero-info { flex: 1; min-width: 0; padding-bottom: 4px; }
     .novel-hero-info h1 {
-      font-family: 'Lora', serif;
-      font-size: 17px; font-weight: 600; line-height: 1.35;
-      color: #fff; margin-bottom: 5px;
+      font-size: 17px; font-weight: 800; line-height: 1.3;
+      color: #fff; margin-bottom: 4px;
     }
     .novel-hero-info .alt-title {
-      font-family: 'Lora', serif; font-style: italic;
-      font-size: 11px; color: rgba(255,255,255,0.45);
-      margin-bottom: 9px;
+      font-size: 11px; color: rgba(255,255,255,0.55);
+      font-style: italic; margin-bottom: 8px;
       display: -webkit-box; -webkit-line-clamp: 2;
       -webkit-box-orient: vertical; overflow: hidden;
     }
-    .novel-hero-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 9px; }
+    .novel-hero-meta {
+      display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
+    }
     .meta-chip {
-      padding: 3px 10px; border-radius: 99px;
-      font-size: 9px; font-weight: 800;
-      border: 1px solid rgba(255,255,255,0.15);
-      color: rgba(255,255,255,0.8);
+      padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
       background: rgba(255,255,255,0.08);
-      text-transform: uppercase; letter-spacing: 0.4px;
     }
-    .meta-chip.purple {
-      background: rgba(124,58,237,0.7); border-color: rgba(124,58,237,0.5);
-      color: #e8d5ff;
-    }
-    .meta-chip.green  {
-      background: rgba(39,174,96,0.6); border-color: rgba(39,174,96,0.4);
-      color: #b8f0ce;
-    }
-    .meta-chip.orange {
-      background: rgba(232,82,42,0.6); border-color: rgba(232,82,42,0.4);
-      color: #ffd4c2;
-    }
-    .rating-row { display: flex; align-items: center; gap: 6px; }
-    .stars { color: var(--gold); font-size: 12px; letter-spacing: 1px; }
-    .rating-num {
-      font-size: 13px; font-weight: 800;
-      background: linear-gradient(135deg, var(--gold), #f0d080);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    }
+    .meta-chip.purple { background: var(--purple); border-color: var(--purple); }
+    .meta-chip.green  { background: #27ae60; border-color: #27ae60; }
+    .meta-chip.orange { background: var(--accent); border-color: var(--accent); }
 
-    /* ── Action bar ──────────────────────────────────────── */
+    .rating-row {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .stars { color: #f5a623; font-size: 13px; letter-spacing: 1px; }
+    .rating-num { font-size: 13px; font-weight: 800; color: #f5a623; }
+
+    /* ── Action buttons ───────────────────────────────────── */
     .action-bar {
-      display: flex; gap: 8px; padding: 14px 16px 6px;
+      display: flex; gap: 8px; padding: 12px 16px 4px;
     }
     .btn-read {
-      flex: 1; padding: 13px 0; border-radius: 99px;
-      background: linear-gradient(135deg, #7c3aed, #9b59b6);
-      border: none; color: #fff;
-      font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
-      cursor: pointer; transition: all 0.2s;
+      flex: 1; padding: 12px 0; border-radius: 10px;
+      background: var(--purple); border: none; color: #fff;
+      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
+      cursor: pointer; transition: background 0.2s, transform 0.1s;
       display: flex; align-items: center; justify-content: center; gap: 6px;
-      box-shadow: 0 4px 18px rgba(124,58,237,0.4);
-      letter-spacing: 0.3px;
     }
-    .btn-read:hover  { box-shadow: 0 6px 24px rgba(124,58,237,0.55); transform: translateY(-1px); }
+    .btn-read:hover  { background: #7d3c98; }
     .btn-read:active { transform: scale(0.97); }
     .btn-share {
-      padding: 13px 16px; border-radius: 99px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text); font-size: 15px; cursor: pointer;
-      transition: all 0.2s;
+      padding: 12px 16px; border-radius: 10px;
+      background: var(--bg-surface); border: 1.5px solid var(--border);
+      color: var(--text); font-family: 'Nunito', sans-serif;
+      font-size: 14px; cursor: pointer;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
     }
-    .btn-share:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); }
-    .btn-bookmark-novel {
-      padding: 13px 16px; border-radius: 99px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.1);
-      font-size: 15px; cursor: pointer; transition: all 0.2s;
-    }
-    .btn-bookmark-novel:hover { border-color: rgba(124,58,237,0.4); background: var(--violet2); }
-    .btn-bookmark-novel.saved { background: var(--violet2); border-color: rgba(124,58,237,0.5); }
-    .btn-bookmark-novel:active { transform: scale(0.93); }
+    .btn-share:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-light); }
 
-    /* Kategori buttons */
-    .kbtn-novel {
-      padding: 5px 13px; border-radius: 99px;
-      border: 1px solid var(--border); background: rgba(255,255,255,0.04);
-      color: var(--muted); font-family: 'Nunito', sans-serif;
-      font-size: 11px; font-weight: 700; cursor: pointer;
-      transition: all 0.15s;
+    /* ── Info table ───────────────────────────────────────── */
+    .info-section {
+      padding: 4px 16px 0;
     }
-    .kbtn-novel.active { background: var(--violet2); border-color: rgba(124,58,237,0.4); color: #d4b0ff; }
-
-    /* Lanjut baca bar */
-    .last-read-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 11px 14px; border-radius: 10px;
-      background: var(--violet2); border: 1px solid rgba(124,58,237,0.2);
-      gap: 10px;
-    }
-    .last-read-bar p { font-size: 12px; color: var(--muted); margin: 0; flex: 1; }
-    .last-read-bar p strong { color: var(--text); }
-    .btn-lanjut-novel {
-      padding: 7px 16px; border-radius: 99px; border: none;
-      background: linear-gradient(135deg, #7c3aed, #9b59b6);
-      color: #fff; font-family: 'Nunito', sans-serif;
-      font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
-      transition: all 0.15s;
-    }
-    .btn-lanjut-novel:hover { box-shadow: 0 4px 14px rgba(124,58,237,0.4); }
-
-    /* ── Info section ────────────────────────────────────── */
-    .info-section { padding: 4px 16px 0; }
     .info-table {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border); border-radius: var(--r); overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
     }
     .info-row {
       display: flex; align-items: flex-start; gap: 10px;
-      padding: 10px 14px; border-bottom: 1px solid var(--border);
+      padding: 9px 14px; border-bottom: 1px solid var(--border);
     }
     .info-row:last-child { border-bottom: none; }
     .info-label {
-      font-size: 10px; font-weight: 800; color: var(--muted);
-      min-width: 84px; flex-shrink: 0; padding-top: 1px;
-      text-transform: uppercase; letter-spacing: 0.6px;
+      font-size: 11px; font-weight: 800; color: var(--text-muted);
+      min-width: 88px; flex-shrink: 0; padding-top: 1px;
+      text-transform: uppercase; letter-spacing: 0.4px;
     }
-    .info-value { font-size: 12px; color: var(--text); font-weight: 600; line-height: 1.5; flex: 1; }
+    .info-value {
+      font-size: 12px; color: var(--text); font-weight: 600; line-height: 1.5;
+      flex: 1;
+    }
 
-    /* ── Section titles ─────────────────────────────────── */
+    /* ── Section title ────────────────────────────────────── */
     .section-head {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 16px 10px;
+      padding: 16px 16px 8px;
     }
     .section-head h3 {
-      font-family: 'Cinzel', serif;
-      font-size: 13px; font-weight: 600; color: var(--text);
-      letter-spacing: 1.5px; text-transform: uppercase;
+      font-size: 14px; font-weight: 800; color: var(--text);
     }
-    .section-head h3::before {
-      content: '— ';
-      color: var(--gold); font-family: 'Lora', serif;
-    }
-    .section-head span { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .section-head span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
 
-    /* ── Synopsis ────────────────────────────────────────── */
-    .synopsis-box { padding: 0 16px 4px; }
+    /* ── Synopsis ─────────────────────────────────────────── */
+    .synopsis-box {
+      padding: 0 16px 4px;
+    }
     .synopsis-text {
-      font-family: 'Lora', serif;
-      font-size: 13px; color: var(--muted); line-height: 1.85;
-      max-height: 82px; overflow: hidden;
-      transition: max-height 0.45s ease;
+      font-size: 13px; color: var(--text-muted); line-height: 1.75;
+      max-height: 80px; overflow: hidden;
+      transition: max-height 0.4s ease;
       white-space: pre-line;
     }
     .synopsis-text.expanded { max-height: 2000px; }
     .synopsis-toggle {
-      margin-top: 8px; padding: 6px 16px; border-radius: 99px;
-      background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.25);
-      cursor: pointer; font-size: 11px;
-      font-family: 'Nunito', sans-serif; color: #c4a0ff;
-      transition: all 0.2s;
+      margin-top: 6px; padding: 5px 14px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 6px; cursor: pointer; font-size: 12px;
+      font-family: 'Nunito', sans-serif; color: var(--text);
+      transition: background 0.2s;
     }
-    .synopsis-toggle:hover { background: rgba(124,58,237,0.2); }
+    .synopsis-toggle:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
 
-    /* ── Chips ───────────────────────────────────────────── */
-    .chips-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 16px 4px; }
+    /* ── Genre & tag chips ────────────────────────────────── */
+    .chips-row {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 0 16px 4px;
+    }
     .chip-genre {
-      padding: 4px 12px; border-radius: 99px; font-size: 11px; font-weight: 700;
-      border: 1px solid var(--border); background: rgba(255,255,255,0.04);
-      color: var(--muted); cursor: pointer; text-decoration: none; display: inline-block;
-      transition: all 0.15s;
+      padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      color: var(--text-muted); cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+      text-decoration: none; display: inline-block;
     }
-    .chip-genre:hover { background: rgba(124,58,237,0.2); border-color: rgba(124,58,237,0.4); color: #d4b0ff; }
+    .chip-genre:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
     .chip-tag {
-      padding: 3px 10px; border-radius: 99px; font-size: 10px; font-weight: 700;
-      border: 1px solid rgba(201,168,76,0.25); background: var(--gold2);
-      color: var(--gold); cursor: pointer; transition: all 0.15s;
+      padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
+      border: 1px solid rgba(142,68,173,0.3); background: var(--purple-light);
+      color: var(--purple); cursor: pointer;
+      transition: background 0.15s, color 0.15s;
     }
-    .chip-tag:hover { background: rgba(201,168,76,0.3); }
+    .chip-tag:hover { background: var(--purple); color: #fff; }
 
-    /* ── Chapter list ────────────────────────────────────── */
+    /* ── Chapter list ─────────────────────────────────────── */
     .novel-chapter-list {
-      margin: 0 16px; border-radius: var(--r); overflow: hidden;
-      border: 1px solid var(--border); background: rgba(255,255,255,0.02);
-      max-height: 430px; overflow-y: auto;
-      scrollbar-width: thin; scrollbar-color: rgba(124,58,237,0.3) transparent;
+      margin: 0 16px; border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border); background: var(--bg-card);
+      max-height: 420px; overflow-y: auto;
     }
-    .novel-chapter-list::-webkit-scrollbar { width: 3px; }
-    .novel-chapter-list::-webkit-scrollbar-thumb { background: rgba(124,58,237,0.3); border-radius: 99px; }
-
     .novel-chapter-item {
       display: flex; align-items: center;
       padding: 11px 14px; border-bottom: 1px solid var(--border);
-      cursor: pointer; text-decoration: none; gap: 10px;
+      cursor: pointer; text-decoration: none;
       transition: background 0.15s;
+      gap: 10px;
     }
     .novel-chapter-item:last-child { border-bottom: none; }
-    .novel-chapter-item:hover { background: rgba(124,58,237,0.08); }
-    .novel-chapter-item:hover .ch-title { color: #c4a0ff; }
-
+    .novel-chapter-item:hover { background: var(--bg-surface); }
+    .novel-chapter-item:hover .ch-title { color: var(--purple); }
     .ch-num {
-      width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
-      background: var(--violet2); display: flex; align-items: center;
-      justify-content: center; font-size: 9px; font-weight: 800;
-      color: #c4a0ff;
+      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+      background: var(--purple-light); display: flex; align-items: center;
+      justify-content: center; font-size: 10px; font-weight: 800;
+      color: var(--purple);
     }
     .ch-info { flex: 1; min-width: 0; }
     .ch-title {
@@ -260,32 +185,80 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       transition: color 0.15s;
     }
-    .ch-date { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .ch-date { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
     .ch-read-btn {
-      padding: 4px 11px; border-radius: 99px; border: none;
-      background: linear-gradient(135deg, rgba(124,58,237,0.8), rgba(124,58,237,0.6));
-      color: #fff; font-size: 10px; font-weight: 800;
-      font-family: 'Nunito', sans-serif; cursor: pointer; flex-shrink: 0;
-      transition: all 0.15s;
+      padding: 4px 10px; border-radius: 6px; border: none;
+      background: var(--purple); color: #fff; font-size: 10px;
+      font-weight: 800; font-family: 'Nunito', sans-serif;
+      cursor: pointer; flex-shrink: 0; white-space: nowrap;
+      transition: background 0.15s;
     }
-    .ch-read-btn:hover { box-shadow: 0 2px 10px rgba(124,58,237,0.4); }
-    .ch-sort-btn {
-      padding: 4px 11px; border-radius: 99px;
-      border: 1px solid var(--border); background: rgba(255,255,255,0.04);
-      color: var(--muted); font-size: 11px; font-weight: 700;
-      cursor: pointer; font-family: 'Nunito', sans-serif;
-      transition: all 0.15s;
-    }
-    .ch-sort-btn:hover { border-color: rgba(124,58,237,0.4); color: #c4a0ff; }
+    .ch-read-btn:hover { background: #7d3c98; }
 
-    /* ── Skeleton ────────────────────────────────────────── */
+    /* Last-read highlight */
+    .novel-chapter-item.chapter-last-read {
+      background: rgba(124,58,237,0.08);
+      border-left: 3px solid rgba(124,58,237,0.5);
+      padding-left: 11px;
+    }
+
+    /* Sort toggle */
+    .ch-sort-btn {
+      padding: 4px 10px; border-radius: 6px;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      color: var(--text-muted); font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: 'Nunito', sans-serif;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .ch-sort-btn:hover { border-color: var(--purple); color: var(--purple); }
+
+    /* ── Loading skeleton ─────────────────────────────────── */
     .skel {
-      background: linear-gradient(90deg, var(--ink2) 0%, var(--ink3) 50%, var(--ink2) 100%);
-      background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 8px;
+      background: linear-gradient(90deg,var(--bg-surface) 0%,var(--bg-card) 50%,var(--bg-surface) 100%);
+      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px;
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    .page-bottom { height: 28px; }
+    /* ── Bookmark button ─────────────────────────────────── */
+    .btn-bookmark-novel {
+      padding: 12px 14px; border-radius: 10px;
+      background: var(--bg-surface); border: 1.5px solid var(--border);
+      font-size: 16px; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+    .btn-bookmark-novel:hover     { border-color: var(--purple); background: var(--purple-light); }
+    .btn-bookmark-novel.saved     { background: var(--purple-light); border-color: var(--purple); }
+    .btn-bookmark-novel:active    { transform: scale(0.93); }
+
+    /* Kategori buttons */
+    .kbtn-novel {
+      padding: 5px 12px; border-radius: 99px;
+      border: 1px solid var(--border); background: var(--bg-surface);
+      color: var(--text-muted); font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 700; cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .kbtn-novel.active { background: var(--purple); border-color: var(--purple); color: #fff; }
+
+    /* Lanjut baca bar */
+    .last-read-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 10px;
+      background: var(--purple-light); border: 1px solid rgba(142,68,173,0.25);
+      gap: 10px;
+    }
+    .last-read-bar p { font-size: 12px; color: var(--text-muted); margin: 0; flex: 1; }
+    .last-read-bar p strong { color: var(--text); }
+    .btn-lanjut-novel {
+      padding: 7px 14px; border-radius: 8px; border: none;
+      background: var(--purple); color: #fff; font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
+      transition: background 0.15s;
+    }
+    .btn-lanjut-novel:hover { background: #7d3c98; }
+
+    /* ── Bottom padding for nav ───────────────────────────── */
+    .page-bottom { height: 24px; }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -448,7 +421,37 @@ async function loadDetail() {
 
 /* ── Placeholder saat gambar tidak muncul ─────────────── */
 function posterFallback(el, title) {
-  el.onerror = null;
+  var original = el.getAttribute("data-original") || el.src || "";
+  var clean = original.split("?")[0];
+  var step = parseInt(el.getAttribute("data-fb-step") || "0");
+  step++;
+  el.setAttribute("data-fb-step", step);
+
+  if (step === 1) {
+    /* Step 1: WordPress Jetpack CDN — bypass Cloudflare untuk sakuranovel */
+    try {
+      var u = new URL(clean);
+      if (u.pathname.includes("/wp-content/")) {
+        el.src = "https://i0.wp.com/" + u.hostname + u.pathname + "?w=300&ssl=1&quality=85";
+        return;
+      }
+    } catch(e) {}
+    /* Bukan WP → langsung ke /api/img */
+    el.src = "/api/img?url=" + encodeURIComponent(clean);
+    return;
+  }
+  if (step === 2) {
+    /* Step 2: /api/img */
+    el.src = "/api/img?url=" + encodeURIComponent(clean);
+    return;
+  }
+  if (step === 3) {
+    /* Step 3: weserv.nl */
+    var c = clean.replace(/^https?:\/\//, "");
+    el.src = "https://images.weserv.nl/?url=" + encodeURIComponent(c) + "&w=300&output=webp&q=80";
+    return;
+  }
+  /* Step 4+: placeholder div */
   const initials = (title || "N").slice(0, 2).toUpperCase();
   el.outerHTML = `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;
     background:linear-gradient(135deg,#2d1b4e,#8e44ad);display:flex;flex-direction:column;
@@ -459,50 +462,87 @@ function posterFallback(el, title) {
 }
 
 /* ============================================================
-   IMAGE PROXY — proxy.sankavolereii.my.id
+   IMAGE PROXY — Multi-layer fallback bypass Cloudflare
+   sakuranovel.id dilindungi Cloudflare Bot Protection
+   Strategi: coba images.weserv.nl → wsrv.nl → langsung (fallback)
    ============================================================ */
-function proxyImg(url) {
+
+/* ── WordPress Jetpack CDN — bypass Cloudflare untuk sakuranovel.id ──
+   i0.wp.com adalah CDN resmi WordPress.com yang bisa serve gambar
+   dari semua WordPress site tanpa hotlink protection / Cloudflare block.
+   Format: https://i0.wp.com/{domain}/{path}?w=300&ssl=1 */
+function toWpCdn(url, width) {
   if (!url) return "";
-  if (url.startsWith("data:")) return url;
-  var clean = url.split("?")[0];
-  return "https://proxy.sankavolereii.my.id/" + clean;
+  try {
+    var clean = url.split("?")[0];
+    var m = clean.match(/^https?:\/\/([^/]+)(\/.+)$/);
+    if (!m) return "";
+    var domain = m[1];
+    var path   = m[2];
+    var w = width || 300;
+    return "https://i0.wp.com/" + domain + path + "?w=" + w + "&ssl=1&quality=85";
+  } catch(e) { return ""; }
 }
 
-/* ── IntersectionObserver untuk lazy load cover ── */
-var _lazyObserver = null;
-function getLazyObserver() {
-  if (_lazyObserver) return _lazyObserver;
-  _lazyObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(entry) {
-      if (!entry.isIntersecting) return;
-      var img = entry.target;
-      var src = img.getAttribute("data-src");
-      if (src) { img.src = src; img.removeAttribute("data-src"); }
-      _lazyObserver.unobserve(img);
-    });
-  }, { rootMargin: "200px 0px" });
-  return _lazyObserver;
+function proxyImg(url, width) {
+  if (!url) return "";
+  if (url.includes("/api/img") || url.includes("wp.com") ||
+      url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
+  var w = width || 300;
+  /* WordPress.com CDN — bypass Cloudflare sakuranovel.id */
+  try {
+    var u = new URL(url);
+    if (u.pathname.includes("/wp-content/")) {
+      return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=" + w + "&ssl=1&quality=85";
+    }
+  } catch(e) {}
+  var clean = url.split("?")[0];
+  return "/api/img?url=" + encodeURIComponent(clean);
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
   var img = document.createElement("img");
   img.alt = altText || "";
   if (cssText) img.style.cssText = cssText;
+
   var clean = (originalUrl || "").split("?")[0];
-  var proxiedUrl = clean ? "https://proxy.sankavolereii.my.id/" + clean : "";
+  var step  = 0;
 
-  img.onerror = function () {
-    img.onerror = null;
-    img.style.display = "none";
-    var sib = img.nextElementSibling;
-    if (sib) sib.style.display = "flex";
-  };
-
-  if (proxiedUrl) {
-    img.setAttribute("data-src", proxiedUrl);
-    img.src = "";
-    getLazyObserver().observe(img);
+  function getUrl(n) {
+    /* Step 0: WordPress.com CDN — bypass Cloudflare */
+    if (n === 0) {
+      try {
+        var u = new URL(clean);
+        if (u.pathname.includes("/wp-content/")) {
+          return "https://i0.wp.com/" + u.hostname + u.pathname + "?w=300&ssl=1&quality=85";
+        }
+      } catch(e) {}
+      return "/api/img?url=" + encodeURIComponent(clean);
+    }
+    /* Step 1: /api/img */
+    if (n === 1) return "/api/img?url=" + encodeURIComponent(clean);
+    /* Step 2: weserv.nl */
+    if (n === 2) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean.replace(/^https?:\/\//, "")) + "&w=300&output=webp&q=80";
+    /* Step 3: direct */
+    return originalUrl;
   }
+
+  function onImgError() {
+    step++;
+    img.onerror = null;
+    console.warn("[Novel Detail] img error, trying step=" + step, clean.substring(0, 70));
+    if (step <= 3) {
+      img.onerror = onImgError;
+      img.src = getUrl(step);
+    } else {
+      img.style.display = "none";
+      var sib = img.nextElementSibling;
+      if (sib) sib.style.display = "flex";
+    }
+  }
+
+  img.onerror = onImgError;
+  img.src = getUrl(0);
   return img;
 }
 
@@ -511,7 +551,7 @@ function renderDetail(d) {
   document.title = `${d.title} — Pankomik`;
   allChapters    = d.chapters || [];
   const info     = d.info || {};
-  const poster   = proxyImg(d.poster || "");
+  const poster   = proxyImg(d.poster || "", 420);
 
   /* Status chip color */
   const statusClass = (d.status || "").toLowerCase() === "completed"
@@ -622,16 +662,23 @@ function renderDetail(d) {
     <!-- ── Chapter list ── -->
     <div class="section-head">
       <h3>📚 Daftar Chapter
-        <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:4px;">(${allChapters.length})</span>
+        <span style="font-size:12px;font-weight:400;color:var(--muted,#7a6e8a);margin-left:4px;">(${allChapters.length})</span>
       </h3>
       ${allChapters.length > 1
         ? `<button class="ch-sort-btn" id="sortBtn" onclick="toggleSort()">↑↓ Terlama dulu</button>`
         : ""
       }
     </div>
+    ${allChapters.length > 8 ? `
+      <div style="padding:0 16px 8px;">
+        <input type="text" class="chapter-search-input"
+          placeholder="🔍 Cari chapter..."
+          oninput="filterChapterList(this.value)"
+          style="width:100%;padding:8px 14px;border-radius:99px;border:1px solid rgba(124,58,237,0.25);background:rgba(124,58,237,0.08);color:var(--text);font-family:'Nunito',sans-serif;font-size:13px;outline:none;box-sizing:border-box;">
+      </div>` : ""}
     ${allChapters.length > 0
       ? `<div class="novel-chapter-list" id="chapterList"></div>`
-      : `<p style="padding:0 16px 12px;font-size:13px;color:var(--text-muted);">Belum ada chapter tersedia.</p>`
+      : `<p style="padding:0 16px 12px;font-size:13px;color:var(--muted,#7a6e8a);">Belum ada chapter tersedia.</p>`
     }
 
     <div class="page-bottom"></div>
@@ -648,32 +695,54 @@ function renderDetail(d) {
 }
 
 /* ── RENDER CHAPTER LIST ──────────────────────────────────── */
-function renderChapterList() {
+let _lastReadSlug = "";
+
+function renderChapterList(filterQ) {
   const list = document.getElementById("chapterList");
   if (!list) return;
 
-  const ordered = chaptersAsc ? [...allChapters].reverse() : [...allChapters];
+  const ordered  = chaptersAsc ? [...allChapters].reverse() : [...allChapters];
+  const q        = (filterQ || "").toLowerCase();
+  const filtered = q ? ordered.filter(ch => (ch.title || "").toLowerCase().includes(q)) : ordered;
 
-  list.innerHTML = ordered.map((ch, i) => {
-    const num    = chaptersAsc ? allChapters.length - ordered.length + i + 1 : allChapters.length - i;
-    const title  = ch.title || `Chapter ${num}`;
-    const date   = ch.date  || "";
-    const cSlug  = ch.slug  || "";
+  if (!filtered.length) {
+    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--muted,#7a6e8a);font-size:13px;">Tidak ada chapter yang cocok.</div>`;
+    return;
+  }
 
-    /* Potong judul panjang untuk nomor chapter */
-    const shortTitle = title.length > 55 ? title.slice(0, 52) + "…" : title;
+  list.innerHTML = filtered.map((ch) => {
+    const idx   = ordered.indexOf(ch);
+    const num   = chaptersAsc ? idx + 1 : allChapters.length - idx;
+    const title = ch.title || `Chapter ${num}`;
+    const date  = ch.date  || "";
+    const cSlug = ch.slug  || "";
+    const isLR  = _lastReadSlug && cSlug === _lastReadSlug;
+    const short = title.length > 55 ? title.slice(0, 52) + "…" : title;
 
     return `
-      <div class="novel-chapter-item" onclick="readChapter('${escHtml(cSlug)}')">
-        <div class="ch-num">${num}</div>
+      <div class="novel-chapter-item ${isLR ? "chapter-last-read" : ""}"
+           onclick="readChapter('${escHtml(cSlug)}')">
+        <div class="ch-num" ${isLR ? 'style="background:rgba(124,58,237,0.25);color:#c4a0ff;"' : ""}>${num}</div>
         <div class="ch-info">
-          <div class="ch-title">${escHtml(shortTitle)}</div>
+          <div class="ch-title" ${isLR ? 'style="color:#c4a0ff;"' : ""}>${escHtml(short)}
+            ${isLR ? `<span style="font-size:9px;background:rgba(124,58,237,0.2);color:#c4a0ff;padding:1px 6px;border-radius:4px;margin-left:5px;font-weight:800;vertical-align:middle;">▶ Terakhir</span>` : ""}
+          </div>
           ${date ? `<div class="ch-date">📅 ${escHtml(date)}</div>` : ""}
         </div>
         <button class="ch-read-btn" onclick="event.stopPropagation();readChapter('${escHtml(cSlug)}')">Baca</button>
       </div>`;
   }).join("");
+
+  /* Auto-scroll ke chapter terakhir dibaca */
+  if (_lastReadSlug && !q) {
+    setTimeout(() => {
+      list.querySelector(".chapter-last-read")
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
+  }
 }
+
+window.filterChapterList = function(val) { renderChapterList(val); };
 
 /* ── TOGGLE SORT ─────────────────────────────────────────── */
 window.toggleSort = function () {
@@ -720,19 +789,39 @@ function updateBookmarkUI() {
 function updateLastReadUI(lastRead) {
   const bar = document.getElementById("lastReadBar");
   if (!bar || !lastRead) return;
+
   const title = lastRead.chapter_title || lastRead.chapter_slug || "Chapter";
-  const short = title.length > 45 ? title.slice(0, 42) + "…" : title;
+  const short = title.length > 48 ? title.slice(0, 45) + "…" : title;
+  const readDate = lastRead.read_at
+    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", {day:"numeric",month:"short",year:"numeric"})
+    : "";
+
   bar.innerHTML = `
-    <div class="last-read-bar">
-      <p>📍 Terakhir baca: <strong>${escHtml(short)}</strong></p>
-      <button class="btn-lanjut-novel" onclick="readChapter('${escHtml(lastRead.chapter_slug)}')">
+    <div class="last-read-bar" style="cursor:pointer;" onclick="readChapter('${escHtml(lastRead.chapter_slug)}')">
+      <div style="flex:1;min-width:0;">
+        <p style="font-size:10px;color:var(--muted,#7a6e8a);font-weight:700;margin:0 0 2px;text-transform:uppercase;letter-spacing:0.5px;">
+          📍 Terakhir Dibaca${readDate ? ` · ${readDate}` : ""}
+        </p>
+        <p style="font-size:13px;font-weight:700;color:var(--text);margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">
+          ${escHtml(short)}
+        </p>
+      </div>
+      <button class="btn-lanjut-novel" onclick="event.stopPropagation();readChapter('${escHtml(lastRead.chapter_slug)}')">
         ▶ Lanjut
       </button>
     </div>`;
   bar.style.display = "block";
+  _lastReadSlug = lastRead.chapter_slug; /* untuk highlight di chapter list */
+
   /* Update tombol utama ke "Lanjut Baca" */
   const btnMain = document.getElementById("btnReadMain");
-  if (btnMain) btnMain.textContent = "▶ Lanjut Baca";
+  if (btnMain) {
+    btnMain.innerHTML = `▶ Lanjut Baca`;
+    btnMain.title = `Lanjut dari: ${title}`;
+  }
+
+  /* Re-render chapter list agar highlight muncul */
+  if (allChapters.length > 0) renderChapterList();
 }
 
 window.toggleNovelBookmark = async function () {
