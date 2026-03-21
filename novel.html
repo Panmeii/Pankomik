@@ -343,33 +343,13 @@ let searchTimer   = null;
 let isSearchMode  = false;
 
 /* ============================================================
-   IMAGE PROXY — Hotlink bypass via wsrv.nl referrer spoofing
+   IMAGE PROXY — proxy.sankavolereii.my.id
    ============================================================ */
-var _NOVEL_REF_MAP = {
-  "sakuranovel": "https://sakuranovel.id",
-  "novelringan": "https://novelringan.com",
-  "gramedia":    "https://gramedia.com",
-  "wattpad":     "https://wattpad.com",
-};
-
-function _getNovelRef(url) {
+function proxyImg(url) {
   if (!url) return "";
-  try {
-    var host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
-    for (var k in _NOVEL_REF_MAP) {
-      if (host.indexOf(k) !== -1) return _NOVEL_REF_MAP[k];
-    }
-    return "https://" + host;
-  } catch(e) { return ""; }
-}
-
-function proxyImg(url, width) {
-  if (!url) return "";
-  if (url.includes("ui-avatars") || url.includes("sankavollerei")) return url;
-  if (url.includes("/api/img")) return url;
+  if (url.startsWith("data:")) return url;
   var clean = url.split("?")[0];
-  // Gunakan Vercel Edge proxy /api/img - bypass hotlink + Cloudflare
-  return "/api/img?url=" + encodeURIComponent(clean);
+  return "https://proxy.sankavolereii.my.id/" + encodeURIComponent(clean);
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
@@ -377,44 +357,20 @@ function createProxiedImg(originalUrl, altText, cssText) {
   img.alt = altText || "";
   if (cssText) img.style.cssText = cssText;
   img.style.background = "var(--bg-surface)";
-
   var clean = (originalUrl || "").split("?")[0];
-  var step  = 0;
 
-  function getUrl(n) {
-    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
-    if (n === 1) {
-      var ref = "";
-      try { var h = new URL(clean).hostname; for (var k in _NOVEL_REF_MAP) { if (h.indexOf(k)!==-1){ref=_NOVEL_REF_MAP[k];break;} } if(!ref)ref="https://"+h; } catch(e){}
-      return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=300&output=webp&q=85&n=-1" + (ref?"&ref="+encodeURIComponent(ref):"");
-    }
-    return clean; // direct
-  }
-
-  function onImgError() {
-    step++;
+  img.onerror = function () {
     img.onerror = null;
-    console.log("[Pankomik Novel] img error step=" + step, "url was:", img.src.substring(0,80));
-    if (step <= 2) {
-      img.onerror = onImgError;
-      img.src = getUrl(step);
-    } else {
-      /* Semua proxy gagal - tampilkan fallback div */
-      var ph = document.createElement("div");
-      ph.className = "novel-card-fallback";
-      ph.style.cssText = "display:flex !important;width:100%;height:100%;";
-      ph.textContent = "📖";
-      if (img.parentNode) img.parentNode.replaceChild(ph, img);
-      /* Tampilkan sibling fallback jika ada */
-      var sib = img.nextElementSibling;
-      if (sib && sib.classList.contains("novel-card-fallback")) {
-        sib.style.display = "flex";
-      }
-    }
-  }
-  img.onerror = onImgError;
+    var ph = document.createElement("div");
+    ph.className = "novel-card-fallback";
+    ph.style.cssText = "display:flex !important;width:100%;height:100%;";
+    ph.textContent = "📖";
+    if (img.parentNode) img.parentNode.replaceChild(ph, img);
+    var sib = img.nextElementSibling;
+    if (sib && sib.classList.contains("novel-card-fallback")) sib.style.display = "flex";
+  };
 
-  img.src = getUrl(0);
+  img.src = clean ? "https://proxy.sankavolereii.my.id/" + encodeURIComponent(clean) : "";
   return img;
 }
 
