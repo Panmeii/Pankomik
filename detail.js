@@ -678,8 +678,12 @@ function normalizeFromBacakomik(det) {
 
 async function getDetail() {
   const container = document.getElementById("detailKomik");
+
+  /* Baca hint source dari URL param ?src= yang di-pass index.html */
+  const urlSrc = new URLSearchParams(window.location.search).get("src") || "";
+
   try {
-    /* ── Fetch semua 3 API paralel, pilih yang chapter-nya TERBANYAK ── */
+    /* ── Fetch semua 3 API paralel ── */
     const [r1, r2, r3] = await Promise.allSettled([
       fetch(API_DETAIL).then(r => r.json()).catch(() => null),
       fetch(API_DETAIL_2).then(r => r.json()).catch(() => null),
@@ -706,9 +710,13 @@ async function getDetail() {
 
     if (!candidates.length) throw new Error("Semua API gagal");
 
-    /* ── Pilih base data dari source dengan chapter TERBANYAK ── */
+    /* ── Pilih best source:
+       1. Kalau ada URL hint (?src=mangakita) dan source itu ada → pakai itu SEBAGAI BASE
+       2. Sisanya: source dengan chapter terbanyak
+       Alasannya: index sudah tahu komik ini dari mana asalnya ── */
     candidates.sort((a, b) => b.count - a.count);
-    const best   = candidates[0];
+    const hinted = urlSrc ? candidates.find(c => c.source === urlSrc) : null;
+    const best   = hinted || candidates[0];
     const source = best.source;
     let komikDataRaw = best.data;
 
