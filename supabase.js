@@ -943,9 +943,15 @@ export async function removeNovelBookmark(userId, novelSlug) {
 }
 
 export async function checkNovelBookmark(userId, novelSlug) {
-  const { data } = await supabase
+  if (!userId || !novelSlug) return { isBookmarked: false, kategori: null };
+  const { data, error } = await supabase
     .from("novel_bookmarks").select("kategori")
-    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
+    .eq("user_id", userId).eq("novel_slug", novelSlug)
+    .maybeSingle();   /* maybeSingle: tidak throw jika 0 baris */
+  if (error) {
+    console.warn("[checkNovelBookmark] Error:", error.message);
+    return { isBookmarked: false, kategori: null };
+  }
   return { isBookmarked: !!data, kategori: data?.kategori || null };
 }
 
@@ -995,6 +1001,34 @@ export async function saveNovelHistory(userId, novel, chapter) {
   return { history: data, error };
 }
 
+/**
+ * Update progress baca novel (chapter terakhir, untuk lanjut baca).
+ * Dipanggil dari novel-reader.html setelah chapter selesai dimuat.
+ * @param {string} userId
+ * @param {{ slug, title, cover, lastChapterSlug }} novel
+ * @param {string} chapterTitle
+ */
+export async function updateNovelProgress(userId, novel, chapterTitle) {
+  if (!userId || !novel?.slug) return { error: new Error("Invalid params") };
+  try {
+    const { error } = await supabase
+      .from("novel_reading_history")
+      .upsert({
+        user_id:       userId,
+        novel_slug:    novel.slug,
+        novel_title:   novel.title   || "",
+        novel_cover:   novel.cover   || "",
+        chapter_slug:  novel.lastChapterSlug || "",
+        chapter_title: chapterTitle  || "",
+        read_at:       new Date().toISOString()
+      }, { onConflict: "user_id,novel_slug" });
+    return { error };
+  } catch (err) {
+    console.error("[updateNovelProgress] Error:", err);
+    return { error: err };
+  }
+}
+
 export async function getNovelHistory(userId) {
   const { data, error } = await supabase
     .from("novel_reading_history").select("*")
@@ -1003,10 +1037,19 @@ export async function getNovelHistory(userId) {
 }
 
 export async function getLastNovelRead(userId, novelSlug) {
-  const { data } = await supabase
+  if (!userId || !novelSlug) return null;
+  const { data, error } = await supabase
     .from("novel_reading_history")
     .select("chapter_slug, chapter_title, read_at")
-    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
+    .eq("user_id", userId)
+    .eq("novel_slug", novelSlug)
+    .order("read_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();   /* maybeSingle: tidak throw jika 0 baris */
+  if (error) {
+    console.warn("[getLastNovelRead] Error:", error.message);
+    return null;
+  }
   return data || null;
 }
 
