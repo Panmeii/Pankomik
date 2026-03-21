@@ -541,11 +541,16 @@ function sanitizeNovelHtml(html) {
     .replace(/href="https?:\/\/(?!pankomik)[^"]*"/gi, 'href="#"')
     /* Proxy semua gambar inline dalam konten novel */
     .replace(/src="(https?:\/\/[^"]+)"/gi, (match, url) => {
-      const proxied = "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=680&output=webp&q=85";
+      const clean   = url.split("?")[0];
+      const proxied = "https://proxy.sankavolereii.my.id/" + encodeURIComponent(clean);
       return `src="${proxied}"`;
     })
-    /* Hapus baris promo dari translator */
-    .replace(/<p[^>]*>.*?(Ko-fi|sakuranovel|Baca novel lain).*?<\/p>/gi, "");
+    /* Hapus semua paragraf/div yang mengandung teks promo/branding */
+    .replace(/<p[^>]*>[^<]*(?:Ko-fi|sakuranovel\.id|sakuranovel|Baca novel lain|baca lebih lanjut di|lanjutkan baca di|sumber\s*:|source\s*:|diterjemahkan oleh|translated by)[^<]*<\/p>/gi, "")
+    .replace(/<div[^>]*>[^<]*(?:sakuranovel\.id|sakuranovel)[^<]*<\/div>/gi, "")
+    /* Hapus teks mentah sakuranovel.id yang muncul di luar tag (text node) */
+    .replace(/sakuranovel\.id/gi, "")
+    .replace(/sakuranovel/gi, "");
 }
 
 /* ── NAVIGASI ────────────────────────────────────────────── */
