@@ -6,6 +6,626 @@
   <title>Reader — Pankomik</title>
   <link rel="stylesheet" href="/reader.css">
   <style>
+    :root {
+      --accent:      #e8522a;
+      --accent-dark: #b83a18;
+      --accent-glow: rgba(232,82,42,0.28);
+      --bg-reader:   #09090f;
+      --glass:       rgba(10,10,18,0.88);
+      --glass-b:     rgba(255,255,255,0.06);
+    }
+
+    /* ═══════════════════════════════════════
+       PROGRESS BAR
+    ═══════════════════════════════════════ */
+    #readingProgressBar {
+      position: fixed; top: 0; left: 0;
+      height: 2px; width: 0%;
+      background: linear-gradient(90deg, var(--accent), #f5a623, var(--accent));
+      background-size: 200% 100%;
+      animation: progressShimmer 2s linear infinite;
+      z-index: 1200;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    @keyframes progressShimmer {
+      0%   { background-position: 200% 0 }
+      100% { background-position: -200% 0 }
+    }
+
+    /* ═══════════════════════════════════════
+       FLOATING HEADER — Pill design
+    ═══════════════════════════════════════ */
+    .reader-header {
+      position: fixed;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1100;
+
+      /* Pill shape */
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      max-width: calc(100vw - 24px);
+      width: max-content;
+
+      /* Glass */
+      background: var(--glass);
+      backdrop-filter: blur(24px) saturate(1.6);
+      -webkit-backdrop-filter: blur(24px) saturate(1.6);
+      border: 1px solid var(--glass-b);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(255,255,255,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.07);
+
+      /* Smooth show/hide */
+      transition:
+        opacity 0.3s cubic-bezier(.4,0,.2,1),
+        transform 0.3s cubic-bezier(.4,0,.2,1),
+        top 0.3s cubic-bezier(.4,0,.2,1);
+      will-change: opacity, transform;
+    }
+
+    /* HIDDEN state — slide up + fade */
+    .reader-header.hidden {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-68px);
+      pointer-events: none;
+    }
+
+    /* Home button — circle */
+    .reader-header .rh-home {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #ccc; font-size: 14px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reader-header .rh-home:hover { background: rgba(255,255,255,0.14); color: #fff; }
+
+    /* Title */
+    .reader-header .rh-title {
+      font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.75);
+      max-width: 140px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      flex-shrink: 1;
+      cursor: default;
+    }
+
+    /* Divider */
+    .rh-divider {
+      width: 1px; height: 20px;
+      background: rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+
+    /* Nav prev/next — pill buttons */
+    .rh-nav {
+      display: flex; align-items: center; gap: 3px; flex-shrink: 0;
+    }
+    .rh-nav-btn {
+      height: 34px; padding: 0 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.8);
+      font-size: 12px; font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+    .rh-nav-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      border-color: rgba(255,255,255,0.18);
+    }
+    .rh-nav-btn:active:not(:disabled) { transform: scale(0.93); }
+    .rh-nav-btn:disabled {
+      opacity: 0.22;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    /* Next styled as accent */
+    .rh-nav-btn.next:not(:disabled) {
+      background: rgba(232,82,42,0.15);
+      border-color: rgba(232,82,42,0.3);
+      color: #f5a090;
+    }
+    .rh-nav-btn.next:hover:not(:disabled) {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+
+    /* Action buttons — small circles */
+    .rh-actions {
+      display: flex; align-items: center; gap: 3px; flex-shrink: 0;
+    }
+    .rh-btn {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      font-size: 15px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.14s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .rh-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+    .rh-btn:active { transform: scale(0.88); }
+
+    /* ═══════════════════════════════════════
+       BOTTOM NAV — floating pill at bottom
+    ═══════════════════════════════════════ */
+    #floatingBottomNav {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1100;
+
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 999px;
+
+      background: var(--glass);
+      backdrop-filter: blur(24px) saturate(1.6);
+      -webkit-backdrop-filter: blur(24px) saturate(1.6);
+      border: 1px solid var(--glass-b);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(255,255,255,0.04);
+
+      transition:
+        opacity 0.3s cubic-bezier(.4,0,.2,1),
+        transform 0.3s cubic-bezier(.4,0,.2,1);
+      will-change: opacity, transform;
+    }
+    #floatingBottomNav.hidden {
+      opacity: 0;
+      transform: translateX(-50%) translateY(60px);
+      pointer-events: none;
+    }
+
+    .fbn-btn {
+      height: 36px; padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.75);
+      font-size: 12px; font-weight: 800;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: all 0.14s;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+    .fbn-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+    }
+    .fbn-btn:active:not(:disabled) { transform: scale(0.94); }
+    .fbn-btn:disabled { opacity: 0.22; pointer-events: none; }
+
+    .fbn-btn.next-ch:not(:disabled) {
+      background: linear-gradient(135deg, var(--accent), #c73f1c);
+      border-color: var(--accent);
+      color: #fff;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .fbn-btn.next-ch:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(232,82,42,0.5);
+      transform: translateY(-1px);
+    }
+
+    .fbn-sep {
+      width: 1px; height: 22px;
+      background: rgba(255,255,255,0.1);
+      flex-shrink: 0;
+    }
+
+    .fbn-chapter-info {
+      font-size: 11px; color: rgba(255,255,255,0.4);
+      font-weight: 700; white-space: nowrap;
+      padding: 0 6px;
+    }
+
+    /* ═══════════════════════════════════════
+       AUTH DROPDOWN
+    ═══════════════════════════════════════ */
+    .dropdown {
+      display: none; position: fixed;
+      right: 10px; top: 68px; z-index: 2000;
+      background: rgba(12,12,20,0.97);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 14px; overflow: hidden;
+      min-width: 160px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      animation: dropIn 0.14s cubic-bezier(.4,0,.2,1);
+    }
+    @keyframes dropIn {
+      from { opacity:0; transform:translateY(-8px) scale(.97) }
+      to   { opacity:1; transform:translateY(0)    scale(1)   }
+    }
+    .dropdown p {
+      padding: 12px 15px; cursor: pointer; font-size: 13px; font-weight: 600;
+      color: #eaeaf0; margin: 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+      transition: background 0.12s, padding-left 0.12s;
+    }
+    .dropdown p:last-child { border-bottom: none; }
+    .dropdown p:hover { background: rgba(255,255,255,0.07); padding-left: 20px; }
+
+    /* ═══════════════════════════════════════
+       CHAPTER LIST PANEL
+    ═══════════════════════════════════════ */
+    #chapterListPanel.open { left: 0 !important; }
+
+    .chapter-list-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      background: rgba(232,82,42,0.08);
+      flex-shrink: 0;
+    }
+    .chapter-list-header h3 { font-size: 14px; font-weight: 800; color: var(--accent); margin: 0; }
+    .chapter-list-header .close-btn {
+      background: rgba(255,255,255,0.07); border: none; color: #eaeaf0;
+      width: 28px; height: 28px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; display: flex; align-items: center; justify-content: center;
+      transition: background 0.12s;
+    }
+    .chapter-list-header .close-btn:hover { background: rgba(255,255,255,0.14); }
+
+    .chapter-list-content { flex: 1; overflow-y: auto; padding: 4px 0; }
+
+    .chapter-item-panel {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 11px 16px; cursor: pointer; font-size: 13px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      border-left: 3px solid transparent;
+      transition: background 0.12s, border-color 0.12s, padding-left 0.12s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .chapter-item-panel:hover  { background: rgba(255,255,255,0.05); }
+    .chapter-item-panel.active {
+      background: rgba(232,82,42,0.12);
+      border-left-color: var(--accent); color: var(--accent); font-weight: 700;
+    }
+    .chapter-item-panel.active .chapter-num { color: var(--accent); }
+    .chapter-num  { font-weight: 600; color: #eaeaf0; }
+    .chapter-date { font-size: 11px; color: #555; }
+
+    /* ═══════════════════════════════════════
+       SINGLE-PAGE CONTROLS
+    ═══════════════════════════════════════ */
+    #singleControls {
+      display: none; position: fixed;
+      bottom: 0; left: 0; right: 0; z-index: 990;
+      background: rgba(9,9,15,0.93);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding: 10px 16px;
+      align-items: center; justify-content: space-between; gap: 10px;
+    }
+    #singleControls button {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #eaeaf0; padding: 9px 18px;
+      border-radius: 10px; cursor: pointer;
+      font-size: 14px; font-family: 'Nunito', sans-serif; font-weight: 700;
+      transition: background 0.14s, transform 0.1s;
+      display: flex; align-items: center; gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #singleControls button:hover  { background: rgba(255,255,255,0.13); }
+    #singleControls button:active { transform: scale(0.94); }
+    #singleControls button:disabled { opacity: 0.28; cursor: not-allowed; pointer-events: none; }
+    #singleControls button.primary {
+      background: var(--accent); border-color: var(--accent); color: #fff; flex: 1;
+      justify-content: center; box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    #singleControls button.primary:hover { background: var(--accent-dark); }
+    #pageCounter {
+      font-size: 13px; font-weight: 700; color: #666;
+      white-space: nowrap; min-width: 60px; text-align: center;
+    }
+
+    /* ═══════════════════════════════════════
+       READER LOADING / ERROR
+    ═══════════════════════════════════════ */
+    .reader-loading {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 16px; color: #555;
+    }
+    .reader-spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(232,82,42,0.18);
+      border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .reader-error {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 60vh; gap: 12px; color: #666; text-align: center;
+    }
+    .btn-retry {
+      padding: 10px 24px; border: none; border-radius: 10px;
+      cursor: pointer; font-weight: 800; font-size: 13px;
+      font-family: 'Nunito', sans-serif;
+      background: var(--accent); color: #fff;
+      transition: background 0.14s, transform 0.1s;
+    }
+    .btn-retry:hover  { background: var(--accent-dark); }
+    .btn-retry:active { transform: scale(0.95); }
+    .btn-home  { background: rgba(255,255,255,0.08); color: #eaeaf0; border: 1px solid rgba(255,255,255,0.1); }
+    .btn-home:hover { background: rgba(255,255,255,0.14); }
+
+    /* ═══════════════════════════════════════
+       MISC
+    ═══════════════════════════════════════ */
+    .image-error {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px; gap: 10px; color: #555;
+    }
+    .image-error button {
+      padding: 8px 18px; background: var(--accent); color: #fff;
+      border: none; border-radius: 8px; cursor: pointer; font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+    }
+    @keyframes toastIn {
+      from { opacity:0; transform:translateY(8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* Reader content padding — account for floating header */
+    #reader { padding-top: 64px; }
+  </style>
+</head>
+<body>
+
+<div id="readingProgressBar"></div>
+
+<!-- ═══ FLOATING HEADER PILL ═══ -->
+<div class="reader-header" id="readerHeader">
+  <!-- Home -->
+  <button class="rh-home" onclick="goHome()" title="Beranda">🏠</button>
+
+  <!-- Title -->
+  <span class="rh-title" id="title">Memuat...</span>
+
+  <div class="rh-divider"></div>
+
+  <!-- Prev / Next nav -->
+  <div class="rh-nav">
+    <button id="prevBtn" class="rh-nav-btn" onclick="prevChapter()" disabled>
+      ← <span class="rh-nav-label">Prev</span>
+    </button>
+    <button id="nextBtn" class="rh-nav-btn next" onclick="nextChapter()" disabled>
+      <span class="rh-nav-label">Next</span> →
+    </button>
+  </div>
+
+  <div class="rh-divider"></div>
+
+  <!-- Action buttons -->
+  <div class="rh-actions">
+    <button class="rh-btn" onclick="toggleChapterList()" title="Daftar Chapter">📚</button>
+    <button class="rh-btn" onclick="shareKomik()" title="Bagikan">🔗</button>
+    <button class="rh-btn" onclick="toggleSettings()" title="Pengaturan">⚙️</button>
+    <button class="rh-btn" onclick="toggleMenu()" title="Akun">👤</button>
+  </div>
+</div>
+
+<!-- ═══ FLOATING BOTTOM NAV ═══ -->
+<div id="floatingBottomNav">
+  <button id="fbnPrev" class="fbn-btn" onclick="prevChapter()" disabled>← Prev</button>
+  <div class="fbn-sep"></div>
+  <span class="fbn-chapter-info" id="fbnInfo">—</span>
+  <div class="fbn-sep"></div>
+  <button id="fbnNext" class="fbn-btn next-ch" onclick="nextChapter()" disabled>Next →</button>
+</div>
+
+<div id="menuDropdown" class="dropdown"></div>
+
+<!-- Settings panel -->
+<div class="settings" id="settings">
+  <h3>⚙️ Pengaturan</h3>
+
+  <label>Mode Baca</label>
+  <select id="mode" onchange="changeMode(this.value)">
+    <option value="scroll">📜 Scroll (Webtoon)</option>
+    <option value="single">📖 Per Halaman (Manga)</option>
+  </select>
+
+  <div id="scrollSettings">
+    <label>Lebar Gambar</label>
+    <input type="range" id="width" min="50" max="100" value="100">
+    <label>Kecepatan Auto Scroll</label>
+    <input type="range" id="speed" min="1" max="10" value="3">
+    <button class="btn-auto" id="autoBtn" onclick="toggleAutoScroll()">▶️ Mulai Auto Scroll</button>
+  </div>
+
+  <div id="singleSettings" style="display:none;">
+    <p style="font-size:12px;color:#888;margin-top:10px;line-height:1.6;">
+      Navigasi halaman:<br>
+      ← → atau <kbd style="background:#1e1e28;padding:2px 5px;border-radius:4px;">A</kbd>
+      <kbd style="background:#1e1e28;padding:2px 5px;border-radius:4px;">D</kbd>
+    </p>
+  </div>
+</div>
+
+<!-- Chapter list overlay -->
+<div id="chapterListOverlay"
+     style="display:none;position:fixed;inset:0;z-index:1499;background:rgba(0,0,0,0.55);"
+     onclick="toggleChapterList()"></div>
+
+<!-- Chapter list panel -->
+<div id="chapterListPanel" style="
+  position:fixed;top:0;left:-320px;width:300px;height:100vh;
+  background:rgba(10,10,16,0.99);backdrop-filter:blur(18px);
+  border-right:1px solid rgba(255,255,255,0.07);
+  z-index:1500;overflow:hidden;display:flex;flex-direction:column;
+  transition:left 0.28s cubic-bezier(.4,0,.2,1);
+  box-shadow:4px 0 28px rgba(0,0,0,0.6);
+"></div>
+
+<div id="reader"></div>
+
+<div id="readerCommentSection"
+  style="max-width:720px;margin:0 auto;background:#09090f;padding-bottom:100px;"></div>
+
+<div id="singleControls">
+  <button id="prevPageBtn" onclick="prevPage()">← Prev</button>
+  <span id="pageCounter">1 / ?</span>
+  <button id="nextPageBtn" class="primary" onclick="nextPage()">Next →</button>
+</div>
+
+<!-- ═══ SCROLL BEHAVIOR CONTROLLER ═══ -->
+<script>
+(function () {
+  const header = document.getElementById("readerHeader");
+  const bottomNav = document.getElementById("floatingBottomNav");
+
+  let lastY      = window.scrollY;
+  let ticking    = false;
+  let hideTimer  = null;
+  let isVisible  = true;
+  let isUserScrolling = false;
+
+  /* Minimum scroll to trigger hide: 80px */
+  const HIDE_THRESHOLD = 80;
+  /* Show immediately on scroll up */
+  const SHOW_THRESHOLD = 8;
+  /* Auto-hide delay after scroll stops: 2.8s */
+  const AUTO_HIDE_MS   = 2800;
+
+  function show() {
+    if (isVisible) return;
+    isVisible = true;
+    header.classList.remove("hidden");
+    bottomNav.classList.remove("hidden");
+  }
+
+  function hide() {
+    if (!isVisible) return;
+    isVisible = false;
+    header.classList.add("hidden");
+    bottomNav.classList.add("hidden");
+  }
+
+  function resetAutoHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      /* Only auto-hide if user is actively at reading position (past 200px) */
+      if (window.scrollY > 200) hide();
+    }, AUTO_HIDE_MS);
+  }
+
+  window.addEventListener("scroll", () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y    = window.scrollY;
+      const diff = y - lastY;
+
+      if (diff > HIDE_THRESHOLD) {
+        /* Scrolling DOWN fast → hide */
+        hide();
+        clearTimeout(hideTimer);
+      } else if (diff < -SHOW_THRESHOLD) {
+        /* Scrolling UP → always show */
+        show();
+        resetAutoHide();
+      }
+
+      lastY   = y;
+      ticking = false;
+    });
+  }, { passive: true });
+
+  /* TAP anywhere on reader area toggles header */
+  document.addEventListener("click", e => {
+    /* Don't toggle if clicking on header itself, settings, chapter panel */
+    const isHeader   = header.contains(e.target);
+    const isBottom   = bottomNav.contains(e.target);
+    const isSettings = document.getElementById("settings")?.contains(e.target);
+    const isPanel    = document.getElementById("chapterListPanel")?.contains(e.target);
+    const isDropdown = document.getElementById("menuDropdown")?.contains(e.target);
+
+    if (isHeader || isBottom || isSettings || isPanel || isDropdown) return;
+
+    if (!isVisible) {
+      show();
+      resetAutoHide();
+    }
+    /* Don't hide on tap — only scroll hides */
+  });
+
+  /* When reader loads new chapter, show header briefly then auto-hide */
+  window.addEventListener("readerChapterLoaded", () => {
+    show();
+    resetAutoHide();
+  });
+})();
+</script>
+
+<script type="module">
+  import { initAuthHeader } from "/auth-header.js";
+  initAuthHeader();
+</script>
+<script type="module" src="/reader.js"></script>
+<script type="module">
+  import { getCurrentUser } from "/supabase.js";
+  import { initComments }   from "/comment-system.js";
+
+  let _commentSlug = null;
+
+  async function initReaderComments(chapterSlug) {
+    if (!chapterSlug || _commentSlug === chapterSlug) return;
+    _commentSlug = chapterSlug;
+    const user        = await getCurrentUser();
+    const contentSlug = `chapter:${chapterSlug}`;
+    await initComments({
+      containerId : "readerCommentSection",
+      contentSlug,
+      accentColor : "#e8522a",
+      user,
+    });
+    const section = document.getElementById("readerCommentSection");
+    if (section) {
+      section.style.borderTop = "1px solid rgba(255,255,255,0.07)";
+    }
+  }
+
+  window.addEventListener("readerChapterLoaded", e => {
+    initReaderComments(e.detail?.slug);
+  });
+
+  setTimeout(async () => {
+    const params = new URLSearchParams(window.location.search);
+    const slug   = params.get("slug")
+      || window.location.pathname.split("/").filter(Boolean).pop();
+    if (slug && !_commentSlug) initReaderComments(slug);
+  }, 3000);
+</script>
+</body>
+</html>
     /* ── CSS variables sync with style.css ── */
     :root {
       --accent:       #e8522a;
