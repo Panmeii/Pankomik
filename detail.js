@@ -670,74 +670,95 @@ async function getDetail() {
     const source = best.source;
     let komikDataRaw = best.data;
 
-    /* ── Merge chapter dari SEMUA source ──────────────────────
-       PRINSIP BARU (fix bug index Ch.20 vs detail Ch.10):
-       1. Kumpulkan SEMUA chapter unik dari semua source, deduplicate by nomor
-       2. Untuk setiap nomor chapter, slug yang dipakai ikut source yang punya:
-          prioritas: best source > source lain (urutan candidates)
-       3. Jangan buang chapter dari source non-best — chapter eksklusif tetap masuk
-       4. Urutkan: nomor terbesar (terbaru) di atas
-    ── */
-    const allChapterMaps = new Map(); // key: nomor chapter (float)
+    /* ════════════════════════════════════════════════════════
+       MERGE CHAPTER — Pendekatan Baru (tidak ada chapter yang terbuang)
+       
+       Masalah lama: regex cuma cocok untuk "Chapter 20" tapi bukan
+       semua format chapter slug sama, jadi banyak chapter di-skip.
+       
+       Pendekatan baru:
+       1. Ambil nomor chapter dari title ATAU slug pakai regex lebar
+       2. Kalau nomor tetap tidak ketemu, pakai title/slug sebagai key
+       3. Deduplicate: nomor sama → satu entri (slug dari best source)
+       4. Urutkan nomor terbesar di atas, sisanya di bawah
+       ════════════════════════════════════════════════════════ */
 
-    // Pass 1 — masukkan semua chapter dari SEMUA source
-    // Source dengan prioritas lebih rendah dulu, lalu best source timpa
-    const _srcOrder = [...candidates].sort((a, b) => a.count - b.count); // lemah dulu
-    for (const c of _srcOrder) {
+    /* Helper: ekstrak angka chapter dari string apapun */
+    function extractNum(str) {
+      if (!str) return null;
+      // "Chapter 20", "Ch.20", "chapter-20", "chapter_20", "chigau-...chapter-20"
+      const patterns = [
+        /(?:chapter|ch)[.\s_-]*([\d]+(?:[._-][\d]+)?)/i,
+        /(?:chapter|ch)([\d]+(?:[._][\d]+)?)/i,
+        /-([\d]+(?:[._][\d]+)?)(?:[_-]|$)/,
+        /^([\d]+(?:[._][\d]+)?)$/,
+      ];
+      for (const re of patterns) {
+        const m = str.match(re);
+        if (m) {
+          const raw = m[1].replace(/[_-]/g, ".");
+          const n = parseFloat(raw);
+          if (!isNaN(n)) return n;
+        }
+      }
+      return null;
+    }
+
+    // Kumpulkan semua chapter dari semua source
+    // Key = nomor chapter (float) jika bisa di-ekstrak, atau string unik jika tidak
+    const chMap = new Map();
+
+    // Proses: source LEMAH dulu (overwrite nanti oleh source kuat)
+    const srcByStrength = [...candidates].sort((a, b) => a.count - b.count);
+
+    for (const c of srcByStrength) {
       const isBest = c.source === source;
       for (const ch of c.data.chapters) {
-        const label = ch.title || ch.slug || "";
-        // Coba ekstrak nomor chapter
-        const m = label.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
-               || label.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
-        if (!m) {
-          // Chapter tanpa nomor yang bisa di-parse: simpan pakai key string unik
-          const fallbackKey = `_${c.source}_${ch.slug || ch.title || Math.random()}`;
-          if (!allChapterMaps.has(fallbackKey)) {
-            allChapterMaps.set(fallbackKey, { ...ch, _num: -9999, _fallback: true });
-          }
-          continue;
-        }
-        const num = parseFloat(m[1].replace(/[_,]/g, "."));
-        if (isNaN(num)) continue;
+        const titleStr = ch.title || "";
+        const slugStr  = ch.slug  || "";
 
-        const existing = allChapterMaps.get(num);
+        // Coba dapatkan nomor dari title dulu, lalu dari slug
+        const num = extractNum(titleStr) ?? extractNum(slugStr);
+        const key = num !== null ? num : `str_${titleStr || slugStr}`;
+
+        const existing = chMap.get(key);
         if (!existing) {
-          // Chapter baru, langsung masuk
-          allChapterMaps.set(num, {
-            title:       ch.title       || "",
-            slug:        ch.slug        || "",
+          chMap.set(key, {
+            title:       titleStr,
+            slug:        slugStr,
             releaseTime: ch.releaseTime || ch.date || "",
             _num:        num,
           });
         } else {
-          // Sudah ada — best source menang untuk slug (agar reader bisa load)
-          // tapi chapter tetap ada (tidak dibuang)
-          allChapterMaps.set(num, {
-            title:       isBest && ch.title       ? ch.title       : (existing.title       || ch.title       || ""),
-            slug:        isBest && ch.slug        ? ch.slug        : (existing.slug        || ch.slug        || ""),
-            releaseTime: isBest && ch.releaseTime ? ch.releaseTime : (existing.releaseTime || ch.releaseTime || ch.date || ""),
+          // Best source MENANG untuk slug (kompatibilitas reader)
+          // Chapter tetap ada — hanya slug dan title yang diupdate
+          chMap.set(key, {
+            title:       isBest && titleStr ? titleStr : (existing.title || titleStr),
+            slug:        isBest && slugStr  ? slugStr  : (existing.slug  || slugStr),
+            releaseTime: (existing.releaseTime || ch.releaseTime || ch.date || ""),
             _num:        num,
           });
         }
       }
     }
 
-    /* Fallback: kalau merge kosong, pakai chapter best source langsung */
-    if (allChapterMaps.size === 0) {
+    // Fallback: kalau map kosong, pakai best source langsung
+    if (chMap.size === 0) {
       best.data.chapters.forEach((ch, i) => {
-        allChapterMaps.set(-(i), { ...ch, _num: -(i) });
+        chMap.set(i, { ...ch, _num: null });
       });
     }
 
-    /* Urutkan: nomor chapter terbesar (terbaru) di atas, fallback di bawah */
-    const mergedChapters = Array.from(allChapterMaps.values())
-      .filter(ch => !ch._fallback)
-      .sort((a, b) => b._num - a._num);
+    // Pisahkan yang punya nomor vs tidak
+    const withNum    = Array.from(chMap.values()).filter(c => c._num !== null);
+    const withoutNum = Array.from(chMap.values()).filter(c => c._num === null);
 
-    // Append fallback chapters (tanpa nomor) di paling bawah
-    const fallbackChapters = Array.from(allChapterMaps.values()).filter(ch => ch._fallback);
-    mergedChapters.push(...fallbackChapters);
+    // Urutkan: nomor terbesar (terbaru) di atas
+    withNum.sort((a, b) => b._num - a._num);
+
+    const mergedChapters = [...withNum, ...withoutNum];
+
+    console.log(`[Detail] Base: ${source} (${best.count}ch), merged total: ${mergedChapters.length}ch dari ${candidates.map(c=>c.source+'='+c.count).join(', ')}`);
 
     /* Ganti chapter list dengan hasil merge dari semua source */
     komikDataRaw = {
@@ -1191,31 +1212,62 @@ window.liveSearch = async function () {
       </div>`;
 
     merged.slice(0, 8).forEach((k, i) => {
-      const origUrl = (k.image || "").split("?")[0];
-      const cover   = origUrl ? proxyImg(origUrl, 100) : "";
-      const item    = document.createElement("div");
+      const rawUrl  = (k.image || "").split("?")[0];
+      /* Pakai wsrv.nl — sama persis dengan script.js */
+      const cover   = rawUrl
+        ? `https://wsrv.nl/?url=${encodeURIComponent(rawUrl)}&w=120&output=webp&q=85&n=-1`
+        : "";
+
+      const item = document.createElement("div");
       item.className = "search-item";
-      item.style.animationDelay = `${i * 40}ms`;
+      item.style.cssText = `
+        display:flex !important; gap:12px; padding:10px 14px;
+        cursor:pointer; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05);
+        transition:background 0.13s; animation:siIn 0.2s ease ${i*40}ms both;
+        background:transparent;
+      `;
+
+      /* Cover wrapper — inline style agar tidak kena override style.css */
+      const coverHtml = cover
+        ? `<div style="position:relative;flex-shrink:0;width:44px;height:60px;border-radius:8px;overflow:hidden;background:var(--bg-surface);border:1px solid rgba(255,255,255,0.08);">
+             <img src="${cover}" alt="" loading="lazy"
+               style="width:44px;height:60px;object-fit:cover;display:block;border-radius:0;"
+               onerror="this.parentElement.innerHTML='<div style=width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px>📚</div>'">
+             ${k.type ? `<span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.8);color:#fff;font-size:7px;font-weight:800;text-align:center;border-radius:3px;padding:1px 2px;text-transform:uppercase;">${escHtml(k.type)}</span>` : ""}
+           </div>`
+        : `<div style="flex-shrink:0;width:44px;height:60px;border-radius:8px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(255,255,255,0.08);">📚</div>`;
+
       item.innerHTML = `
-        <div class="si-cover">
-          ${cover ? `<img src="${cover}" alt="" loading="lazy">` : `<div class="si-cover-ph">📚</div>`}
-          ${k.type ? `<span class="si-type-badge">${escHtml(k.type)}</span>` : ""}
-        </div>
-        <div class="si-body">
-          <p class="si-title">${escHtml(k.title)}</p>
-          <div class="si-meta">
-            ${k.rating ? `<span class="si-rating">⭐ ${escHtml(k.rating)}</span>` : ""}
-            ${k.type   ? `<span class="si-genre">${escHtml(k.type)}</span>` : ""}
+        ${coverHtml}
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+          <p style="font-weight:800;font-size:13px;color:var(--text);margin:0;
+            display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;">
+            ${escHtml(k.title)}
+          </p>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            ${k.rating ? `<span style="font-size:11px;color:#f5a623;font-weight:700;">⭐ ${escHtml(k.rating)}</span>` : ""}
+            ${k.type   ? `<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,0.07);border-radius:4px;padding:1px 6px;color:var(--text-muted);">${escHtml(k.type)}</span>` : ""}
           </div>
-          <span class="si-arrow">Lihat Detail →</span>
+          <span style="font-size:10px;color:var(--accent);font-weight:800;opacity:0;transition:opacity 0.13s;" class="si-goto">Lihat Detail →</span>
         </div>`;
+
+      item.addEventListener("mouseenter", () => {
+        item.style.background = "rgba(232,82,42,0.06)";
+        const g = item.querySelector(".si-goto");
+        if (g) g.style.opacity = "1";
+      });
+      item.addEventListener("mouseleave", () => {
+        item.style.background = "transparent";
+        const g = item.querySelector(".si-goto");
+        if (g) g.style.opacity = "0";
+      });
       item.onclick = () => { window.location.href = "/komik/" + k.slug; };
       resultBox.appendChild(item);
     });
 
     if (merged.length > 8) {
       const more = document.createElement("div");
-      more.className = "sr-more";
+      more.style.cssText = "text-align:center;padding:10px;font-size:12px;font-weight:700;color:var(--text-muted);border-top:1px solid rgba(255,255,255,0.05);";
       more.textContent = `+${merged.length - 8} hasil lainnya`;
       resultBox.appendChild(more);
     }
