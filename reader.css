@@ -1,11 +1,10 @@
 /* ============================================================
-   PANKOMIK - reader.css
-   File ini mengatur tampilan halaman baca komik (reader.html)
+   PANKOMIK — reader.css  (Updated for Floating Pill Header)
    ============================================================ */
 
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
 
-/* ---- RESET & BASE ----------------------------------------- */
+/* ── RESET & BASE ────────────────────────────────────────── */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -15,118 +14,153 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: #0e0e12;
+  background: #09090f;
   color: #eaeaf0;
   font-family: 'Nunito', sans-serif;
   overscroll-behavior: none; /* cegah bounce di iOS */
 }
 
-/* ============================================================
-   HEADER READER
-   Posisinya fixed (menempel di atas), otomatis sembunyikan saat scroll
-   ============================================================ */
+/* ══════════════════════════════════════════════════════════
+   READER HEADER — FLOATING PILL
+   (Style utama ada di reader.html inline, ini override/support)
+══════════════════════════════════════════════════════════ */
+
+/* Override reader.css lama — header sekarang pill, bukan bar */
 .reader-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 999;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: rgba(14, 14, 18, 0.88);
-  backdrop-filter: blur(14px);        /* efek kaca buram */
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  /* Semua layout/glass dihandle di reader.html inline style */
+  /* reader.css hanya perlu reset style lama yang override */
+  position: fixed !important;
+  top: 12px !important;
+  left: 50% !important;
+  right: auto !important;        /* hapus right:0 dari CSS lama */
+  padding: 8px 10px !important;  /* override padding lama */
+  border-bottom: none !important; /* hapus border-bottom lama */
+  background: rgba(10,10,18,0.88) !important;
+  backdrop-filter: blur(24px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.6) !important;
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  border-radius: 999px !important;
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.6),
+    0 0 0 1px rgba(255,255,255,0.04),
+    inset 0 1px 0 rgba(255,255,255,0.07) !important;
+  /* Disable lama h3 centering */
+  justify-content: flex-start !important;
 }
 
-/* Kelas .hide ditambahkan JS saat user scroll ke bawah */
-.reader-header.hide {
-  transform: translateY(-100%);
-  opacity: 0;
-  pointer-events: none; /* tidak bisa diklik saat tersembunyi */
+/* Lama: .hide pakai transform:translateY(-100%) — sekarang pakai .hidden */
+/* Tetap support .hide untuk fallback */
+.reader-header.hide,
+.reader-header.hidden {
+  opacity: 0 !important;
+  transform: translateX(-50%) translateY(-68px) !important;
+  pointer-events: none !important;
 }
 
-/* Judul chapter di tengah header */
+/* Override h3 lama di dalam header */
 .reader-header h3 {
-  font-size: 13px;
-  font-weight: 700;
-  max-width: 45%;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  color: #ccc;
+  display: none; /* h3 lama diganti .rh-title di HTML baru */
 }
 
-/* Tombol di header (home, prev, next, settings) */
-.reader-header button {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #eaeaf0;
-  padding: 6px 10px;
-  margin: 0 2px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 15px;
-  transition: background 0.2s, transform 0.1s;
+/* Override button style lama di header — sekarang pakai rh-btn / rh-nav-btn */
+.reader-header > button:not(.rh-home):not(.rh-btn):not(.rh-nav-btn) {
+  display: none; /* sembunyikan tombol format lama */
 }
 
-.reader-header button:hover  { background: rgba(255,255,255,0.15); }
-.reader-header button:active { transform: scale(0.90); }
-
-/* Grup tombol kanan (prev/next/settings) */
-.reader-header .btn-group {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-/* ============================================================
-   AREA GAMBAR KOMIK
-   ============================================================ */
+/* ── AREA GAMBAR ─────────────────────────────────────────── */
 #reader {
-  margin-top: 58px;     /* ruang untuk header fixed */
+  /* Tidak perlu margin-top besar karena header sekarang floating pill */
+  margin-top: 0;
+  padding-top: 64px; /* ruang di atas konten agar tidak tertutup pill */
   text-align: center;
-  padding-bottom: 40px;
+  padding-bottom: 100px; /* ruang untuk bottom nav */
+  min-height: 100vh;
 }
 
-/* Setiap gambar chapter */
 #reader img {
   width: 100%;
-  max-width: 720px;     /* batas lebar agar nyaman dibaca */
+  max-width: 720px;
   margin: 0 auto;
   display: block;
-  /* Tidak ada gap antar gambar agar menyatu seperti baca komik asli */
 }
 
-/* ============================================================
-   PANEL SETTINGS
-   Muncul di pojok kanan atas saat tombol ⚙️ diklik
-   ============================================================ */
+/* ── IMAGE WRAPPER ───────────────────────────────────────── */
+.image-wrapper {
+  position: relative;
+  margin-bottom: 2px;
+  background: #09090f;
+}
+
+.image-wrapper:last-child {
+  margin-bottom: 40px;
+}
+
+.image-wrapper img {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ── IMAGE SKELETON ──────────────────────────────────────── */
+.image-skeleton {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: linear-gradient(
+    90deg,
+    #141419 0%,
+    #1e1e26 50%,
+    #141419 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonLoad 1.4s infinite;
+  display: block;
+}
+
+@keyframes skeletonLoad {
+  0%   { background-position: 200% 0 }
+  100% { background-position: -200% 0 }
+}
+
+/* ── SINGLE MODE ─────────────────────────────────────────── */
+#singleImgWrap img {
+  border-radius: 4px;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SETTINGS PANEL
+══════════════════════════════════════════════════════════ */
 .settings {
   position: fixed;
-  right: 10px;
-  top: 66px;
+  right: 12px;
+  top: 72px;  /* sedikit lebih bawah karena header pill lebih kecil */
   width: 210px;
-  background: rgba(20, 20, 28, 0.96);
-  backdrop-filter: blur(14px);
+  background: rgba(12, 12, 20, 0.97);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 16px;
-  z-index: 1000;
-  display: none;        /* tersembunyi secara default */
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  z-index: 1050;
+  display: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
   animation: popIn 0.15s ease;
 }
 
-/* Animasi panel muncul */
 @keyframes popIn {
   from { opacity: 0; transform: scale(0.95) translateY(-6px); }
   to   { opacity: 1; transform: scale(1)    translateY(0); }
 }
 
-/* Kelas .active ditambahkan JS saat tombol ⚙️ diklik */
 .settings.active { display: block; }
 
 .settings h3 {
@@ -136,7 +170,6 @@ body {
   color: #e8522a;
 }
 
-/* Label tiap opsi settings */
 .settings label {
   display: block;
   font-size: 11px;
@@ -147,25 +180,27 @@ body {
   margin: 12px 0 4px;
 }
 
-/* Dropdown (select) dan range slider */
 .settings select,
 .settings input[type="range"] {
   width: 100%;
-  accent-color: #e8522a;  /* warna thumb slider & focus */
+  accent-color: #e8522a;
 }
 
 .settings select {
-  padding: 6px 8px;
+  padding: 6px 28px 6px 8px;
   background: rgba(255,255,255,0.06);
   color: #eaeaf0;
   border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: 'Nunito', sans-serif;
   font-size: 13px;
   cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
 }
 
-/* Tombol auto scroll */
 .settings .btn-auto {
   margin-top: 12px;
   width: 100%;
@@ -180,410 +215,251 @@ body {
   cursor: pointer;
   transition: background 0.2s, transform 0.1s;
 }
-
 .settings .btn-auto:hover  { background: #c73f1c; }
 .settings .btn-auto:active { transform: scale(0.96); }
+.settings .btn-auto.running { background: #27ae60; }
+.settings .btn-auto.running:hover { background: #1e8449; }
 
-/* Saat auto scroll aktif, warnanya berubah */
-.settings .btn-auto.running {
-  background: #27ae60;
+/* ══════════════════════════════════════════════════════════
+   CHAPTER LIST PANEL
+══════════════════════════════════════════════════════════ */
+#chapterListPanel.open { left: 0 !important; }
+
+.chapter-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: rgba(232,82,42,0.08);
+  flex-shrink: 0;
+}
+.chapter-list-header h3 {
+  font-size: 14px;
+  font-weight: 800;
+  color: #e8522a;
+  margin: 0;
+}
+.chapter-list-header .close-btn {
+  background: rgba(255,255,255,0.07);
+  border: none;
+  color: #eaeaf0;
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.12s;
+}
+.chapter-list-header .close-btn:hover { background: rgba(255,255,255,0.14); }
+
+.chapter-list-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232,82,42,0.3) transparent;
+}
+.chapter-list-content::-webkit-scrollbar { width: 3px; }
+.chapter-list-content::-webkit-scrollbar-thumb {
+  background: rgba(232,82,42,0.3);
+  border-radius: 99px;
 }
 
-.settings .btn-auto.running:hover {
-  background: #1e8449;
+.chapter-item-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-left: 3px solid transparent;
+  transition: background 0.12s, border-color 0.12s, padding-left 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.chapter-item-panel:hover { background: rgba(255,255,255,0.05); }
+.chapter-item-panel.active {
+  background: rgba(232,82,42,0.12);
+  border-left-color: #e8522a;
+  color: #e8522a;
+  font-weight: 700;
+}
+.chapter-item-panel.active .chapter-num { color: #e8522a; }
+.chapter-num  { font-weight: 600; color: #eaeaf0; }
+.chapter-date { font-size: 11px; color: #555; }
+.current-badge {
+  font-size: 12px;
 }
 
-/* ============================================================
-   SCROLLBAR KUSTOM
-   ============================================================ */
-::-webkit-scrollbar       { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e8522a; border-radius: 99px; }
-
-
-/* ============================================================
-   READER.CSS ENHANCEMENTS
-   Tambahan untuk reader.css yang sudah ada
-   ============================================================ */
-
-/* Image Loading States */
-#reader {
-  min-height: 100vh;
+/* ══════════════════════════════════════════════════════════
+   BOTTOM CHAPTER NAV (ditambahkan oleh reader.js di akhir komik)
+   Ini yang tampil setelah semua halaman habis di scroll mode
+══════════════════════════════════════════════════════════ */
+#bottomChapterNav {
+  user-select: none;
+  padding-bottom: 80px; /* ruang ekstra untuk floating bottom nav */
 }
 
-.image-wrapper {
-  position: relative;
-  margin-bottom: 2px;
-  background: #0e0e12;
+#bottomChapterNav button:focus-visible {
+  outline: 2px solid #e8522a;
+  outline-offset: 2px;
 }
 
-.image-wrapper:last-child {
-  margin-bottom: 40px;
-}
-
-/* Smooth image fade in */
-.reader-image {
-  display: block;
-  margin: 0 auto;
-  transition: opacity 0.3s ease, transform 0.2s ease;
-}
-
-.reader-image:hover {
-  transform: scale(1.01);
-}
-
-/* Loading skeleton */
-.image-skeleton {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    #1a1a1f 0%,
-    #252530 50%,
-    #1a1a1f 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
-  z-index: 1;
-}
-
-@keyframes skeleton-loading {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Image loaded state */
-.reader-image.loaded {
-  opacity: 1;
-}
-
-.reader-image.loaded + .image-skeleton {
-  display: none;
-}
-
-/* Error placeholder */
-.image-error-placeholder {
+/* ══════════════════════════════════════════════════════════
+   READER LOADING & ERROR
+══════════════════════════════════════════════════════════ */
+.reader-loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  background: linear-gradient(135deg, #1a1a1f 0%, #252530 100%);
-  border: 2px dashed #444;
-  border-radius: 12px;
-  color: #888;
-  padding: 30px;
+  min-height: 60vh;
+  gap: 16px;
+  color: #555;
+}
+
+.reader-spinner {
+  width: 40px; height: 40px;
+  border: 3px solid rgba(232,82,42,0.18);
+  border-top-color: #e8522a;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.reader-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: 12px;
+  color: #666;
   text-align: center;
 }
 
-.image-error-placeholder .error-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-  opacity: 0.5;
-}
-
-.image-error-placeholder p {
-  margin: 5px 0;
-  font-size: 14px;
-}
-
-.image-error-placeholder .retry-btn {
-  margin-top: 15px;
+.btn-retry {
   padding: 10px 24px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 13px;
+  font-family: 'Nunito', sans-serif;
   background: #e8522a;
   color: #fff;
-  border: none;
-  border-radius: 8px;
+  transition: background 0.14s, transform 0.1s;
+}
+.btn-retry:hover  { background: #b83a18; }
+.btn-retry:active { transform: scale(0.95); }
+
+.btn-home {
+  background: rgba(255,255,255,0.08);
+  color: #eaeaf0;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+.btn-home:hover { background: rgba(255,255,255,0.14); }
+
+/* ══════════════════════════════════════════════════════════
+   SINGLE PAGE CONTROLS
+══════════════════════════════════════════════════════════ */
+#singleControls {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 990;
+  background: rgba(9,9,15,0.93);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+#singleControls button {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #eaeaf0;
+  padding: 9px 18px;
+  border-radius: 10px;
   cursor: pointer;
-  font-weight: 700;
   font-size: 14px;
-  transition: all 0.2s;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
+  transition: background 0.14s, transform 0.1s;
+  display: flex; align-items: center; gap: 6px;
+  -webkit-tap-highlight-color: transparent;
 }
-
-.image-error-placeholder .retry-btn:hover {
-  background: #c73f1c;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(232, 82, 42, 0.3);
-}
-
-/* Chapter Navigation Enhancement */
-.reader-header .btn-group {
-  display: flex;
-  gap: 6px;
-}
-
-.reader-header button {
-  position: relative;
-  overflow: hidden;
-}
-
-.reader-header button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  transition: width 0.3s, height 0.3s;
-}
-
-.reader-header button:active::after {
-  width: 100%;
-  height: 100%;
-}
-
-/* Disabled button state */
-.reader-header button:disabled {
-  opacity: 0.3;
+#singleControls button:hover  { background: rgba(255,255,255,0.13); }
+#singleControls button:active { transform: scale(0.94); }
+#singleControls button:disabled {
+  opacity: 0.28;
   cursor: not-allowed;
   pointer-events: none;
 }
-
-/* Tooltip untuk keyboard shortcut */
-.reader-header button[title]::before {
-  content: attr(title);
-  position: absolute;
-  bottom: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 4px 8px;
-  background: #000;
-  color: #fff;
-  font-size: 11px;
-  border-radius: 4px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s;
-  z-index: 1000;
-}
-
-.reader-header button[title]:hover::before {
-  opacity: 1;
-}
-
-/* Progress indicator */
-.reading-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 3px;
+#singleControls button.primary {
   background: #e8522a;
-  z-index: 1001;
-  transition: width 0.1s;
-}
-
-/* Keyboard shortcut hint */
-.keyboard-hint {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: #888;
-  padding: 8px 16px;
-  border-radius: 99px;
-  font-size: 12px;
-  opacity: 0;
-  transition: opacity 0.3s;
-  pointer-events: none;
-  z-index: 997;
-}
-
-.keyboard-hint.show {
-  opacity: 1;
-}
-
-.keyboard-hint kbd {
-  background: #333;
-  padding: 2px 6px;
-  border-radius: 4px;
+  border-color: #e8522a;
   color: #fff;
-  font-family: monospace;
-  margin: 0 2px;
-}
-
-/* Chapter end indicator */
-.chapter-end {
-  text-align: center;
-  padding: 60px 20px;
-  color: #888;
-  border-top: 1px solid #2a2a36;
-  margin-top: 40px;
-}
-
-.chapter-end .end-icon {
-  font-size: 48px;
-  margin-bottom: 15px;
-}
-
-.chapter-end h3 {
-  color: #eaeaf0;
-  margin-bottom: 10px;
-}
-
-.chapter-end .nav-buttons {
-  display: flex;
-  gap: 10px;
+  flex: 1;
   justify-content: center;
-  margin-top: 20px;
+  box-shadow: 0 4px 14px rgba(232,82,42,0.28);
 }
+#singleControls button.primary:hover { background: #b83a18; }
 
-.chapter-end .nav-btn {
-  padding: 12px 24px;
-  background: #e8522a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
+#pageCounter {
+  font-size: 13px;
   font-weight: 700;
-  transition: all 0.2s;
+  color: #666;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
 }
 
-.chapter-end .nav-btn:hover {
-  background: #c73f1c;
-  transform: translateY(-2px);
+/* ══════════════════════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════════════════════ */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-.chapter-end .nav-btn.secondary {
-  background: #444;
-}
+/* ══════════════════════════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e8522a; border-radius: 99px; }
 
-.chapter-end .nav-btn.secondary:hover {
-  background: #555;
-}
+body::-webkit-scrollbar { width: 4px; }
+body::-webkit-scrollbar-track { background: #09090f; }
+body::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 99px; }
+body::-webkit-scrollbar-thumb:hover { background: #e8522a; }
 
-/* Mobile optimizations */
-@media (max-width: 768px) {
-  .reader-header h3 {
-    font-size: 12px;
-    max-width: 35%;
-  }
-
-  .reader-header button {
-    padding: 5px 8px;
-    font-size: 14px;
-  }
-
-  #chapterListPanel {
-    width: 100%;
-    left: -100%;
-  }
-
-  #chapterListPanel.open {
-    left: 0;
-  }
-}
-
-/* Prevent image drag */
-.reader-image {
-  -webkit-user-drag: none;
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
-  user-drag: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-
-/* Smooth scroll behavior */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Hide scrollbar but keep functionality */
-body::-webkit-scrollbar {
-  width: 8px;
-}
-
-body::-webkit-scrollbar-track {
-  background: #0e0e12;
-}
-
-body::-webkit-scrollbar-thumb {
-  background: #333;
-  border-radius: 99px;
-}
-
-body::-webkit-scrollbar-thumb:hover {
-  background: #e8522a;
-}
-
-/* ============================================================
-   READER.CSS ENHANCEMENTS — Tambahan v2
-   ============================================================ */
-
-/* ── Bottom chapter nav (ditambahkan oleh reader.js) ──── */
-#bottomChapterNav {
-  user-select: none;
-}
-
-#bottomChapterNav button:focus-visible {
-  outline: 2px solid var(--accent, #e8522a);
-  outline-offset: 2px;
-}
-
-/* ── Image sequential loading fade ───────────────────── */
-.image-wrapper img {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-.image-wrapper img[style*="opacity: 1"] {
-  opacity: 1;
-}
-
-/* ── Page number overlay ──────────────────────────────── */
-.image-wrapper {
-  position: relative;
-}
-
-/* ── Single viewer smooth ─────────────────────────────── */
-#singleImgWrap img {
-  border-radius: 4px;
-}
-
-/* ── Settings panel polish ────────────────────────────── */
-.settings {
-  border-radius: 14px;
-}
-.settings select {
-  border-radius: 8px;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 28px;
-}
-
-/* ── Reader header button active ──────────────────────── */
-.reader-header button:active {
-  transform: scale(0.88) !important;
-}
-
-/* ── Progress bar glow ────────────────────────────────── */
-#readingProgressBar {
-  box-shadow: 0 0 8px rgba(232,82,42,0.6);
-}
-
-/* ── Mobile: chapter list full width ─────────────────── */
+/* ══════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS
+══════════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
   #chapterListPanel {
     width: 100%;
     left: -100%;
   }
-  #chapterListPanel.open {
-    left: 0;
+  #chapterListPanel.open { left: 0; }
+
+  /* Pill header lebih compact di mobile */
+  .reader-header {
+    max-width: calc(100vw - 16px) !important;
   }
+
+  /* Sembunyikan label teks di nav button kalau layar kecil banget */
+  .rh-nav-label {
+    display: none;
+  }
+}
+
+@media (min-width: 481px) {
+  .rh-nav-label { display: inline; }
 }
