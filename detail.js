@@ -39,12 +39,50 @@ const API_DETAIL   = `https://www.sankavollerei.com/comic/komikindo/detail/${slu
 const API_DETAIL_2 = `https://www.sankavollerei.com/comic/mangakita/detail/${slug}`;
 const API_DETAIL_3 = `https://www.sankavollerei.com/comic/bacakomik/detail/${slug}`;
 
-/* ── IMAGE PROXY ────────────────────────────────────────── */
+/* ── IMAGE PROXY — sama persis dengan script.js ─────────── */
+const DOMAIN_REF_MAP = {
+  "komikindo":   "https://komikindo.org",
+  "komikcast":   "https://komikcast.me",
+  "komiku":      "https://komiku.id",
+  "manhwaindo":  "https://manhwaindo.id",
+  "bacakomik":   "https://bacakomik.me",
+  "mangatale":   "https://mangatale.co",
+  "westmanga":   "https://westmanga.info",
+  "shinigami":   "https://shinigami.id",
+  "mangakita":   "https://mangakita.me",
+  "i0.wp.com":   "https://mangakita.me",
+  "i1.wp.com":   "https://mangakita.me",
+  "i2.wp.com":   "https://mangakita.me",
+  "i3.wp.com":   "https://mangakita.me",
+  "kiryuu":      "https://kiryuu.id",
+  "mgkomik":     "https://mgkomik.id",
+};
+
+function getReferer(url) {
+  if (!url) return "";
+  try {
+    const host = new URL(url.startsWith("http") ? url : "https://" + url).hostname;
+    for (const [key, ref] of Object.entries(DOMAIN_REF_MAP)) {
+      if (host.includes(key)) return ref;
+    }
+    return "https://" + host;
+  } catch { return ""; }
+}
+
+function buildWsrv(rawUrl, w, withRef) {
+  const clean = rawUrl.split("?")[0];
+  let q = `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=85&n=-1`;
+  if (withRef) {
+    const ref = getReferer(clean);
+    if (ref) q += `&ref=${encodeURIComponent(ref)}`;
+  }
+  return q;
+}
+
 function proxyImg(url, w = 300) {
   if (!url) return "";
-  if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("wsrv.nl")) return url;
-  const clean = url.split("?")[0];
-  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=82&n=-1`;
+  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
+  return buildWsrv(url, w, true);
 }
 
 function escHtml(str) {
@@ -537,6 +575,12 @@ function showDetailSkeleton() {
    ============================================================ */
 /* Normalize data dari API komikindo ke format internal */
 function normalizeFromKomikindo(raw) {
+  const chapters = (raw.chapters || []).map(ch => ({
+    title:       ch.title || ch.name || "",
+    slug:        ch.slug  || ch.href || ch.url || "",
+    releaseTime: ch.date  || ch.time || ch.releaseTime || "",
+  }));
+  console.log(`[komikindo] ${chapters.length}ch, first:`, chapters[0]);
   return {
     title:          cleanTitle(raw.title),
     cover:          raw.image || "",
@@ -550,9 +594,9 @@ function normalizeFromKomikindo(raw) {
     altTitle:       raw.detail?.alternativeTitle  || "",
     synopsis:       raw.description || "",
     genres:         raw.genres   || [],
-    chapters:       raw.chapters || [],
-    firstChapter:   raw.firstChapter   || null,
-    latestChapter:  raw.latestChapter  || null,
+    chapters,
+    firstChapter:   chapters.length ? chapters[chapters.length - 1] : null,
+    latestChapter:  chapters.length ? chapters[0] : null,
     allChapterSlug: raw.allChapterSlug || slug,
   };
 }
@@ -571,6 +615,7 @@ function normalizeFromMangakita(det) {
     };
   });
 
+  console.log(`[mangakita] ${chapters.length}ch, first:`, chapters[0]);
   const info = det.info || {};
   return {
     title:          cleanTitle(det.title),
@@ -599,20 +644,17 @@ function normalizeFromMangakita(det) {
 }
 
 
-/* Normalize data dari API bacakomik ke format internal */
 function normalizeFromBacakomik(det) {
-  /* bacakomik genres: [{title, slug}] — sudah format object, tinggal map */
   const genres = (det.genres || []).map(g => ({
     name: g.title || g.name || "",
     slug: g.slug  || (g.title || "").toLowerCase().replace(/\s+/g, "-"),
   }));
-
   const chapters = (det.chapters || []).map(ch => ({
     title:       ch.title || "",
     slug:        ch.slug  || "",
     releaseTime: ch.date  || "",
   }));
-
+  console.log(`[bacakomik] ${chapters.length}ch, first:`, chapters[0]);
   return {
     title:          cleanTitle(det.title),
     cover:          det.cover  || "",
@@ -625,8 +667,8 @@ function normalizeFromBacakomik(det) {
     theme:          "",
     altTitle:       det.otherTitle || "",
     synopsis:       det.synopsis  || "",
-    genres:         genres,
-    chapters:       chapters,
+    genres,
+    chapters,
     firstChapter:   chapters.length ? chapters[chapters.length - 1] : null,
     latestChapter:  chapters.length ? chapters[0] : null,
     allChapterSlug: slug,
@@ -670,74 +712,69 @@ async function getDetail() {
     const source = best.source;
     let komikDataRaw = best.data;
 
-    /* ── Merge chapter dari SEMUA source ──────────────────────
-       PRINSIP BARU (fix bug index Ch.20 vs detail Ch.10):
-       1. Kumpulkan SEMUA chapter unik dari semua source, deduplicate by nomor
-       2. Untuk setiap nomor chapter, slug yang dipakai ikut source yang punya:
-          prioritas: best source > source lain (urutan candidates)
-       3. Jangan buang chapter dari source non-best — chapter eksklusif tetap masuk
-       4. Urutkan: nomor terbesar (terbaru) di atas
-    ── */
-    const allChapterMaps = new Map(); // key: nomor chapter (float)
+    /* ════════════════════════════════════════════════════════
+       MERGE CHAPTER — Final Fix
+       
+       Strategi: JANGAN filter/skip chapter apapun.
+       Kumpulkan semua dari semua source.
+       Deduplicate berdasarkan nomor yang berhasil di-extract.
+       Kalau tidak bisa extract nomor → tetap masuk, pakai title sebagai key.
+       Best source (chapter terbanyak) punya prioritas slug untuk reader.
+       ════════════════════════════════════════════════════════ */
 
-    // Pass 1 — masukkan semua chapter dari SEMUA source
-    // Source dengan prioritas lebih rendah dulu, lalu best source timpa
-    const _srcOrder = [...candidates].sort((a, b) => a.count - b.count); // lemah dulu
-    for (const c of _srcOrder) {
-      const isBest = c.source === source;
-      for (const ch of c.data.chapters) {
-        const label = ch.title || ch.slug || "";
-        // Coba ekstrak nomor chapter
-        const m = label.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
-               || label.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
-        if (!m) {
-          // Chapter tanpa nomor yang bisa di-parse: simpan pakai key string unik
-          const fallbackKey = `_${c.source}_${ch.slug || ch.title || Math.random()}`;
-          if (!allChapterMaps.has(fallbackKey)) {
-            allChapterMaps.set(fallbackKey, { ...ch, _num: -9999, _fallback: true });
-          }
-          continue;
+    function extractChNum(title, slug) {
+      const s = title || slug || "";
+      /* Pola dari yang paling spesifik ke paling umum */
+      const tries = [
+        s.match(/chapter[\s._-]*(\d+(?:[._]\d+)?)/i),      // chapter 20, chapter-20, chapter_20
+        s.match(/ch[\s._-]*(\d+(?:[._]\d+)?)/i),           // ch 20, ch.20, ch-20
+        s.match(/(?:^|[^a-z])(\d+(?:\.\d+)?)(?:[^a-z]|$)/i), // angka standalone
+      ];
+      for (const m of tries) {
+        if (m?.[1]) {
+          const n = parseFloat(m[1].replace("_", "."));
+          if (!isNaN(n) && n > 0) return n;
         }
-        const num = parseFloat(m[1].replace(/[_,]/g, "."));
-        if (isNaN(num)) continue;
+      }
+      return null;
+    }
 
-        const existing = allChapterMaps.get(num);
-        if (!existing) {
-          // Chapter baru, langsung masuk
-          allChapterMaps.set(num, {
-            title:       ch.title       || "",
-            slug:        ch.slug        || "",
-            releaseTime: ch.releaseTime || ch.date || "",
-            _num:        num,
-          });
-        } else {
-          // Sudah ada — best source menang untuk slug (agar reader bisa load)
-          // tapi chapter tetap ada (tidak dibuang)
-          allChapterMaps.set(num, {
-            title:       isBest && ch.title       ? ch.title       : (existing.title       || ch.title       || ""),
-            slug:        isBest && ch.slug        ? ch.slug        : (existing.slug        || ch.slug        || ""),
-            releaseTime: isBest && ch.releaseTime ? ch.releaseTime : (existing.releaseTime || ch.releaseTime || ch.date || ""),
-            _num:        num,
-          });
+    const chMap   = new Map(); // key = nomor (float) atau "t_"+title
+    /* Source lemah dulu → best source timpa di akhir */
+    const ordered = [...candidates].sort((a, b) => a.count - b.count);
+
+    for (const cand of ordered) {
+      const isBest = cand.source === source;
+      for (const ch of cand.data.chapters) {
+        const t   = (ch.title || "").trim();
+        const sl  = (ch.slug  || "").trim();
+        const num = extractChNum(t, sl);
+        const key = num !== null ? num : `t_${t || sl}`;
+
+        const prev = chMap.get(key);
+        if (!prev) {
+          chMap.set(key, { title: t, slug: sl, releaseTime: ch.releaseTime || ch.date || "", _num: num });
+        } else if (isBest) {
+          /* Best source menang untuk slug agar reader bisa load */
+          chMap.set(key, { ...prev, title: t || prev.title, slug: sl || prev.slug });
         }
       }
     }
 
-    /* Fallback: kalau merge kosong, pakai chapter best source langsung */
-    if (allChapterMaps.size === 0) {
-      best.data.chapters.forEach((ch, i) => {
-        allChapterMaps.set(-(i), { ...ch, _num: -(i) });
-      });
+    /* Kalau tetap kosong (semua chapter tidak punya title/slug) pakai best langsung */
+    if (chMap.size === 0) {
+      best.data.chapters.forEach((ch, i) => chMap.set(i, { ...ch, _num: i }));
     }
 
-    /* Urutkan: nomor chapter terbesar (terbaru) di atas, fallback di bawah */
-    const mergedChapters = Array.from(allChapterMaps.values())
-      .filter(ch => !ch._fallback)
-      .sort((a, b) => b._num - a._num);
+    const withNum    = [...chMap.values()].filter(c => c._num !== null).sort((a,b) => b._num - a._num);
+    const withoutNum = [...chMap.values()].filter(c => c._num === null);
+    const mergedChapters = [...withNum, ...withoutNum];
 
-    // Append fallback chapters (tanpa nomor) di paling bawah
-    const fallbackChapters = Array.from(allChapterMaps.values()).filter(ch => ch._fallback);
-    mergedChapters.push(...fallbackChapters);
+    console.log(
+      `[Detail] sources: ${candidates.map(c => c.source+"="+c.count+"ch").join(", ")}`,
+      `| best: ${source}`,
+      `| merged: ${mergedChapters.length}ch`
+    );
 
     /* Ganti chapter list dengan hasil merge dari semua source */
     komikDataRaw = {
@@ -1191,31 +1228,59 @@ window.liveSearch = async function () {
       </div>`;
 
     merged.slice(0, 8).forEach((k, i) => {
-      const origUrl = (k.image || "").split("?")[0];
-      const cover   = origUrl ? proxyImg(origUrl, 100) : "";
-      const item    = document.createElement("div");
+      const rawUrl = (k.image || "").split("?")[0];
+      const cover  = rawUrl ? proxyImg(rawUrl, 120) : "";  /* pakai proxyImg — ada referer */
+
+      const item = document.createElement("div");
       item.className = "search-item";
-      item.style.animationDelay = `${i * 40}ms`;
+      item.style.cssText = `
+        display:flex !important; gap:12px; padding:10px 14px;
+        cursor:pointer; align-items:center; border-bottom:1px solid rgba(255,255,255,0.05);
+        transition:background 0.13s; animation:siIn 0.2s ease ${i*40}ms both;
+        background:transparent;
+      `;
+
+      /* Cover wrapper — inline style agar tidak kena override style.css */
+      const coverHtml = cover
+        ? `<div style="position:relative;flex-shrink:0;width:44px;height:60px;border-radius:8px;overflow:hidden;background:var(--bg-surface);border:1px solid rgba(255,255,255,0.08);">
+             <img src="${cover}" alt="" loading="lazy"
+               style="width:44px;height:60px;object-fit:cover;display:block;border-radius:0;"
+               onerror="this.parentElement.innerHTML='<div style=width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:20px>📚</div>'">
+             ${k.type ? `<span style="position:absolute;bottom:2px;left:2px;right:2px;background:rgba(0,0,0,0.8);color:#fff;font-size:7px;font-weight:800;text-align:center;border-radius:3px;padding:1px 2px;text-transform:uppercase;">${escHtml(k.type)}</span>` : ""}
+           </div>`
+        : `<div style="flex-shrink:0;width:44px;height:60px;border-radius:8px;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(255,255,255,0.08);">📚</div>`;
+
       item.innerHTML = `
-        <div class="si-cover">
-          ${cover ? `<img src="${cover}" alt="" loading="lazy">` : `<div class="si-cover-ph">📚</div>`}
-          ${k.type ? `<span class="si-type-badge">${escHtml(k.type)}</span>` : ""}
-        </div>
-        <div class="si-body">
-          <p class="si-title">${escHtml(k.title)}</p>
-          <div class="si-meta">
-            ${k.rating ? `<span class="si-rating">⭐ ${escHtml(k.rating)}</span>` : ""}
-            ${k.type   ? `<span class="si-genre">${escHtml(k.type)}</span>` : ""}
+        ${coverHtml}
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+          <p style="font-weight:800;font-size:13px;color:var(--text);margin:0;
+            display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35;">
+            ${escHtml(k.title)}
+          </p>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            ${k.rating ? `<span style="font-size:11px;color:#f5a623;font-weight:700;">⭐ ${escHtml(k.rating)}</span>` : ""}
+            ${k.type   ? `<span style="font-size:10px;font-weight:700;background:rgba(255,255,255,0.07);border-radius:4px;padding:1px 6px;color:var(--text-muted);">${escHtml(k.type)}</span>` : ""}
           </div>
-          <span class="si-arrow">Lihat Detail →</span>
+          <span style="font-size:10px;color:var(--accent);font-weight:800;opacity:0;transition:opacity 0.13s;" class="si-goto">Lihat Detail →</span>
         </div>`;
+
+      item.addEventListener("mouseenter", () => {
+        item.style.background = "rgba(232,82,42,0.06)";
+        const g = item.querySelector(".si-goto");
+        if (g) g.style.opacity = "1";
+      });
+      item.addEventListener("mouseleave", () => {
+        item.style.background = "transparent";
+        const g = item.querySelector(".si-goto");
+        if (g) g.style.opacity = "0";
+      });
       item.onclick = () => { window.location.href = "/komik/" + k.slug; };
       resultBox.appendChild(item);
     });
 
     if (merged.length > 8) {
       const more = document.createElement("div");
-      more.className = "sr-more";
+      more.style.cssText = "text-align:center;padding:10px;font-size:12px;font-weight:700;color:var(--text-muted);border-top:1px solid rgba(255,255,255,0.05);";
       more.textContent = `+${merged.length - 8} hasil lainnya`;
       resultBox.appendChild(more);
     }
