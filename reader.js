@@ -70,13 +70,33 @@ function _extractNum(str) {
    INIT
    ============================================================ */
 window.addEventListener("DOMContentLoaded", async () => {
-  /* Bug fix: kalau komikSlug tersimpan di sessionStorage berasal dari
-     komik lain (stale), bersihkan supaya tidak dipakai sebagai fallback
-     yang salah. Deteksi: kalau chapter slug saat ini tidak mengandung
-     prefix dari komikSlug yang tersimpan → clear. */
+  /* ── Validasi sessionStorage: cegah data stale dari komik lain ──
+     Kalau komikSrcSlug di sessionStorage berbeda dengan komik yang
+     bisa diinfer dari chapter slug saat ini, clear komikSource &
+     komikSrcHint tapi JANGAN hapus komikSlug (masih berguna untuk
+     ekstraksi komik slug dari chapter slug). ── */
+  const _storedSrcSlug = sessionStorage.getItem("komikSrcSlug") || "";
   const _storedKomikSlug = sessionStorage.getItem("komikSlug") || "";
-  if (_storedKomikSlug && slug && !slug.startsWith(_storedKomikSlug.slice(0, 8))) {
-    sessionStorage.removeItem("komikSlug");
+
+  /* Coba infer komik slug dari chapter slug untuk validasi */
+  const _inferredKomikSlug = slug
+    .replace(/-chapter-[\d]+(?:[.-][\d]+)?.*$/i, "")
+    .replace(/-ch-[\d]+(?:[.-][\d]+)?.*$/i, "")
+    .replace(/-(ch|ep|eps)[\d]+.*$/i, "")
+    .trim();
+
+  /* Kalau stored slug TIDAK cocok dengan komik yang sedang dibuka → data stale */
+  const _isStale = _storedSrcSlug && _inferredKomikSlug &&
+    _storedSrcSlug !== _inferredKomikSlug &&
+    _storedKomikSlug !== _inferredKomikSlug;
+
+  if (_isStale) {
+    console.warn(`[Reader] sessionStorage stale: stored=${_storedSrcSlug}, current≈${_inferredKomikSlug} → clearing source hints`);
+    sessionStorage.removeItem("komikSource");
+    sessionStorage.removeItem("komikSrcHint");
+    sessionStorage.removeItem("komikSrcSlug");
+    /* komikSlug dibiarkan, tapi set ulang dengan nilai yang fresh */
+    sessionStorage.setItem("komikSlug", _inferredKomikSlug);
   }
 
   currentUser = await getCurrentUser();
@@ -184,18 +204,30 @@ async function loadChapter() {
     }
 
     /* ── Tentukan source API ─────────────────────────────────
-       Urutan priority:
-       1. komikSrcHint (sessionStorage) → coba duluan
-       2. currentApiSource → kalau hint gagal atau tidak ada
-       3. Sisa API lain → fallback agar reader tidak pernah kosong
+       LOGIKA PINTAR — konsisten dengan detail.js:
 
-       Catatan: kita TIDAK hard-fail kalau hint gagal — reader tetap
-       menampilkan chapter dari API lain daripada halaman kosong.
+       detail.js sudah menyimpan "komikSource" dan "komikSrcHint" di sessionStorage
+       dengan source yang benar. Reader HARUS pakai source yang sama agar:
+       - Slug chapter compatible dengan API
+       - Tidak ada gambar 404 atau chapter tidak ditemukan
+
+       Urutan priority:
+       1. komikSource (diset oleh detail.js) — PALING DIPERCAYA
+       2. komikSrcHint (diset saat klik kartu) — backup
+       3. currentApiSource — kalau navigasi antar chapter
+       4. Fallback ke API lain kalau semua di atas gagal (last resort)
+
+       CATATAN: Fallback ke API lain masih diizinkan agar reader tidak
+       pernah kosong total, tapi dicatat sebagai warning di console.
     ── */
-    const _srcHint = sessionStorage.getItem("komikSrcHint") || "";
+    const _komikSrc  = sessionStorage.getItem("komikSource")  || "";
+    const _srcHint   = sessionStorage.getItem("komikSrcHint") || "";
+
+    /* Pilih source utama: komikSource > srcHint > currentApiSource */
+    const _primarySrc = _komikSrc || _srcHint || currentApiSource;
 
     let d = null;
-    let _apiSource = currentApiSource;
+    let _apiSource = _primarySrc;
 
     const _APIs = {
       komikindo:   { fetch: (s) => fetch(API_CHAPTER  + s).then(r=>r.json()) },
@@ -204,15 +236,19 @@ async function loadChapter() {
       komikstation:{ fetch: (s) => fetch(API_CHAPTER_4 + s).then(r=>r.json()) },
     };
 
-    /* Susun urutan: hint duluan, lalu currentApiSource, sisanya fallback */
+    /* Susun urutan: primary source duluan, sisanya sebagai last-resort fallback.
+       Deduplicate, jaga urutan insertion. */
     const _allSources = ["komikindo", "komikstation", "mangakita", "bacakomik"];
     const _ordered = [
-      _srcHint,                  /* 1. hint dari index/detail */
-      currentApiSource,          /* 2. source terakhir berhasil */
-      ..._allSources,            /* 3. semua sisanya */
+      _primarySrc,         /* 1. source dari detail.js — PALING DIPERCAYA */
+      _srcHint,            /* 2. hint dari index (backup kalau komikSource kosong) */
+      currentApiSource,    /* 3. source chapter terakhir berhasil */
+      ..._allSources,      /* 4. semua sisanya sebagai last-resort */
     ]
       .filter(Boolean)
       .filter((v, i, a) => a.indexOf(v) === i); /* deduplicate, jaga urutan */
+
+    console.log(`[Reader] Source order: ${_ordered.join(" > ")} | chapter=${currentChapterSlug}`);
 
     for (const key of _ordered) {
       if (!_APIs[key]) continue;
@@ -226,6 +262,11 @@ async function loadChapter() {
           d = _normalizeChapter(json, key);
         }
         _apiSource = key;
+        /* Warning kalau terpaksa pakai API yang berbeda dari yang diharapkan */
+        if (key !== _primarySrc) {
+          console.warn(`[Reader] ⚠️ Terpaksa fallback: primary=${_primarySrc} → actual=${key}`);
+          console.warn(`[Reader] Chapter slug mungkin tidak kompatibel dengan API ${key}`);
+        }
         break;
       } catch(e) {
         console.warn(`[Reader] ${key} gagal:`, e.message);
@@ -233,9 +274,11 @@ async function loadChapter() {
       }
     }
     if (!d) throw new Error("Semua API gagal");
-    console.log(`[Reader] loaded=${_apiSource} hint=${_srcHint||"-"} chapter=${currentChapterSlug}`);
+    console.log(`[Reader] loaded=${_apiSource} primary=${_primarySrc} chapter=${currentChapterSlug}`);
     currentApiSource = _apiSource;
+    /* Update sessionStorage agar navigasi chapter berikutnya tetap konsisten dengan source yang sama */
     sessionStorage.setItem("komikSource", _apiSource);
+    sessionStorage.setItem("komikSrcHint", _apiSource);
 
     /* Reset progress bar */
     const bar = document.getElementById("readingProgressBar");
@@ -427,19 +470,39 @@ function updateNavButtons() {
 async function loadChapterListFromAPI() {
   if (!komikSlug) return;
   try {
-    /* Cek apakah ada hint source dari sessionStorage */
-    const srcHintStored = sessionStorage.getItem("komikSrcHint") || "";
-    const srcSlugStored = sessionStorage.getItem("komikSrcSlug") || "";
-    /* Hint valid kalau slug cocok dengan komik yang sedang dibuka */
-    const useSingleSrc  = srcHintStored && (srcSlugStored === komikSlug || currentApiSource === srcHintStored);
+    /* ── Baca source yang benar dari sessionStorage ────────────
+       Ini harus konsisten dengan source yang dipakai saat baca chapter.
+       Kalau user datang dari index/detail → pakai source yang sama.
+       Kalau buka langsung → merge dari semua API.
+    ── */
+    const srcFromSession = sessionStorage.getItem("komikSource")  || "";
+    const srcHintStored  = sessionStorage.getItem("komikSrcHint") || "";
+    const srcSlugStored  = sessionStorage.getItem("komikSrcSlug") || "";
 
-    /* Kalau ada hint → hanya fetch 1 API yang sesuai, tidak merge
-       Kalau tidak ada hint → fetch semua 4, merge chapter terlengkap */
+    /* Single source valid kalau:
+       1. Ada source yang di-set dari detail.js (komikSource), DAN
+       2. Slug cocok dengan komik yang sedang dibuka, ATAU source sama dengan currentApiSource */
+    const useSingleSrc = (srcFromSession || srcHintStored) &&
+      (srcSlugStored === komikSlug || currentApiSource === (srcFromSession || srcHintStored));
+    const singleSrc = srcFromSession || srcHintStored || currentApiSource;
+
+    /* ── Fetch detail API untuk mendapatkan chapter list ──────
+       Kalau single source: hanya fetch API yang relevan, sisanya skip
+       untuk hemat bandwidth & percepat loading.
+       Kalau merge mode: fetch semua 4 API.
+    ── */
+    const shouldFetch = {
+      komikindo:    !useSingleSrc || singleSrc === "komikindo",
+      mangakita:    !useSingleSrc || singleSrc === "mangakita",
+      bacakomik:    !useSingleSrc || singleSrc === "bacakomik",
+      komikstation: !useSingleSrc || singleSrc === "komikstation",
+    };
+
     const [r1, r2, r3, r4] = await Promise.allSettled([
-      fetch(API_DETAIL   + komikSlug).then(r => r.json()).catch(() => null),
-      fetch(API_DETAIL_2 + komikSlug).then(r => r.json()).catch(() => null),
-      fetch(API_DETAIL_3 + komikSlug).then(r => r.json()).catch(() => null),
-      fetch(API_DETAIL_4 + komikSlug).then(r => r.json()).catch(() => null),
+      shouldFetch.komikindo    ? fetch(API_DETAIL   + komikSlug).then(r => r.json()).catch(() => null) : Promise.resolve(null),
+      shouldFetch.mangakita    ? fetch(API_DETAIL_2 + komikSlug).then(r => r.json()).catch(() => null) : Promise.resolve(null),
+      shouldFetch.bacakomik    ? fetch(API_DETAIL_3 + komikSlug).then(r => r.json()).catch(() => null) : Promise.resolve(null),
+      shouldFetch.komikstation ? fetch(API_DETAIL_4 + komikSlug).then(r => r.json()).catch(() => null) : Promise.resolve(null),
     ]);
 
     const j1 = r1.status === "fulfilled" ? r1.value : null;
@@ -477,9 +540,10 @@ async function loadChapterListFromAPI() {
     let chapters;
 
     if (useSingleSrc) {
-      /* SINGLE SOURCE — pakai source yang sama dengan yang dipilih di index
-         Tidak ada merge → tidak ada duplikat */
-      const singleSrc = srcHintStored || currentApiSource;
+      /* ═══ SINGLE SOURCE MODE ══════════════════════════════
+         Pakai source yang sama dengan detail.js → slug chapter dijamin kompatibel
+         Tidak ada merge → tidak ada duplikat chapter antar API
+      ══════════════════════════════════════════════════════ */
       chapters = (srcChapters[singleSrc] || []).slice().sort((a, b) => {
         const na = _extractNum(a.title) ?? _extractNum(a.slug) ?? 0;
         const nb = _extractNum(b.title) ?? _extractNum(b.slug) ?? 0;
@@ -487,11 +551,15 @@ async function loadChapterListFromAPI() {
       });
       console.log(`[Reader] Single source (${singleSrc}): ${chapters.length}ch`);
     } else {
-      /* MERGE — tidak ada hint, gabung semua untuk chapter terlengkap */
+      /* ═══ MERGE MODE ══════════════════════════════════════
+         Buka langsung dari URL → merge semua untuk tampilkan terlengkap.
+         PENTING: slug chapter dari currentApiSource yang diutamakan agar
+         reader bisa menemukan chapter di API yang sama.
+      ══════════════════════════════════════════════════════ */
       const chMap = new Map();
-      const _allSources = ["komikindo", "mangakita", "bacakomik", "komikstation"]
+      const _allSrcKeys = ["komikindo", "mangakita", "bacakomik", "komikstation"]
         .filter(s => s !== currentApiSource);
-      const processOrder = [..._allSources, currentApiSource];
+      const processOrder = [..._allSrcKeys, currentApiSource]; /* best source diproses terakhir → menang */
 
       for (const srcKey of processOrder) {
         const isBest = srcKey === currentApiSource;
@@ -508,7 +576,7 @@ async function loadChapterListFromAPI() {
         }
       }
       chapters = Array.from(chMap.values()).sort((a, b) => b._num - a._num);
-      console.log(`[Reader] Merged: ${chapters.length}ch`);
+      console.log(`[Reader] Merged: ${chapters.length}ch from all APIs`);
     }
     if (!chapters.length) {
       const fallback = srcChapters[currentApiSource]
@@ -579,24 +647,6 @@ function formatChapterTitle(title, slug) {
   const padded = parseInt(main) < 100 ? main.padStart(2, "0") : main;
   return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
 }
-    return `
-      <div class="chapter-item-panel ${isActive ? "active" : ""}"
-           onclick="navigateToChapter('${ch.slug}')">
-        <span class="chapter-num">${title}</span>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span class="chapter-date">${date}</span>
-          ${isActive ? '<span class="current-badge">📖</span>' : ""}
-        </div>
-      </div>`;
-  }).join("");
-
-  panel.innerHTML = `
-    <div class="chapter-list-header">
-      <h3>📚 Daftar Chapter</h3>
-      <button onclick="toggleChapterList()" class="close-btn">✕</button>
-    </div>
-    <div class="chapter-list-content">${listHtml}</div>`;
-}
 
 window.toggleChapterList = function () {
   const panel   = document.getElementById("chapterListPanel");
@@ -617,6 +667,10 @@ window.navigateToChapter = function (chSlug) {
   if (chSlug === currentChapterSlug) { toggleChapterList(); return; }
   currentChapterSlug = chSlug;
   historyWasSaved    = false;
+  /* Pastikan source tetap sama saat navigasi chapter dari panel
+     — jangan reset komikSrcHint ke nilai lain */
+  sessionStorage.setItem("komikSource", currentApiSource);
+  sessionStorage.setItem("komikSrcHint", currentApiSource);
   window.scrollTo({ top: 0, behavior: "smooth" });
   loadChapter();
   toggleChapterList();
@@ -1142,6 +1196,9 @@ window.nextChapter = () => {
   if (!target) return;
   currentChapterSlug = target;
   historyWasSaved    = false;
+  /* Pertahankan source agar chapter baru diambil dari API yang sama */
+  sessionStorage.setItem("komikSource", currentApiSource);
+  sessionStorage.setItem("komikSrcHint", currentApiSource);
   window.scrollTo({ top: 0, behavior: "smooth" });
   loadChapter();
 };
@@ -1151,6 +1208,9 @@ window.prevChapter = () => {
   if (!target) return;
   currentChapterSlug = target;
   historyWasSaved    = false;
+  /* Pertahankan source agar chapter baru diambil dari API yang sama */
+  sessionStorage.setItem("komikSource", currentApiSource);
+  sessionStorage.setItem("komikSrcHint", currentApiSource);
   window.scrollTo({ top: 0, behavior: "smooth" });
   loadChapter();
 };
