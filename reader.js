@@ -54,6 +54,18 @@ let readMode    = localStorage.getItem("readMode") || "scroll";
 let currentPage = 0;
 let allImages   = [];   /* array of { id, url } */
 
+/* ── Helper: ekstrak nomor chapter dari title/slug ── */
+function _extractNum(str) {
+  if (!str) return null;
+  let m = str.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i);
+  if (m) return parseFloat(m[1].replace(",", "."));
+  m = str.match(/chapter[_-]([\d]+(?:[._-][\d]+)?)/i);
+  if (m) return parseFloat(m[1].replace(/[_-]/, "."));
+  m = str.match(/([\d]+[._-][\d]+)$/);
+  if (m) return parseFloat(m[1].replace(/[_-]/, "."));
+  return null;
+}
+
 /* ============================================================
    INIT
    ============================================================ */
@@ -378,6 +390,14 @@ function updateNavButtons() {
 async function loadChapterListFromAPI() {
   if (!komikSlug) return;
   try {
+    /* Cek apakah ada hint source dari sessionStorage */
+    const srcHintStored = sessionStorage.getItem("komikSrcHint") || "";
+    const srcSlugStored = sessionStorage.getItem("komikSrcSlug") || "";
+    /* Hint valid kalau slug cocok dengan komik yang sedang dibuka */
+    const useSingleSrc  = srcHintStored && (srcSlugStored === komikSlug || currentApiSource === srcHintStored);
+
+    /* Kalau ada hint → hanya fetch 1 API yang sesuai, tidak merge
+       Kalau tidak ada hint → fetch semua 4, merge chapter terlengkap */
     const [r1, r2, r3, r4] = await Promise.allSettled([
       fetch(API_DETAIL   + komikSlug).then(r => r.json()).catch(() => null),
       fetch(API_DETAIL_2 + komikSlug).then(r => r.json()).catch(() => null),
@@ -408,7 +428,6 @@ async function loadChapterListFromAPI() {
             releaseTime: ch.date  || "",
           }))
         : [],
-      /* komikstation: success + chapters langsung di root */
       komikstation: (j4?.success && j4?.chapters?.length)
         ? j4.chapters.map(ch => ({
             title:       ch.title || "",
@@ -418,32 +437,42 @@ async function loadChapterListFromAPI() {
         : [],
     };
 
-    /* Merge semua 4 source — key = nomor chapter, slug dari currentApiSource menang */
-    const chMap = new Map();
-    const _allSources = ["komikindo", "mangakita", "bacakomik", "komikstation"]
-      .filter(s => s !== currentApiSource);
-    const processOrder = [..._allSources, currentApiSource];
+    let chapters;
 
-    for (const srcKey of processOrder) {
-      const isBest = srcKey === currentApiSource;
-      for (const ch of (srcChapters[srcKey] || [])) {
-        const label = ch.title || ch.slug || "";
-        const m = label.match(/(?:chapter|ch\.?)\s*([\d]+(?:[.,][\d]+)?)/i)
-               || label.match(/chapter[_-]?([\d]+(?:[._-][\d]+)?)/i);
-        if (!m) continue;
-        const num = parseFloat(m[1].replace(/[_,]/g, "."));
-        if (isNaN(num)) continue;
-        const existing = chMap.get(num);
-        chMap.set(num, {
-          title:       (isBest && ch.title) ? ch.title : (existing?.title || ch.title || ""),
-          slug:        (isBest && ch.slug)  ? ch.slug  : (existing?.slug  || ch.slug  || ""),
-          releaseTime: ch.releaseTime || existing?.releaseTime || "",
-          _num: num,
-        });
+    if (useSingleSrc) {
+      /* SINGLE SOURCE — pakai source yang sama dengan yang dipilih di index
+         Tidak ada merge → tidak ada duplikat */
+      const singleSrc = srcHintStored || currentApiSource;
+      chapters = (srcChapters[singleSrc] || []).slice().sort((a, b) => {
+        const na = _extractNum(a.title) ?? _extractNum(a.slug) ?? 0;
+        const nb = _extractNum(b.title) ?? _extractNum(b.slug) ?? 0;
+        return nb - na;
+      });
+      console.log(`[Reader] Single source (${singleSrc}): ${chapters.length}ch`);
+    } else {
+      /* MERGE — tidak ada hint, gabung semua untuk chapter terlengkap */
+      const chMap = new Map();
+      const _allSources = ["komikindo", "mangakita", "bacakomik", "komikstation"]
+        .filter(s => s !== currentApiSource);
+      const processOrder = [..._allSources, currentApiSource];
+
+      for (const srcKey of processOrder) {
+        const isBest = srcKey === currentApiSource;
+        for (const ch of (srcChapters[srcKey] || [])) {
+          const num = _extractNum(ch.title) ?? _extractNum(ch.slug);
+          if (num === null || isNaN(num)) continue;
+          const existing = chMap.get(num);
+          chMap.set(num, {
+            title:       (isBest && ch.title) ? ch.title : (existing?.title || ch.title || ""),
+            slug:        (isBest && ch.slug)  ? ch.slug  : (existing?.slug  || ch.slug  || ""),
+            releaseTime: ch.releaseTime || existing?.releaseTime || "",
+            _num: num,
+          });
+        }
       }
+      chapters = Array.from(chMap.values()).sort((a, b) => b._num - a._num);
+      console.log(`[Reader] Merged: ${chapters.length}ch`);
     }
-
-    let chapters = Array.from(chMap.values()).sort((a, b) => b._num - a._num);
     if (!chapters.length) {
       const fallback = srcChapters[currentApiSource]
         || srcChapters.komikstation
@@ -475,8 +504,44 @@ function renderChapterList() {
 
   const listHtml = allChapters.map(ch => {
     const isActive = ch.slug === currentChapterSlug;
-    const title    = cleanText(ch.title);
+    /* Kalau title adalah slug mentah (mengandung "-"), format jadi label yang bersih */
+    const rawTitle = cleanText(ch.title || ch.slug || "");
+    const title    = formatChapterTitle(rawTitle, ch.slug);
     const date     = ch.releaseTime || ch.date || "";
+    return `
+      <div class="chapter-item-panel ${isActive ? "active" : ""}"
+           onclick="navigateToChapter('${ch.slug}')">
+        <span class="chapter-num">${title}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="chapter-date">${date}</span>
+          ${isActive ? '<span class="current-badge">📖</span>' : ""}
+        </div>
+      </div>`;
+  }).join("");
+
+  panel.innerHTML = `
+    <div class="chapter-list-header">
+      <h3>📚 Daftar Chapter</h3>
+      <button onclick="toggleChapterList()" class="close-btn">✕</button>
+    </div>
+    <div class="chapter-list-content">${listHtml}</div>`;
+}
+
+/* Format title chapter — slug mentah → "Ch.35.2", title bersih → tampil apa adanya */
+function formatChapterTitle(title, slug) {
+  if (!title) return slug || "–";
+  /* Kalau title adalah slug mentah (ada "-" tapi tidak ada spasi) → format */
+  const isSlugLike = title.includes("-") && !title.includes(" ");
+  const src = isSlugLike ? slug || title : title;
+  /* Coba ekstrak nomor chapter */
+  const m = src.match(/(?:chapter|ch\.?)[_\s-]*([\d]+(?:[._-][\d]+)?)/i)
+         || src.match(/([\d]+(?:\.\d+)?)$/);
+  if (!m) return title; /* tidak bisa parse → tampilkan apa adanya */
+  const num = m[1].replace(/[_-]/g, ".");
+  const [main, sub] = num.split(".");
+  const padded = parseInt(main) < 100 ? main.padStart(2, "0") : main;
+  return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
+}
     return `
       <div class="chapter-item-panel ${isActive ? "active" : ""}"
            onclick="navigateToChapter('${ch.slug}')">
