@@ -216,47 +216,105 @@ function formatChapterLabel(chTitle, chSlug) {
   return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
 }
 
-/* ── Merge latest lists — deduplicate by slug, tidak ada priority khusus.
-   Sumber terpilih ditentukan ON-DEMAND saat user klik kartu (cek KS dulu).
-   Di sini kita hanya pastikan tidak ada duplikat.
-   Kalau slug sama dari dua API: pertahankan yang chapter number-nya lebih tinggi
-   agar update terbaru yang muncul. ── */
-function mergeLatestLists(list1, list2) {
-  const map = new Map();
+/* ── parseUpdateScore — konversi string tanggal/waktu ke angka untuk dibandingkan ──
+   Makin besar angkanya = makin baru updatenya.
+   Mendukung format:
+   - Relatif: "2 hours ago", "3 hari lalu", "kemarin", "just now", "baru saja"
+   - Absolut: "2024-01-15", "15 Jan 2024", "Jan 15, 2024"
+   - Fallback: chapter number (kalau tidak ada tanggal)
+── */
+function parseUpdateScore(dateStr, chapterNum) {
+  const now = Date.now();
+  const s   = (dateStr || "").toLowerCase().trim();
 
-  const getLatestChNum = (komik) => {
-    const ch = (komik.chapters && komik.chapters[0]) || {};
-    return extractChapterNum(ch.title || "") || extractChapterNum(ch.slug || "");
-  };
+  if (!s) return chapterNum ?? -1;
 
-  for (const k of [...list1, ...list2]) {
+  /* ── Relatif: "X unit ago" / "X unit lalu" ── */
+  const relMatch = s.match(/(\d+)\s*(second|menit|minute|jam|hour|hari|day|minggu|week|bulan|month|tahun|year)/i);
+  if (relMatch) {
+    const n    = parseInt(relMatch[1]);
+    const unit = relMatch[2].toLowerCase();
+    const msMap = {
+      second:1000, menit:60000, minute:60000,
+      jam:3600000, hour:3600000,
+      hari:86400000, day:86400000,
+      minggu:604800000, week:604800000,
+      bulan:2592000000, month:2592000000,
+      tahun:31536000000, year:31536000000,
+    };
+    const ms = msMap[unit] || 86400000;
+    return now - (n * ms); /* timestamp perkiraan */
+  }
+
+  /* ── "just now" / "baru saja" / "kemarin" / "yesterday" ── */
+  if (/just now|baru saja|barusan/.test(s)) return now;
+  if (/kemarin|yesterday/.test(s))          return now - 86400000;
+  if (/hari ini|today/.test(s))             return now - 3600000;
+
+  /* ── Absolut: coba parse sebagai Date ── */
+  const parsed = Date.parse(dateStr);
+  if (!isNaN(parsed)) return parsed;
+
+  /* ── Fallback: gunakan chapter number ── */
+  return chapterNum ?? -1;
+}
+
+/* ── mergeAllFlat — gabung semua list dari semua API sekaligus ──────────
+   - Deduplicate by slug
+   - Kalau slug sama dari >1 API → ambil yang UPDATE-nya PALING BARU
+     (berdasarkan tanggal/waktu chapter terbaru, bukan chapter number)
+   - Cover: kalau pemenang tidak punya cover → tambal dari entri lain
+   - _src: ikut pemenang (dipakai saat klik untuk cek KS on-demand)
+── */
+function mergeAllFlat(allItems) {
+  const map = new Map(); /* slug → best entry */
+
+  for (const k of allItems) {
     if (!k.slug) continue;
+
+    /* Ambil info chapter terbaru dari entri ini */
+    const ch      = (k.chapters && k.chapters[0]) || {};
+    const chStr   = ch.title || ch.slug || k.chapter || k.ch || "";
+    const dateStr = ch.date  || ch.time || ch.timeAgo || k.date || k.time || "";
+    const chNum   = extractChapterNum(chStr);
+    /* Score: makin besar = makin baru. Gabungkan date score + chapter num sebagai tiebreaker */
+    const score   = parseUpdateScore(dateStr, chNum);
+
     if (!map.has(k.slug)) {
-      map.set(k.slug, k);
+      map.set(k.slug, { ...k, _score: score });
     } else {
-      const existing = map.get(k.slug);
-      const numNew   = getLatestChNum(k);
-      const numExist = getLatestChNum(existing);
-      if (numNew > numExist) {
-        /* Ambil yang chapter-nya lebih tinggi, tapi pertahankan cover yang ada */
+      const ex = map.get(k.slug);
+
+      if (score > (ex._score ?? -Infinity)) {
+        /* Entry baru lebih fresh — menang, tapi pertahankan cover kalau baru kosong */
+        const rawNew   = k.image || k.cover || "";
+        const isSvgNew = !rawNew || rawNew.startsWith("data:image/svg");
         map.set(k.slug, {
           ...k,
-          image: k.image || existing.image,
-          _src:  k._src  || existing._src,
+          _score: score,
+          image: isSvgNew ? (ex.image || ex.cover || "") : rawNew,
         });
-      } else if (!existing.image && k.image) {
-        /* Chapter sama tapi cover lama kosong → tambal cover */
-        map.set(k.slug, { ...existing, image: k.image });
+      } else {
+        /* Entry lama lebih fresh — tapi tambal cover kalau kosong */
+        const rawEx   = ex.image || ex.cover || "";
+        const isSvgEx = !rawEx || rawEx.startsWith("data:image/svg");
+        if (isSvgEx) {
+          const rawNew = k.image || k.cover || "";
+          if (rawNew && !rawNew.startsWith("data:image/svg")) {
+            map.set(k.slug, { ...ex, image: rawNew });
+          }
+        }
       }
     }
   }
-  return Array.from(map.values());
+
+  /* Hapus field internal sebelum return */
+  return Array.from(map.values()).map(({ _score, ...rest }) => rest);
 }
 
-/* ── Helper: merge komikindo + mangakita → deduplicate ── */
-function mergeNonKS(listKI, listMK) {
-  return mergeLatestLists(listKI, listMK);
-}
+/* Alias untuk kompatibilitas */
+function mergeLatestLists(a, b) { return mergeAllFlat([...a, ...b]); }
+function mergeNonKS(a, b)       { return mergeAllFlat([...a, ...b]); }
 
 /* ── Cache hasil cek KomikStation (slug → "ks" | "original") ──
    Agar tidak re-fetch tiap kali user hover/klik kartu yang sama ── */
@@ -402,7 +460,8 @@ async function getKomikLatest() {
   const data3 = res3.status === "fulfilled" ? res3.value : null;
 
   /* List dari komikindo */
-  const list1 = (data1?.komikList || data1?.data || data1?.comics || []);
+  const list1 = (data1?.komikList || data1?.data || data1?.comics || [])
+    .map(k => ({ ...k, _src: k._src || "komikindo" }));
 
   /* List dari mangakita */
   const list2mk = (data2?.latestReleases || []).map(normalizeMKLatest);
@@ -410,12 +469,25 @@ async function getKomikLatest() {
   /* List dari komikstation — pakai latestUpdates */
   const list3ks = (data3?.latestUpdates || []).map(normalizeKSLatest);
 
-  /* Merge semua 3 API — deduplicate biasa, tidak ada priority khusus.
-     Priority KS ditentukan ON-DEMAND saat user klik kartu. */
-  const listOthers = mergeNonKS(list1, list2mk);
-  const merged     = mergeLatestLists(list3ks, listOthers);
+  /* ── Merge semua 3 API secara flat — deduplicate by slug.
+     Kalau slug sama dari beberapa API → ambil yang UPDATE-nya paling baru
+     (berdasarkan tanggal/waktu chapter terbaru).
+     Cover: kalau yang menang tidak punya cover → tambal dari sumber lain.
+  ── */
+  const merged = mergeAllFlat([...list1, ...list2mk, ...list3ks]);
 
-  console.log(`[Latest] KI=${list1.length} MK=${list2mk.length} KS=${list3ks.length} → merged=${merged.length}`);
+  /* Urutkan hasil merge dari yang paling baru updatenya */
+  merged.sort((a, b) => {
+    const getScore = k => {
+      const ch  = (k.chapters && k.chapters[0]) || {};
+      const dat = ch.date || ch.time || ch.timeAgo || k.date || k.time || "";
+      const chStr = ch.title || ch.slug || "";
+      return parseUpdateScore(dat, extractChapterNum(chStr));
+    };
+    return getScore(b) - getScore(a); /* descending: terbaru di atas */
+  });
+
+  console.log(`[Latest] KI=${list1.length} MK=${list2mk.length} KS=${list3ks.length} → merged=${merged.length} (sorted by date)`);
 
   if (!merged.length) {
     container.innerHTML = `<p style="grid-column:1/-1;padding:20px;color:var(--text-muted);text-align:center;font-size:13px;">😕 Gagal memuat konten terbaru.</p>`;
@@ -519,7 +591,8 @@ window.loadMore = async function () {
     const res  = await fetch(`${API_LATEST}/${latestPage}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const list = data.komikList || data.data || data.comics || [];
+    const list = (data.komikList || data.data || data.comics || [])
+      .map(k => ({ ...k, _src: k._src || "komikindo" }));
 
     renderLatest(list, document.getElementById("komikLatest"));
 
