@@ -216,63 +216,84 @@ function formatChapterLabel(chTitle, chSlug) {
   return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
 }
 
-/* ── Merge latest lists dengan KomikStation sebagai sumber PRIMER ──────
-   Logika:
-   1. Bangun slug-set dari KomikStation terlebih dahulu
-   2. Kalau slug ada di KomikStation → WAJIB pakai entri KomikStation
-      (chapter lebih lengkap, slug kompatibel dengan API chapter KS)
-   3. Kalau slug TIDAK ada di KomikStation → pakai dari sumber lain
-      (komikindo / mangakita) sebagai fallback
-   4. Deduplicate: satu slug = satu entri, tidak ada duplikat
-── */
-function mergeLatestLists(listKS, listOthers) {
+/* ── Merge latest lists — deduplicate by slug, tidak ada priority khusus.
+   Sumber terpilih ditentukan ON-DEMAND saat user klik kartu (cek KS dulu).
+   Di sini kita hanya pastikan tidak ada duplikat.
+   Kalau slug sama dari dua API: pertahankan yang chapter number-nya lebih tinggi
+   agar update terbaru yang muncul. ── */
+function mergeLatestLists(list1, list2) {
   const map = new Map();
 
-  /* Pass 1 — masukkan semua KomikStation dulu (prioritas penuh) */
-  for (const k of listKS) {
-    if (!k.slug) continue;
-    map.set(k.slug, k); /* _src sudah "komikstation" dari normalizeKSLatest */
-  }
+  const getLatestChNum = (komik) => {
+    const ch = (komik.chapters && komik.chapters[0]) || {};
+    return extractChapterNum(ch.title || "") || extractChapterNum(ch.slug || "");
+  };
 
-  /* Pass 2 — masukkan sumber lain HANYA kalau slug belum ada di KS */
-  for (const k of listOthers) {
-    if (!k.slug) continue;
-    if (map.has(k.slug)) {
-      /* Slug ada di KS — pertahankan KS, tapi tambal cover kalau KS punya SVG placeholder */
-      const ks = map.get(k.slug);
-      const rawKsImg = ks.image || ks.cover || "";
-      const isSvgKs  = !rawKsImg || rawKsImg.startsWith("data:image/svg");
-      if (isSvgKs && (k.image || k.cover)) {
-        map.set(k.slug, { ...ks, image: k.image || k.cover || "" });
-      }
-      /* _src tetap "komikstation" — jangan diganti */
-    } else {
-      /* Slug tidak ada di KS → pakai sumber ini sebagai fallback */
-      map.set(k.slug, k);
-    }
-  }
-
-  return Array.from(map.values());
-}
-
-/* ── Helper: merge komikindo + mangakita (non-KS) → deduplicate sederhana ── */
-function mergeNonKS(listKI, listMK) {
-  const map = new Map();
-  /* Komikindo dulu, lalu MK tambal yang kosong */
-  for (const k of [...listKI, ...listMK]) {
+  for (const k of [...list1, ...list2]) {
     if (!k.slug) continue;
     if (!map.has(k.slug)) {
       map.set(k.slug, k);
     } else {
-      /* Tambal cover/chapter kalau lebih baru */
-      const ex = map.get(k.slug);
-      const rawImg = ex.image || ex.cover || "";
-      if ((rawImg.startsWith("data:image/svg") || !rawImg) && (k.image || k.cover)) {
-        map.set(k.slug, { ...ex, image: k.image || k.cover });
+      const existing = map.get(k.slug);
+      const numNew   = getLatestChNum(k);
+      const numExist = getLatestChNum(existing);
+      if (numNew > numExist) {
+        /* Ambil yang chapter-nya lebih tinggi, tapi pertahankan cover yang ada */
+        map.set(k.slug, {
+          ...k,
+          image: k.image || existing.image,
+          _src:  k._src  || existing._src,
+        });
+      } else if (!existing.image && k.image) {
+        /* Chapter sama tapi cover lama kosong → tambal cover */
+        map.set(k.slug, { ...existing, image: k.image });
       }
     }
   }
   return Array.from(map.values());
+}
+
+/* ── Helper: merge komikindo + mangakita → deduplicate ── */
+function mergeNonKS(listKI, listMK) {
+  return mergeLatestLists(listKI, listMK);
+}
+
+/* ── Cache hasil cek KomikStation (slug → "ks" | "original") ──
+   Agar tidak re-fetch tiap kali user hover/klik kartu yang sama ── */
+const _ksCheckCache = new Map();
+
+/**
+ * Cek apakah komik dengan slug ini ada di KomikStation.
+ * Return: "komikstation" kalau ada, atau src aslinya kalau tidak ada.
+ * Hasil di-cache agar hanya fetch 1x per slug per sesi.
+ */
+async function resolveSource(slug, originalSrc) {
+  /* Kalau sudah pernah dicek → pakai cache */
+  if (_ksCheckCache.has(slug)) return _ksCheckCache.get(slug);
+
+  /* Kalau source aslinya sudah KS → tidak perlu cek lagi */
+  if (originalSrc === "komikstation") {
+    _ksCheckCache.set(slug, "komikstation");
+    return "komikstation";
+  }
+
+  try {
+    const res = await fetch(
+      `https://www.sankavollerei.com/comic/komikstation/manga/${slug}`,
+      { signal: AbortSignal.timeout(4000) } /* timeout 4 detik */
+    );
+    const json = await res.json();
+    /* KomikStation punya data kalau: success=true DAN punya chapters */
+    const hasData = json?.success && Array.isArray(json?.chapters) && json.chapters.length > 0;
+    const resolved = hasData ? "komikstation" : (originalSrc || "komikindo");
+    _ksCheckCache.set(slug, resolved);
+    console.log(`[KS-Check] ${slug} → ${resolved} (ks=${hasData})`);
+    return resolved;
+  } catch (e) {
+    /* Timeout / error → fallback ke source asli */
+    _ksCheckCache.set(slug, originalSrc || "komikindo");
+    return originalSrc || "komikindo";
+  }
 }
 /** Tambahkan style animasi fade-in ke sebuah elemen */
 function animateIn(el, delay = 0) {
@@ -345,9 +366,11 @@ function renderTopKomik(list, container) {
       if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type, 175), ph);
     }
 
-    card.onclick = () => {
-      /* Top komik dari bacakomik API — simpan source agar detail & reader konsisten */
-      sessionStorage.setItem("komikSrcHint", "bacakomik");
+    card.onclick = async () => {
+      card.style.opacity = "0.7";
+      card.style.pointerEvents = "none";
+      const resolvedSrc = await resolveSource(komik.slug, "bacakomik");
+      sessionStorage.setItem("komikSrcHint", resolvedSrc);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
@@ -387,15 +410,12 @@ async function getKomikLatest() {
   /* List dari komikstation — pakai latestUpdates */
   const list3ks = (data3?.latestUpdates || []).map(normalizeKSLatest);
 
-  /* ── Merge dengan KomikStation sebagai SUMBER PRIMER ──────────
-     Logika: kalau slug ada di KS → pakai KS (chapter lebih lengkap)
-             kalau tidak ada di KS → fallback ke komikindo/mangakita
-     Gabungkan dulu semua non-KS, lalu merge dengan KS sebagai primer.
-  ── */
-  const listOthers = mergeNonKS(list1, list2mk); /* gabung komikindo + mk, deduplicate */
+  /* Merge semua 3 API — deduplicate biasa, tidak ada priority khusus.
+     Priority KS ditentukan ON-DEMAND saat user klik kartu. */
+  const listOthers = mergeNonKS(list1, list2mk);
   const merged     = mergeLatestLists(list3ks, listOthers);
 
-  console.log(`[Latest] KS=${list3ks.length} KI=${list1.length} MK=${list2mk.length} → merged=${merged.length}`);
+  console.log(`[Latest] KI=${list1.length} MK=${list2mk.length} KS=${list3ks.length} → merged=${merged.length}`);
 
   if (!merged.length) {
     container.innerHTML = `<p style="grid-column:1/-1;padding:20px;color:var(--text-muted);text-align:center;font-size:13px;">😕 Gagal memuat konten terbaru.</p>`;
@@ -459,11 +479,19 @@ function renderLatest(list, container) {
       if (ph) ph.parentNode.replaceChild(makeGeneratedCover(title, type, 155), ph);
     }
 
-    card.onclick = () => {
-      /* Selalu simpan source agar detail.js & reader.js tahu API yang benar.
-         _src ada untuk mangakita/komikstation; komikindo tidak punya _src → default "komikindo" */
-      const src = komik._src || "komikindo";
-      sessionStorage.setItem("komikSrcHint", src);
+    card.onclick = async () => {
+      /* Tampilkan mini loading di kartu agar user tahu sedang diproses */
+      card.style.opacity = "0.7";
+      card.style.pointerEvents = "none";
+
+      /* Cek KomikStation on-demand:
+         - Kalau ada di KS → pakai source KS (chapter lebih lengkap)
+         - Kalau tidak ada → pakai source asli dari merge result
+         Hasil di-cache agar tidak re-fetch kalau kartu diklik ulang */
+      const originalSrc = komik._src || "komikindo";
+      const resolvedSrc = await resolveSource(komik.slug, originalSrc);
+
+      sessionStorage.setItem("komikSrcHint", resolvedSrc);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
@@ -607,9 +635,11 @@ function renderRekomen(list) {
       }
     }
 
-    card.onclick = () => {
-      /* Rekomendasi dari bacakomik API */
-      sessionStorage.setItem("komikSrcHint", "bacakomik");
+    card.onclick = async () => {
+      card.style.opacity = "0.7";
+      card.style.pointerEvents = "none";
+      const resolvedSrc = await resolveSource(komik.slug, "bacakomik");
+      sessionStorage.setItem("komikSrcHint", resolvedSrc);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
