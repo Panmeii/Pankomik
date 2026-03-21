@@ -216,41 +216,64 @@ function formatChapterLabel(chTitle, chSlug) {
   return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
 }
 
-/* ── Merge dua list latest, deduplicate by slug.
-   Jika slug sama, ambil yang chapter number-nya LEBIH BESAR
-   agar update terbaru selalu menang meski dari API berbeda. ── */
-function mergeLatestLists(list1, list2) {
+/* ── Merge latest lists dengan KomikStation sebagai sumber PRIMER ──────
+   Logika:
+   1. Bangun slug-set dari KomikStation terlebih dahulu
+   2. Kalau slug ada di KomikStation → WAJIB pakai entri KomikStation
+      (chapter lebih lengkap, slug kompatibel dengan API chapter KS)
+   3. Kalau slug TIDAK ada di KomikStation → pakai dari sumber lain
+      (komikindo / mangakita) sebagai fallback
+   4. Deduplicate: satu slug = satu entri, tidak ada duplikat
+── */
+function mergeLatestLists(listKS, listOthers) {
   const map = new Map();
 
-  const getLatestChNum = (komik) => {
-    const ch = (komik.chapters && komik.chapters[0]) || {};
-    return extractChapterNum(ch.title || "") || extractChapterNum(ch.slug || "");
-  };
+  /* Pass 1 — masukkan semua KomikStation dulu (prioritas penuh) */
+  for (const k of listKS) {
+    if (!k.slug) continue;
+    map.set(k.slug, k); /* _src sudah "komikstation" dari normalizeKSLatest */
+  }
 
-  for (const k of [...list1, ...list2]) {
+  /* Pass 2 — masukkan sumber lain HANYA kalau slug belum ada di KS */
+  for (const k of listOthers) {
+    if (!k.slug) continue;
+    if (map.has(k.slug)) {
+      /* Slug ada di KS — pertahankan KS, tapi tambal cover kalau KS punya SVG placeholder */
+      const ks = map.get(k.slug);
+      const rawKsImg = ks.image || ks.cover || "";
+      const isSvgKs  = !rawKsImg || rawKsImg.startsWith("data:image/svg");
+      if (isSvgKs && (k.image || k.cover)) {
+        map.set(k.slug, { ...ks, image: k.image || k.cover || "" });
+      }
+      /* _src tetap "komikstation" — jangan diganti */
+    } else {
+      /* Slug tidak ada di KS → pakai sumber ini sebagai fallback */
+      map.set(k.slug, k);
+    }
+  }
+
+  return Array.from(map.values());
+}
+
+/* ── Helper: merge komikindo + mangakita (non-KS) → deduplicate sederhana ── */
+function mergeNonKS(listKI, listMK) {
+  const map = new Map();
+  /* Komikindo dulu, lalu MK tambal yang kosong */
+  for (const k of [...listKI, ...listMK]) {
     if (!k.slug) continue;
     if (!map.has(k.slug)) {
       map.set(k.slug, k);
     } else {
-      /* Sudah ada entri untuk slug ini — bandingkan chapter number */
-      const existing = map.get(k.slug);
-      const numExist = getLatestChNum(existing);
-      const numNew   = getLatestChNum(k);
-      /* Ganti dengan yang chapter-nya lebih tinggi */
-      if (numNew > numExist) {
-        map.set(k.slug, {
-          ...existing,         /* pertahankan cover/type dari entri lama jika baru kosong */
-          image: k.image || existing.image,
-          chapters: k.chapters,
-          _src: k._src,
-        });
+      /* Tambal cover/chapter kalau lebih baru */
+      const ex = map.get(k.slug);
+      const rawImg = ex.image || ex.cover || "";
+      if ((rawImg.startsWith("data:image/svg") || !rawImg) && (k.image || k.cover)) {
+        map.set(k.slug, { ...ex, image: k.image || k.cover });
       }
     }
   }
   return Array.from(map.values());
 }
-
-/* ── ANIMASI MASUK ──────────────────────────────────────── */
 /** Tambahkan style animasi fade-in ke sebuah elemen */
 function animateIn(el, delay = 0) {
   el.style.opacity = "0";
@@ -364,8 +387,15 @@ async function getKomikLatest() {
   /* List dari komikstation — pakai latestUpdates */
   const list3ks = (data3?.latestUpdates || []).map(normalizeKSLatest);
 
-  /* Merge semua 3: komikstation prioritas utama karena punya chapter terbanyak */
-  const merged = mergeLatestLists(mergeLatestLists(list1, list2mk), list3ks);
+  /* ── Merge dengan KomikStation sebagai SUMBER PRIMER ──────────
+     Logika: kalau slug ada di KS → pakai KS (chapter lebih lengkap)
+             kalau tidak ada di KS → fallback ke komikindo/mangakita
+     Gabungkan dulu semua non-KS, lalu merge dengan KS sebagai primer.
+  ── */
+  const listOthers = mergeNonKS(list1, list2mk); /* gabung komikindo + mk, deduplicate */
+  const merged     = mergeLatestLists(list3ks, listOthers);
+
+  console.log(`[Latest] KS=${list3ks.length} KI=${list1.length} MK=${list2mk.length} → merged=${merged.length}`);
 
   if (!merged.length) {
     container.innerHTML = `<p style="grid-column:1/-1;padding:20px;color:var(--text-muted);text-align:center;font-size:13px;">😕 Gagal memuat konten terbaru.</p>`;
