@@ -38,6 +38,12 @@ const API_DETAIL_2 = `https://www.sankavollerei.com/comic/mangakita/detail/${slu
 const API_DETAIL_3 = `https://www.sankavollerei.com/comic/bacakomik/detail/${slug}`;
 const API_DETAIL_4 = `https://www.sankavollerei.com/comic/komikstation/manga/${slug}`;
 
+/* ── Mapping: source mana yang harus diprioritaskan berdasarkan hint ──
+   Urutan fetch: hint/hinted source didahulukan, sisanya sebagai fallback.
+   Kalau user buka langsung dari URL (tidak ada hint) → semua di-fetch,
+   pakai yang punya chapter terbanyak & cover terbaik. ── */
+const SOURCE_PRIORITY = ["komikindo", "komikstation", "mangakita", "bacakomik"];
+
 /* ── IMAGE PROXY ────────────────────────────────────────── */
 function proxyImg(url, w = 300) {
   if (!url) return "";
@@ -348,7 +354,10 @@ async function getDetail() {
   /* Baca source hint dari sessionStorage (di-set oleh script.js saat klik kartu) */
   const storedSlug = sessionStorage.getItem("komikSrcSlug") || "";
   const storedSrc  = sessionStorage.getItem("komikSrcHint") || "";
+  /* Hint valid hanya kalau slug-nya cocok dengan komik yang sedang dibuka */
   const srcHint    = (storedSlug === slug) ? storedSrc : "";
+
+  console.log(`[Detail] slug=${slug} hint=${srcHint||"none"}`);
 
   try {
     /* ── Fetch 4 API paralel ── */
@@ -386,38 +395,66 @@ async function getDetail() {
     if (!candidates.length) throw new Error("Semua API gagal");
 
     /* ── Pilih best source ──────────────────────────────────
-       1. Ada hint dari sessionStorage (klik kartu index) → pakai source itu SAJA
-          tidak merge dengan API lain → tidak ada duplikat
-       2. Tidak ada hint → pakai source dengan chapter TERBANYAK + merge semua
+       LOGIKA PINTAR:
+       1. Ada hint dari sessionStorage (user klik kartu di index)
+          → WAJIB pakai source itu, bukan merge dengan API lain
+          → Chapter list, cover, dan reader semua dari source yang sama
+          → Tidak ada duplikat chapter dari cross-API
+
+       2. Tidak ada hint (buka detail langsung dari URL / share link)
+          → Pakai source dengan chapter TERBANYAK sebagai base
+          → Merge chapter dari semua API untuk tampilkan daftar terlengkap
+          → Cover dari source terbaik
+
+       PENTING: source yang dipilih di sini HARUS sama persis yang
+       dipakai reader.js agar slug chapter compatible!
     ── */
     candidates.sort((a, b) => b.count - a.count);
+
+    /* Cari kandidat yang sesuai hint */
     const hinted = srcHint ? candidates.find(c => c.source === srcHint) : null;
+    /* Kalau hint tidak ditemukan di candidates (API gagal), pakai yang terbanyak */
     const best   = hinted || candidates[0];
     const source = best.source;
-    let komikDataRaw = best.data;
 
     console.log(`[Detail] hint=${srcHint||"none"} → best=${source} (${best.count}ch) | all:`,
       candidates.map(c => `${c.source}=${c.count}`).join(", "));
 
-    /* ── Chapter list ────────────────────────────────────────
-       Kalau ada hint (user klik dari index) → pakai chapter dari source itu SAJA.
-       Tidak perlu merge → tidak ada duplikat antar API.
+    let komikDataRaw = best.data;
 
-       Kalau tidak ada hint (buka detail langsung dari URL) → merge dari semua
-       source agar chapter paling lengkap. */
+    /* ── Chapter list ────────────────────────────────────────
+       MODE SINGLE SOURCE (ada hint):
+       - Gunakan chapter dari source yang sama dengan yang diklik user di index
+       - Slug chapter PASTI compatible dengan API reader yang sama
+       - Tidak ada cross-API mix → tidak ada 404 saat baca chapter
+
+       MODE MERGE (buka langsung, tidak ada hint):
+       - Gabungkan chapter dari semua API
+       - Pakai slug chapter dari source terkuat (currentApiSource / best)
+       - Ini acceptable karena user tidak datang dari kartu yang specific
+    ── */
     let mergedChapters;
 
     if (srcHint && hinted) {
-      /* MODE SINGLE SOURCE — ikut source yang dipilih user dari index */
+      /* ═══ MODE SINGLE SOURCE ══════════════════════════════
+         User klik dari index → source sudah ditentukan
+         Jangan merge → slug chapter dijamin kompatibel dengan reader
+      ══════════════════════════════════════════════════════ */
       mergedChapters = [...best.data.chapters].sort((a, b) => {
         const na = extractNum(a.title) ?? extractNum(a.slug) ?? 0;
         const nb = extractNum(b.title) ?? extractNum(b.slug) ?? 0;
         return nb - na;
       });
+      console.log(`[Detail] Single source mode: ${source}, ${mergedChapters.length} chapters`);
     } else {
-      /* MODE MERGE — buka langsung dari URL, ambil chapter terlengkap dari semua API */
+      /* ═══ MODE MERGE ══════════════════════════════════════
+         Buka langsung dari URL → merge semua untuk tampilkan terlengkap.
+         PENTING: slug chapter dari best source yang diutamakan agar
+         reader.js bisa menemukan chapter di API yang sama.
+      ══════════════════════════════════════════════════════ */
       const allChapterMaps = new Map();
-      const _srcOrder = [...candidates].reverse(); /* terlemah → terkuat */
+      /* Proses dari yang terlemah ke terkuat agar best source menang */
+      const _srcOrder = [...candidates].reverse();
       for (const c of _srcOrder) {
         const isBest = c.source === source;
         for (const ch of c.data.chapters) {
@@ -436,9 +473,10 @@ async function getDetail() {
         best.data.chapters.forEach((ch, i) => allChapterMaps.set(-(i), { ...ch, _num: -(i) }));
       }
       mergedChapters = Array.from(allChapterMaps.values()).sort((a, b) => b._num - a._num);
+      console.log(`[Detail] Merge mode: ${source} base, ${mergedChapters.length} chapters merged`);
     }
 
-    /* Ganti chapter list dengan hasil merge dari semua source */
+    /* Ganti chapter list dengan hasil */
     komikDataRaw = {
       ...komikDataRaw,
       chapters:      mergedChapters,
@@ -453,13 +491,17 @@ async function getDetail() {
     }
 
     komikData = komikDataRaw;
-    console.log(`[Detail] Base: ${source} (${best.count}ch), merged: ${mergedChapters.length}ch`);
-    /* Simpan source ke sessionStorage agar reader.js tahu API mana yang dipakai */
+
+    /* ── PENTING: Simpan source ke sessionStorage ────────────
+       reader.js akan baca ini untuk tahu API chapter mana yang harus dipakai.
+       Harus konsisten dengan source yang dipilih di atas! ── */
     sessionStorage.setItem("komikSource", source);
     sessionStorage.setItem("komikSlugKey", slug);
-    /* Bug fix: simpan komikSlug yang benar ke sessionStorage sebagai fallback
-       untuk reader.js — menggantikan nilai stale dari komik sebelumnya */
     sessionStorage.setItem("komikSlug", slug);
+    /* Update hint agar reader.js tidak perlu tebak-tebakan */
+    sessionStorage.setItem("komikSrcHint", source);
+    sessionStorage.setItem("komikSrcSlug", slug);
+
     document.title = `${komikData.title} — Pankomik`;
     await tampilkanDetail(komikData);
     await loadComments();
