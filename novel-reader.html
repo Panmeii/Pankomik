@@ -542,7 +542,7 @@ function sanitizeNovelHtml(html) {
     /* Proxy semua gambar inline dalam konten novel */
     .replace(/src="(https?:\/\/[^"]+)"/gi, (match, url) => {
       const clean   = url.split("?")[0];
-      const proxied = "https://proxy.sankavolereii.my.id/" + encodeURIComponent(clean);
+      const proxied = "https://proxy.sankavolereii.my.id/" + clean;
       return `src="${proxied}"`;
     })
     /* Hapus semua paragraf/div yang mengandung teks promo/branding */
