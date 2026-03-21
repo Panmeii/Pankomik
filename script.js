@@ -13,12 +13,13 @@
    ============================================================ */
 
 /* ── API ENDPOINTS ──────────────────────────────────────── */
-const API_TOP       = "https://www.sankavollerei.com/comic/bacakomik/top";
-const API_LATEST    = "https://www.sankavollerei.com/comic/komikindo/latest";
-const API_LATEST_MK = "https://www.sankavollerei.com/comic/mangakita/home"; /* mangakita latest */
-const API_REKOM     = "https://www.sankavollerei.com/comic/bacakomik/recomen";
-const API_SEARCH    = "https://www.sankavollerei.com/comic/bacakomik/search/";
-const API_GENRES    = "https://www.sankavollerei.com/comic/komikindo/genres";
+const API_TOP         = "https://www.sankavollerei.com/comic/bacakomik/top";
+const API_LATEST      = "https://www.sankavollerei.com/comic/komikindo/latest";
+const API_LATEST_MK   = "https://www.sankavollerei.com/comic/mangakita/home";
+const API_LATEST_KS   = "https://www.sankavollerei.com/comic/komikstation/home"; /* komikstation */
+const API_REKOM       = "https://www.sankavollerei.com/comic/bacakomik/recomen";
+const API_SEARCH      = "https://www.sankavollerei.com/comic/bacakomik/search/";
+const API_GENRES      = "https://www.sankavollerei.com/comic/komikindo/genres";
 
 /* ── URL BUILDERS ───────────────────────────────────────── */
 function komikURL(slug)               { return `/komik/${slug}`; }
@@ -170,6 +171,28 @@ function normalizeMKLatest(k) {
   };
 }
 
+/* ── Normalize komikstation latestUpdates item ── */
+function normalizeKSLatest(k) {
+  /* latestUpdates: {title, slug, imageSrc, chapters:[{slug,title,timeAgo}]} */
+  const chapters = (k.chapters || []).map(ch => ({
+    title: ch.title || "",
+    slug:  ch.slug  || "",
+    date:  ch.timeAgo || "",
+  }));
+  /* imageSrc bisa jadi SVG placeholder — skip kalau SVG */
+  const rawImg = k.imageSrc || "";
+  const image  = rawImg.startsWith("data:image/svg") ? "" : rawImg;
+  return {
+    title:    k.title || "Untitled",
+    slug:     k.slug  || "",
+    image,
+    type:     k.type  || "Manga",
+    rating:   k.rating || "",
+    chapters,
+    _src:     "komikstation",
+  };
+}
+
 /* ── Ekstrak angka chapter dari title/slug ───────────────── */
 function extractChapterNum(str) {
   if (!str) return -1;
@@ -213,13 +236,13 @@ function mergeLatestLists(list1, list2) {
       const existing = map.get(k.slug);
       const numExist = getLatestChNum(existing);
       const numNew   = getLatestChNum(k);
-      /* Ganti dengan yang chapter-nya lebih tinggi, _src ikut sumber yang lebih update */
+      /* Ganti dengan yang chapter-nya lebih tinggi */
       if (numNew > numExist) {
         map.set(k.slug, {
-          ...existing,
-          image:    k.image || existing.image,
+          ...existing,         /* pertahankan cover/type dari entri lama jika baru kosong */
+          image: k.image || existing.image,
           chapters: k.chapters,
-          _src:     k._src,
+          _src: k._src,
         });
       }
     }
@@ -316,24 +339,28 @@ async function getKomikLatest() {
   hasNextPage = false;
   container.innerHTML = Array(4).fill(`<div class="grid-card skeleton skeleton-grid"></div>`).join("");
 
-  /* Fetch kedua API paralel */
-  const [res1, res2] = await Promise.allSettled([
+  /* Fetch 3 API paralel */
+  const [res1, res2, res3] = await Promise.allSettled([
     fetch(`${API_LATEST}/${latestPage}`).then(r => r.json()).catch(() => null),
     fetch(API_LATEST_MK).then(r => r.json()).catch(() => null),
+    fetch(API_LATEST_KS).then(r => r.json()).catch(() => null),
   ]);
 
   const data1 = res1.status === "fulfilled" ? res1.value : null;
   const data2 = res2.status === "fulfilled" ? res2.value : null;
+  const data3 = res3.status === "fulfilled" ? res3.value : null;
 
-  /* List dari komikindo — tandai _src */
-  const list1 = (data1?.komikList || data1?.data || data1?.comics || [])
-    .map(k => ({ ...k, _src: k._src || "komikindo" }));
+  /* List dari komikindo */
+  const list1 = (data1?.komikList || data1?.data || data1?.comics || []);
 
-  /* List dari mangakita: pakai latestReleases */
+  /* List dari mangakita */
   const list2mk = (data2?.latestReleases || []).map(normalizeMKLatest);
 
-  /* Merge: komikindo dulu, mangakita tambal yang tidak ada */
-  const merged = mergeLatestLists(list1, list2mk);
+  /* List dari komikstation — pakai latestUpdates */
+  const list3ks = (data3?.latestUpdates || []).map(normalizeKSLatest);
+
+  /* Merge semua 3: komikstation prioritas utama karena punya chapter terbanyak */
+  const merged = mergeLatestLists(mergeLatestLists(list1, list2mk), list3ks);
 
   if (!merged.length) {
     container.innerHTML = `<p style="grid-column:1/-1;padding:20px;color:var(--text-muted);text-align:center;font-size:13px;">😕 Gagal memuat konten terbaru.</p>`;
@@ -398,9 +425,8 @@ function renderLatest(list, container) {
     }
 
     card.onclick = () => {
-      /* Simpan source hint ke sessionStorage — detail.js akan baca ini */
       if (komik._src) sessionStorage.setItem("komikSrcHint", komik._src);
-      sessionStorage.setItem("komikSrcSlug", komik.slug); /* validasi: hanya berlaku untuk slug ini */
+      sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
     container.appendChild(card);
