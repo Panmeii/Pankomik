@@ -275,10 +275,11 @@
       backdrop-filter: blur(4px);
     }
 
+    /* Rating badge — pojok kanan bawah */
     .genre-card-rating-badge {
       position: absolute;
       bottom: 5px;
-      left: 5px;
+      right: 5px;
       background: rgba(0,0,0,0.72);
       color: #f5a623;
       font-size: 9px;
@@ -288,20 +289,22 @@
       backdrop-filter: blur(4px);
     }
 
-    /* Source badge pada kartu */
+    /* Source badge pada kartu — dot kecil di pojok kiri bawah, di atas rating */
     .genre-card-src {
       position: absolute;
-      bottom: 5px;
-      right: 5px;
-      font-size: 8px;
-      font-weight: 800;
+      top: 5px;
+      left: 5px;
+      font-size: 7px;
+      font-weight: 900;
       padding: 2px 5px;
       border-radius: 4px;
       backdrop-filter: blur(4px);
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
     }
-    .genre-card-src.ks { background: rgba(155,89,182,0.85); color: #fff; }
-    .genre-card-src.bk { background: rgba(39,174,96,0.85); color: #fff; }
-    .genre-card-src.mk { background: rgba(52,152,219,0.85); color: #fff; }
+    .genre-card-src.ks { background: rgba(155,89,182,0.88); color: #fff; }
+    .genre-card-src.bk { background: rgba(39,174,96,0.88);  color: #fff; }
+    .genre-card-src.mk { background: rgba(52,152,219,0.88); color: #fff; }
 
     /* ---- IMAGE WRAP ----------------------------------------- */
     .genre-card-img-wrap {
@@ -528,10 +531,10 @@
       <option value="az">🔤 A → Z</option>
     </select>
     <select class="source-select" id="sourceSelect" onchange="onSourceChange()">
-      <option value="all">🌐 Semua API</option>
-      <option value="komikstation">💜 KomikStation</option>
-      <option value="bacakomik">💚 BacaKomik</option>
-      <option value="mangakita">💙 MangaKita</option>
+      <option value="all">🌐 Semua Server</option>
+      <option value="komikstation">💜 Server Alpha</option>
+      <option value="bacakomik">💚 Server Beta</option>
+      <option value="mangakita">💙 Server Gamma</option>
     </select>
   </div>
   <div class="type-filter-btns" id="typeFilterBtns">
@@ -886,9 +889,9 @@ function updateResultMeta(d1, d2, d3) {
   const page   = document.getElementById("resultPage");
 
   const parts = [];
-  if (d1?.mangaList?.length)  parts.push(`<span class="source-badge mangakita">💙 MangaKita ${d1.mangaList.length}</span>`);
-  if (d2?.komikList?.length)  parts.push(`<span class="source-badge bacakomik">💚 BacaKomik ${d2.komikList.length}</span>`);
-  if (d3?.seriesList?.length) parts.push(`<span class="source-badge komikstation">💜 KomikStation ${d3.seriesList.length}</span>`);
+  if (d1?.mangaList?.length)  parts.push(`<span class="source-badge mangakita">💙 Gamma &nbsp;${d1.mangaList.length}</span>`);
+  if (d2?.komikList?.length)  parts.push(`<span class="source-badge bacakomik">💚 Beta &nbsp;${d2.komikList.length}</span>`);
+  if (d3?.seriesList?.length) parts.push(`<span class="source-badge komikstation">💜 Alpha &nbsp;${d3.seriesList.length}</span>`);
 
   badges.innerHTML = parts.join(" ");
   count.textContent = `${allFetched.length} komik`;
@@ -967,7 +970,7 @@ function renderGenreGrid(list) {
     const href       = k.slug ? `/komik/${k.slug}` : "#";
     const rating     = parseFloat(k.rating);
     const ratingStr  = !isNaN(rating) ? rating.toFixed(1) : "";
-    const srcLabel   = { komikstation: "KS", bacakomik: "BK", mangakita: "MK" }[k._src] || "";
+    const srcLabel   = { komikstation: "α", bacakomik: "β", mangakita: "γ" }[k._src] || "";
     const srcClass   = { komikstation: "ks", bacakomik: "bk", mangakita: "mk" }[k._src] || "";
 
     const imgHtml = cover
@@ -981,9 +984,9 @@ function renderGenreGrid(list) {
            style="animation-delay:${Math.min(i, 8) * 35}ms">
         <div class="genre-card-img-wrap">
           ${imgHtml}${placeholder}
+          ${srcLabel ? `<span class="genre-card-src ${srcClass}">${srcLabel}</span>` : ""}
           ${k.type ? `<span class="genre-card-type badge ${type}">${escHtml(k.type)}</span>` : ""}
           ${ratingStr ? `<span class="genre-card-rating-badge">⭐ ${ratingStr}</span>` : ""}
-          ${srcLabel ? `<span class="genre-card-src ${srcClass}">${srcLabel}</span>` : ""}
         </div>
         <div class="genre-card-info">
           <div class="genre-card-title">${escHtml(k.title)}</div>
