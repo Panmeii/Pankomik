@@ -816,6 +816,15 @@ function proxyImg(url, w) {
   return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=" + (w||200) + "&output=webp&q=80";
 }
 
+/* Proxy khusus untuk cover novel dari sakuranovel.id */
+function proxyNovelCover(url) {
+  if (!url) return "";
+  if (url.includes("proxy.sankavolereii.my.id")) return url;
+  if (url.startsWith("/")) url = "https://sakuranovel.id" + url;
+  if (!url.startsWith("http")) url = "https://" + url;
+  return "https://proxy.sankavolereii.my.id/" + url;
+}
+
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 
 /* ── INIT ─────────────────────────────────────────────── */
@@ -1512,28 +1521,42 @@ async function loadNovelHistory() {
       return;
     }
     el.innerHTML = history.map((h, i) => {
-      const cover = h.novel_cover || "";
+      const cover   = proxyNovelCover(h.novel_cover || "");
+      const dateStr = h.read_at
+        ? new Date(h.read_at).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"})
+        : "–";
+      const chTitle = h.chapter_title || h.chapter_slug || "–";
+      const chShort = chTitle.length > 30 ? chTitle.slice(0, 28) + "…" : chTitle;
       return `
         <div class="komik-list-item" style="animation:lbSlideIn 0.25s ease ${i*25}ms both">
           <div class="novel-history-cover" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">
             ${cover
-              ? `<img src="https://proxy.sankavolereii.my.id/${cover}" alt="${esc(h.novel_title || '')}" onerror="this.parentElement.textContent='📖'">`
+              ? `<img src="${esc(cover)}" alt="${esc(h.novel_title || '')}"
+                   onerror="this.onerror=null;this.parentElement.innerHTML='📖'">`
               : "📖"}
           </div>
           <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">
-            <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
-            <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;color:var(--acc);">${esc(h.chapter_title || h.chapter_slug || '–')}</p>
-            <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</p>
+            <div class="title">${esc(h.novel_title || h.novel_slug || "–")}</div>
+            <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;
+               color:var(--acc);">${esc(chShort)}</p>
+            <p>⏱️ ${esc(dateStr)}</p>
           </div>
           <div class="komik-list-actions">
-            <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug || '')}'"  >▶ Lanjut</button>
+            <button class="btn-sm primary"
+              onclick="window.location.href='/baca-novel/${esc(h.chapter_slug || '')}'"
+            >▶ Lanjut</button>
             <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">Detail</button>
           </div>
         </div>`;
     }).join("");
   } catch(err) {
     console.error("loadNovelHistory error:", err);
-    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat riwayat novel.</p></div>`;
+    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat riwayat novel.</p>
+      <button onclick="_tabLoaded.novelHistory=false;loadNovelHistory()"
+        style="margin-top:10px;padding:7px 18px;background:var(--acc);color:#fff;border:none;
+        border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;">
+        🔄 Coba Lagi
+      </button></div>`;
   }
 }
 
