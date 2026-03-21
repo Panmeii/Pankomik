@@ -183,24 +183,16 @@ async function loadChapter() {
       if (btn) { btn.textContent = "▶️ Mulai Auto Scroll"; btn.classList.remove("running"); }
     }
 
-    /* ── Tentukan source API yang dipakai ──────────────────
-       Prioritas:
-       1. komikSrcHint dari sessionStorage (di-set saat klik kartu di index)
-          → gunakan source itu SAJA, tanpa fallback ke API lain
-          → agar slug chapter konsisten index → detail → reader
-       2. Tidak ada hint → coba urutan berdasarkan currentApiSource,
-          fallback ke API lain kalau gagal
+    /* ── Tentukan source API ─────────────────────────────────
+       Urutan priority:
+       1. komikSrcHint (sessionStorage) → coba duluan
+       2. currentApiSource → kalau hint gagal atau tidak ada
+       3. Sisa API lain → fallback agar reader tidak pernah kosong
+
+       Catatan: kita TIDAK hard-fail kalau hint gagal — reader tetap
+       menampilkan chapter dari API lain daripada halaman kosong.
     ── */
-    const _srcHint     = sessionStorage.getItem("komikSrcHint") || "";
-    const _srcSlugHint = sessionStorage.getItem("komikSrcSlug") || "";
-    /* Hint valid kalau:
-       - currentApiSource sudah cocok (navigasi dalam reader yang sama)
-       - ATAU komikSrcSlug cocok dengan komikSlug yang sedang dibaca */
-    const _hintValid = _srcHint && (
-      currentApiSource === _srcHint ||
-      (komikSlug && _srcSlugHint === komikSlug)
-    );
-    const _pinnedSource = _hintValid ? _srcHint : "";
+    const _srcHint = sessionStorage.getItem("komikSrcHint") || "";
 
     let d = null;
     let _apiSource = currentApiSource;
@@ -212,19 +204,18 @@ async function loadChapter() {
       komikstation:{ fetch: (s) => fetch(API_CHAPTER_4 + s).then(r=>r.json()) },
     };
 
-    /* Urutan: kalau ada hint → source itu saja (tidak fallback)
-               kalau tidak ada hint → source terbaik duluan, fallback ke yang lain */
-    const _order = _pinnedSource
-      ? [_pinnedSource]   /* HANYA source yang dipilih user, tidak ada fallback */
-      : currentApiSource === "komikstation"
-        ? ["komikstation", "komikindo", "mangakita", "bacakomik"]
-        : currentApiSource === "mangakita"
-        ? ["mangakita", "komikstation", "bacakomik", "komikindo"]
-        : currentApiSource === "bacakomik"
-        ? ["bacakomik", "komikstation", "komikindo", "mangakita"]
-        : ["komikindo", "komikstation", "mangakita", "bacakomik"];
+    /* Susun urutan: hint duluan, lalu currentApiSource, sisanya fallback */
+    const _allSources = ["komikindo", "komikstation", "mangakita", "bacakomik"];
+    const _ordered = [
+      _srcHint,                  /* 1. hint dari index/detail */
+      currentApiSource,          /* 2. source terakhir berhasil */
+      ..._allSources,            /* 3. semua sisanya */
+    ]
+      .filter(Boolean)
+      .filter((v, i, a) => a.indexOf(v) === i); /* deduplicate, jaga urutan */
 
-    for (const key of _order) {
+    for (const key of _ordered) {
+      if (!_APIs[key]) continue;
       try {
         const json = await _APIs[key].fetch(currentChapterSlug);
         if (key === "komikindo") {
@@ -238,16 +229,13 @@ async function loadChapter() {
         break;
       } catch(e) {
         console.warn(`[Reader] ${key} gagal:`, e.message);
-        /* Kalau source pinned gagal, jangan fallback — tampilkan error */
-        if (_pinnedSource) throw new Error(`API ${key} gagal memuat chapter ini`);
+        /* Lanjut ke API berikutnya */
       }
     }
     if (!d) throw new Error("Semua API gagal");
-    console.log(`[Reader] source=${_apiSource} pinned=${_pinnedSource||"no"} chapter=${currentChapterSlug}`);
-    /* Simpan source — kalau pinned, pastikan currentApiSource ikut source tersebut
-       agar navigasi next/prev chapter tetap pakai API yang sama */
-    currentApiSource = _pinnedSource || _apiSource;
-    sessionStorage.setItem("komikSource", currentApiSource);
+    console.log(`[Reader] loaded=${_apiSource} hint=${_srcHint||"-"} chapter=${currentChapterSlug}`);
+    currentApiSource = _apiSource;
+    sessionStorage.setItem("komikSource", _apiSource);
 
     /* Reset progress bar */
     const bar = document.getElementById("readingProgressBar");
