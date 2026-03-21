@@ -431,7 +431,7 @@ function proxyImg(url) {
   if (!url) return "";
   if (url.startsWith("data:")) return url;
   var clean = url.split("?")[0];
-  return "https://proxy.sankavolereii.my.id/" + encodeURIComponent(clean);
+  return "https://proxy.sankavolereii.my.id/" + clean;
 }
 
 function createProxiedImg(originalUrl, altText, cssText) {
@@ -447,7 +447,7 @@ function createProxiedImg(originalUrl, altText, cssText) {
     if (sib) sib.style.display = "flex";
   };
 
-  img.src = clean ? "https://proxy.sankavolereii.my.id/" + encodeURIComponent(clean) : "";
+  img.src = clean ? "https://proxy.sankavolereii.my.id/" + clean : "";
   return img;
 }
 
