@@ -29,6 +29,8 @@ const API_CHAPTER_2 = "https://www.sankavollerei.com/comic/mangakita/chapter/";
 const API_DETAIL_2  = "https://www.sankavollerei.com/comic/mangakita/detail/";
 const API_CHAPTER_3 = "https://www.sankavollerei.com/comic/bacakomik/chapter/";
 const API_DETAIL_3  = "https://www.sankavollerei.com/comic/bacakomik/detail/";
+const API_CHAPTER_4 = "https://www.sankavollerei.com/comic/komikstation/chapter/";
+const API_DETAIL_4  = "https://www.sankavollerei.com/comic/komikstation/manga/";
 
 /* ── SLUG dari URL ───────────────────────────────────────── */
 const slug = getSlug();
@@ -144,17 +146,33 @@ function initKeyboard() {
 /* ============================================================
    FETCH & RENDER CHAPTER
    ============================================================ */
-/* ── Normalize chapter response dari mangakita/bacakomik → format komikindo ── */
+/* ── Normalize chapter response dari API non-komikindo → format internal ── */
 function _normalizeChapter(json, source) {
-  /* Kedua API: images[] array string, navigation {prev, next}, title string */
-  const nav = json.navigation || {};
+  /* komikindo:    json.data.images = [{id, url}], navigation = {prev, next, allChapterSlug}
+     mangakita:    json.images = [url,...], navigation = {prev, next}
+     bacakomik:    json.images = [url,...], navigation = {prev, next}
+     komikstation: json.images = [url,...], prevSlug, nextSlug (BUKAN navigation)
+  */
+  let prev, next, comicSlug;
+
+  if (source === "komikstation") {
+    prev      = json.prevSlug || null;
+    next      = json.nextSlug || null;
+    comicSlug = json.comicSlug || null;
+  } else {
+    const nav = json.navigation || {};
+    prev      = (nav.prev && nav.prev !== "#prev" && nav.prev !== null) ? nav.prev : null;
+    next      = (nav.next && nav.next !== "#next" && nav.next !== null) ? nav.next : null;
+    comicSlug = json.comicSlug || null;
+  }
+
   return {
     title:  json.title || "",
     images: (json.images || []).map((url, i) => ({ id: i, url: String(url) })),
     navigation: {
-      prev:           (nav.prev && nav.prev !== "#prev" && nav.prev !== null) ? nav.prev : null,
-      next:           (nav.next && nav.next !== "#next" && nav.next !== null) ? nav.next : null,
-      allChapterSlug: json.comicSlug || null,
+      prev,
+      next,
+      allChapterSlug: comicSlug,
     },
     komikInfo: {
       title: (json.title || "").replace(/\s*chapter\s*[\d.]+.*/i, "").trim(),
@@ -182,15 +200,20 @@ async function loadChapter() {
 
     /* Urutkan API berdasarkan source yang terakhir berhasil */
     const _APIs = {
-      komikindo: { fetch: (s) => fetch(API_CHAPTER  + s).then(r=>r.json()), norm: null           },
-      mangakita: { fetch: (s) => fetch(API_CHAPTER_2 + s).then(r=>r.json()), norm: "mangakita"   },
-      bacakomik: { fetch: (s) => fetch(API_CHAPTER_3 + s).then(r=>r.json()), norm: "bacakomik"   },
+      komikindo:   { fetch: (s) => fetch(API_CHAPTER  + s).then(r=>r.json()), norm: null           },
+      mangakita:   { fetch: (s) => fetch(API_CHAPTER_2 + s).then(r=>r.json()), norm: "mangakita"   },
+      bacakomik:   { fetch: (s) => fetch(API_CHAPTER_3 + s).then(r=>r.json()), norm: "bacakomik"   },
+      komikstation:{ fetch: (s) => fetch(API_CHAPTER_4 + s).then(r=>r.json()), norm: "komikstation"},
     };
-    const _order = currentApiSource === "mangakita"
-      ? ["mangakita", "bacakomik", "komikindo"]
+
+    /* Komikstation dulukan kalau source hint dari detail page adalah komikstation */
+    const _order = currentApiSource === "komikstation"
+      ? ["komikstation", "komikindo", "mangakita", "bacakomik"]
+      : currentApiSource === "mangakita"
+      ? ["mangakita", "komikstation", "bacakomik", "komikindo"]
       : currentApiSource === "bacakomik"
-      ? ["bacakomik", "komikindo", "mangakita"]
-      : ["komikindo", "mangakita", "bacakomik"];
+      ? ["bacakomik", "komikstation", "komikindo", "mangakita"]
+      : ["komikindo", "komikstation", "mangakita", "bacakomik"];
 
     for (const key of _order) {
       try {
@@ -199,7 +222,8 @@ async function loadChapter() {
           if (!json.success || !json.data) throw new Error("no data");
           d = json.data;
         } else {
-          if (!json.success) throw new Error("no success");
+          /* komikstation, mangakita, bacakomik: success + images langsung di root */
+          if (!json.success || !json.images?.length) throw new Error("no images");
           d = _normalizeChapter(json, key);
         }
         _apiSource = key;
@@ -364,20 +388,18 @@ function updateNavButtons() {
 async function loadChapterListFromAPI() {
   if (!komikSlug) return;
   try {
-    /* Fetch semua 3 API paralel — sama seperti detail.js agar chapter
-       yang belum masuk ke satu API tetap muncul dari API lain */
-    const [r1, r2, r3] = await Promise.allSettled([
+    const [r1, r2, r3, r4] = await Promise.allSettled([
       fetch(API_DETAIL   + komikSlug).then(r => r.json()).catch(() => null),
       fetch(API_DETAIL_2 + komikSlug).then(r => r.json()).catch(() => null),
       fetch(API_DETAIL_3 + komikSlug).then(r => r.json()).catch(() => null),
+      fetch(API_DETAIL_4 + komikSlug).then(r => r.json()).catch(() => null),
     ]);
 
-    /* Normalize tiap source jadi array chapter {title, slug, releaseTime} */
     const j1 = r1.status === "fulfilled" ? r1.value : null;
     const j2 = r2.status === "fulfilled" ? r2.value : null;
     const j3 = r3.status === "fulfilled" ? r3.value : null;
+    const j4 = r4.status === "fulfilled" ? r4.value : null;
 
-    /* Source prioritas: pakai currentApiSource agar slug reader-compatible */
     const srcChapters = {
       komikindo: (j1?.success && j1?.data?.chapters?.length)
         ? j1.data.chapters
@@ -396,14 +418,21 @@ async function loadChapterListFromAPI() {
             releaseTime: ch.date  || "",
           }))
         : [],
+      /* komikstation: success + chapters langsung di root */
+      komikstation: (j4?.success && j4?.chapters?.length)
+        ? j4.chapters.map(ch => ({
+            title:       ch.title || "",
+            slug:        ch.slug  || "",
+            releaseTime: ch.date  || "",
+          }))
+        : [],
     };
 
-    /* Merge: sama persis logika di detail.js
-       — key = nomor chapter (float), slug dari currentApiSource menang */
+    /* Merge semua 4 source — key = nomor chapter, slug dari currentApiSource menang */
     const chMap = new Map();
-    const _order = ["komikindo", "mangakita", "bacakomik"]
-      .filter(s => s !== currentApiSource);   /* best source diproses terakhir */
-    const processOrder = [..._order, currentApiSource];
+    const _allSources = ["komikindo", "mangakita", "bacakomik", "komikstation"]
+      .filter(s => s !== currentApiSource);
+    const processOrder = [..._allSources, currentApiSource];
 
     for (const srcKey of processOrder) {
       const isBest = srcKey === currentApiSource;
@@ -424,18 +453,19 @@ async function loadChapterListFromAPI() {
       }
     }
 
-    /* Fallback: kalau merge kosong, pakai source terbaik langsung */
     let chapters = Array.from(chMap.values()).sort((a, b) => b._num - a._num);
     if (!chapters.length) {
       const fallback = srcChapters[currentApiSource]
+        || srcChapters.komikstation
         || srcChapters.komikindo
         || srcChapters.mangakita
         || srcChapters.bacakomik;
       chapters = fallback || [];
     }
 
-    const totalSrc = Object.values(srcChapters).map(a => a.length);
-    console.log(`[Reader] Chapter list merged: ${chapters.length} (src: ${totalSrc.join("/")})`);
+    const totalSrc = ["komikindo","mangakita","bacakomik","komikstation"]
+      .map(s => `${s}:${srcChapters[s]?.length||0}`).join(" ");
+    console.log(`[Reader] Chapter list merged: ${chapters.length} (${totalSrc})`);;
 
     if (chapters.length) {
       allChapters = chapters;
@@ -587,31 +617,39 @@ function loadImageSequential(wrapper, url, idx, onDone) {
   const skeleton = wrapper.querySelector(".image-skeleton");
   let tried = 0;
 
+  /* Strategi:
+     0 = URL langsung (paling jernih, tanpa kompresi proxy)
+     1 = wsrv.nl kualitas tinggi (q=95, lossless webp, tanpa resize)
+     2 = wsrv.nl tanpa output conversion (fallback aman)
+     3 = direct tanpa cleanup query params
+  */
   function getUrl(n) {
-    const clean = url.split("?")[0].replace(/^https?:\/\//, "");
-    if (n === 0) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + "&w=800&output=webp&q=85";
-    if (n === 1) return "https://wsrv.nl/?url=" + encodeURIComponent(url.split("?")[0]) + "&w=800";
-    return url; /* direct fallback */
+    const clean = url.split("?")[0];
+    if (n === 0) return clean;  /* direct — paling jernih */
+    if (n === 1) return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&output=webp&q=95&n=-1`;
+    if (n === 2) return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&n=-1`;
+    return url; /* original dengan query params */
   }
 
   const img = document.createElement("img");
   img.alt           = "Page " + idx;
   img.decoding      = "async";
-  img.style.cssText = "width:100%;display:block;opacity:0;transition:opacity 0.25s ease;";
+  img.loading       = idx <= 3 ? "eager" : "lazy";  /* 3 gambar pertama eager */
+  img.style.cssText = "width:100%;display:block;opacity:0;transition:opacity 0.2s ease;";
 
   img.onload = function () {
     if (skeleton) skeleton.style.display = "none";
     img.style.opacity = "1";
-    onDone(); /* lanjut ke gambar berikutnya */
+    onDone();
   };
 
   img.onerror = function () {
     tried++;
-    if (tried <= 2) {
+    if (tried <= 3) {
       img.src = getUrl(tried);
       return;
     }
-    /* Semua proxy gagal — tampilkan fallback */
+    /* Semua gagal — tampilkan fallback dengan tombol retry */
     if (skeleton) skeleton.style.display = "none";
     img.remove();
 
@@ -627,20 +665,16 @@ function loadImageSequential(wrapper, url, idx, onDone) {
     retryBtn.style.cssText = `
       padding:7px 18px;background:#e8522a;color:#fff;border:none;
       border-radius:8px;cursor:pointer;font-weight:700;font-size:13px;
-      font-family:'Nunito',sans-serif;transition:background 0.2s;`;
-    retryBtn.onmouseenter = () => retryBtn.style.background = "#c73f1c";
-    retryBtn.onmouseleave = () => retryBtn.style.background = "#e8522a";
+      font-family:'Nunito',sans-serif;`;
     retryBtn.onclick = function () {
       fb.remove();
       tried = 0;
-      img.src = "";
       wrapper.appendChild(img);
       img.src = getUrl(0);
     };
     fb.appendChild(retryBtn);
     wrapper.appendChild(fb);
-
-    onDone(); /* tetap lanjut meskipun error */
+    onDone();
   };
 
   img.src = getUrl(0);
@@ -811,9 +845,10 @@ function showPage(index) {
 
   let tried = 0;
   function getUrl(n) {
-    const clean = url.split("?")[0].replace(/^https?:\/\//, "");
-    if (n === 0) return "https://images.weserv.nl/?url=" + encodeURIComponent(clean) + "&w=800&output=webp&q=85";
-    if (n === 1) return "https://wsrv.nl/?url=" + encodeURIComponent(url.split("?")[0]) + "&w=800";
+    const clean = url.split("?")[0];
+    if (n === 0) return clean;  /* direct — paling jernih */
+    if (n === 1) return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&output=webp&q=95&n=-1`;
+    if (n === 2) return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&n=-1`;
     return url;
   }
 
