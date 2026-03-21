@@ -250,9 +250,27 @@ async function loadChapter() {
     nextSlug = d.navigation?.next || null;
     prevSlug = d.navigation?.prev || null;
 
-    /* Images — API: [{id, url}] */
+    /* Images */
     allImages   = Array.isArray(d.images) ? d.images : [];
     currentPage = 0;
+
+    /* Debug: log images count agar mudah diagnosa */
+    console.log(`[Reader] images=${allImages.length} source=${_apiSource}`);
+
+    /* Kalau images kosong setelah semua API dicoba — tampilkan pesan jelas */
+    if (allImages.length === 0) {
+      document.getElementById("reader").innerHTML = `
+        <div style="text-align:center;padding:80px 20px;color:#888;">
+          <p style="font-size:40px;margin-bottom:12px;">📭</p>
+          <p style="font-size:14px;margin-bottom:6px;">Gambar chapter tidak ditemukan</p>
+          <p style="font-size:12px;color:#555;margin-bottom:20px;">Source: ${_apiSource}</p>
+          <button onclick="location.reload()" style="
+            padding:10px 22px;background:#e8522a;color:#fff;border:none;
+            border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;
+            font-size:13px;font-weight:800;">🔄 Coba Lagi</button>
+        </div>`;
+      return;
+    }
 
     /* Komik info */
     /* Bug fix: komikSlug extraction lebih robust —
@@ -328,7 +346,15 @@ async function loadChapter() {
 
   } catch (err) {
     console.error("Gagal load chapter:", err);
-    showError("Gagal memuat chapter. Coba lagi.");
+    const container = document.getElementById("reader");
+    if (container) container.innerHTML = `
+      <div class="reader-error">
+        <p style="font-size:48px">😕</p>
+        <p style="color:#ccc;font-size:14px;margin-bottom:6px;">Gagal memuat chapter</p>
+        <p style="color:#555;font-size:11px;margin-bottom:16px;">${err?.message || "Unknown error"}</p>
+        <button onclick="location.reload()" class="btn-retry">🔄 Coba Lagi</button>
+        <button onclick="goHome()" class="btn-home">🏠 Beranda</button>
+      </div>`;
   }
 }
 
