@@ -722,6 +722,49 @@
 
     /* ─── MOBILE TOUCH ───────────────────────────────────── */
     * { -webkit-tap-highlight-color: transparent; }
+
+    /* ─── SCROLL INDICATOR (tabs) ────────────────────────── */
+    .profile-tabs-wrap::after {
+      content: '';
+      position: absolute; right: 0; top: 0; bottom: 0;
+      width: 32px;
+      background: linear-gradient(to right, transparent, var(--bg-card, #1a1a24));
+      pointer-events: none;
+    }
+    .profile-tabs-wrap { position: sticky; top: 0; z-index: 100; }
+
+    /* ─── REFRESH BUTTON ─────────────────────────────────── */
+    .tab-refresh-btn {
+      float: right; background: none; border: 1px solid var(--glass-b);
+      color: var(--text-muted, #888); font-size: 12px; padding: 4px 10px;
+      border-radius: 99px; cursor: pointer; font-family: 'Nunito', sans-serif;
+      font-weight: 700; margin-bottom: 10px; transition: all 0.15s;
+    }
+    .tab-refresh-btn:hover { border-color: var(--acc); color: var(--acc); }
+
+    /* ─── NOVEL HISTORY COVER ────────────────────────────── */
+    .novel-history-cover {
+      width: 52px; height: 70px; border-radius: 8px; flex-shrink: 0;
+      overflow: hidden; border: 1px solid var(--glass-b);
+      background: var(--glass);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .novel-history-cover img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+
+    /* ─── SEARCH INPUT LIVE ──────────────────────────────── */
+    .tab-search {
+      width: 100%; padding: 9px 14px; margin-bottom: 12px;
+      background: rgba(0,0,0,0.2); border: 1px solid var(--glass-b);
+      border-radius: 99px; color: var(--text, #eaeaf0);
+      font-family: 'Nunito', sans-serif; font-size: 13px;
+      outline: none; box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .tab-search:focus { border-color: var(--acc); }
+    .tab-search::placeholder { color: var(--text-muted, #888); }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -753,7 +796,7 @@
 <script type="module">
 import {
   getCurrentUser, getProfile, updateProfile, updatePassword,
-  isOAuthUser, uploadAvatar,
+  isOAuthUser, uploadAvatar, logout,
   getBookmarks, removeBookmark, addBookmark,
   getHistory, getProgress, syncProfileProgress, getTotalChaptersRead,
   getLeaderboard, getNovelLeaderboard,
@@ -893,6 +936,7 @@ async function loadProfile() {
         <button class="kategori-btn" onclick="filterKategori('lagi_dibaca',this)">📖 Dibaca</button>
         <button class="kategori-btn" onclick="filterKategori('tamat',this)">✅ Tamat</button>
       </div>
+      <input type="text" id="bookmarkSearch" class="tab-search" placeholder="🔍 Cari judul komik..." oninput="bookmarkSearch(this.value)">
       <div id="bookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
@@ -1014,20 +1058,29 @@ async function loadProfile() {
 }
 
 /* ── SWITCH TAB ───────────────────────────────────────── */
+/* Cache flags: tab hanya di-load sekali kecuali data mungkin berubah */
+const _tabLoaded = {};
+
 window.switchTab = function (tab) {
   document.querySelectorAll(".profile-tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
   document.getElementById(`tab-${tab}`)?.classList.add("active");
   document.getElementById(`content-${tab}`)?.classList.add("active");
 
-  if (tab === "history")        loadHistory();
-  if (tab === "novel-history")  loadNovelHistory();
-  if (tab === "novel-bookmark") loadNovelBookmarks();
-  if (tab === "anime-bookmark") loadAnimeBookmarks();
-  if (tab === "progress")       loadProgressTab();
-  if (tab === "badge")          loadBadgeTab();
-  if (tab === "leaderboard")    loadLeaderboard();
-  if (tab === "comments")       loadMyComments();
+  /* Update URL tanpa reload */
+  const url = new URL(window.location.href);
+  url.searchParams.set("tab", tab);
+  history.replaceState({}, "", url);
+
+  /* Load data hanya sekali per sesi, kecuali yang sering berubah */
+  if (tab === "history"        && !_tabLoaded.history)        { _tabLoaded.history = true; loadHistory(); }
+  if (tab === "novel-history"  && !_tabLoaded.novelHistory)   { _tabLoaded.novelHistory = true; loadNovelHistory(); }
+  if (tab === "novel-bookmark" && !_tabLoaded.novelBookmark)  { _tabLoaded.novelBookmark = true; loadNovelBookmarks(); }
+  if (tab === "anime-bookmark" && !_tabLoaded.animeBookmark)  { loadAnimeBookmarks(); }
+  if (tab === "progress"       && !_tabLoaded.progress)       { _tabLoaded.progress = true; loadProgressTab(); }
+  if (tab === "badge"          && !_tabLoaded.badge)          { _tabLoaded.badge = true; loadBadgeTab(); }
+  if (tab === "leaderboard"    && !_tabLoaded.leaderboard)    { _tabLoaded.leaderboard = true; loadLeaderboard(); }
+  if (tab === "comments"       && !_tabLoaded.comments)       { loadMyComments(); }
 };
 
 /* ── BOOKMARKS ────────────────────────────────────────── */
@@ -1102,19 +1155,32 @@ window.hapusAnimeBookmark = async function(fullSlug, btn) {
 
 window.gotoAnimeDetail = slug => window.location.href = `/anime/detail/${slug}`;
 
-function renderBookmarks(kategori) {
-  const list = bookmarkData[kategori] || [];
-  const el   = document.getElementById("bookmarkList");
+function renderBookmarks(kategori, query) {
+  let list = bookmarkData[kategori] || [];
+  const el = document.getElementById("bookmarkList");
+  if (!el) return;
+
+  /* Filter pencarian lokal */
+  if (query) {
+    const q = query.toLowerCase();
+    list = list.filter(bm => (bm.komik_title || "").toLowerCase().includes(q));
+  }
+
   if (!list.length) {
-    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada komik di kategori ini.</p></div>`;
+    el.innerHTML = query
+      ? `<div class="empty-state"><p>🔍</p><p>Tidak ada hasil untuk "<strong>${esc(query)}</strong>"</p></div>`
+      : `<div class="empty-state"><p>📭</p><p>Belum ada komik di kategori ini.</p></div>`;
     return;
   }
-  el.innerHTML = list.map(bm => `
-    <div class="komik-list-item">
-      <img src="${esc(bm.komik_cover || '')}" alt="${esc(bm.komik_title)}" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer">
+  /* Render dengan stagger animation */
+  el.innerHTML = list.map((bm, i) => `
+    <div class="komik-list-item" style="animation:lbSlideIn 0.25s ease ${i*30}ms both">
+      ${bm.komik_cover
+        ? `<img src="${esc(bm.komik_cover)}" alt="${esc(bm.komik_title)}" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer" onerror="this.style.display='none'">`
+        : `<div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);">📚</div>`}
       <div class="komik-list-info" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer">
         <div class="title">${esc(bm.komik_title)}</div>
-        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
+        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</p>
       </div>
       <div class="komik-list-actions">
         <button class="btn-sm primary" onclick="gotoDetail('${esc(bm.komik_slug)}')">Buka</button>
@@ -1127,7 +1193,12 @@ window.filterKategori = function (kategori, btn) {
   activeKategori = kategori;
   document.querySelectorAll("#content-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
-  renderBookmarks(kategori);
+  const q = document.getElementById("bookmarkSearch")?.value || "";
+  renderBookmarks(kategori, q);
+};
+
+window.bookmarkSearch = function(val) {
+  renderBookmarks(activeKategori, val);
 };
 
 window.hapusBookmark = async function (slug, btn) {
@@ -1138,22 +1209,34 @@ window.hapusBookmark = async function (slug, btn) {
 
 /* ── RIWAYAT KOMIK ────────────────────────────────────── */
 async function loadHistory() {
-  const { history } = await getHistory(currentUser.id);
   const el = document.getElementById("historyList");
-  if (!history.length) { el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p></div>`; return; }
-  el.innerHTML = history.map(h => `
-    <div class="komik-list-item">
-      <img src="${esc(h.komik_cover || '')}" alt="${esc(h.komik_title)}" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
-      <div class="komik-list-info">
-        <div class="title">${esc(h.komik_title)}</div>
-        <p>📖 Chapter ${esc(String(h.chapter_number || '?'))}</p>
-        <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
-      </div>
-      <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">Lanjut</button>
-        <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
-      </div>
-    </div>`).join("");
+  if (!el) return;
+  el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
+  try {
+    const { history } = await getHistory(currentUser.id);
+    if (!history?.length) {
+      el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p><p style="font-size:11px;margin-top:4px;">Mulai baca komik untuk mencatat riwayat!</p></div>`;
+      return;
+    }
+    el.innerHTML = history.map((h, i) => `
+      <div class="komik-list-item" style="animation:lbSlideIn 0.25s ease ${i*25}ms both">
+        ${h.komik_cover
+          ? `<img src="${esc(h.komik_cover)}" alt="${esc(h.komik_title)}" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer" onerror="this.style.display='none'">`
+          : `<div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);">📚</div>`}
+        <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
+          <div class="title">${esc(h.komik_title || h.komik_slug || '–')}</div>
+          <p>📖 Ch. ${esc(String(h.chapter_number || '?'))}</p>
+          <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</p>
+        </div>
+        <div class="komik-list-actions">
+          <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">▶ Lanjut</button>
+          <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
+        </div>
+      </div>`).join("");
+  } catch(err) {
+    console.error("loadHistory error:", err);
+    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat riwayat.</p></div>`;
+  }
 }
 
 /* ── PROGRESS ─────────────────────────────────────────── */
@@ -1419,22 +1502,39 @@ window.hapusNovelBookmark = async function (slug, btn) {
 
 /* ── NOVEL HISTORY ────────────────────────────────────── */
 async function loadNovelHistory() {
-  const { history } = await getNovelHistory(currentUser.id);
   const el = document.getElementById("novelHistoryList");
-  if (!history?.length) { el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca novel.</p></div>`; return; }
-  el.innerHTML = history.map(h => `
-    <div class="komik-list-item">
-      <div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--glass-b);">📖</div>
-      <div class="komik-list-info">
-        <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
-        <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${esc(h.chapter_title || h.chapter_slug || '')}</p>
-        <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID')}</p>
-      </div>
-      <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">Lanjut</button>
-        <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
-      </div>
-    </div>`).join("");
+  if (!el) return;
+  el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
+  try {
+    const { history } = await getNovelHistory(currentUser.id);
+    if (!history?.length) {
+      el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca novel.</p></div>`;
+      return;
+    }
+    el.innerHTML = history.map((h, i) => {
+      const cover = h.novel_cover || "";
+      return `
+        <div class="komik-list-item" style="animation:lbSlideIn 0.25s ease ${i*25}ms both">
+          <div class="novel-history-cover" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">
+            ${cover
+              ? `<img src="https://proxy.sankavolereii.my.id/${cover}" alt="${esc(h.novel_title || '')}" onerror="this.parentElement.textContent='📖'">`
+              : "📖"}
+          </div>
+          <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">
+            <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
+            <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;color:var(--acc);">${esc(h.chapter_title || h.chapter_slug || '–')}</p>
+            <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</p>
+          </div>
+          <div class="komik-list-actions">
+            <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug || '')}'"  >▶ Lanjut</button>
+            <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">Detail</button>
+          </div>
+        </div>`;
+    }).join("");
+  } catch(err) {
+    console.error("loadNovelHistory error:", err);
+    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat riwayat novel.</p></div>`;
+  }
 }
 
 /* ── KOMENTAR SAYA ────────────────────────────────────── */
@@ -1582,9 +1682,18 @@ window.loadMyComments   = loadMyComments;
 window.gotoNovelDetail  = slug => window.location.href = `/novel/${slug}`;
 window.gotoDetail       = slug => window.location.href = `/komik/${slug}`;
 window.goHome           = () => window.location.href = "/";
-window.liveSearch       = () => {};
+window.liveSearch       = () => {};  /* search dihandle oleh auth-header.js */
 window.toggleMenu       = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display==="block"?"none":"block"; };
-window.toggleDarkMode   = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark"); };
+window.toggleDarkMode   = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark"); const btn = document.querySelector('button[onclick="toggleDarkMode()"]'); if(btn) btn.textContent = document.body.classList.contains("light") ? "☀️" : "🌙"; };
+
+/* ── LOGOUT ──────────────────────────────────────────── */
+window.handleLogout = async function () {
+  if (!confirm("Yakin ingin keluar?")) return;
+  try {
+    await logout();
+  } catch(e) { console.error("Logout error:", e); }
+  window.location.href = "/masuk";
+};
 
 </script>
 
