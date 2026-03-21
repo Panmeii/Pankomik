@@ -395,30 +395,35 @@ async function getDetail() {
     if (!candidates.length) throw new Error("Semua API gagal");
 
     /* ── Pilih best source ──────────────────────────────────
-       LOGIKA PINTAR:
+       LOGIKA PINTAR — KomikStation sebagai SUMBER PRIMER:
+
        1. Ada hint dari sessionStorage (user klik kartu di index)
-          → WAJIB pakai source itu, bukan merge dengan API lain
-          → Chapter list, cover, dan reader semua dari source yang sama
-          → Tidak ada duplikat chapter dari cross-API
+          → WAJIB pakai source itu (sudah ditentukan saat klik)
 
        2. Tidak ada hint (buka detail langsung dari URL / share link)
-          → Pakai source dengan chapter TERBANYAK sebagai base
-          → Merge chapter dari semua API untuk tampilkan daftar terlengkap
-          → Cover dari source terbaik
+          → CEK apakah KomikStation punya data komik ini
+          → Kalau KomikStation ada (success & punya chapters) → pakai KomikStation
+          → Kalau KomikStation tidak ada → pakai source dengan chapter terbanyak
 
-       PENTING: source yang dipilih di sini HARUS sama persis yang
-       dipakai reader.js agar slug chapter compatible!
+       Alasan: KomikStation chapter-nya paling lengkap. Kalau user buka
+       langsung dari URL tanpa hint, kita optimalkan ke KS.
     ── */
     candidates.sort((a, b) => b.count - a.count);
 
-    /* Cari kandidat yang sesuai hint */
+    /* Cari kandidat sesuai hint */
     const hinted = srcHint ? candidates.find(c => c.source === srcHint) : null;
-    /* Kalau hint tidak ditemukan di candidates (API gagal), pakai yang terbanyak */
-    const best   = hinted || candidates[0];
+
+    /* Kalau tidak ada hint → cek apakah KomikStation tersedia */
+    const ksCandidate = candidates.find(c => c.source === "komikstation");
+
+    /* Pilih: hint > KomikStation (kalau ada) > terbanyak */
+    const best   = hinted || ksCandidate || candidates[0];
     const source = best.source;
 
-    console.log(`[Detail] hint=${srcHint||"none"} → best=${source} (${best.count}ch) | all:`,
-      candidates.map(c => `${c.source}=${c.count}`).join(", "));
+    console.log(
+      `[Detail] hint=${srcHint||"none"} ks=${ksCandidate?.count??"-"} → best=${source} (${best.count}ch) | all:`,
+      candidates.map(c => `${c.source}=${c.count}`).join(", ")
+    );
 
     let komikDataRaw = best.data;
 
