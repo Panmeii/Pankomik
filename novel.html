@@ -352,12 +352,33 @@ function proxyImg(url) {
   return "https://proxy.sankavolereii.my.id/" + clean;
 }
 
+/* ── IntersectionObserver untuk lazy load semua cover ── */
+var _lazyObserver = null;
+
+function getLazyObserver() {
+  if (_lazyObserver) return _lazyObserver;
+  _lazyObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (!entry.isIntersecting) return;
+      var img = entry.target;
+      var src = img.getAttribute("data-src");
+      if (src) {
+        img.src = src;
+        img.removeAttribute("data-src");
+      }
+      _lazyObserver.unobserve(img);
+    });
+  }, { rootMargin: "200px 0px" }); /* preload 200px sebelum masuk viewport */
+  return _lazyObserver;
+}
+
 function createProxiedImg(originalUrl, altText, cssText) {
   var img = document.createElement("img");
   img.alt = altText || "";
   if (cssText) img.style.cssText = cssText;
   img.style.background = "var(--bg-surface)";
   var clean = (originalUrl || "").split("?")[0];
+  var proxiedUrl = clean ? "https://proxy.sankavolereii.my.id/" + clean : "";
 
   img.onerror = function () {
     img.onerror = null;
@@ -370,7 +391,12 @@ function createProxiedImg(originalUrl, altText, cssText) {
     if (sib && sib.classList.contains("novel-card-fallback")) sib.style.display = "flex";
   };
 
-  img.src = clean ? "https://proxy.sankavolereii.my.id/" + clean : "";
+  if (proxiedUrl) {
+    /* Simpan URL di data-src, load saat masuk viewport */
+    img.setAttribute("data-src", proxiedUrl);
+    img.src = ""; /* placeholder kosong — tidak ada request ke proxy */
+    getLazyObserver().observe(img);
+  }
   return img;
 }
 
