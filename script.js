@@ -294,56 +294,72 @@ function parseUpdateScore(dateStr, chapterNum) {
 }
 
 /* ── mergeAllFlat — gabung semua list dari semua API sekaligus ──────────
-   - Deduplicate by slug
+   - Deduplicate by slug (primary) DAN title normalize (secondary)
    - Kalau slug sama dari >1 API → ambil yang UPDATE-nya PALING BARU
-     (berdasarkan tanggal/waktu chapter terbaru, bukan chapter number)
+   - Kalau title sama tapi slug berbeda (KomikStation vs lain) → merge juga
    - Cover: kalau pemenang tidak punya cover → tambal dari entri lain
-   - _src: ikut pemenang (dipakai saat klik untuk cek KS on-demand)
+   - _src: ikut pemenang
 ── */
+
+/* Normalize title untuk dedup: lowercase, hapus karakter non-alfanumerik, trim */
+function normalizeTitle(t) {
+  return (t || "").toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")   /* hapus tanda baca */
+    .replace(/\s+/g, " ")           /* collapse spasi */
+    .trim()
+    .slice(0, 60);                  /* max 60 char untuk keamanan */
+}
+
 function mergeAllFlat(allItems) {
-  const map = new Map(); /* slug → best entry */
+  const slugMap  = new Map(); /* slug → best entry */
+  const titleMap = new Map(); /* normalizedTitle → slug di slugMap */
 
   for (const k of allItems) {
     if (!k.slug) continue;
 
-    /* Ambil info chapter terbaru dari entri ini */
     const ch      = (k.chapters && k.chapters[0]) || {};
     const chStr   = ch.title || ch.slug || k.chapter || k.ch || "";
     const dateStr = ch.date  || ch.time || ch.timeAgo || k.date || k.time || "";
     const chNum   = extractChapterNum(chStr);
-    /* Score: makin besar = makin baru. Gabungkan date score + chapter num sebagai tiebreaker */
     const score   = parseUpdateScore(dateStr, chNum);
+    const normT   = normalizeTitle(k.title);
 
-    if (!map.has(k.slug)) {
-      map.set(k.slug, { ...k, _score: score });
+    /* ── Cek apakah sudah ada entry dengan title yang sama (tapi mungkin slug beda) ── */
+    const existingSlugByTitle = normT ? titleMap.get(normT) : null;
+    const canonSlug = existingSlugByTitle || k.slug;
+
+    if (!slugMap.has(canonSlug)) {
+      /* Entry baru */
+      slugMap.set(canonSlug, { ...k, slug: canonSlug, _score: score, _origSlug: k.slug });
+      if (normT) titleMap.set(normT, canonSlug);
     } else {
-      const ex = map.get(k.slug);
+      const ex = slugMap.get(canonSlug);
+
+      /* Cover terbaik: pilih yang bukan SVG/GIF placeholder */
+      const isCoverOk = (url) => url && !url.startsWith("data:image/svg") && !url.startsWith("data:image/gif");
+      const coverNew  = k.image   || k.cover || "";
+      const coverEx   = ex.image  || ex.cover || "";
+      const bestCover = isCoverOk(coverNew) ? coverNew : (isCoverOk(coverEx) ? coverEx : "");
 
       if (score > (ex._score ?? -Infinity)) {
-        /* Entry baru lebih fresh — menang, tapi pertahankan cover kalau baru kosong */
-        const rawNew   = k.image || k.cover || "";
-        const isSvgNew = !rawNew || rawNew.startsWith("data:image/svg");
-        map.set(k.slug, {
+        /* Entry baru lebih fresh — menang, pertahankan cover terbaik */
+        slugMap.set(canonSlug, {
           ...k,
-          _score: score,
-          image: isSvgNew ? (ex.image || ex.cover || "") : rawNew,
+          slug:       canonSlug,
+          _score:     score,
+          _origSlug:  k.slug,
+          image:      bestCover,
         });
       } else {
         /* Entry lama lebih fresh — tapi tambal cover kalau kosong */
-        const rawEx   = ex.image || ex.cover || "";
-        const isSvgEx = !rawEx || rawEx.startsWith("data:image/svg");
-        if (isSvgEx) {
-          const rawNew = k.image || k.cover || "";
-          if (rawNew && !rawNew.startsWith("data:image/svg")) {
-            map.set(k.slug, { ...ex, image: rawNew });
-          }
+        if (!isCoverOk(coverEx) && isCoverOk(coverNew)) {
+          slugMap.set(canonSlug, { ...ex, image: bestCover });
         }
       }
     }
   }
 
-  /* Hapus field internal sebelum return */
-  return Array.from(map.values()).map(({ _score, ...rest }) => rest);
+  return Array.from(slugMap.values()).map(({ _score, _origSlug, ...rest }) => rest);
 }
 
 /* Alias untuk kompatibilitas */
