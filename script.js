@@ -33,24 +33,29 @@ function readerURL(chSlug, komikSlug) { return komikSlug ? `/komik/${komikSlug}/
 
 /* ── Domain → Referer map untuk bypass hotlink protection ── */
 const DOMAIN_REF_MAP = {
-  "komikindo":  "https://komikindo.org",
-  "komikcast":  "https://komikcast.me",
-  "komiku":     "https://komiku.id",
-  "manhwaindo": "https://manhwaindo.id",
-  "bacakomik":  "https://bacakomik.me",
-  "mangatale":  "https://mangatale.co",
-  "westmanga":  "https://westmanga.info",
-  "shinigami":  "https://shinigami.id",
-  "sakuranovel":"https://sakuranovel.id",
-  "novelringan":"https://novelringan.com",
-  "mangakita":  "https://mangakita.me",
+  "komikindo":   "https://komikindo.org",
+  "komikcast":   "https://komikcast.me",
+  "komiku":      "https://komiku.id",
+  "manhwaindo":  "https://manhwaindo.id",
+  "bacakomik":   "https://bacakomik.me",
+  "mangatale":   "https://mangatale.co",
+  "westmanga":   "https://westmanga.info",
+  "shinigami":   "https://shinigami.id",
+  "sakuranovel": "https://sakuranovel.id",
+  "novelringan": "https://novelringan.com",
+  "mangakita":   "https://mangakita.me",
   "bacakomik.my":"https://bacakomik.my",
-  "i0.wp.com":  "https://mangakita.me",
-  "i1.wp.com":  "https://mangakita.me",
-  "i2.wp.com":  "https://mangakita.me",
-  "i3.wp.com":  "https://mangakita.me",
-  "kiryuu":     "https://kiryuu.id",
-  "mgkomik":    "https://mgkomik.id",
+  "i0.wp.com":   "https://mangakita.me",
+  "i1.wp.com":   "https://mangakita.me",
+  "i2.wp.com":   "https://mangakita.me",
+  "i3.wp.com":   "https://mangakita.me",
+  "kiryuu":      "https://kiryuu.id",
+  "mgkomik":     "https://mgkomik.id",
+  /* ── KomikStation CDN ── */
+  "komikstation":"https://komikstation.com",
+  "cdn.komikstation":"https://komikstation.com",
+  "asset.komikstation":"https://komikstation.com",
+  "img.komikstation":  "https://komikstation.com",
 };
 
 function getReferer(url) {
@@ -77,6 +82,12 @@ function buildWsrv(rawUrl, w, withRef) {
 function proxyImg(url, w = 300) {
   if (!url) return "";
   if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
+  if (url.includes("proxy.sankavolereii.my.id")) return url;
+  /* KomikStation: langsung pakai proxy.sankavolereii.my.id — lebih reliable dari wsrv */
+  const cleanUrl = url.split("?")[0];
+  if (cleanUrl.includes("komikstation")) {
+    return "https://proxy.sankavolereii.my.id/" + cleanUrl;
+  }
   return buildWsrv(url, w, true);
 }
 
@@ -121,21 +132,44 @@ function makeGeneratedCover(title, type, height) {
 }
 
 /**
- * imgFallback — chain: wsrv+ref → wsrv tanpa ref → direct URL → placeholder
+ * imgFallback — chain berdasarkan domain:
+ *
+ * KomikStation (initial = proxy.sankavolereii):
+ *   step 1: wsrv tanpa ref
+ *   step 2: direct URL
+ *   step 3: placeholder
+ *
+ * Domain lain (initial = wsrv+ref):
+ *   step 1: wsrv tanpa ref
+ *   step 2: proxy.sankavolereii.my.id
+ *   step 3: direct URL
+ *   step 4: placeholder
  */
 function imgFallback(img, originalUrl) {
   if (!originalUrl || img.dataset.fallbackSet) return;
   img.dataset.fallbackSet = "1";
   const clean = originalUrl.split("?")[0];
+  const isKS  = clean.includes("komikstation");
   let step = 0;
 
   function tryNext() {
     step++;
     img.onerror = null;
-    switch (step) {
-      case 1: img.onerror = tryNext; img.src = buildWsrv(clean, 300, false); break;
-      case 2: img.onerror = tryNext; img.src = clean; break;
-      default: showImgPlaceholder(img);
+    if (isKS) {
+      /* KomikStation: sankavolereii sudah dicoba di initial → wsrv → direct → placeholder */
+      switch (step) {
+        case 1: img.onerror = tryNext; img.src = buildWsrv(clean, 300, false); break;
+        case 2: img.onerror = tryNext; img.src = clean; break;
+        default: showImgPlaceholder(img);
+      }
+    } else {
+      /* Domain lain: wsrv+ref sudah dicoba di initial */
+      switch (step) {
+        case 1: img.onerror = tryNext; img.src = buildWsrv(clean, 300, false); break;
+        case 2: img.onerror = tryNext; img.src = "https://proxy.sankavolereii.my.id/" + clean; break;
+        case 3: img.onerror = tryNext; img.src = clean; break;
+        default: showImgPlaceholder(img);
+      }
     }
   }
 
