@@ -597,13 +597,14 @@ async function patchKSCovers(entries, container) {
         const genCover    = card.querySelector(".card-gen-cover-el");
 
         if (genCover) {
-          /* Ganti generated cover dengan img asli */
+          /* Ganti generated cover dengan img asli.
+             Tidak perlu inline style — .grid-card img di style.css sudah handle
+             aspect-ratio:3/4, object-fit:cover, width:100% */
           const img = document.createElement("img");
           img.src = proxied;
           img.alt = titleEl.textContent || "";
           img.loading = "lazy";
-          img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;";
-          img.onerror = () => { img.onerror = null; /* biarkan generated cover */ };
+          img.onerror = () => { img.onerror = null; /* biarkan generated cover tetap */ };
           genCover.parentNode.replaceChild(img, genCover);
         } else if (existingImg && !existingImg.src.includes("proxy.sankavolereii")) {
           existingImg.src = proxied;
