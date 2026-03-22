@@ -531,10 +531,86 @@ async function getKomikLatest() {
   container.innerHTML = "";
   renderLatest(merged, container);
 
+  /* ── Patch cover untuk KomikStation-only entries (imageSrc = SVG placeholder) ──
+     Fetch /manga/{slug} secara batch paralel, max 6 sekaligus agar tidak spam.
+     Setelah dapat cover asli, update img element yang sudah dirender. */
+  const noCoverKS = merged.filter(k =>
+    k._src === "komikstation" &&
+    (!k.image || k.image.startsWith("data:image/svg") || k.image.startsWith("data:image/gif"))
+  );
+  if (noCoverKS.length > 0) {
+    patchKSCovers(noCoverKS, container);
+  }
+
   /* hasNextPage: true kalau komikindo masih ada halaman berikutnya */
   hasNextPage = data1?.pagination?.hasNextPage ?? data1?.hasNextPage ?? (list1.length >= 10);
   updateLoadMoreUI();
   setupInfiniteScroll();
+}
+
+/**
+ * patchKSCovers — fetch cover asli dari /manga/{slug} untuk KomikStation entries
+ * yang tidak punya cover (imageSrc = SVG placeholder dari /home endpoint).
+ * Dijalankan background setelah kartu sudah dirender dengan generated cover.
+ *
+ * @param {Array}  entries   - komik KomikStation tanpa cover
+ * @param {Element} container - DOM container tempat kartu dirender
+ */
+async function patchKSCovers(entries, container) {
+  const BASE_KS_DETAIL = "https://www.sankavollerei.com/comic/komikstation/manga";
+  const BATCH = 6; /* max paralel fetch */
+
+  for (let i = 0; i < entries.length; i += BATCH) {
+    const batch = entries.slice(i, i + BATCH);
+    const results = await Promise.allSettled(
+      batch.map(k =>
+        fetch(`${BASE_KS_DETAIL}/${k.slug}`, { signal: AbortSignal.timeout(5000) })
+          .then(r => r.json())
+          .catch(() => null)
+      )
+    );
+
+    results.forEach((res, idx) => {
+      if (res.status !== "fulfilled" || !res.value) return;
+      const d = res.value;
+      /* Response: { success, imageSrc, title, ... } atau { data: { imageSrc, ... } } */
+      const rawCover = d.imageSrc || d.image || d.cover || d.data?.imageSrc || d.data?.image || "";
+      if (!rawCover || rawCover.startsWith("data:image/svg")) return;
+
+      const slug = batch[idx].slug;
+      const proxied = "https://proxy.sankavolereii.my.id/" + rawCover.split("?")[0];
+
+      /* Cari kartu di DOM berdasarkan slug — kartu menyimpan slug di onclick atau data attr */
+      const allCards = container.querySelectorAll(".grid-card");
+      allCards.forEach(card => {
+        /* Cek apakah kartu ini untuk slug yang tepat */
+        const onclickStr = card.getAttribute("onclick") || card.querySelector("[data-slug]")?.dataset?.slug || "";
+        /* Cara lebih reliable: cek title di card-info */
+        const titleEl = card.querySelector(".title");
+        if (!titleEl) return;
+
+        /* Cari berdasarkan dataset slug yang kita set saat render */
+        if (card.dataset.slug !== slug) return;
+
+        /* Temukan img atau generated cover di kartu ini */
+        const existingImg = card.querySelector("img");
+        const genCover    = card.querySelector(".card-gen-cover-el");
+
+        if (genCover) {
+          /* Ganti generated cover dengan img asli */
+          const img = document.createElement("img");
+          img.src = proxied;
+          img.alt = titleEl.textContent || "";
+          img.loading = "lazy";
+          img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;";
+          img.onerror = () => { img.onerror = null; /* biarkan generated cover */ };
+          genCover.parentNode.replaceChild(img, genCover);
+        } else if (existingImg && !existingImg.src.includes("proxy.sankavolereii")) {
+          existingImg.src = proxied;
+        }
+      });
+    });
+  }
 }
 
 /* ── Render & append kartu latest ── */
@@ -560,12 +636,13 @@ function renderLatest(list, container) {
 
     const card = document.createElement("div");
     card.className = "grid-card";
+    card.dataset.slug = komik.slug; /* untuk patchKSCovers */
 
     card.innerHTML = `
       <div class="badge ${type}">${komik.type || "Manhwa"}</div>
       ${cover
         ? `<img src="${cover}" alt="${escHtml(title)}" loading="lazy" style="background:var(--bg-surface);">`
-        : `<div class="card-gen-wrap" data-title="${escHtml(title)}" data-type="${escHtml(type)}"></div>`}
+        : `<div class="card-gen-wrap card-gen-cover-el" data-title="${escHtml(title)}" data-type="${escHtml(type)}"></div>`}
       <div class="grid-info">
         <p class="title">${escHtml(title)}</p>
         <div class="grid-meta">
@@ -582,7 +659,12 @@ function renderLatest(list, container) {
       if (img) imgFallback(img, origUrl);
     } else if (!cover) {
       const ph = card.querySelector(".card-gen-wrap");
-      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(title, type, 155), ph);
+      if (ph) {
+        const gen = makeGeneratedCover(title, type, 155);
+        gen.classList.add("card-gen-cover-el"); /* marker untuk patchKSCovers */
+        gen.dataset.slug = komik.slug;
+        ph.parentNode.replaceChild(gen, ph);
+      }
     }
 
     card.onclick = async () => {
