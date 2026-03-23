@@ -381,32 +381,54 @@
     .sv-legend { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text-muted); font-weight:700; margin-bottom:4px; }
     .sv-leg-dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex-shrink:0; }
 
-    /* Hari ini cards */
-    .sv-today-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-    .sv-today-item {
-      background:var(--bg-surface); border:1px solid var(--border-s); border-radius:10px;
-      padding:10px 12px; display:flex; align-items:center; gap:10px;
+    /* Category cards */
+    .sv-category-grid {
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px,1fr));
+      gap:12px; margin-bottom:20px;
     }
-    .sv-today-icon { font-size:20px; flex-shrink:0; }
-    .sv-today-label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); }
-    .sv-today-val { font-family:'Bebas Neue',cursive; font-size:26px; color:var(--text); line-height:1.1; }
-    .sv-last-update { font-size:11px; color:var(--text-muted); margin-top:12px; text-align:right; font-style:italic; }
+    .sv-cat-card {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+      padding:14px 16px; position:relative; overflow:hidden;
+      transition:transform .2s;
+    }
+    .sv-cat-card:hover { transform:translateY(-2px); }
+    .sv-cat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; border-radius:14px 14px 0 0; background:rgba(255,255,255,.07); }
+    .sv-cat-card.c-orange::before { background:var(--accent); }
+    .sv-cat-card.c-blue::before   { background:var(--blue); }
+    .sv-cat-card.c-green::before  { background:var(--green); }
+    .sv-cat-card.c-yellow::before { background:var(--accent2); }
+    .sv-cat-total { grid-column: span 1; }
+    .sv-cat-header { display:flex; align-items:center; gap:7px; margin-bottom:10px; }
+    .sv-cat-icon  { font-size:18px; }
+    .sv-cat-title { font-size:13px; font-weight:900; color:var(--text); }
+    .sv-cat-stat  { margin-bottom:4px; }
+    .sv-cat-label { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--text-muted); display:block; margin-bottom:2px; }
+    .sv-val { font-family:'Bebas Neue',cursive; font-size:34px; line-height:1; }
+    .sv-cat-card.c-orange .sv-val { color:var(--accent); }
+    .sv-cat-card.c-blue   .sv-val { color:var(--blue); }
+    .sv-cat-card.c-green  .sv-val { color:var(--green); }
+    .sv-cat-card.c-yellow .sv-val { color:var(--accent2); }
+    .sv-cat-rows { display:flex; flex-direction:column; gap:4px; margin-bottom:6px; }
+    .sv-cat-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:var(--text-muted); padding:2px 0; }
+    .sv-cat-row-hl { color:var(--text); font-weight:800; }
+    .sv-mini-val { font-family:'Bebas Neue',cursive; font-size:16px; color:var(--text); }
+    .sv-cat-today { font-size:10px; color:var(--text-muted); border-top:1px solid var(--border-s); padding-top:6px; margin-top:4px; }
+    .sv-cat-today b { color:var(--text); font-weight:800; }
 
-    /* Top pages list */
-    .top-pages-list { display:flex; flex-direction:column; gap:6px; padding:8px 6px; }
-    .tp-row { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:9px; background:var(--bg-surface); border:1px solid var(--border-s); }
-    .tp-rank { font-family:'Bebas Neue',cursive; font-size:16px; color:var(--text-muted); min-width:22px; text-align:center; flex-shrink:0; }
-    .tp-info { flex:1; min-width:0; }
-    .tp-path  { font-size:12px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-    .tp-title { font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:1px; }
-    .tp-bar-wrap { width:60px; flex-shrink:0; }
-    .tp-bar-bg   { height:5px; border-radius:99px; background:var(--bg-hover); overflow:hidden; }
-    .tp-bar-fill { height:100%; border-radius:99px; background:var(--accent); transition:width .5s; }
-    .tp-count { font-family:'Bebas Neue',cursive; font-size:16px; color:var(--accent); min-width:36px; text-align:right; flex-shrink:0; }
+    /* Breakdown today list */
+    .sv-breakdown-list { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; }
+    .sv-bd-row { display:flex; align-items:center; gap:8px; }
+    .sv-bd-label { font-size:11px; font-weight:700; color:var(--text-muted); min-width:110px; flex-shrink:0; }
+    .sv-bd-bar-wrap { flex:1; height:5px; border-radius:99px; background:var(--bg-hover); overflow:hidden; }
+    .sv-bd-bar { height:100%; border-radius:99px; background:var(--accent); transition:width .5s; }
+    .sv-bd-val { font-size:12px; font-weight:800; color:var(--text); min-width:32px; text-align:right; }
+    .sv-last-update { font-size:11px; color:var(--text-muted); text-align:right; font-style:italic; margin-top:8px; }
 
-    /* Stats two-col */
-    .stats-two { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
-    @media(max-width:768px) { .stats-two { grid-template-columns:1fr; } .sv-kpi-row { grid-template-columns:repeat(2,1fr); } .sv-today-grid { grid-template-columns:1fr; } }
+    @media(max-width:768px) {
+      .stats-two { grid-template-columns:1fr; }
+      .sv-category-grid { grid-template-columns:repeat(2,1fr); }
+    }
 
     /* Skeleton */
     .lb-skeleton { height:42px; border-radius:8px; margin-bottom:6px; background:var(--bg-surface); animation:svShim 1.4s ease infinite; }
@@ -520,69 +542,100 @@
 
     <!-- ═══ STATISTIK WEB — GoatCounter ═══ -->
     <!-- ═══ STATISTIK WEB ═══ -->
+    <!-- ═══ STATISTIK WEB ═══ -->
     <div class="page" id="page-stats">
 
-      <!-- SQL setup guide -->
       <details class="sv-sql-box">
         <summary>🗄️ Setup SQL Supabase (klik untuk lihat)</summary>
         <pre>
 -- Jalankan sekali di Supabase SQL Editor:
 
 CREATE TABLE IF NOT EXISTS site_stats (
-  page        text PRIMARY KEY,   -- '/', '/komik', '/baca'
+  page        text PRIMARY KEY,
   views       bigint DEFAULT 0,
   last_seen   timestamptz DEFAULT now()
 );
-
--- Seed 3 halaman
-INSERT INTO site_stats (page) VALUES ('/'), ('/komik'), ('/baca')
-ON CONFLICT DO NOTHING;
-
--- RLS: allow upsert from anon, read only for admin
-ALTER TABLE site_stats ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_upsert" ON site_stats FOR ALL USING (true) WITH CHECK (true);
-
--- Daily stats table (untuk chart harian)
 CREATE TABLE IF NOT EXISTS site_daily (
   day   date NOT NULL,
   page  text NOT NULL,
   views bigint DEFAULT 0,
   PRIMARY KEY (day, page)
 );
+
+-- Seed 10 halaman
+INSERT INTO site_stats (page) VALUES
+  ('home'),
+  ('komik-list'),('komik-detail'),('komik-read'),
+  ('novel-list'),('novel-detail'),('novel-read'),
+  ('anime-list'),('anime-detail'),('anime-watch')
+ON CONFLICT DO NOTHING;
+
+ALTER TABLE site_stats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_daily ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "anon_upsert_daily" ON site_daily FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_stats" ON site_stats FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "anon_all_daily" ON site_daily FOR ALL USING (true) WITH CHECK (true);
         </pre>
       </details>
 
-      <!-- KPI Cards -->
-      <div class="sv-kpi-row">
-        <div class="sv-card c-orange">
-          <div class="sv-icon">🏠</div>
-          <div class="sv-label">Home</div>
-          <div class="sv-val stat-loading" id="svHome">–</div>
-          <div class="sv-sub">Total kunjungan</div>
+      <!-- ── KPI per kategori ── -->
+      <div class="sv-category-grid">
+
+        <!-- HOME -->
+        <div class="sv-cat-card">
+          <div class="sv-cat-header"><span class="sv-cat-icon">🏠</span><span class="sv-cat-title">Home</span></div>
+          <div class="sv-cat-stat">
+            <span class="sv-cat-label">Total</span>
+            <span class="sv-val stat-loading" id="svHome">–</span>
+          </div>
+          <div class="sv-cat-today">Hari ini: <b id="svTodayHome">–</b></div>
         </div>
-        <div class="sv-card c-blue">
-          <div class="sv-icon">📚</div>
-          <div class="sv-label">Detail Komik</div>
-          <div class="sv-val stat-loading" id="svKomik">–</div>
-          <div class="sv-sub">Total kunjungan</div>
+
+        <!-- KOMIK -->
+        <div class="sv-cat-card c-orange">
+          <div class="sv-cat-header"><span class="sv-cat-icon">📚</span><span class="sv-cat-title">Komik</span></div>
+          <div class="sv-cat-rows">
+            <div class="sv-cat-row"><span>List</span><span class="sv-mini-val stat-loading" id="svKomikList">–</span></div>
+            <div class="sv-cat-row"><span>Detail</span><span class="sv-mini-val stat-loading" id="svKomikDetail">–</span></div>
+            <div class="sv-cat-row sv-cat-row-hl"><span>Baca</span><span class="sv-mini-val stat-loading" id="svKomikRead">–</span></div>
+          </div>
+          <div class="sv-cat-today">Hari ini: <b id="svTodayKomik">–</b></div>
         </div>
-        <div class="sv-card c-green">
-          <div class="sv-icon">📖</div>
-          <div class="sv-label">Baca Chapter</div>
-          <div class="sv-val stat-loading" id="svBaca">–</div>
-          <div class="sv-sub">Total kunjungan</div>
+
+        <!-- NOVEL -->
+        <div class="sv-cat-card c-blue">
+          <div class="sv-cat-header"><span class="sv-cat-icon">📖</span><span class="sv-cat-title">Novel</span></div>
+          <div class="sv-cat-rows">
+            <div class="sv-cat-row"><span>List</span><span class="sv-mini-val stat-loading" id="svNovelList">–</span></div>
+            <div class="sv-cat-row"><span>Detail</span><span class="sv-mini-val stat-loading" id="svNovelDetail">–</span></div>
+            <div class="sv-cat-row sv-cat-row-hl"><span>Baca</span><span class="sv-mini-val stat-loading" id="svNovelRead">–</span></div>
+          </div>
+          <div class="sv-cat-today">Hari ini: <b id="svTodayNovel">–</b></div>
         </div>
-        <div class="sv-card c-yellow">
-          <div class="sv-icon">📊</div>
-          <div class="sv-label">Total Semua</div>
-          <div class="sv-val stat-loading" id="svTotal">–</div>
-          <div class="sv-sub">Gabungan 3 halaman</div>
+
+        <!-- ANIME -->
+        <div class="sv-cat-card c-green">
+          <div class="sv-cat-header"><span class="sv-cat-icon">⚡</span><span class="sv-cat-title">Anime</span></div>
+          <div class="sv-cat-rows">
+            <div class="sv-cat-row"><span>List</span><span class="sv-mini-val stat-loading" id="svAnimeList">–</span></div>
+            <div class="sv-cat-row"><span>Detail</span><span class="sv-mini-val stat-loading" id="svAnimeDetail">–</span></div>
+            <div class="sv-cat-row sv-cat-row-hl"><span>Nonton</span><span class="sv-mini-val stat-loading" id="svAnimeWatch">–</span></div>
+          </div>
+          <div class="sv-cat-today">Hari ini: <b id="svTodayAnime">–</b></div>
         </div>
+
+        <!-- TOTAL -->
+        <div class="sv-cat-card c-yellow sv-cat-total">
+          <div class="sv-cat-header"><span class="sv-cat-icon">📊</span><span class="sv-cat-title">Grand Total</span></div>
+          <div class="sv-cat-stat">
+            <span class="sv-cat-label">Semua Halaman</span>
+            <span class="sv-val stat-loading" id="svGrandTotal">–</span>
+          </div>
+          <div class="sv-cat-today">Hari ini: <b id="svTodayTotal">–</b></div>
+        </div>
+
       </div>
 
-      <!-- Chart 7 hari + Hari ini -->
+      <!-- ── Chart 7 hari + Hari ini ── -->
       <div class="stats-two" style="margin-bottom:18px;">
 
         <div class="chart-wrap">
@@ -590,78 +643,43 @@ CREATE POLICY "anon_upsert_daily" ON site_daily FOR ALL USING (true) WITH CHECK 
             📅 7 Hari Terakhir
             <button class="btn btn-ghost btn-sm" onclick="loadStatsPage()">🔄</button>
           </div>
-          <!-- Legend -->
           <div class="sv-legend">
-            <span class="sv-leg-dot" style="background:var(--accent)"></span><span>Home</span>
-            <span class="sv-leg-dot" style="background:var(--blue);margin-left:10px;"></span><span>Komik</span>
-            <span class="sv-leg-dot" style="background:var(--green);margin-left:10px;"></span><span>Baca</span>
+            <span class="sv-leg-dot" style="background:var(--accent)"></span>Komik
+            <span class="sv-leg-dot" style="background:var(--blue);margin-left:10px;"></span>Novel
+            <span class="sv-leg-dot" style="background:var(--green);margin-left:10px;"></span>Anime
           </div>
-          <div class="bar-chart" id="svDailyChart" style="height:140px;margin-top:8px;">
-            <!-- JS rendered -->
-          </div>
-          <div class="sv-day-labels" id="svDayLabels" style="display:flex;gap:0;margin-top:4px;"></div>
+          <div class="bar-chart" id="svDailyChart" style="height:140px;margin-top:8px;"></div>
         </div>
 
         <div class="chart-wrap">
-          <div class="chart-title">⚡ Hari Ini</div>
-          <div class="sv-today-grid">
-            <div class="sv-today-item">
-              <span class="sv-today-icon">🏠</span>
-              <div>
-                <div class="sv-today-label">Home</div>
-                <div class="sv-today-val stat-loading" id="svTodayHome">–</div>
-              </div>
-            </div>
-            <div class="sv-today-item">
-              <span class="sv-today-icon">📚</span>
-              <div>
-                <div class="sv-today-label">Detail Komik</div>
-                <div class="sv-today-val stat-loading" id="svTodayKomik">–</div>
-              </div>
-            </div>
-            <div class="sv-today-item">
-              <span class="sv-today-icon">📖</span>
-              <div>
-                <div class="sv-today-label">Baca Chapter</div>
-                <div class="sv-today-val stat-loading" id="svTodayBaca">–</div>
-              </div>
-            </div>
-            <div class="sv-today-item" style="border-color:rgba(245,200,66,.2);">
-              <span class="sv-today-icon">🔢</span>
-              <div>
-                <div class="sv-today-label">Total Hari Ini</div>
-                <div class="sv-today-val stat-loading" id="svTodayTotal">–</div>
-              </div>
-            </div>
+          <div class="chart-title">📋 Breakdown Hari Ini</div>
+          <div class="sv-breakdown-list" id="svBreakdownToday">
+            <div class="lb-skeleton"></div><div class="lb-skeleton"></div><div class="lb-skeleton"></div>
           </div>
-          <div class="sv-last-update">
-            Terakhir diperbarui: <span id="svLastUpdate">–</span>
-          </div>
+          <div class="sv-last-update">Update: <span id="svLastUpdate">–</span></div>
         </div>
 
       </div>
 
-      <!-- Komik & chapter terpopuler (dari reading_history) -->
+      <!-- ── Top Komik & Novel dari reading_history ── -->
       <div class="stats-two">
         <div class="chart-wrap" style="padding-bottom:4px;">
           <div class="chart-title">🏆 Komik Terbanyak Dibaca</div>
           <div id="svTopKomik" class="top-pages-list" style="padding:0;">
-            <div class="lb-skeleton"></div>
-            <div class="lb-skeleton"></div>
-            <div class="lb-skeleton"></div>
+            <div class="lb-skeleton"></div><div class="lb-skeleton"></div><div class="lb-skeleton"></div>
           </div>
         </div>
         <div class="chart-wrap" style="padding-bottom:4px;">
           <div class="chart-title">📖 Novel Terbanyak Dibaca</div>
           <div id="svTopNovel" class="top-pages-list" style="padding:0;">
-            <div class="lb-skeleton"></div>
-            <div class="lb-skeleton"></div>
-            <div class="lb-skeleton"></div>
+            <div class="lb-skeleton"></div><div class="lb-skeleton"></div><div class="lb-skeleton"></div>
           </div>
         </div>
       </div>
 
     </div><!-- /page-stats -->
+
+    <!-- USERS -->
 
     <!-- USERS -->
     <!-- USERS -->
@@ -965,13 +983,15 @@ let _gcDays  = 7;
    Tracking: upsert counter — tidak ada insert masif
 ══════════════════════════════════════════════════════════ */
 
+/* ══════════════════════════════════════════════════════════
+   STATISTIK WEB — Supabase upsert counter (10 page keys)
+══════════════════════════════════════════════════════════ */
 function svFmt(n) {
   if (!n) return "0";
   if (n >= 1e6) return (n/1e6).toFixed(1)+"jt";
   if (n >= 1e3) return (n/1e3).toFixed(1)+"rb";
   return String(n);
 }
-
 function svSet(id, val) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -980,95 +1000,149 @@ function svSet(id, val) {
 }
 
 async function loadStatsPage() {
-  /* Reset loading state */
-  ["svHome","svKomik","svBaca","svTotal",
-   "svTodayHome","svTodayKomik","svTodayBaca","svTodayTotal"
-  ].forEach(id => {
+  /* Reset */
+  const allIds = [
+    "svHome",
+    "svKomikList","svKomikDetail","svKomikRead",
+    "svNovelList","svNovelDetail","svNovelRead",
+    "svAnimeList","svAnimeDetail","svAnimeWatch",
+    "svGrandTotal"
+  ];
+  allIds.forEach(id => {
     const el = document.getElementById(id);
-    if (el) { el.textContent = "–"; el.classList.add("stat-loading"); }
+    if (el) { el.textContent="–"; el.classList.add("stat-loading"); }
   });
 
-  const todayStr = new Date().toISOString().slice(0,10);
-  const days7 = [];
-  for (let i = 6; i >= 0; i--) {
+  const today   = new Date().toISOString().slice(0,10);
+  const days7   = [];
+  for (let i=6; i>=0; i--) {
     const d = new Date(); d.setDate(d.getDate()-i);
     days7.push(d.toISOString().slice(0,10));
   }
   const weekStart = days7[0];
 
+  /* Kategori helper */
+  const CATS = {
+    komik: ["komik-list","komik-detail","komik-read"],
+    novel: ["novel-list","novel-detail","novel-read"],
+    anime: ["anime-list","anime-detail","anime-watch"],
+  };
+  const ALL_PAGES = ["home","komik-list","komik-detail","komik-read",
+                     "novel-list","novel-detail","novel-read",
+                     "anime-list","anime-detail","anime-watch"];
+
   try {
-    /* ── 1. Total semua waktu dari site_stats ── */
+    /* ── 1. Total semua waktu ── */
     const { data: totals, error: e1 } = await supabase
       .from("site_stats").select("page, views");
-
     if (e1) throw e1;
 
     const tMap = {};
     (totals||[]).forEach(r => { tMap[r.page] = r.views || 0; });
 
-    svSet("svHome",  tMap["/"]       ?? 0);
-    svSet("svKomik", tMap["/komik"]  ?? 0);
-    svSet("svBaca",  tMap["/baca"]   ?? 0);
-    svSet("svTotal", (tMap["/"]||0) + (tMap["/komik"]||0) + (tMap["/baca"]||0));
+    svSet("svHome",        tMap["home"]          ?? 0);
+    svSet("svKomikList",   tMap["komik-list"]     ?? 0);
+    svSet("svKomikDetail", tMap["komik-detail"]   ?? 0);
+    svSet("svKomikRead",   tMap["komik-read"]     ?? 0);
+    svSet("svNovelList",   tMap["novel-list"]     ?? 0);
+    svSet("svNovelDetail", tMap["novel-detail"]   ?? 0);
+    svSet("svNovelRead",   tMap["novel-read"]     ?? 0);
+    svSet("svAnimeList",   tMap["anime-list"]     ?? 0);
+    svSet("svAnimeDetail", tMap["anime-detail"]   ?? 0);
+    svSet("svAnimeWatch",  tMap["anime-watch"]    ?? 0);
 
-    /* ── 2. Hari ini dari site_daily ── */
+    const grand = ALL_PAGES.reduce((s,k) => s + (tMap[k]||0), 0);
+    svSet("svGrandTotal", grand);
+
+    /* ── 2. Hari ini ── */
     const { data: todayData, error: e2 } = await supabase
-      .from("site_daily").select("page, views")
-      .eq("day", todayStr);
-
+      .from("site_daily").select("page, views").eq("day", today);
     if (e2) throw e2;
 
     const tDay = {};
     (todayData||[]).forEach(r => { tDay[r.page] = r.views || 0; });
-    svSet("svTodayHome",  tDay["/"]       ?? 0);
-    svSet("svTodayKomik", tDay["/komik"]  ?? 0);
-    svSet("svTodayBaca",  tDay["/baca"]   ?? 0);
-    svSet("svTodayTotal", (tDay["/"]||0)+(tDay["/komik"]||0)+(tDay["/baca"]||0));
 
+    const todayKomik = CATS.komik.reduce((s,k)=>s+(tDay[k]||0),0);
+    const todayNovel = CATS.novel.reduce((s,k)=>s+(tDay[k]||0),0);
+    const todayAnime = CATS.anime.reduce((s,k)=>s+(tDay[k]||0),0);
+    const todayAll   = (tDay["home"]||0) + todayKomik + todayNovel + todayAnime;
+
+    /* set today text (b tags) */
+    const setB = (id, val) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = svFmt(val);
+    };
+    setB("svTodayHome",  tDay["home"]||0);
+    setB("svTodayKomik", todayKomik);
+    setB("svTodayNovel", todayNovel);
+    setB("svTodayAnime", todayAnime);
+    setB("svTodayTotal", todayAll);
+
+    /* Update time */
     const lu = document.getElementById("svLastUpdate");
     if (lu) lu.textContent = new Date().toLocaleTimeString("id-ID");
 
-    /* ── 3. Chart 7 hari dari site_daily ── */
+    /* Breakdown today list */
+    const breakdown = [
+      { label:"🏠 Home",          val: tDay["home"]||0 },
+      { label:"📚 Komik List",     val: tDay["komik-list"]||0 },
+      { label:"📚 Komik Detail",   val: tDay["komik-detail"]||0 },
+      { label:"📚 Komik Baca",     val: tDay["komik-read"]||0 },
+      { label:"📖 Novel List",     val: tDay["novel-list"]||0 },
+      { label:"📖 Novel Detail",   val: tDay["novel-detail"]||0 },
+      { label:"📖 Novel Baca",     val: tDay["novel-read"]||0 },
+      { label:"⚡ Anime List",     val: tDay["anime-list"]||0 },
+      { label:"⚡ Anime Detail",   val: tDay["anime-detail"]||0 },
+      { label:"⚡ Anime Nonton",   val: tDay["anime-watch"]||0 },
+    ].sort((a,b)=>b.val-a.val);
+    const maxBD = breakdown[0]?.val || 1;
+    const bdEl  = document.getElementById("svBreakdownToday");
+    if (bdEl) {
+      bdEl.innerHTML = breakdown.map(r => `
+        <div class="sv-bd-row">
+          <span class="sv-bd-label">${r.label}</span>
+          <div class="sv-bd-bar-wrap">
+            <div class="sv-bd-bar" style="width:${Math.round(r.val/maxBD*100)}%"></div>
+          </div>
+          <span class="sv-bd-val">${svFmt(r.val)}</span>
+        </div>`).join("");
+    }
+
+    /* ── 3. Chart 7 hari ── */
     const { data: weekData, error: e3 } = await supabase
       .from("site_daily").select("day, page, views")
-      .gte("day", weekStart).lte("day", todayStr)
-      .order("day", {ascending: true});
+      .gte("day", weekStart).lte("day", today)
+      .order("day", {ascending:true});
 
     if (!e3) {
-      /* Build map: { "2026-03-17": { "/":N, "/komik":N, "/baca":N } } */
       const wMap = {};
-      days7.forEach(d => { wMap[d] = {"/":0, "/komik":0, "/baca":0}; });
+      days7.forEach(d => {
+        wMap[d] = {komik:0, novel:0, anime:0};
+      });
       (weekData||[]).forEach(r => {
-        if (wMap[r.day]) wMap[r.day][r.page] = r.views || 0;
+        if (!wMap[r.day]) return;
+        if (CATS.komik.includes(r.page)) wMap[r.day].komik += r.views||0;
+        if (CATS.novel.includes(r.page)) wMap[r.day].novel += r.views||0;
+        if (CATS.anime.includes(r.page)) wMap[r.day].anime += r.views||0;
       });
 
       const dayNames = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
-      const entries  = Object.entries(wMap); // 7 entries
-      const maxVal   = Math.max(...entries.map(([,v]) => (v["/"]+v["/komik"]+v["/baca"])), 1);
-
-      const chartEl = document.getElementById("svDailyChart");
+      const entries  = Object.entries(wMap);
+      const maxV     = Math.max(...entries.map(([,v])=>v.komik+v.novel+v.anime), 1);
+      const chartEl  = document.getElementById("svDailyChart");
       if (chartEl) {
-        chartEl.innerHTML = entries.map(([day, counts]) => {
-          const h    = counts["/"]     || 0;
-          const k    = counts["/komik"]|| 0;
-          const b    = counts["/baca"] || 0;
-          const pctH = Math.round((h/maxVal)*100);
-          const pctK = Math.round((k/maxVal)*100);
-          const pctB = Math.round((b/maxVal)*100);
-          const d    = new Date(day+"T00:00:00");
-          const lbl  = dayNames[d.getDay()];
-          const isToday = day === todayStr;
+        chartEl.innerHTML = entries.map(([day, v]) => {
+          const pK = Math.round((v.komik/maxV)*100);
+          const pN = Math.round((v.novel/maxV)*100);
+          const pA = Math.round((v.anime/maxV)*100);
+          const d  = new Date(day+"T00:00:00");
+          const lbl = dayNames[d.getDay()];
+          const isToday = day === today;
           return `<div class="bar-col">
             <div style="display:flex;align-items:flex-end;gap:2px;width:100%;height:100%;justify-content:center;">
-              <div class="bar-fill"        style="height:${Math.max(pctH,2)}%;flex:1;" title="Home: ${svFmt(h)}">
-                <div class="bar-tip">🏠 ${svFmt(h)}</div>
-              </div>
-              <div class="bar-fill b-blue" style="height:${Math.max(pctK,2)}%;flex:1;" title="Komik: ${svFmt(k)}">
-                <div class="bar-tip">📚 ${svFmt(k)}</div>
-              </div>
-              <div class="bar-fill b-green" style="height:${Math.max(pctB,2)}%;flex:1;" title="Baca: ${svFmt(b)}">
-                <div class="bar-tip">📖 ${svFmt(b)}</div>
-              </div>
+              <div class="bar-fill"        style="height:${Math.max(pK,2)}%;flex:1;max-width:12px;" title="Komik: ${svFmt(v.komik)}"><div class="bar-tip">📚${svFmt(v.komik)}</div></div>
+              <div class="bar-fill b-blue" style="height:${Math.max(pN,2)}%;flex:1;max-width:12px;" title="Novel: ${svFmt(v.novel)}"><div class="bar-tip">📖${svFmt(v.novel)}</div></div>
+              <div class="bar-fill b-green" style="height:${Math.max(pA,2)}%;flex:1;max-width:12px;" title="Anime: ${svFmt(v.anime)}"><div class="bar-tip">⚡${svFmt(v.anime)}</div></div>
             </div>
             <div class="bar-label" style="${isToday?"color:var(--accent);font-weight:900":""}">${lbl}</div>
           </div>`;
@@ -1076,90 +1150,61 @@ async function loadStatsPage() {
       }
     }
 
-    /* ── 4. Top komik dari reading_history ── */
+    /* ── 4. Top Komik dari reading_history ── */
     const { data: topKomikData } = await supabase
-      .from("reading_history")
-      .select("komik_title, komik_slug, komik_cover")
-      .order("read_at", {ascending:false})
-      .limit(500);
+      .from("reading_history").select("komik_title, komik_slug")
+      .order("read_at",{ascending:false}).limit(500);
+    renderTopList("svTopKomik", topKomikData, "komik_slug", "komik_title", "var(--accent)");
 
-    /* Hitung per slug */
-    if (topKomikData?.length) {
-      const slugCount = {};
-      const slugMeta  = {};
-      topKomikData.forEach(r => {
-        if (!r.komik_slug) return;
-        slugCount[r.komik_slug] = (slugCount[r.komik_slug]||0) + 1;
-        if (!slugMeta[r.komik_slug]) slugMeta[r.komik_slug] = r.komik_title || r.komik_slug;
-      });
-      const top8 = Object.entries(slugCount)
-        .sort((a,b) => b[1]-a[1]).slice(0,8);
-      const maxC = top8[0]?.[1] || 1;
-      const tpEl = document.getElementById("svTopKomik");
-      if (tpEl) tpEl.innerHTML = top8.map(([slug,cnt],i) => `
-        <div class="tp-row">
-          <div class="tp-rank">${i+1}</div>
-          <div class="tp-info">
-            <div class="tp-path">${slugMeta[slug]||slug}</div>
-          </div>
-          <div class="tp-bar-wrap">
-            <div class="tp-bar-bg"><div class="tp-bar-fill" style="width:${Math.round(cnt/maxC*100)}%"></div></div>
-          </div>
-          <div class="tp-count">${svFmt(cnt)}</div>
-        </div>`).join("");
-    } else {
-      const tpEl = document.getElementById("svTopKomik");
-      if (tpEl) tpEl.innerHTML = `<div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px;">Belum ada data</div>`;
-    }
-
-    /* ── 5. Top novel dari novel_reading_history ── */
+    /* ── 5. Top Novel dari novel_reading_history ── */
     const { data: topNovelData } = await supabase
-      .from("novel_reading_history")
-      .select("novel_title, novel_slug")
-      .order("read_at", {ascending:false})
-      .limit(500);
-
-    if (topNovelData?.length) {
-      const slugCount = {};
-      const slugMeta  = {};
-      topNovelData.forEach(r => {
-        if (!r.novel_slug) return;
-        slugCount[r.novel_slug] = (slugCount[r.novel_slug]||0) + 1;
-        if (!slugMeta[r.novel_slug]) slugMeta[r.novel_slug] = r.novel_title || r.novel_slug;
-      });
-      const top8 = Object.entries(slugCount)
-        .sort((a,b) => b[1]-a[1]).slice(0,8);
-      const maxC = top8[0]?.[1] || 1;
-      const tpEl = document.getElementById("svTopNovel");
-      if (tpEl) tpEl.innerHTML = top8.map(([slug,cnt],i) => `
-        <div class="tp-row">
-          <div class="tp-rank">${i+1}</div>
-          <div class="tp-info">
-            <div class="tp-path">${slugMeta[slug]||slug}</div>
-          </div>
-          <div class="tp-bar-wrap">
-            <div class="tp-bar-bg"><div class="tp-bar-fill" style="width:${Math.round(cnt/maxC*100)}%;background:var(--blue);"></div></div>
-          </div>
-          <div class="tp-count" style="color:var(--blue);">${svFmt(cnt)}</div>
-        </div>`).join("");
-    } else {
-      const tpEl = document.getElementById("svTopNovel");
-      if (tpEl) tpEl.innerHTML = `<div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px;">Belum ada data</div>`;
-    }
+      .from("novel_reading_history").select("novel_title, novel_slug")
+      .order("read_at",{ascending:false}).limit(500);
+    renderTopList("svTopNovel", topNovelData, "novel_slug", "novel_title", "var(--blue)");
 
   } catch(err) {
     console.error("[Stats]", err);
-    const msg = err.message?.includes("relation") || err.message?.includes("does not exist")
-      ? `⚠️ Tabel belum dibuat. Buka SQL Setup di atas.`
-      : `⚠️ Error: ${err.message}`;
-    ["svHome","svKomik","svBaca","svTotal"].forEach(id => {
+    const isNoTable = err.message?.includes("relation") || err.message?.includes("does not exist");
+    const msg = isNoTable
+      ? "⚠️ Tabel belum dibuat — buka SQL Setup di atas"
+      : `⚠️ ${err.message}`;
+    ["svTopKomik","svTopNovel","svBreakdownToday"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<div style="padding:14px;color:var(--red);font-size:12px;">${msg}</div>`;
+    });
+    allIds.forEach(id => {
       const el = document.getElementById(id);
       if (el) { el.textContent="–"; el.classList.remove("stat-loading"); }
     });
-    const tpK = document.getElementById("svTopKomik");
-    if (tpK) tpK.innerHTML = `<div style="padding:14px;color:var(--red);font-size:12px;">${msg}</div>`;
   }
 }
+
+function renderTopList(containerId, data, slugKey, titleKey, barColor) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!data?.length) {
+    el.innerHTML = `<div style="padding:14px;text-align:center;color:var(--text-muted);font-size:12px;">Belum ada data</div>`;
+    return;
+  }
+  const cnt = {}, meta = {};
+  data.forEach(r => {
+    const s = r[slugKey]; if (!s) return;
+    cnt[s] = (cnt[s]||0) + 1;
+    if (!meta[s]) meta[s] = r[titleKey] || s;
+  });
+  const top8 = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const maxC = top8[0]?.[1]||1;
+  el.innerHTML = top8.map(([slug,count],i) => `
+    <div class="tp-row">
+      <div class="tp-rank">${i+1}</div>
+      <div class="tp-info"><div class="tp-path">${meta[slug]||slug}</div></div>
+      <div class="tp-bar-wrap">
+        <div class="tp-bar-bg"><div class="tp-bar-fill" style="width:${Math.round(count/maxC*100)}%;background:${barColor};"></div></div>
+      </div>
+      <div class="tp-count" style="color:${barColor};">${svFmt(count)}</div>
+    </div>`).join("");
+}
+
 
 /* ── BATCH PROFILES ── FIX: global cache, single query, no duplicates ── */
 async function batchProfiles(ids) {
