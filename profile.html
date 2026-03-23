@@ -793,7 +793,15 @@ let activeKategori = "favorit";
 
 function proxyImg(url, w) {
   if (!url) return "";
-  if (url.includes("wsrv.nl") || url.includes("ui-avatars")) return url;
+  if (url.includes("wsrv.nl") || url.includes("ui-avatars") || url.includes("proxy.sankavolereii")) return url;
+  /* Anime/sankavollerei cover — pakai proxy khusus */
+  if (url.includes("sankavollerei") || url.includes("cdn.myanimelist") || url.includes("cdn.animenewsnetwork")) {
+    return "https://proxy.sankavolereii.my.id/" + url;
+  }
+  /* Novel (sakuranovel, dll) — pakai proxy sankavolereii */
+  if (url.includes("sakuranovel") || url.includes("novelupdates") || url.includes("lightnovelworld")) {
+    return "https://proxy.sankavolereii.my.id/" + url;
+  }
   return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=" + (w||200) + "&output=webp&q=80";
 }
 
@@ -943,7 +951,7 @@ async function loadProfile() {
     <!-- Riwayat Novel -->
     <div class="tab-content" id="content-novel-history">
       <div style="display:flex;justify-content:flex-end;padding:8px 14px 0;">
-        <button onclick="window._novelHistoryAll=null;loadNovelHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
+        <button onclick="window._novelHistoryAll=null;window._novelHistoryPage=1;window._novelHistoryFiltered=null;loadNovelHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
       </div>
       <div id="novelHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
@@ -951,7 +959,7 @@ async function loadProfile() {
     <!-- Riwayat Komik -->
     <div class="tab-content" id="content-history">
       <div style="display:flex;justify-content:flex-end;padding:8px 14px 0;">
-        <button onclick="window._historyAll=null;loadHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
+        <button onclick="window._historyAll=null;window._historyPage=1;window._historyFiltered=null;loadHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
       </div>
       <div id="historyList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
@@ -1199,8 +1207,10 @@ window.hapusBookmark = async function (slug, btn) {
 };
 
 /* ── RIWAYAT KOMIK ────────────────────────────────────── */
+const HISTORY_PER_PAGE = 8;
+
 async function loadHistory() {
-  if (window._historyAll && document.getElementById("historyItems")) return; /* already loaded */
+  if (window._historyAll && document.getElementById("historyItems")) return;
   const el = document.getElementById("historyList");
   el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
   const { history } = await getHistory(currentUser.id);
@@ -1209,77 +1219,65 @@ async function loadHistory() {
     return;
   }
 
-  /* Dedup: ambil hanya 1 entry per komik_slug (yang terbaru) */
+  /* Dedup: 1 entry per komik_slug */
   const seen = new Map();
   for (const h of history) {
     if (!h.komik_slug) continue;
     if (!seen.has(h.komik_slug)) seen.set(h.komik_slug, h);
   }
-  const deduped = Array.from(seen.values());
+  window._historyAll = Array.from(seen.values());
+  window._historyPage = 1;
 
-  function renderHistory(list) {
-    if (!list.length) {
-      el.innerHTML = `
-        <div class="profile-search-bar">
-          <input id="historySearch" placeholder="🔍 Cari judul komik..." oninput="filterHistory(this.value)">
-        </div>
-        <div class="empty-state"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
-      return;
-    }
-    el.innerHTML = `
-      <div class="profile-search-bar">
-        <input id="historySearch" placeholder="🔍 Cari judul komik..." oninput="filterHistory(this.value)">
+  function historyItemHTML(h) {
+    return `<div class="komik-list-item">
+      <img src="${esc(proxyImg(h.komik_cover||''  ,80))}" alt="${esc(h.komik_title)}"
+        onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer"
+        onerror="this.style.display='none'">
+      <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
+        <div class="title">${esc(h.komik_title || h.komik_slug)}</div>
+        <p>📖 Ch.${esc(String(h.chapter_number || '?'))}</p>
+        <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
       </div>
-      <div id="historyItems">
-        ${list.map(h => `
-          <div class="komik-list-item">
-            <img src="${esc(proxyImg(h.komik_cover||'',80))}" alt="${esc(h.komik_title)}"
-              onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer"
-              onerror="this.style.display='none'">
-            <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
-              <div class="title">${esc(h.komik_title || h.komik_slug)}</div>
-              <p>📖 Ch.${esc(String(h.chapter_number || '?'))}</p>
-              <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
-            </div>
-            <div class="komik-list-actions">
-              <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
-              <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
-            </div>
-          </div>`).join("")}
-      </div>`;
+      <div class="komik-list-actions">
+        <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
+        <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
+      </div>
+    </div>`;
   }
 
-  window._historyAll = deduped;
-  window.filterHistory = function(q) {
-    const s = q.toLowerCase().trim();
-    const filtered = s ? window._historyAll.filter(h =>
-      (h.komik_title||"").toLowerCase().includes(s) ||
-      (h.komik_slug||"").toLowerCase().includes(s)
-    ) : window._historyAll;
-    const wrap = document.getElementById("historyItems");
+  window.renderHistoryPage = function() {
+    const src    = window._historyFiltered || window._historyAll;
+    const shown  = src.slice(0, window._historyPage * HISTORY_PER_PAGE);
+    const hasMore = shown.length < src.length;
+    const wrap   = document.getElementById("historyItems");
     if (!wrap) return;
-    if (!filtered.length) {
-      wrap.innerHTML = `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
-      return;
-    }
-    wrap.innerHTML = filtered.map(h => `
-      <div class="komik-list-item">
-        <img src="${esc(proxyImg(h.komik_cover||'',80))}" alt="${esc(h.komik_title)}"
-          onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer"
-          onerror="this.style.display='none'">
-        <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
-          <div class="title">${esc(h.komik_title || h.komik_slug)}</div>
-          <p>📖 Ch.${esc(String(h.chapter_number || '?'))}</p>
-          <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
-        </div>
-        <div class="komik-list-actions">
-          <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
-          <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
-        </div>
-      </div>`).join("");
+    wrap.innerHTML = shown.map(historyItemHTML).join("") +
+      (hasMore ? `<div style="text-align:center;padding:12px 0;">
+        <button onclick="window._historyPage++;window.renderHistoryPage()"
+          style="padding:9px 28px;background:var(--acc);color:#fff;border:none;border-radius:10px;
+          font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+          Muat Lebih Banyak ↓
+        </button>
+      </div>` : "");
   };
 
-  renderHistory(deduped);
+  window.filterHistory = function(q) {
+    const s = q.toLowerCase().trim();
+    window._historyFiltered = s
+      ? window._historyAll.filter(h =>
+          (h.komik_title||"").toLowerCase().includes(s) ||
+          (h.komik_slug||"").toLowerCase().includes(s))
+      : null;
+    window._historyPage = 1;
+    window.renderHistoryPage();
+  };
+
+  el.innerHTML = `
+    <div class="profile-search-bar">
+      <input id="historySearch" placeholder="🔍 Cari judul komik..." oninput="filterHistory(this.value)">
+    </div>
+    <div id="historyItems"></div>`;
+  window.renderHistoryPage();
 }
 
 /* ── PROGRESS ─────────────────────────────────────────── */
@@ -1580,59 +1578,67 @@ async function loadNovelHistory() {
     if (!h.novel_slug) continue;
     if (!seen.has(h.novel_slug)) seen.set(h.novel_slug, h);
   }
-  const deduped = Array.from(seen.values());
+  window._novelHistoryAll = Array.from(seen.values());
+  window._novelHistoryPage = 1;
+
+  function novelHistItemHTML(h) {
+    const coverUrl = h.novel_cover
+      ? "https://proxy.sankavolereii.my.id/" + h.novel_cover
+      : "";
+    return `<div class="komik-list-item">
+      ${coverUrl
+        ? `<img src="${esc(coverUrl)}" alt="${esc(h.novel_title)}"
+            onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer"
+            onerror="this.outerHTML='<div style=&quot;width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);&quot;>📖</div>'">`
+        : `<div style="width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);cursor:pointer"
+            onclick="gotoNovelDetail('${esc(h.novel_slug)}')">📖</div>`}
+      <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer">
+        <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
+        <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${esc(h.chapter_title || h.chapter_slug || '')}</p>
+        <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
+      </div>
+      <div class="komik-list-actions">
+        <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
+        <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
+      </div>
+    </div>`;
+  }
+
+  window.renderNovelHistoryPage = function() {
+    const src     = window._novelHistoryFiltered || window._novelHistoryAll;
+    const shown   = src.slice(0, window._novelHistoryPage * 8);
+    const hasMore = shown.length < src.length;
+    const wrap    = document.getElementById("novelHistoryItems");
+    if (!wrap) return;
+    wrap.innerHTML = shown.map(novelHistItemHTML).join("") +
+      (hasMore ? `<div style="text-align:center;padding:12px 0;">
+        <button onclick="window._novelHistoryPage++;window.renderNovelHistoryPage()"
+          style="padding:9px 28px;background:var(--acc);color:#fff;border:none;border-radius:10px;
+          font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+          Muat Lebih Banyak ↓
+        </button>
+      </div>` : "");
+  };
+
+  window.filterNovelHistory = function(q) {
+    const s = q.toLowerCase().trim();
+    window._novelHistoryFiltered = s
+      ? window._novelHistoryAll.filter(h =>
+          (h.novel_title||"").toLowerCase().includes(s) ||
+          (h.novel_slug||"").toLowerCase().includes(s))
+      : null;
+    window._novelHistoryPage = 1;
+    window.renderNovelHistoryPage();
+  };
 
   el.innerHTML = `
     <div class="profile-search-bar">
       <input id="novelHistorySearch" placeholder="🔍 Cari judul novel..." oninput="filterNovelHistory(this.value)">
     </div>
-    <div id="novelHistoryItems">
-      ${deduped.map(h => `
-        <div class="komik-list-item">
-          <div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;
-            display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);cursor:pointer"
-            onclick="gotoNovelDetail('${esc(h.novel_slug)}')">📖</div>
-          <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer">
-            <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
-            <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${esc(h.chapter_title || h.chapter_slug || '')}</p>
-            <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
-          </div>
-          <div class="komik-list-actions">
-            <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
-            <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
-          </div>
-        </div>`).join("")}
-    </div>`;
-
-  window._novelHistoryAll = deduped;
-  window.filterNovelHistory = function(q) {
-    const s = q.toLowerCase().trim();
-    const filtered = s ? window._novelHistoryAll.filter(h =>
-      (h.novel_title||"").toLowerCase().includes(s) ||
-      (h.novel_slug||"").toLowerCase().includes(s)
-    ) : window._novelHistoryAll;
-    const wrap = document.getElementById("novelHistoryItems");
-    if (!wrap) return;
-    if (!filtered.length) {
-      wrap.innerHTML = `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
-      return;
-    }
-    wrap.innerHTML = filtered.map(h => `
-      <div class="komik-list-item">
-        <div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;
-          display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);">📖</div>
-        <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer">
-          <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
-          <p>${esc(h.chapter_title || h.chapter_slug || '')}</p>
-          <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
-        </div>
-        <div class="komik-list-actions">
-          <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
-          <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
-        </div>
-      </div>`).join("");
-  };
+    <div id="novelHistoryItems"></div>`;
+  window.renderNovelHistoryPage();
 }
+
 
 /* ── KOMENTAR SAYA ────────────────────────────────────── */
 let _myCommentsLoaded = false;
