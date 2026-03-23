@@ -172,6 +172,139 @@ body.light .header { background:rgba(242,242,247,0.92); }
 }
 
 /* ── TOP KOMIK SLIDER ── */
+/* ── TOP KOMIK — Leaderboard List ─────────────────────── */
+#topKomik {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 14px 8px;
+}
+
+/* ── Top Item ── */
+.top-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.18s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  border: 1px solid transparent;
+}
+.top-item:hover {
+  background: var(--bg-card);
+  border-color: var(--border);
+  transform: translateX(3px);
+}
+.top-item:active { transform: scale(0.98); }
+
+/* Garis pemisah halus antar item */
+.top-item + .top-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 60px; right: 0;
+  height: 1px;
+  background: var(--border);
+  opacity: 0.5;
+}
+
+/* ── Rank badge ── */
+.top-rank {
+  font-family: 'Bangers', cursive;
+  font-size: 15px;
+  min-width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.rank-gold   { font-size: 22px; filter: drop-shadow(0 2px 4px rgba(245,166,35,.5)); }
+.rank-silver { font-size: 20px; filter: drop-shadow(0 2px 4px rgba(176,176,192,.4)); }
+.rank-bronze { font-size: 18px; filter: drop-shadow(0 2px 4px rgba(205,127,50,.4)); }
+.rank-normal { color: var(--text-muted); font-size: 14px; letter-spacing: 0.5px; }
+
+/* ── Cover thumbnail ── */
+.top-cover {
+  width: 46px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+}
+.top-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+.top-item:hover .top-cover img { transform: scale(1.06); }
+
+/* ── Info ── */
+.top-info {
+  flex: 1;
+  min-width: 0;
+}
+.top-title {
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 5px;
+}
+.top-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.top-flag   { font-size: 13px; line-height: 1; }
+.top-ch     { font-size: 10px; font-weight: 700; color: var(--accent); }
+.top-rating { font-size: 10px; font-weight: 700; color: var(--accent2); }
+.top-views  { font-size: 10px; color: var(--text-muted); font-weight: 600; }
+
+/* ── Read button ── */
+.top-read-btn {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: 'Nunito', sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.1s;
+  box-shadow: 0 2px 8px rgba(232,82,42,.35);
+}
+.top-read-btn:hover  { background: var(--accent-dark, #c73f1c); }
+.top-read-btn:active { transform: scale(0.94); }
+
+/* ── Skeleton for top items ── */
+.top-item-skel {
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 12px;
+}
+.top-skel-rank  { width:32px; height:20px; border-radius:6px; background:var(--bg-card); animation:shimmer-top 1.4s infinite; flex-shrink:0; }
+.top-skel-cover { width:46px; height:64px; border-radius:8px; background:var(--bg-card); animation:shimmer-top 1.4s infinite; flex-shrink:0; }
+.top-skel-info  { flex:1; display:flex; flex-direction:column; gap:7px; }
+.top-skel-line  { height:12px; border-radius:5px; background:var(--bg-card); animation:shimmer-top 1.4s infinite; }
+.top-skel-line.short { width:55%; }
+@keyframes shimmer-top {
+  0%   { opacity:0.4; }
+  50%  { opacity:0.8; }
+  100% { opacity:0.4; }
+}
+
+/* ── OLD SLIDER (dipertahankan untuk kompatibilitas jika masih dipakai di tempat lain) ── */
 .slider {
   display:flex; gap:10px; overflow-x:auto;
   padding:4px 14px 16px;
