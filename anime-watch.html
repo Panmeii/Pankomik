@@ -193,11 +193,16 @@
 </script>
 <script type="module">
 import { getAnimeEpisodeId, animeWatchURL, animeURL, animeGenreURL, pushAnimeURL } from "/router.js";
+import { getCurrentUser, saveAnimeHistory } from "/supabase.js";
 
 const API = "https://www.sankavollerei.com";
 window._animeWatchURL = animeWatchURL;
 window._animeURL      = animeURL;
 window._animeGenreURL = animeGenreURL;
+
+let currentUser = null;
+/* Ambil user di background — tidak blocking load episode */
+getCurrentUser().then(u => { currentUser = u; }).catch(() => {});
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
@@ -256,6 +261,20 @@ async function loadEpisode() {
       const bar = document.getElementById("animeInfoBar");
       document.getElementById("animeInfoTitle").textContent = `Detail Anime: ${currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim()}`;
       bar.style.display = "flex";
+
+      /* Simpan riwayat nonton ke DB (seperti komik & novel) */
+      if (currentUser) {
+        const epNum = d.eps || (rawTitle.match(/episode\s*(\d+)/i)?.[1] || "");
+        saveAnimeHistory(currentUser, {
+          id:    currentAnimeId,
+          title: currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim(),
+          cover: d.info?.poster || ""
+        }, {
+          id:     epId,
+          title:  rawTitle || shortTitle,
+          number: epNum
+        }).catch(() => {});
+      }
     }
 
     const genreList = d.info?.genreList || [];
