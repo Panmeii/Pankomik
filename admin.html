@@ -315,6 +315,118 @@
       .page { padding:14px; }
       .topbar { padding:0 14px; }
     }
+    /* ── STATISTIK PAGE ── */
+    .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:20px; }
+    .sv-card {
+      background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+      padding:18px 20px; position:relative; overflow:hidden;
+      transition:transform .2s, border-color .2s;
+    }
+    .sv-card:hover { transform:translateY(-2px); }
+    .sv-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      border-radius:14px 14px 0 0;
+    }
+    .sv-card.c-orange::before { background:var(--accent); }
+    .sv-card.c-blue::before   { background:var(--blue); }
+    .sv-card.c-green::before  { background:var(--green); }
+    .sv-card.c-purple::before { background:#9b59b6; }
+    .sv-card.c-yellow::before { background:var(--accent2); }
+    .sv-card.c-teal::before   { background:#1abc9c; }
+    .sv-label { font-size:10px; font-weight:900; letter-spacing:.8px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px; }
+    .sv-val   { font-family:'Bebas Neue',cursive; font-size:38px; line-height:1; margin-bottom:2px; }
+    .sv-card.c-orange .sv-val { color:var(--accent); }
+    .sv-card.c-blue   .sv-val { color:var(--blue); }
+    .sv-card.c-green  .sv-val { color:var(--green); }
+    .sv-card.c-purple .sv-val { color:#9b59b6; }
+    .sv-card.c-yellow .sv-val { color:var(--accent2); }
+    .sv-card.c-teal   .sv-val { color:#1abc9c; }
+    .sv-sub  { font-size:11px; color:var(--text-muted); }
+    .sv-trend { position:absolute; top:14px; right:16px; font-size:11px; font-weight:800; padding:2px 8px; border-radius:99px; }
+    .sv-trend.up   { background:rgba(46,204,113,.14); color:var(--green); }
+    .sv-trend.down { background:rgba(231,76,60,.12); color:var(--red); }
+
+    /* Chart bars */
+    .chart-wrap { background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:18px 20px; margin-bottom:18px; }
+    .chart-title { font-size:14px; font-weight:800; margin-bottom:16px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+    .chart-subtitle { font-size:11px; color:var(--text-muted); font-weight:700; }
+    .bar-chart { display:flex; align-items:flex-end; gap:4px; height:120px; }
+    .bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+    .bar-fill {
+      width:100%; border-radius:5px 5px 0 0; min-height:3px;
+      background:linear-gradient(to top, var(--accent), rgba(232,82,42,.5));
+      transition:height .6s cubic-bezier(.34,1.1,.64,1);
+      position:relative; cursor:pointer;
+    }
+    .bar-fill:hover { filter:brightness(1.2); }
+    .bar-fill.secondary { background:linear-gradient(to top, var(--blue), rgba(52,152,219,.4)); }
+    .bar-tip {
+      position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
+      background:var(--bg-surface); border:1px solid var(--border);
+      padding:4px 8px; border-radius:7px; font-size:11px; font-weight:700;
+      white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .15s;
+      z-index:10;
+    }
+    .bar-fill:hover .bar-tip { opacity:1; }
+    .bar-label { font-size:9px; color:var(--text-muted); font-weight:700; text-align:center; white-space:nowrap; }
+
+    /* Line chart SVG */
+    .line-chart-wrap { width:100%; overflow:hidden; }
+    .line-chart-svg { width:100%; height:100px; }
+
+    /* Top pages table */
+    .top-pages-list { display:flex; flex-direction:column; gap:8px; padding:14px; }
+    .tp-row {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:10px; background:var(--bg-surface);
+      border:1px solid var(--border-s);
+    }
+    .tp-rank { font-family:'Bebas Neue',cursive; font-size:18px; color:var(--text-muted); min-width:28px; text-align:center; }
+    .tp-info { flex:1; min-width:0; }
+    .tp-path { font-size:12px; font-weight:800; color:var(--text); font-family:'JetBrains Mono',monospace; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tp-title { font-size:11px; color:var(--text-muted); margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .tp-bar-wrap { width:80px; }
+    .tp-bar-bg { height:6px; border-radius:99px; background:var(--bg-hover); overflow:hidden; }
+    .tp-bar-fill { height:100%; border-radius:99px; background:var(--accent); transition:width .5s ease; }
+    .tp-count { font-size:12px; font-weight:800; color:var(--accent); min-width:42px; text-align:right; font-family:'Bebas Neue',cursive; font-size:16px; }
+
+    /* Realtime visitors */
+    .realtime-wrap { display:flex; align-items:center; gap:8px; padding:0 0 16px; }
+    .realtime-pulse {
+      width:10px; height:10px; border-radius:50%; background:var(--green);
+      animation:rtPulse 1.5s ease infinite; flex-shrink:0;
+    }
+    @keyframes rtPulse { 0%,100%{box-shadow:0 0 0 0 rgba(46,204,113,.6)} 50%{box-shadow:0 0 0 8px rgba(46,204,113,0)} }
+    .realtime-label { font-size:13px; font-weight:800; }
+    .realtime-count { font-family:'Bebas Neue',cursive; font-size:28px; color:var(--green); line-height:1; }
+
+    /* Device / referrer chips */
+    .stat-chips { display:flex; flex-wrap:wrap; gap:8px; padding:14px; }
+    .stat-chip {
+      display:flex; align-items:center; gap:8px;
+      background:var(--bg-surface); border:1px solid var(--border-s);
+      border-radius:10px; padding:8px 12px; flex:1; min-width:120px;
+    }
+    .stat-chip-icon { font-size:18px; }
+    .stat-chip-info { flex:1; min-width:0; }
+    .stat-chip-label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; color:var(--text-muted); }
+    .stat-chip-val { font-size:16px; font-weight:900; color:var(--text); }
+    .stat-chip-pct { font-size:10px; color:var(--text-muted); margin-left:auto; font-weight:700; }
+
+    /* Two-col stats */
+    .stats-two { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
+    @media(max-width:768px) { .stats-two { grid-template-columns:1fr; } .stats-row { grid-template-columns:repeat(2,1fr); } }
+
+    /* SQL info box */
+    .sql-info {
+      background:rgba(52,152,219,.08); border:1px solid rgba(52,152,219,.2);
+      border-radius:12px; padding:14px 16px; margin-bottom:18px;
+      font-size:12px; color:var(--text-soft); line-height:1.7;
+    }
+    .sql-info code { font-family:'JetBrains Mono',monospace; background:rgba(255,255,255,.07); padding:1px 5px; border-radius:4px; font-size:11px; color:var(--accent2); }
+    .sql-info summary { font-size:13px; font-weight:800; color:var(--blue); cursor:pointer; margin-bottom:6px; }
+    .sql-info pre { margin-top:8px; padding:10px; background:rgba(0,0,0,.3); border-radius:8px; overflow-x:auto; font-size:11px; line-height:1.6; }
+
   </style>
 </head>
 <body>
@@ -342,6 +454,7 @@
     <div class="nav-section">Dashboard</div>
     <div class="nav-item active" data-page="overview" onclick="switchPage('overview')"><span class="ni">📊</span> Overview</div>
     <div class="nav-section">Manajemen</div>
+    <div class="nav-item" data-page="stats"    onclick="switchPage('stats')"><span class="ni">📈</span> Statistik Web</div>
     <div class="nav-item" data-page="users"    onclick="switchPage('users')"><span class="ni">👥</span> Pengguna</div>
     <div class="nav-item" data-page="chats"    onclick="switchPage('chats')"><span class="ni">💬</span> Global Chat</div>
     <div class="nav-item" data-page="announce" onclick="switchPage('announce')"><span class="ni">📢</span> Pengumuman</div>
@@ -419,6 +532,153 @@
         </div>
       </div>
     </div>
+
+    <!-- ═══ STATISTIK WEB ═══ -->
+    <div class="page" id="page-stats">
+
+      <!-- SQL Setup info -->
+      <details class="sql-info">
+        <summary>🗄️ Setup Tabel Supabase (klik untuk lihat SQL)</summary>
+        <pre>-- Jalankan di Supabase SQL Editor:
+CREATE TABLE IF NOT EXISTS page_views (
+  id          bigserial PRIMARY KEY,
+  path        text NOT NULL,
+  title       text,
+  referrer    text,
+  device      text,  -- 'mobile' | 'tablet' | 'desktop'
+  country     text,
+  session_id  text,
+  user_id     uuid REFERENCES profiles(id) ON DELETE SET NULL,
+  created_at  timestamptz DEFAULT now()
+);
+CREATE INDEX ON page_views (created_at DESC);
+CREATE INDEX ON page_views (path);
+CREATE INDEX ON page_views (session_id);
+
+-- Enable RLS + allow insert from anon
+ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "allow_insert" ON page_views FOR INSERT WITH CHECK (true);
+CREATE POLICY "allow_admin_read" ON page_views FOR SELECT USING (
+  EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin')
+);</pre>
+      </details>
+
+      <!-- Row 1: KPI cards -->
+      <div class="stats-row" id="svKpiRow">
+        <div class="sv-card c-orange">
+          <div class="sv-label">Total Kunjungan</div>
+          <div class="sv-val stat-loading" id="svTotalViews">–</div>
+          <div class="sv-sub">Semua waktu</div>
+        </div>
+        <div class="sv-card c-blue">
+          <div class="sv-label">Hari Ini</div>
+          <div class="sv-val stat-loading" id="svToday">–</div>
+          <div class="sv-sub">Pageviews hari ini</div>
+        </div>
+        <div class="sv-card c-green">
+          <div class="sv-label">Pengunjung Unik</div>
+          <div class="sv-val stat-loading" id="svUnique">–</div>
+          <div class="sv-sub">Session berbeda</div>
+        </div>
+        <div class="sv-card c-purple">
+          <div class="sv-label">Kemarin</div>
+          <div class="sv-val stat-loading" id="svYesterday">–</div>
+          <div class="sv-sub">Pageviews kemarin</div>
+        </div>
+        <div class="sv-card c-yellow">
+          <div class="sv-label">Minggu Ini</div>
+          <div class="sv-val stat-loading" id="svWeek">–</div>
+          <div class="sv-sub">7 hari terakhir</div>
+        </div>
+        <div class="sv-card c-teal">
+          <div class="sv-label">Bulan Ini</div>
+          <div class="sv-val stat-loading" id="svMonth">–</div>
+          <div class="sv-sub">30 hari terakhir</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Chart + Realtime -->
+      <div class="stats-two">
+        <!-- Bar chart 7 hari -->
+        <div class="chart-wrap">
+          <div class="chart-title">
+            📅 7 Hari Terakhir
+            <span class="chart-subtitle" id="svChartTotal"></span>
+          </div>
+          <div class="bar-chart" id="svBarChart">
+            <!-- Skeleton bars -->
+            <div class="bar-col"><div class="bar-fill" style="height:60%;opacity:.2"></div><div class="bar-label">…</div></div>
+            <div class="bar-col"><div class="bar-fill" style="height:40%;opacity:.2"></div><div class="bar-label">…</div></div>
+            <div class="bar-col"><div class="bar-fill" style="height:80%;opacity:.2"></div><div class="bar-label">…</div></div>
+            <div class="bar-col"><div class="bar-fill" style="height:55%;opacity:.2"></div><div class="bar-label">…</div></div>
+            <div class="bar-col"><div class="bar-fill" style="height:70%;opacity:.2"></div><div class="bar-label">…</div></div>
+            <div class="bar-col"><div class="bar-fill" style="height:45%;opacity:.2"></div><div class="bar-label">…</div></div>
+            <div class="bar-col"><div class="bar-fill" style="height:90%;opacity:.2"></div><div class="bar-label">…</div></div>
+          </div>
+        </div>
+
+        <!-- Realtime + per jam -->
+        <div class="chart-wrap">
+          <div class="chart-title">⚡ Realtime</div>
+          <div class="realtime-wrap">
+            <div class="realtime-pulse"></div>
+            <div>
+              <div class="realtime-label">Pengunjung aktif (30 mnt)</div>
+              <div class="realtime-count" id="svRealtime">–</div>
+            </div>
+          </div>
+          <div class="chart-title" style="margin-top:14px;font-size:13px;">
+            🕐 24 Jam Terakhir
+            <span class="chart-subtitle" id="svHourlyTotal"></span>
+          </div>
+          <div class="bar-chart" style="height:80px;" id="svHourlyChart">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Top pages + Device -->
+      <div class="stats-two">
+        <!-- Top halaman -->
+        <div class="chart-wrap" style="padding-bottom:0;">
+          <div class="chart-title" style="padding-bottom:0;">🏆 Halaman Terpopuler</div>
+          <div id="svTopPages" class="top-pages-list">
+            <div class="lb-skeleton"></div><div class="lb-skeleton"></div><div class="lb-skeleton"></div>
+          </div>
+        </div>
+
+        <!-- Device & referrer -->
+        <div>
+          <div class="chart-wrap">
+            <div class="chart-title">📱 Perangkat</div>
+            <div class="stat-chips" id="svDevices">
+              <div class="stat-chip"><div class="stat-chip-icon">⏳</div><div class="stat-chip-info"><div class="stat-chip-val">–</div></div></div>
+            </div>
+          </div>
+          <div class="chart-wrap">
+            <div class="chart-title">🔗 Sumber Trafik</div>
+            <div class="stat-chips" id="svReferrers">
+              <div class="stat-chip"><div class="stat-chip-icon">⏳</div><div class="stat-chip-info"><div class="stat-chip-val">–</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Latest visits log -->
+      <div class="chart-wrap" style="padding-bottom:0;">
+        <div class="chart-title">
+          📋 Log Kunjungan Terbaru
+          <button class="btn btn-ghost btn-sm" onclick="loadStatsPage()">🔄 Refresh</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Waktu</th><th>Halaman</th><th>Perangkat</th><th>Referrer</th><th>User</th></tr></thead>
+            <tbody id="svLogTable"><tr class="state-row"><td colspan="5">⏳ Memuat...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /page-stats -->
 
     <!-- USERS -->
     <div class="page" id="page-users">
@@ -655,7 +915,7 @@ async function init() {
 }
 
 /* ── NAVIGATION ── */
-const PAGE_TITLES = { overview:"📊 Overview", users:"👥 Kelola Pengguna", chats:"💬 Kelola Global Chat", announce:"📢 Pengumuman" };
+const PAGE_TITLES = { overview:"📊 Overview", stats:"📈 Statistik Web", users:"👥 Kelola Pengguna", chats:"💬 Kelola Global Chat", announce:"📢 Pengumuman" };
 
 window.switchPage = (page) => {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
@@ -667,6 +927,7 @@ window.switchPage = (page) => {
   if (page === "users")    loadUsers();
   if (page === "chats")    loadChats();
   if (page === "announce") loadAnnouncements();
+  if (page === "stats")    loadStatsPage();
 };
 
 window.refreshPage = async () => {
@@ -675,6 +936,7 @@ window.refreshPage = async () => {
   if (active === "users")    await loadUsers();
   if (active === "chats")    await loadChats();
   if (active === "announce") await loadAnnouncements();
+  if (active === "stats")    await loadStatsPage();
   showToast("Diperbarui ✓", "success");
 };
 
@@ -699,6 +961,273 @@ async function loadStats() {
   setVal("statOnline", onlineCount ?? 0);
   setVal("statChats",  chatCount  ?? 0);
   setVal("statPinned", pinnedCount ?? 0);
+}
+
+/* ══════════════════════════════════════════════════════════
+   STATISTIK WEB — loadStatsPage()
+   Membaca dari tabel: page_views
+   Kolom: id, path, title, referrer, device, session_id, user_id, created_at
+══════════════════════════════════════════════════════════ */
+async function loadStatsPage() {
+  const sv = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) { el.textContent = fmtNum(val); el.classList.remove("stat-loading"); }
+  };
+  const fmtNum = n => n >= 1e6 ? (n/1e6).toFixed(1)+"jt" : n >= 1e3 ? (n/1e3).toFixed(1)+"rb" : String(n ?? 0);
+
+  const now     = new Date();
+  const todayStart    = new Date(now); todayStart.setHours(0,0,0,0);
+  const yestStart     = new Date(todayStart); yestStart.setDate(yestStart.getDate()-1);
+  const yestEnd       = new Date(todayStart);
+  const weekStart     = new Date(now); weekStart.setDate(weekStart.getDate()-7);
+  const monthStart    = new Date(now); monthStart.setDate(monthStart.getDate()-30);
+  const realtimeStart = new Date(now - 30*60*1000);
+
+  try {
+    /* ── 1. KPI counts paralel ── */
+    const [
+      { count: cTotal },
+      { count: cToday },
+      { count: cYest  },
+      { count: cWeek  },
+      { count: cMonth },
+      { count: cRT    },
+    ] = await Promise.all([
+      supabase.from("page_views").select("*",{count:"exact",head:true}),
+      supabase.from("page_views").select("*",{count:"exact",head:true}).gte("created_at", todayStart.toISOString()),
+      supabase.from("page_views").select("*",{count:"exact",head:true}).gte("created_at", yestStart.toISOString()).lt("created_at", yestEnd.toISOString()),
+      supabase.from("page_views").select("*",{count:"exact",head:true}).gte("created_at", weekStart.toISOString()),
+      supabase.from("page_views").select("*",{count:"exact",head:true}).gte("created_at", monthStart.toISOString()),
+      supabase.from("page_views").select("*",{count:"exact",head:true}).gte("created_at", realtimeStart.toISOString()),
+    ]);
+    sv("svTotalViews", cTotal  ?? 0);
+    sv("svToday",      cToday  ?? 0);
+    sv("svYesterday",  cYest   ?? 0);
+    sv("svWeek",       cWeek   ?? 0);
+    sv("svMonth",      cMonth  ?? 0);
+    sv("svRealtime",   cRT     ?? 0);
+
+    /* ── 2. Unique sessions (hari ini) ── */
+    const { data: sessionData } = await supabase
+      .from("page_views").select("session_id")
+      .gte("created_at", todayStart.toISOString());
+    const uniqueSessions = new Set((sessionData||[]).map(r => r.session_id).filter(Boolean)).size;
+    sv("svUnique", uniqueSessions);
+
+    /* ── 3. 7-hari bar chart ── */
+    const days7Start = new Date(now); days7Start.setDate(days7Start.getDate()-6); days7Start.setHours(0,0,0,0);
+    const { data: daily } = await supabase
+      .from("page_views").select("created_at")
+      .gte("created_at", days7Start.toISOString())
+      .order("created_at", {ascending:true});
+
+    const dayMap = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now); d.setDate(d.getDate()-i); d.setHours(0,0,0,0);
+      dayMap[d.toDateString()] = 0;
+    }
+    (daily||[]).forEach(r => {
+      const key = new Date(r.created_at).toDateString();
+      if (key in dayMap) dayMap[key]++;
+    });
+    const dayLabels = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
+    const entries   = Object.entries(dayMap);
+    const maxVal    = Math.max(...entries.map(e=>e[1]), 1);
+    const barChart  = document.getElementById("svBarChart");
+    if (barChart) {
+      barChart.innerHTML = entries.map(([dateStr, count]) => {
+        const d   = new Date(dateStr);
+        const lbl = dayLabels[d.getDay()];
+        const pct = Math.round((count/maxVal)*100);
+        const isToday = d.toDateString() === now.toDateString();
+        return `<div class="bar-col">
+          <div class="bar-fill${isToday?" secondary":""}" style="height:${Math.max(pct,2)}%">
+            <div class="bar-tip">${fmtNum(count)}</div>
+          </div>
+          <div class="bar-label" style="${isToday?"color:var(--blue);font-weight:900":""}">${lbl}</div>
+        </div>`;
+      }).join("");
+      const totalWeek = entries.reduce((s,[,v])=>s+v,0);
+      const el = document.getElementById("svChartTotal");
+      if (el) el.textContent = fmtNum(totalWeek) + " total";
+    }
+
+    /* ── 4. Hourly bar (24 jam) ── */
+    const hours24Start = new Date(now - 24*3600*1000);
+    const { data: hourly } = await supabase
+      .from("page_views").select("created_at")
+      .gte("created_at", hours24Start.toISOString());
+    const hourMap = {};
+    for (let h = 0; h < 24; h++) hourMap[h] = 0;
+    (hourly||[]).forEach(r => { hourMap[new Date(r.created_at).getHours()]++; });
+    const hourEntries = Object.entries(hourMap);
+    const maxH = Math.max(...hourEntries.map(e=>+e[1]), 1);
+    const hChart = document.getElementById("svHourlyChart");
+    if (hChart) {
+      hChart.innerHTML = hourEntries.map(([h, count]) => {
+        const pct = Math.round((count/maxH)*100);
+        const isNow = +h === now.getHours();
+        return `<div class="bar-col">
+          <div class="bar-fill${isNow?" secondary":""}" style="height:${Math.max(pct,2)}%">
+            <div class="bar-tip">${count}</div>
+          </div>
+          <div class="bar-label" style="${isNow?"color:var(--blue)":"opacity:.5"}">${h}</div>
+        </div>`;
+      }).join("");
+      const el = document.getElementById("svHourlyTotal");
+      if (el) el.textContent = fmtNum(hourly?.length ?? 0) + " views";
+    }
+
+    /* ── 5. Top pages ── */
+    const { data: allViews } = await supabase
+      .from("page_views").select("path, title")
+      .gte("created_at", monthStart.toISOString())
+      .limit(2000);
+    const pathMap = {};
+    (allViews||[]).forEach(r => {
+      if (!pathMap[r.path]) pathMap[r.path] = { count:0, title: r.title||r.path };
+      pathMap[r.path].count++;
+    });
+    const topPages = Object.entries(pathMap)
+      .sort((a,b)=>b[1].count-a[1].count).slice(0,8);
+    const maxPV = topPages[0]?.[1]?.count || 1;
+    const tpEl = document.getElementById("svTopPages");
+    if (tpEl) {
+      if (!topPages.length) {
+        tpEl.innerHTML = `<div class="empty-box"><div class="ei">📭</div>Belum ada data halaman</div>`;
+      } else {
+        tpEl.innerHTML = topPages.map(([path, {count, title}], i) => `
+          <div class="tp-row">
+            <div class="tp-rank">${i+1}</div>
+            <div class="tp-info">
+              <div class="tp-path">${escHtmlA(path)}</div>
+              <div class="tp-title">${escHtmlA(title)}</div>
+            </div>
+            <div class="tp-bar-wrap">
+              <div class="tp-bar-bg"><div class="tp-bar-fill" style="width:${Math.round(count/maxPV*100)}%"></div></div>
+            </div>
+            <div class="tp-count">${fmtNum(count)}</div>
+          </div>`).join("");
+      }
+    }
+
+    /* ── 6. Device breakdown ── */
+    const { data: devData } = await supabase
+      .from("page_views").select("device")
+      .gte("created_at", monthStart.toISOString());
+    const devMap = { mobile:0, tablet:0, desktop:0 };
+    (devData||[]).forEach(r => { if (r.device in devMap) devMap[r.device]++; });
+    const devTotal = Object.values(devMap).reduce((a,b)=>a+b,0) || 1;
+    const devIcons = { mobile:"📱", tablet:"📟", desktop:"🖥️" };
+    const devEl = document.getElementById("svDevices");
+    if (devEl) devEl.innerHTML = Object.entries(devMap).map(([d,n]) => `
+      <div class="stat-chip">
+        <div class="stat-chip-icon">${devIcons[d]||"💻"}</div>
+        <div class="stat-chip-info">
+          <div class="stat-chip-label">${d}</div>
+          <div class="stat-chip-val">${fmtNum(n)}</div>
+        </div>
+        <div class="stat-chip-pct">${Math.round(n/devTotal*100)}%</div>
+      </div>`).join("");
+
+    /* ── 7. Referrer sources ── */
+    const { data: refData } = await supabase
+      .from("page_views").select("referrer")
+      .gte("created_at", monthStart.toISOString());
+    const refMap = {};
+    (refData||[]).forEach(r => {
+      let src = "Langsung";
+      if (r.referrer) {
+        try {
+          const host = new URL(r.referrer).hostname.replace("www.","");
+          src = host || "Langsung";
+        } catch { src = r.referrer.slice(0,30); }
+      }
+      refMap[src] = (refMap[src]||0)+1;
+    });
+    const topRefs = Object.entries(refMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const refTotal = topRefs.reduce((s,[,v])=>s+v,0) || 1;
+    const refIcons = {"Langsung":"🏠","google.com":"🔍","t.me":"📱","facebook.com":"👍","twitter.com":"🐦","instagram.com":"📸"};
+    const refEl = document.getElementById("svReferrers");
+    if (refEl) refEl.innerHTML = topRefs.map(([src,n]) => `
+      <div class="stat-chip">
+        <div class="stat-chip-icon">${refIcons[src]||"🔗"}</div>
+        <div class="stat-chip-info">
+          <div class="stat-chip-label">${escHtmlA(src)}</div>
+          <div class="stat-chip-val">${fmtNum(n)}</div>
+        </div>
+        <div class="stat-chip-pct">${Math.round(n/refTotal*100)}%</div>
+      </div>`).join("");
+
+    /* ── 8. Recent log ── */
+    const { data: recentLog } = await supabase
+      .from("page_views").select("created_at, path, title, device, referrer, user_id")
+      .order("created_at",{ascending:false}).limit(50);
+    const tbody = document.getElementById("svLogTable");
+    if (tbody) {
+      if (!recentLog?.length) {
+        tbody.innerHTML = `<tr class="state-row"><td colspan="5">📭 Belum ada data kunjungan</td></tr>`;
+      } else {
+        /* Batch fetch usernames for user_id yang ada */
+        const uids = [...new Set(recentLog.filter(r=>r.user_id).map(r=>r.user_id))];
+        const profMap = uids.length ? await batchProfiles(uids) : {};
+        tbody.innerHTML = recentLog.map(r => {
+          const t   = new Date(r.created_at);
+          const ago = fmtAgoShort(t);
+          const dev = {mobile:"📱",tablet:"📟",desktop:"🖥️"}[r.device]||"💻";
+          let ref = "–";
+          if (r.referrer) { try { ref = new URL(r.referrer).hostname.replace("www.",""); } catch { ref = r.referrer.slice(0,20); } }
+          const uname = r.user_id ? (profMap[r.user_id]?.username || r.user_id.slice(0,8)+"…") : "–";
+          return `<tr>
+            <td style="white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:11px;">${ago}</td>
+            <td><div style="font-size:12px;font-weight:700;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtmlA(r.path)}</div><div style="font-size:10px;color:var(--text-muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escHtmlA(r.title||"")}</div></td>
+            <td>${dev} <span style="font-size:11px;">${r.device||"–"}</span></td>
+            <td style="font-size:11px;color:var(--text-soft);">${escHtmlA(ref)}</td>
+            <td style="font-size:11px;">${escHtmlA(uname)}</td>
+          </tr>`;
+        }).join("");
+      }
+    }
+
+  } catch(err) {
+    console.error("[Stats]", err);
+    /* Tabel belum dibuat — tampilkan pesan petunjuk */
+    const ids = ["svTotalViews","svToday","svYesterday","svWeek","svMonth","svRealtime","svUnique"];
+    ids.forEach(id => { const el=document.getElementById(id); if(el){el.textContent="–";el.classList.remove("stat-loading");} });
+    const tb = document.getElementById("svLogTable");
+    if (tb) tb.innerHTML = `<tr class="state-row"><td colspan="5">⚠️ Tabel <code>page_views</code> belum ada. Buka detail SQL di atas untuk setup.</td></tr>`;
+  }
+
+  /* Auto-refresh realtime setiap 60 detik */
+  if (!window._statsInterval) {
+    window._statsInterval = setInterval(async () => {
+      if (document.getElementById("page-stats")?.classList.contains("active")) {
+        const { count } = await supabase.from("page_views")
+          .select("*",{count:"exact",head:true})
+          .gte("created_at", new Date(Date.now()-30*60*1000).toISOString());
+        const el = document.getElementById("svRealtime");
+        if (el) el.textContent = String(count ?? 0);
+      }
+    }, 60000);
+  }
+}
+
+/* Escape HTML sederhana untuk statistik */
+function escHtmlA(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+/* Format waktu singkat: "2 mnt lalu", "3 jam lalu", "kemarin" */
+function fmtAgoShort(date) {
+  const diff = Date.now() - new Date(date).getTime();
+  const m = Math.floor(diff/60000);
+  if (m < 1)  return "baru saja";
+  if (m < 60) return m+"m lalu";
+  const h = Math.floor(m/60);
+  if (h < 24) return h+"j lalu";
+  const d = Math.floor(h/24);
+  if (d === 1) return "kemarin";
+  return d+"h lalu";
 }
 
 /* ── BATCH PROFILES ── FIX: global cache, single query, no duplicates ── */
