@@ -421,200 +421,190 @@ let isLoadingMore = false;
 let ioObserver    = null; /* IntersectionObserver untuk infinite scroll sentinel */
 
 /* ============================================================
-   TOP KOMIK POPULER — Westmanga API
+   POPULER — Westmanga /popular (no period filter)
    ============================================================ */
-const _popCache   = {};        /* cache: period → { list, pagination } */
-let   _popPeriod  = "week";
-let   _popPage    = 1;
-let   _popLoading = false;
+let _popPage    = 1;
+let _popLoading = false;
+let _popHasMore = true;
+const _popCache = {}; /* page → list */
 
-window.switchTopPeriod = function(period, btn) {
-  if (period === _popPeriod && _popCache[period]) return;
-  _popPeriod = period;
-  _popPage   = 1;
-  document.querySelectorAll(".pop-tab").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  const container = document.getElementById("topKomik");
-  if (container) container.innerHTML = "";
-  getTopKomik(period, 1);
-};
-
-window.loadMorePop = function() {
+window.loadMorePop = async function() {
   if (_popLoading) return;
-  _popPage++;
-  getTopKomik(_popPeriod, _popPage, true);
-};
-
-async function getTopKomik(period, page, append) {
-  period = period || _popPeriod;
-  page   = page   || 1;
   const container = document.getElementById("topKomik");
   if (!container) return;
 
-  const cacheKey = `${period}_${page}`;
+  const shown = container.querySelectorAll(".pop-card").length;
 
-  /* Pakai cache kalau ada */
-  if (_popCache[cacheKey]) {
-    if (!append) container.innerHTML = "";
-    renderTopKomik(_popCache[cacheKey].list, container, append ? container.querySelectorAll(".pop-card").length : 0);
-    updatePopLoadMore(_popCache[cacheKey].pagination, period);
+  /* Kalau page 1 ada di cache tapi baru tampil 10 — render sisanya dulu */
+  if (_popCache[1] && shown < _popCache[1].length) {
+    _renderPopGrid(_popCache[1].slice(shown), container, true);
+    /* Kalau page 1 sudah habis semua, cek apakah ada page berikutnya */
+    if (!_popHasMore) {
+      const btn = document.getElementById("popLoadMoreBtn");
+      if (btn) btn.style.display = "none";
+    }
     return;
   }
 
-  /* Skeleton — hanya saat pertama (bukan append) */
+  /* Fetch halaman berikutnya */
+  _popPage++;
+  await getTopKomik(_popPage, true);
+};
+
+async function getTopKomik(page, append) {
+  page = page || 1;
+  const container = document.getElementById("topKomik");
+  if (!container) return;
+
+  /* Cache hit */
+  if (_popCache[page]) {
+    _renderPopGrid(_popCache[page], container, append);
+    return;
+  }
+
+  /* Skeleton — hanya halaman pertama */
   if (!append) {
     container.innerHTML = `<div class="pop-grid">${
-      Array(9).fill(`<div class="pop-skel"><div class="pop-skel-img"></div><div class="pop-skel-info"><div class="pop-skel-l"></div><div class="pop-skel-l s"></div></div></div>`).join("")
+      Array(9).fill(`
+        <div class="pop-skel">
+          <div class="pop-skel-img"></div>
+          <div class="pop-skel-body">
+            <div class="pop-skel-l"></div>
+            <div class="pop-skel-l short"></div>
+          </div>
+        </div>`).join("")
     }</div>`;
   } else {
-    /* Append: tambah spinner di bawah */
-    const sp = document.createElement("div");
-    sp.id = "popAppendSpin";
-    sp.style.cssText = "padding:16px;text-align:center;color:var(--text-muted);font-size:12px;";
-    sp.textContent = "Memuat...";
+    const sp = Object.assign(document.createElement("div"), {
+      id: "popSpin",
+      innerHTML: `<div class="pop-spin-dot"></div><div class="pop-spin-dot"></div><div class="pop-spin-dot"></div>`
+    });
+    sp.className = "pop-spinner";
     container.appendChild(sp);
   }
 
   _popLoading = true;
   try {
-    const url  = `https://www.sankavollerei.com/comic/westmanga/popular?page=${page}&period=${period}`;
-    const res  = await fetch(url);
+    const res  = await fetch(`https://www.sankavollerei.com/comic/westmanga/popular?page=${page}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     const list = data.data || [];
     const pag  = data.pagination || {};
 
-    _popCache[cacheKey] = { list, pagination: pag };
+    _popCache[page] = list;
+    _popHasMore = pag.current_page < pag.last_page;
 
-    /* Hapus skeleton / spinner */
+    document.getElementById("popSpin")?.remove();
     if (!append) container.innerHTML = "";
-    else document.getElementById("popAppendSpin")?.remove();
 
-    renderTopKomik(list, container, append ? container.querySelectorAll(".pop-card").length : 0);
-    updatePopLoadMore(pag, period);
+    /* Halaman pertama: tampilkan max 10 item saja */
+    const renderList = (!append && page === 1) ? list.slice(0, 10) : list;
+    _renderPopGrid(renderList, container, append);
+
+    /* Tombol "Muat Lebih Banyak" hanya muncul setelah user klik — tidak otomatis */
+    const btn = document.getElementById("popLoadMoreBtn");
+    if (btn) {
+      /* Saat initial load: selalu tampilkan tombol (masih ada 15+ item sisa di page 1 + page berikutnya) */
+      btn.style.display = "flex";
+    }
   } catch (err) {
-    console.error("[Pop] Gagal:", err);
-    document.getElementById("popAppendSpin")?.remove();
-    if (!append) container.innerHTML = `
-      <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">
-        <div style="font-size:32px;margin-bottom:8px;">😕</div>
-        <p>Gagal memuat. <button onclick="getTopKomik('${period}',${page})" style="background:none;border:none;color:var(--accent);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px;">Coba lagi</button></p>
-      </div>`;
+    console.error("[Pop]", err);
+    document.getElementById("popSpin")?.remove();
+    if (!append) container.innerHTML = `<p style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">😕 Gagal memuat. <button onclick="getTopKomik(1)" style="background:none;border:none;color:var(--accent);cursor:pointer;font-weight:700;font-size:13px;font-family:inherit;">Coba lagi</button></p>`;
   }
   _popLoading = false;
 }
 
-function updatePopLoadMore(pag, period) {
-  const wrap = document.getElementById("popLoadMore");
-  if (!wrap) return;
-  /* Tampilkan tombol kalau masih ada halaman berikutnya */
-  const hasMore = pag.current_page < pag.last_page;
-  wrap.style.display = hasMore ? "flex" : "none";
-}
-
-function renderTopKomik(list, container, startIdx) {
-  startIdx = startIdx || 0;
-
-  /* Pastikan ada .pop-grid */
+function _renderPopGrid(list, container, append) {
   let grid = container.querySelector(".pop-grid");
-  if (!grid) {
+  if (!grid || !append) {
+    if (!append) container.innerHTML = "";
     grid = document.createElement("div");
     grid.className = "pop-grid";
     container.appendChild(grid);
   }
 
-  list.forEach((komik, i) => {
-    if (!komik?.slug) return;
-    const rank = startIdx + i;   /* rank global (0-based) */
+  const startRank = container.querySelectorAll(".pop-card").length;
 
-    const rawCover = komik.cover || komik.image || "";
-    const origUrl  = rawCover && !rawCover.startsWith("data:") ? rawCover.split("?")[0] : "";
-    const coverSrc = origUrl ? proxyImg(origUrl, 240) : "";
+  list.forEach((k, i) => {
+    if (!k?.slug) return;
+    const rank   = startRank + i;
+    const cover  = k.cover || k.image || "";
+    const orig   = cover && !cover.startsWith("data:") ? cover.split("?")[0] : "";
+    const src    = orig ? proxyImg(orig, 260) : "";
+    const ch     = (k.lastChapters || [])[0] || {};
+    const chNum  = ch.number || "";
+    const ts     = ch.created_at?.time || ch.created_at?.formatted || "";
+    const ago    = ts ? fmtTimeAgo(ts) : "";
+    const rating = k.rating ? (+k.rating).toFixed(1) : "";
+    const flag   = ({JP:"🇯🇵",KR:"🇰🇷",CN:"🇨🇳",ID:"🇮🇩"})[(k.country_id||"").toUpperCase()] || "";
+    const views  = k.total_views ? fmtViews(k.total_views) : "";
 
-    const latestCh = (komik.lastChapters || [])[0] || {};
-    const chNum    = latestCh.number  || "";
-    const chSlug   = latestCh.slug    || "";
-    const chTime   = latestCh.created_at?.time || latestCh.created_at?.formatted || "";
-    const timeAgo  = chTime ? fmtTimeAgo(chTime) : "";
-
-    const rating   = komik.rating ? (+komik.rating).toFixed(1) : "";
-    const flag     = ({ JP:"🇯🇵", KR:"🇰🇷", CN:"🇨🇳", ID:"🇮🇩" })[(komik.country_id||"").toUpperCase()] || "";
-    const isColor  = komik.color;
-    const isHot    = komik.hot;
+    const rankLabel = rank === 0 ? "🥇" : rank === 1 ? "🥈" : rank === 2 ? "🥉" : `#${rank+1}`;
+    const isTopRank = rank < 3;
 
     const card = document.createElement("div");
-    card.className = "pop-card";
-    card.dataset.slug = komik.slug;
+    card.className = "pop-card" + (isTopRank ? " pop-top" : "");
+    card.dataset.slug = k.slug;
 
     card.innerHTML = `
-      <div class="pop-cover">
-        ${coverSrc
-          ? `<img src="${coverSrc}" alt="${escHtml(komik.title||"")}" loading="${rank < 6 ? "eager" : "lazy"}">`
-          : `<div class="pop-cover-placeholder"></div>`}
-        <div class="pop-cover-overlay"></div>
-        <span class="pop-rank${rank < 3 ? " pop-rank-top" : ""}">${rank < 3 ? ["🥇","🥈","🥉"][rank] : `#${rank+1}`}</span>
-        ${flag ? `<span class="pop-flag">${flag}</span>` : ""}
-        <div class="pop-cover-badges">
-          ${isColor ? `<span class="pop-badge-color">COLOR</span>` : ""}
-          ${isHot   ? `<span class="pop-badge-hot">🔥 HOT</span>` : ""}
+      <div class="pop-img">
+        ${src ? `<img src="${escHtml(src)}" alt="${escHtml(k.title||"")}" loading="${rank<6?"eager":"lazy"}">` : `<div class="pop-img-gen"></div>`}
+        <div class="pop-gradient"></div>
+        <div class="pop-top-bar">
+          <span class="pop-rank-badge${isTopRank?" is-top":""}">${rankLabel}</span>
+          ${flag ? `<span class="pop-flag-badge">${flag}</span>` : ""}
+        </div>
+        <div class="pop-bottom-bar">
+          ${k.hot   ? `<span class="pop-pill hot">HOT</span>` : ""}
+          ${k.color ? `<span class="pop-pill color">COLOR</span>` : ""}
         </div>
       </div>
-      <div class="pop-body">
-        <p class="pop-name">${escHtml(komik.title || "Untitled")}</p>
-        <div class="pop-meta">
-          ${chNum   ? `<span class="pop-ch">Ch.${escHtml(String(chNum))}</span>` : ""}
-          ${timeAgo ? `<span class="pop-time">${escHtml(timeAgo)}</span>` : ""}
+      <div class="pop-info">
+        <p class="pop-title-text">${escHtml(k.title||"Untitled")}</p>
+        <div class="pop-chips">
+          ${chNum  ? `<span class="pop-chip-ch">Ch.${escHtml(String(chNum))}</span>` : ""}
+          ${ago    ? `<span class="pop-chip-time">${escHtml(ago)}</span>` : ""}
         </div>
-        ${rating ? `<div class="pop-rating"><span class="pop-star">★</span>${rating}</div>` : ""}
+        ${rating ? `<div class="pop-stars">★ ${rating}</div>` : ""}
       </div>`;
 
-    if (coverSrc && origUrl) {
-      const img = card.querySelector("img");
-      if (img) imgFallback(img, origUrl);
-    } else if (!coverSrc) {
-      const ph = card.querySelector(".pop-cover-placeholder");
-      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type || "manga", 155), ph);
-    }
+    if (src && orig) { const img = card.querySelector("img"); if (img) imgFallback(img, orig); }
+    else if (!src) { const ph = card.querySelector(".pop-img-gen"); if (ph) ph.replaceWith(makeGeneratedCover(k.title, k.type||"manga", 155)); }
 
     card.onclick = async () => {
-      card.style.opacity = "0.7";
+      card.style.opacity = "0.65";
       card.style.pointerEvents = "none";
-      const src = await resolveSource(komik.slug, "westmanga");
-      sessionStorage.setItem("komikSrcHint", src);
-      sessionStorage.setItem("komikSrcSlug", komik.slug);
-      window.location.href = komikURL(komik.slug);
+      const s = await resolveSource(k.slug, "westmanga");
+      sessionStorage.setItem("komikSrcHint", s);
+      sessionStorage.setItem("komikSrcSlug", k.slug);
+      window.location.href = komikURL(k.slug);
     };
 
     grid.appendChild(card);
-    animateIn(card, i * 25);
+    animateIn(card, i * 22);
   });
 }
 
-/* Format waktu dari unix timestamp atau string formatted */
+/* ── Helpers ── */
 function fmtTimeAgo(val) {
   const ts = typeof val === "number" ? val * 1000 : Date.parse(val);
-  if (!ts || isNaN(ts)) return String(val || "");
-  const d = Math.floor((Date.now() - ts) / 86400000);
-  if (d === 0) {
-    const h = Math.floor((Date.now() - ts) / 3600000);
-    if (h === 0) return Math.floor((Date.now() - ts) / 60000) + " mnt lalu";
-    return h + " jam lalu";
-  }
+  if (!ts || isNaN(ts)) return String(val||"");
+  const sec = (Date.now() - ts) / 1000;
+  if (sec < 3600)  return Math.floor(sec/60) + " mnt lalu";
+  if (sec < 86400) return Math.floor(sec/3600) + " jam lalu";
+  const d = Math.floor(sec/86400);
   if (d < 30)  return d + " hari lalu";
-  if (d < 365) return Math.floor(d / 30) + " bln lalu";
-  return Math.floor(d / 365) + " thn lalu";
+  if (d < 365) return Math.floor(d/30) + " bln lalu";
+  return Math.floor(d/365) + " thn lalu";
 }
-
-/* Format views */
 function fmtViews(n) {
-  if (!n) return "–";
+  if (!n) return "";
   if (n >= 1e6) return (n/1e6).toFixed(n>=1e7?0:1)+"jt";
   if (n >= 1e3) return (n/1e3).toFixed(0)+"rb";
   return String(n);
 }
 
-
-/* ============================================================
    LATEST UPDATE
    ============================================================ */
 async function getKomikLatest() {
@@ -1230,7 +1220,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* Fetch semua konten */
-  getTopKomik("week");
+  getTopKomik(1);
   getKomikLatest();
   getKomikRekomen();
   getGenreChips();
