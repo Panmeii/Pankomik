@@ -782,9 +782,13 @@ import {
   getHistory, getProgress, syncProfileProgress, getTotalChaptersRead,
   getLeaderboard, getNovelLeaderboard,
   getNovelBookmarks, removeNovelBookmark,
-  getNovelHistory, getMyComments
+  getNovelHistory, getMyComments,
+  getAnimeHistory
 } from "/supabase.js";
 import { initAuthHeader } from "/auth-header.js";
+import { animeWatchURL, animeURL } from "/router.js";
+window._animeWatchURL = animeWatchURL;
+window._animeURL      = animeURL;
 
 let currentUser    = null;
 let currentProfile = null;
@@ -832,6 +836,11 @@ function novelCoverImg(url, altText, cssText) {
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+
+/* Strip prefix "Komik ", "Novel " dari judul yang tersimpan di DB */
+function cleanTitle(t) {
+  return (t||"").replace(/^(Komik|Novel|Manhwa|Manga|Manhua)\s+/i,"").trim() || t || "";
+}
 
 /* ── INIT ─────────────────────────────────────────────── */
 window.onload = async function () {
@@ -932,7 +941,8 @@ async function loadProfile() {
         <button class="profile-tab active" id="tab-bookmark"       onclick="switchTab('bookmark')"><span class="tab-icon">🔖</span>Komik</button>
         <button class="profile-tab"        id="tab-anime-bookmark" onclick="switchTab('anime-bookmark')"><span class="tab-icon">⚡</span>Anime</button>
         <button class="profile-tab"        id="tab-novel-bookmark" onclick="switchTab('novel-bookmark')"><span class="tab-icon">📚</span>Novel</button>
-        <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')"><span class="tab-icon">📖</span>Riwayat</button>
+        <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')"><span class="tab-icon">📖</span>Komik</button>
+        <button class="profile-tab"        id="tab-anime-history"  onclick="switchTab('anime-history')"><span class="tab-icon">⚡</span>Anime</button>
         <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')"><span class="tab-icon">📝</span>Novel</button>
         <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')"><span class="tab-icon">📊</span>Progress</button>
         <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')"><span class="tab-icon">🏅</span>Badge</button>
@@ -980,6 +990,14 @@ async function loadProfile() {
         <button onclick="window._novelHistoryAll=null;window._novelHistoryPage=1;window._novelHistoryFiltered=null;loadNovelHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
       </div>
       <div id="novelHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
+    </div>
+
+    <!-- Riwayat Anime -->
+    <div class="tab-content" id="content-anime-history">
+      <div style="display:flex;justify-content:flex-end;padding:8px 14px 0;">
+        <button onclick="window._animeHistoryAll=null;window._animeHistoryPage=1;loadAnimeHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
+      </div>
+      <div id="animeHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
     <!-- Riwayat Komik -->
@@ -1085,6 +1103,7 @@ window.switchTab = function (tab) {
   document.getElementById(`content-${tab}`)?.classList.add("active");
 
   if (tab === "history")        loadHistory();
+  if (tab === "anime-history")  loadAnimeHistory();
   if (tab === "novel-history")  loadNovelHistory();
   if (tab === "novel-bookmark") loadNovelBookmarks();
   if (tab === "anime-bookmark") loadAnimeBookmarks();
@@ -1241,7 +1260,7 @@ window.hapusAnimeBookmark = async function(fullSlug, btn) {
   await loadAnimeBookmarks();
 };
 
-window.gotoAnimeDetail = slug => window.location.href = `/anime/detail/${slug}`;
+window.gotoAnimeDetail = slug => window.location.href = `/anime/${slug}`;
 
 function renderBookmarks(kategori) {
   const list = bookmarkData[kategori] || [];
@@ -1249,11 +1268,11 @@ function renderBookmarks(kategori) {
 
   const renderItems = (items) => items.map(bm => `
     <div class="komik-list-item">
-      <img src="${esc(proxyImg(bm.komik_cover||'',80))}" alt="${esc(bm.komik_title)}"
+      <img src="${esc(proxyImg(bm.komik_cover||'',80))}" alt="${esc(cleanTitle(bm.komik_title))}"
         onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer"
         onerror="this.style.display='none'">
       <div class="komik-list-info" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer">
-        <div class="title">${esc(bm.komik_title || bm.komik_slug)}</div>
+        <div class="title">${esc(cleanTitle(bm.komik_title) || bm.komik_slug)}</div>
         <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
       </div>
       <div class="komik-list-actions">
@@ -1324,7 +1343,7 @@ async function loadHistory() {
         onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer"
         onerror="this.style.display='none'">
       <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
-        <div class="title">${esc(h.komik_title || h.komik_slug)}</div>
+        <div class="title">${esc(cleanTitle(h.komik_title) || h.komik_slug)}</div>
         <p>📖 Ch.${esc(String(h.chapter_number || '?'))}</p>
         <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
       </div>
@@ -1429,7 +1448,7 @@ async function loadProgressTab() {
     const info = document.createElement("div");
     info.style.cssText = "flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;";
     info.innerHTML = `
-      <div class="title" style="cursor:pointer" onclick="gotoDetail('${esc(p.komik_slug)}')">${esc(p.komik_title)}</div>
+      <div class="title" style="cursor:pointer" onclick="gotoDetail('${esc(p.komik_slug)}')">${esc(cleanTitle(p.komik_title))}</div>
       <p style="font-size:11px;color:var(--text-muted);margin:0;">📖 ${esc(chapLabel)} · 🕒 ${esc(updated)}</p>
       ${p.total_chapters > 0 ? `
       <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
@@ -1781,6 +1800,104 @@ window.hapusNovelBookmark = async function (slug, btn) {
 };
 
 /* ── NOVEL HISTORY ────────────────────────────────────── */
+/* ── RIWAYAT ANIME ────────────────────────────────────── */
+async function loadAnimeHistory() {
+  if (window._animeHistoryAll && document.getElementById("animeHistoryItems")) return;
+  const el = document.getElementById("animeHistoryList");
+  el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
+
+  const { history } = await getAnimeHistory(currentUser.id);
+  if (!history.length) {
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat nonton anime.</p></div>`;
+    return;
+  }
+
+  window._animeHistoryAll  = history;
+  window._animeHistoryPage = 1;
+
+  function buildAnimeHistItem(h) {
+    const wrap = document.createElement("div");
+    wrap.className = "komik-list-item";
+
+    /* Cover — URL langsung dari sankavollerei */
+    const coverWrap = document.createElement("div");
+    coverWrap.style.cssText = "width:52px;height:70px;flex-shrink:0;border-radius:8px;overflow:hidden;background:rgba(108,99,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;border:1.5px solid rgba(108,99,255,0.25);";
+    coverWrap.onclick = () => gotoAnimeDetail(h.anime_id);
+    if (h.anime_cover) {
+      const img = document.createElement("img");
+      img.src = h.anime_cover;
+      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+      img.onerror = () => { coverWrap.textContent = "⚡"; img.remove(); };
+      coverWrap.appendChild(img);
+    } else {
+      coverWrap.textContent = "⚡";
+    }
+    wrap.appendChild(coverWrap);
+
+    /* Info */
+    const info = document.createElement("div");
+    info.className = "komik-list-info";
+    info.style.cursor = "pointer";
+    info.onclick = () => gotoAnimeDetail(h.anime_id);
+    const epLabel = h.episode_number ? `Ep ${h.episode_number}` : (h.episode_title || "");
+    info.innerHTML = `
+      <div class="title">${esc(cleanTitle(h.anime_title) || h.anime_id)}</div>
+      ${epLabel ? `<p>📺 ${esc(epLabel)}</p>` : ""}
+      <p>🕒 ${new Date(h.watched_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}</p>`;
+    wrap.appendChild(info);
+
+    /* Actions */
+    const acts = document.createElement("div");
+    acts.className = "komik-list-actions";
+    acts.innerHTML = `
+      <button class="btn-sm primary" onclick="window.location.href=window._animeWatchURL('${esc(h.episode_id)}')"
+        style="background:linear-gradient(135deg,#6c63ff,#4f46e5);border-color:#6c63ff;">▶ Lanjut</button>
+      <button class="btn-sm" onclick="gotoAnimeDetail('${esc(h.anime_id)}')">Detail</button>`;
+    wrap.appendChild(acts);
+    return wrap;
+  }
+
+  window.renderAnimeHistoryPage = function() {
+    const src     = window._animeHistoryFiltered || window._animeHistoryAll;
+    const shown   = src.slice(0, window._animeHistoryPage * 8);
+    const hasMore = shown.length < src.length;
+    const wrap    = document.getElementById("animeHistoryItems");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    shown.forEach(h => wrap.appendChild(buildAnimeHistItem(h)));
+    if (hasMore) {
+      const btn = document.createElement("div");
+      btn.style.cssText = "text-align:center;padding:12px 0;";
+      btn.innerHTML = `<button onclick="window._animeHistoryPage++;window.renderAnimeHistoryPage()"
+        style="padding:9px 28px;background:var(--acc);color:#fff;border:none;border-radius:10px;
+        font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+        Muat Lebih Banyak ↓</button>`;
+      wrap.appendChild(btn);
+    }
+  };
+
+  window.filterAnimeHistory = function(q) {
+    const s = q.toLowerCase().trim();
+    window._animeHistoryFiltered = s
+      ? window._animeHistoryAll.filter(h =>
+          (h.anime_title||"").toLowerCase().includes(s) ||
+          (h.anime_id||"").toLowerCase().includes(s))
+      : null;
+    window._animeHistoryPage = 1;
+    window.renderAnimeHistoryPage();
+  };
+
+  el.innerHTML = "";
+  const searchBar = document.createElement("div");
+  searchBar.className = "profile-search-bar";
+  searchBar.innerHTML = `<input id="animeHistorySearch" placeholder="🔍 Cari anime..." oninput="filterAnimeHistory(this.value)">`;
+  const itemsWrap = document.createElement("div");
+  itemsWrap.id = "animeHistoryItems";
+  el.appendChild(searchBar);
+  el.appendChild(itemsWrap);
+  window.renderAnimeHistoryPage();
+}
+
 async function loadNovelHistory() {
   if (window._novelHistoryAll && document.getElementById("novelHistoryItems")) return;
   const { history } = await getNovelHistory(currentUser.id);
