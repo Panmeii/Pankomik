@@ -812,44 +812,98 @@ let currentProfile = null;
 let bookmarkData   = {};
 let activeKategori = "favorit";
 
-function proxyImg(url, w) {
+/* ── Domain → Referer map (sama dengan script.js) ── */
+const _DOMAIN_REF = {
+  "komikindo":"https://komikindo.org","komikcast":"https://komikcast.me",
+  "komiku":"https://komiku.id","manhwaindo":"https://manhwaindo.id",
+  "bacakomik":"https://bacakomik.me","mangatale":"https://mangatale.co",
+  "westmanga":"https://westmanga.info","shinigami":"https://shinigami.id",
+  "sakuranovel":"https://sakuranovel.id","novelringan":"https://novelringan.com",
+  "mangakita":"https://mangakita.me","bacakomik.my":"https://bacakomik.my",
+  "i0.wp.com":"https://mangakita.me","i1.wp.com":"https://mangakita.me",
+  "i2.wp.com":"https://mangakita.me","i3.wp.com":"https://mangakita.me",
+  "kiryuu":"https://kiryuu.id","mgkomik":"https://mgkomik.id",
+};
+
+function _getRef(url) {
   if (!url) return "";
-  if (url.includes("wsrv.nl") || url.includes("ui-avatars")) return url;
-  if (url.includes("sankavollerei")) return url; /* anime API - akses langsung */
-  if (url.includes("/api/img")) return url;
-  /* Novel cover (sakuranovel, dll) — pakai /api/img sama seperti novel.html */
-  var clean = url.split("?")[0];
-  return "/api/img?url=" + encodeURIComponent(clean);
+  try {
+    const host = new URL(url.startsWith("http") ? url : "https://"+url).hostname;
+    for (const [k,v] of Object.entries(_DOMAIN_REF)) { if (host.includes(k)) return v; }
+    return "https://"+host;
+  } catch { return ""; }
 }
 
-/* Novel cover dengan fallback chain: /api/img → wsrv → direct */
-function novelCoverImg(url, altText, cssText) {
-  if (!url) return null;
-  var clean = url.split("?")[0];
-  var step  = 0;
-  var img   = document.createElement("img");
-  img.alt   = altText || "";
-  if (cssText) img.style.cssText = cssText;
-  img.style.background = "var(--bg-surface)";
+function _buildWsrv(url, w) {
+  const clean = url.split("?")[0];
+  const ref   = _getRef(clean);
+  let q = `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w||200}&output=webp&q=85&n=-1`;
+  if (ref) q += `&ref=${encodeURIComponent(ref)}`;
+  return q;
+}
 
+/* proxyImg — meniru logika script.js:
+   - sankavollerei (anime): langsung
+   - sudah wsrv/ui-avatars: lewati
+   - novel (sakuranovel dll): /api/img dulu, fallback wsrv
+   - komik (komikindo dll): wsrv dengan ref header
+*/
+function proxyImg(url, w) {
+  if (!url) return "";
+  const clean = url.split("?")[0];
+  if (url.includes("wsrv.nl") || url.includes("ui-avatars") || url.includes("/api/img")) return url;
+  if (url.includes("sankavollerei")) return url; /* anime — akses langsung */
+  if (url.includes("data:image/svg") || url.includes("data:image/gif")) return "";
+  return _buildWsrv(clean, w || 200);
+}
+
+/* coverImg — DOM element dengan fallback chain lengkap */
+function coverImg(url, altText, cssText, fallbackEmoji) {
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;";
+  if (!url) { wrap.textContent = fallbackEmoji || "📚"; return wrap; }
+
+  const clean = url.split("?")[0];
+  const isAnime  = url.includes("sankavollerei");
+  const isNovel  = url.includes("sakuranovel") || url.includes("novelringan") ||
+                   url.includes("novelupdates") || url.includes("lightnovelworld") ||
+                   url.includes("wattpad") || url.includes("gramedia");
+
+  let step = 0;
   function getUrl(n) {
-    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
-    if (n === 1) {
-      try {
-        var h   = new URL(clean).hostname;
-        var ref = "https://" + h;
-        return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=200&output=webp&q=80&n=-1&ref=" + encodeURIComponent(ref);
-      } catch(e) { return clean; }
+    if (n === 0) {
+      if (isAnime) return clean;              /* anime: langsung */
+      if (isNovel) return "/api/img?url=" + encodeURIComponent(clean); /* novel: /api/img */
+      return _buildWsrv(clean, 200);          /* komik: wsrv+ref */
     }
-    return clean;
+    if (n === 1) {
+      if (isAnime) return clean;
+      return _buildWsrv(clean, 200);          /* fallback: wsrv */
+    }
+    if (n === 2) return clean;               /* direct */
+    return "";
   }
+
+  const img = document.createElement("img");
+  img.alt = altText || "";
+  if (cssText) img.style.cssText = cssText;
+  img.style.background = "var(--bg-surface,rgba(255,255,255,0.05))";
+
   img.onerror = function() {
     step++;
-    if (step <= 2) { img.src = getUrl(step); }
-    else { img.style.display = "none"; }
+    const next = getUrl(step);
+    if (next && step <= 2) { img.src = next; }
+    else { img.style.display = "none"; wrap.textContent = fallbackEmoji || "📚"; }
   };
   img.src = getUrl(0);
-  return img;
+  wrap.appendChild(img);
+  return wrap;
+}
+
+/* Legacy alias */
+function novelCoverImg(url, altText, cssText) {
+  const w = coverImg(url, altText, cssText, "📖");
+  return w.querySelector("img") || w;
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
@@ -1230,14 +1284,8 @@ function renderAnimeBookmarks(kategori) {
     coverWrap.onclick = () => gotoAnimeDetail(cleanSlug);
 
     if (bm.komik_cover) {
-      const img = document.createElement("img");
-      img.src = bm.komik_cover; /* anime URL langsung */
-      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
-      img.onerror = function() {
-        coverWrap.innerHTML = "⚡";
-        img.remove();
-      };
-      coverWrap.appendChild(img);
+      const c = coverImg(bm.komik_cover, bm.komik_title||"", "width:100%;height:100%;object-fit:cover;display:block;", "⚡");
+      coverWrap.appendChild(c);
     } else {
       coverWrap.innerHTML = "⚡";
     }
@@ -1339,9 +1387,7 @@ function renderBookmarks(kategori) {
 
   const renderItems = (items) => items.map(bm => `
     <div class="komik-list-item">
-      <img src="${esc(proxyImg(bm.komik_cover||'',80))}" alt="${esc(cleanTitle(bm.komik_title))}"
-        onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer"
-        onerror="this.style.display='none'">
+      <div style="width:52px;height:70px;flex-shrink:0;border-radius:7px;overflow:hidden;cursor:pointer;border:1px solid var(--glass-b);" onclick="gotoDetail('${esc(bm.komik_slug)}')" data-cover-komik="${esc(bm.komik_cover||'')}"></div>
       <div class="komik-list-info" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer">
         <div class="title">${esc(cleanTitle(bm.komik_title) || bm.komik_slug)}</div>
         <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
@@ -1358,6 +1404,13 @@ function renderBookmarks(kategori) {
   }
 
   el.innerHTML = `<div class="profile-search-bar"><input id="bookmarkSearch" placeholder="🔍 Cari judul komik..." oninput="filterBookmarkSearch(this.value)"></div><div id="bookmarkItems">${renderItems(list)}</div>`;
+  /* Inject cover setelah render */
+  el.querySelectorAll("[data-cover-komik]").forEach(div => {
+    const url = div.getAttribute("data-cover-komik");
+    if (!url) { div.textContent = "📚"; return; }
+    const c = coverImg(url, "", "width:100%;height:100%;object-fit:cover;display:block;border-radius:7px;", "📚");
+    div.appendChild(c);
+  });
 
   window._bookmarkCurrent = list;
   window.filterBookmarkSearch = function(q) {
@@ -1365,7 +1418,16 @@ function renderBookmarks(kategori) {
     const filtered = s ? (window._bookmarkCurrent||[]).filter(bm => (bm.komik_title||"").toLowerCase().includes(s) || (bm.komik_slug||"").toLowerCase().includes(s)) : (window._bookmarkCurrent||[]);
     const wrap = document.getElementById("bookmarkItems");
     if (!wrap) return;
-    wrap.innerHTML = filtered.length ? renderItems(filtered) : `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+    if (filtered.length) {
+      wrap.innerHTML = renderItems(filtered);
+      wrap.querySelectorAll("[data-cover-komik]").forEach(div => {
+        const url = div.getAttribute("data-cover-komik");
+        if (url) div.appendChild(coverImg(url,"","width:100%;height:100%;object-fit:cover;display:block;border-radius:7px;","📚"));
+        else div.textContent = "📚";
+      });
+    } else {
+      wrap.innerHTML = `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+    }
   };
 }
 
@@ -1410,9 +1472,7 @@ async function loadHistory() {
 
   function historyItemHTML(h) {
     return `<div class="komik-list-item">
-      <img src="${esc(proxyImg(h.komik_cover||''  ,80))}" alt="${esc(h.komik_title)}"
-        onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer"
-        onerror="this.style.display='none'">
+      <div style="width:52px;height:70px;flex-shrink:0;border-radius:7px;overflow:hidden;cursor:pointer;border:1px solid var(--glass-b);" onclick="gotoDetail('${esc(h.komik_slug)}')" data-cover-komik="${esc(h.komik_cover||'')}"></div>
       <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
         <div class="title">${esc(cleanTitle(h.komik_title) || h.komik_slug)}</div>
         <p>📖 Ch.${esc(String(h.chapter_number || '?'))}</p>
@@ -1439,6 +1499,13 @@ async function loadHistory() {
           Muat Lebih Banyak ↓
         </button>
       </div>` : "");
+    /* Inject cover images setelah render */
+    wrap.querySelectorAll("[data-cover-komik]").forEach(el => {
+      const url = el.getAttribute("data-cover-komik");
+      if (!url) { el.textContent = "📚"; return; }
+      const c = coverImg(url, "", "width:100%;height:100%;object-fit:cover;display:block;", "📚");
+      el.appendChild(c.tagName ? c : c);
+    });
   };
 
   window.filterHistory = function(q) {
@@ -1505,11 +1572,8 @@ async function loadProgressTab() {
     coverWrap.style.cssText = "width:52px;height:70px;flex-shrink:0;border-radius:8px;overflow:hidden;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;";
     coverWrap.onclick = () => gotoDetail(p.komik_slug);
     if (cover) {
-      const img = document.createElement("img");
-      img.src   = proxyImg(cover, 80);
-      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
-      img.onerror = () => { coverWrap.textContent = "📚"; img.remove(); };
-      coverWrap.appendChild(img);
+      const c = coverImg(cover, p.komik_title||"", "width:100%;height:100%;object-fit:cover;display:block;", "📚");
+      coverWrap.appendChild(c);
     } else {
       coverWrap.textContent = "📚";
     }
@@ -1895,11 +1959,8 @@ async function loadAnimeHistory() {
     coverWrap.style.cssText = "width:52px;height:70px;flex-shrink:0;border-radius:8px;overflow:hidden;background:rgba(108,99,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;border:1.5px solid rgba(108,99,255,0.25);";
     coverWrap.onclick = () => gotoAnimeDetail(h.anime_id);
     if (h.anime_cover) {
-      const img = document.createElement("img");
-      img.src = h.anime_cover;
-      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
-      img.onerror = () => { coverWrap.textContent = "⚡"; img.remove(); };
-      coverWrap.appendChild(img);
+      const c = coverImg(h.anime_cover, h.anime_title||"", "width:100%;height:100%;object-fit:cover;display:block;", "⚡");
+      coverWrap.appendChild(c);
     } else {
       coverWrap.textContent = "⚡";
     }
