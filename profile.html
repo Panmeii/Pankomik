@@ -317,6 +317,27 @@
       color: var(--acc);
     }
 
+    /* ─── PROFILE SEARCH BAR ─────────────────────────────── */
+    .profile-search-bar {
+      padding: 10px 14px 6px;
+    }
+    .profile-search-bar input {
+      width: 100%;
+      padding: 9px 14px;
+      background: var(--glass);
+      border: 1.5px solid var(--glass-b);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .profile-search-bar input:focus {
+      border-color: var(--acc);
+    }
+
     /* ─── KOMIK LIST CARDS ───────────────────────────────── */
     .komik-list-item {
       display: flex; gap: 12px;
@@ -337,6 +358,9 @@
 
     .komik-list-item img {
       width: 52px; height: 70px;
+      object-fit: cover;
+      border-radius: 7px;
+      flex-shrink: 0;
       object-fit: cover;
       border-radius: var(--radius-sm);
       flex-shrink: 0;
@@ -722,49 +746,6 @@
 
     /* ─── MOBILE TOUCH ───────────────────────────────────── */
     * { -webkit-tap-highlight-color: transparent; }
-
-    /* ─── SCROLL INDICATOR (tabs) ────────────────────────── */
-    .profile-tabs-wrap::after {
-      content: '';
-      position: absolute; right: 0; top: 0; bottom: 0;
-      width: 32px;
-      background: linear-gradient(to right, transparent, var(--bg-card, #1a1a24));
-      pointer-events: none;
-    }
-    .profile-tabs-wrap { position: sticky; top: 0; z-index: 100; }
-
-    /* ─── REFRESH BUTTON ─────────────────────────────────── */
-    .tab-refresh-btn {
-      float: right; background: none; border: 1px solid var(--glass-b);
-      color: var(--text-muted, #888); font-size: 12px; padding: 4px 10px;
-      border-radius: 99px; cursor: pointer; font-family: 'Nunito', sans-serif;
-      font-weight: 700; margin-bottom: 10px; transition: all 0.15s;
-    }
-    .tab-refresh-btn:hover { border-color: var(--acc); color: var(--acc); }
-
-    /* ─── NOVEL HISTORY COVER ────────────────────────────── */
-    .novel-history-cover {
-      width: 52px; height: 70px; border-radius: 8px; flex-shrink: 0;
-      overflow: hidden; border: 1px solid var(--glass-b);
-      background: var(--glass);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-    }
-    .novel-history-cover img {
-      width: 100%; height: 100%; object-fit: cover;
-    }
-
-    /* ─── SEARCH INPUT LIVE ──────────────────────────────── */
-    .tab-search {
-      width: 100%; padding: 9px 14px; margin-bottom: 12px;
-      background: rgba(0,0,0,0.2); border: 1px solid var(--glass-b);
-      border-radius: 99px; color: var(--text, #eaeaf0);
-      font-family: 'Nunito', sans-serif; font-size: 13px;
-      outline: none; box-sizing: border-box;
-      transition: border-color 0.2s;
-    }
-    .tab-search:focus { border-color: var(--acc); }
-    .tab-search::placeholder { color: var(--text-muted, #888); }
   </style>
 </head>
 <body class="has-bottom-nav">
@@ -796,7 +777,7 @@
 <script type="module">
 import {
   getCurrentUser, getProfile, updateProfile, updatePassword,
-  isOAuthUser, uploadAvatar, logout,
+  isOAuthUser, uploadAvatar,
   getBookmarks, removeBookmark, addBookmark,
   getHistory, getProgress, syncProfileProgress, getTotalChaptersRead,
   getLeaderboard, getNovelLeaderboard,
@@ -814,15 +795,6 @@ function proxyImg(url, w) {
   if (!url) return "";
   if (url.includes("wsrv.nl") || url.includes("ui-avatars")) return url;
   return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=" + (w||200) + "&output=webp&q=80";
-}
-
-/* Proxy khusus untuk cover novel dari sakuranovel.id */
-function proxyNovelCover(url) {
-  if (!url) return "";
-  if (url.includes("proxy.sankavolereii.my.id")) return url;
-  if (url.startsWith("/")) url = "https://sakuranovel.id" + url;
-  if (!url.startsWith("http")) url = "https://" + url;
-  return "https://proxy.sankavolereii.my.id/" + url;
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
@@ -927,7 +899,7 @@ async function loadProfile() {
         <button class="profile-tab"        id="tab-anime-bookmark" onclick="switchTab('anime-bookmark')"><span class="tab-icon">⚡</span>Anime</button>
         <button class="profile-tab"        id="tab-novel-bookmark" onclick="switchTab('novel-bookmark')"><span class="tab-icon">📚</span>Novel</button>
         <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')"><span class="tab-icon">📖</span>Riwayat</button>
-        <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')"><span class="tab-icon">📝</span>Nov. Hist</button>
+        <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')"><span class="tab-icon">📝</span>Novel</button>
         <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')"><span class="tab-icon">📊</span>Progress</button>
         <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')"><span class="tab-icon">🏅</span>Badge</button>
         <button class="profile-tab"        id="tab-leaderboard"    onclick="switchTab('leaderboard')"><span class="tab-icon">🏆</span>Top</button>
@@ -945,7 +917,6 @@ async function loadProfile() {
         <button class="kategori-btn" onclick="filterKategori('lagi_dibaca',this)">📖 Dibaca</button>
         <button class="kategori-btn" onclick="filterKategori('tamat',this)">✅ Tamat</button>
       </div>
-      <input type="text" id="bookmarkSearch" class="tab-search" placeholder="🔍 Cari judul komik..." oninput="bookmarkSearch(this.value)">
       <div id="bookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
@@ -971,11 +942,17 @@ async function loadProfile() {
 
     <!-- Riwayat Novel -->
     <div class="tab-content" id="content-novel-history">
+      <div style="display:flex;justify-content:flex-end;padding:8px 14px 0;">
+        <button onclick="window._novelHistoryAll=null;loadNovelHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
+      </div>
       <div id="novelHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
     <!-- Riwayat Komik -->
     <div class="tab-content" id="content-history">
+      <div style="display:flex;justify-content:flex-end;padding:8px 14px 0;">
+        <button onclick="window._historyAll=null;loadHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
+      </div>
       <div id="historyList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
 
@@ -1067,29 +1044,20 @@ async function loadProfile() {
 }
 
 /* ── SWITCH TAB ───────────────────────────────────────── */
-/* Cache flags: tab hanya di-load sekali kecuali data mungkin berubah */
-const _tabLoaded = {};
-
 window.switchTab = function (tab) {
   document.querySelectorAll(".profile-tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
   document.getElementById(`tab-${tab}`)?.classList.add("active");
   document.getElementById(`content-${tab}`)?.classList.add("active");
 
-  /* Update URL tanpa reload */
-  const url = new URL(window.location.href);
-  url.searchParams.set("tab", tab);
-  history.replaceState({}, "", url);
-
-  /* Load data hanya sekali per sesi, kecuali yang sering berubah */
-  if (tab === "history"        && !_tabLoaded.history)        { _tabLoaded.history = true; loadHistory(); }
-  if (tab === "novel-history"  && !_tabLoaded.novelHistory)   { _tabLoaded.novelHistory = true; loadNovelHistory(); }
-  if (tab === "novel-bookmark" && !_tabLoaded.novelBookmark)  { _tabLoaded.novelBookmark = true; loadNovelBookmarks(); }
-  if (tab === "anime-bookmark" && !_tabLoaded.animeBookmark)  { loadAnimeBookmarks(); }
-  if (tab === "progress"       && !_tabLoaded.progress)       { _tabLoaded.progress = true; loadProgressTab(); }
-  if (tab === "badge"          && !_tabLoaded.badge)          { _tabLoaded.badge = true; loadBadgeTab(); }
-  if (tab === "leaderboard"    && !_tabLoaded.leaderboard)    { _tabLoaded.leaderboard = true; loadLeaderboard(); }
-  if (tab === "comments"       && !_tabLoaded.comments)       { loadMyComments(); }
+  if (tab === "history")        loadHistory();
+  if (tab === "novel-history")  loadNovelHistory();
+  if (tab === "novel-bookmark") loadNovelBookmarks();
+  if (tab === "anime-bookmark") loadAnimeBookmarks();
+  if (tab === "progress")       loadProgressTab();
+  if (tab === "badge")          loadBadgeTab();
+  if (tab === "leaderboard")    loadLeaderboard();
+  if (tab === "comments")       loadMyComments();
 };
 
 /* ── BOOKMARKS ────────────────────────────────────────── */
@@ -1122,23 +1090,18 @@ function renderAnimeBookmarks(kategori) {
   const list = animeBookmarkData[kategori] || [];
   const el   = document.getElementById("animeBookmarkList");
   if (!el) return;
-  if (!list.length) {
-    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada anime di kategori ini.</p></div>`;
-    return;
-  }
-  el.innerHTML = list.map(bm => {
+  const renderAnimeItems = (items) => items.map(bm => {
     const cleanSlug = bm.komik_slug.replace(/^anime:/, "");
     return `<div class="komik-list-item">
       ${bm.komik_cover
-        ? `<img src="${esc(bm.komik_cover)}" alt="${esc(bm.komik_title)}"
+        ? `<img src="${esc(proxyImg(bm.komik_cover,80))}" alt="${esc(bm.komik_title)}"
             style="border:1px solid rgba(108,99,255,0.2);"
             onclick="gotoAnimeDetail('${esc(cleanSlug)}')"
             onerror="this.style.display='none'">`
         : `<div style="width:52px;height:70px;background:rgba(108,99,255,0.08);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;">⚡</div>`}
       <div class="komik-list-info" onclick="gotoAnimeDetail('${esc(cleanSlug)}')" style="cursor:pointer">
         <div class="title">${esc(bm.komik_title || cleanSlug)}</div>
-        <p style="color:#a78bfa;">⚡ Anime</p>
-        <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID")}</p>
+        <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}</p>
       </div>
       <div class="komik-list-actions">
         <button class="btn-sm primary" onclick="gotoAnimeDetail('${esc(cleanSlug)}')">Buka</button>
@@ -1146,12 +1109,30 @@ function renderAnimeBookmarks(kategori) {
       </div>
     </div>`;
   }).join("");
+
+  if (!list.length) {
+    el.innerHTML = `<div class="profile-search-bar"><input placeholder="🔍 Cari anime..." disabled style="opacity:0.4"></div><div class="empty-state"><p>📭</p><p>Belum ada anime di kategori ini.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="profile-search-bar"><input id="animeBmSearch" placeholder="🔍 Cari anime..." oninput="filterAnimeBmSearch(this.value)"></div><div id="animeBmItems">${renderAnimeItems(list)}</div>`;
+
+  window._animeBmCurrent = list;
+  window.filterAnimeBmSearch = function(q) {
+    const s = q.toLowerCase().trim();
+    const filtered = s ? (window._animeBmCurrent||[]).filter(bm => (bm.komik_title||"").toLowerCase().includes(s) || bm.komik_slug.replace(/^anime:/,"").toLowerCase().includes(s)) : (window._animeBmCurrent||[]);
+    const wrap = document.getElementById("animeBmItems");
+    if (!wrap) return;
+    wrap.innerHTML = filtered.length ? renderAnimeItems(filtered) : `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+  };
 }
 
 window.filterAnimeKategori = function(kategori, btn) {
   activeAnimeKategori = kategori;
   document.querySelectorAll("#content-anime-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
+  const si = document.getElementById("animeBmSearch");
+  if (si) si.value = "";
   renderAnimeBookmarks(kategori);
 };
 
@@ -1164,50 +1145,51 @@ window.hapusAnimeBookmark = async function(fullSlug, btn) {
 
 window.gotoAnimeDetail = slug => window.location.href = `/anime/detail/${slug}`;
 
-function renderBookmarks(kategori, query) {
-  let list = bookmarkData[kategori] || [];
-  const el = document.getElementById("bookmarkList");
-  if (!el) return;
+function renderBookmarks(kategori) {
+  const list = bookmarkData[kategori] || [];
+  const el   = document.getElementById("bookmarkList");
 
-  /* Filter pencarian lokal */
-  if (query) {
-    const q = query.toLowerCase();
-    list = list.filter(bm => (bm.komik_title || "").toLowerCase().includes(q));
-  }
-
-  if (!list.length) {
-    el.innerHTML = query
-      ? `<div class="empty-state"><p>🔍</p><p>Tidak ada hasil untuk "<strong>${esc(query)}</strong>"</p></div>`
-      : `<div class="empty-state"><p>📭</p><p>Belum ada komik di kategori ini.</p></div>`;
-    return;
-  }
-  /* Render dengan stagger animation */
-  el.innerHTML = list.map((bm, i) => `
-    <div class="komik-list-item" style="animation:lbSlideIn 0.25s ease ${i*30}ms both">
-      ${bm.komik_cover
-        ? `<img src="${esc(bm.komik_cover)}" alt="${esc(bm.komik_title)}" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer" onerror="this.style.display='none'">`
-        : `<div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);">📚</div>`}
+  const renderItems = (items) => items.map(bm => `
+    <div class="komik-list-item">
+      <img src="${esc(proxyImg(bm.komik_cover||'',80))}" alt="${esc(bm.komik_title)}"
+        onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer"
+        onerror="this.style.display='none'">
       <div class="komik-list-info" onclick="gotoDetail('${esc(bm.komik_slug)}')" style="cursor:pointer">
-        <div class="title">${esc(bm.komik_title)}</div>
-        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</p>
+        <div class="title">${esc(bm.komik_title || bm.komik_slug)}</div>
+        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
       </div>
       <div class="komik-list-actions">
         <button class="btn-sm primary" onclick="gotoDetail('${esc(bm.komik_slug)}')">Buka</button>
         <button class="btn-sm" onclick="hapusBookmark('${esc(bm.komik_slug)}',this)">Hapus</button>
       </div>
     </div>`).join("");
+
+  if (!list.length) {
+    el.innerHTML = `<div class="profile-search-bar"><input placeholder="🔍 Cari judul komik..." disabled style="opacity:0.4"></div><div class="empty-state"><p>📭</p><p>Belum ada komik di kategori ini.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="profile-search-bar"><input id="bookmarkSearch" placeholder="🔍 Cari judul komik..." oninput="filterBookmarkSearch(this.value)"></div><div id="bookmarkItems">${renderItems(list)}</div>`;
+
+  window._bookmarkCurrent = list;
+  window.filterBookmarkSearch = function(q) {
+    const s = q.toLowerCase().trim();
+    const filtered = s ? (window._bookmarkCurrent||[]).filter(bm => (bm.komik_title||"").toLowerCase().includes(s) || (bm.komik_slug||"").toLowerCase().includes(s)) : (window._bookmarkCurrent||[]);
+    const wrap = document.getElementById("bookmarkItems");
+    if (!wrap) return;
+    wrap.innerHTML = filtered.length ? renderItems(filtered) : `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+  };
 }
+
 
 window.filterKategori = function (kategori, btn) {
   activeKategori = kategori;
   document.querySelectorAll("#content-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
-  const q = document.getElementById("bookmarkSearch")?.value || "";
-  renderBookmarks(kategori, q);
-};
-
-window.bookmarkSearch = function(val) {
-  renderBookmarks(activeKategori, val);
+  /* Reset search */
+  const si = document.getElementById("bookmarkSearch");
+  if (si) si.value = "";
+  renderBookmarks(kategori);
 };
 
 window.hapusBookmark = async function (slug, btn) {
@@ -1218,41 +1200,96 @@ window.hapusBookmark = async function (slug, btn) {
 
 /* ── RIWAYAT KOMIK ────────────────────────────────────── */
 async function loadHistory() {
+  if (window._historyAll && document.getElementById("historyItems")) return; /* already loaded */
   const el = document.getElementById("historyList");
-  if (!el) return;
   el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
-  try {
-    const { history } = await getHistory(currentUser.id);
-    if (!history?.length) {
-      el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p><p style="font-size:11px;margin-top:4px;">Mulai baca komik untuk mencatat riwayat!</p></div>`;
+  const { history } = await getHistory(currentUser.id);
+  if (!history.length) {
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca.</p></div>`;
+    return;
+  }
+
+  /* Dedup: ambil hanya 1 entry per komik_slug (yang terbaru) */
+  const seen = new Map();
+  for (const h of history) {
+    if (!h.komik_slug) continue;
+    if (!seen.has(h.komik_slug)) seen.set(h.komik_slug, h);
+  }
+  const deduped = Array.from(seen.values());
+
+  function renderHistory(list) {
+    if (!list.length) {
+      el.innerHTML = `
+        <div class="profile-search-bar">
+          <input id="historySearch" placeholder="🔍 Cari judul komik..." oninput="filterHistory(this.value)">
+        </div>
+        <div class="empty-state"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
       return;
     }
-    el.innerHTML = history.map((h, i) => `
-      <div class="komik-list-item" style="animation:lbSlideIn 0.25s ease ${i*25}ms both">
-        ${h.komik_cover
-          ? `<img src="${esc(h.komik_cover)}" alt="${esc(h.komik_title)}" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer" onerror="this.style.display='none'">`
-          : `<div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);">📚</div>`}
+    el.innerHTML = `
+      <div class="profile-search-bar">
+        <input id="historySearch" placeholder="🔍 Cari judul komik..." oninput="filterHistory(this.value)">
+      </div>
+      <div id="historyItems">
+        ${list.map(h => `
+          <div class="komik-list-item">
+            <img src="${esc(proxyImg(h.komik_cover||'',80))}" alt="${esc(h.komik_title)}"
+              onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer"
+              onerror="this.style.display='none'">
+            <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
+              <div class="title">${esc(h.komik_title || h.komik_slug)}</div>
+              <p>📖 Ch.${esc(String(h.chapter_number || '?'))}</p>
+              <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
+            </div>
+            <div class="komik-list-actions">
+              <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
+              <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
+            </div>
+          </div>`).join("")}
+      </div>`;
+  }
+
+  window._historyAll = deduped;
+  window.filterHistory = function(q) {
+    const s = q.toLowerCase().trim();
+    const filtered = s ? window._historyAll.filter(h =>
+      (h.komik_title||"").toLowerCase().includes(s) ||
+      (h.komik_slug||"").toLowerCase().includes(s)
+    ) : window._historyAll;
+    const wrap = document.getElementById("historyItems");
+    if (!wrap) return;
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+      return;
+    }
+    wrap.innerHTML = filtered.map(h => `
+      <div class="komik-list-item">
+        <img src="${esc(proxyImg(h.komik_cover||'',80))}" alt="${esc(h.komik_title)}"
+          onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer"
+          onerror="this.style.display='none'">
         <div class="komik-list-info" onclick="gotoDetail('${esc(h.komik_slug)}')" style="cursor:pointer">
-          <div class="title">${esc(h.komik_title || h.komik_slug || '–')}</div>
-          <p>📖 Ch. ${esc(String(h.chapter_number || '?'))}</p>
-          <p>⏱️ ${new Date(h.read_at).toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'})}</p>
+          <div class="title">${esc(h.komik_title || h.komik_slug)}</div>
+          <p>📖 Ch.${esc(String(h.chapter_number || '?'))}</p>
+          <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
         </div>
         <div class="komik-list-actions">
-          <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">▶ Lanjut</button>
+          <button class="btn-sm primary" onclick="window.location.href='/baca/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
           <button class="btn-sm" onclick="gotoDetail('${esc(h.komik_slug)}')">Detail</button>
         </div>
       </div>`).join("");
-  } catch(err) {
-    console.error("loadHistory error:", err);
-    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat riwayat.</p></div>`;
-  }
+  };
+
+  renderHistory(deduped);
 }
 
 /* ── PROGRESS ─────────────────────────────────────────── */
+let _progressLoaded = false;
 async function loadProgressTab() {
+  if (_progressLoaded) return;
   const el = document.getElementById("progressList");
   el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
   const { progress } = await getProgress(currentUser.id);
+  _progressLoaded = true;
   if (!progress.length) { el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`; return; }
   el.innerHTML = progress.map(p => {
     const pct      = p.total_chapters > 0 ? Math.min(100, Math.round((p.read_chapters / p.total_chapters) * 100)) : 0;
@@ -1280,9 +1317,12 @@ async function loadProgressTab() {
 }
 
 /* ── BADGE & LEVEL ────────────────────────────────────── */
+let _badgeLoaded = false;
 async function loadBadgeTab() {
+  if (_badgeLoaded) return;
   const el = document.getElementById("badgeContent");
   const { total: liveTotal } = await getTotalChaptersRead(currentUser.id);
+  _badgeLoaded = true;
   const level     = Math.floor(liveTotal / 50) + 1;
   const title     = getLevelTitle(level);
   const xpInLevel = liveTotal % 50;
@@ -1477,29 +1517,44 @@ function renderNovelBookmarks(kategori) {
   const list = novelBookmarkData[kategori] || [];
   const el   = document.getElementById("novelBookmarkList");
   if (!el) return;
-  if (!list.length) {
-    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada novel di kategori ini.</p></div>`;
-    return;
-  }
-  el.innerHTML = list.map(bm => `
+
+  const renderItems = (items) => items.map(bm => `
     <div class="komik-list-item">
-      <div style="width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);">📖</div>
+      <div style="width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);cursor:pointer"
+        onclick="gotoNovelDetail('${esc(bm.novel_slug)}')">📖</div>
       <div class="komik-list-info" onclick="gotoNovelDetail('${esc(bm.novel_slug)}')" style="cursor:pointer">
         <div class="title">${esc(bm.novel_title || bm.novel_slug)}</div>
-        <p style="color:#a5b4fc;">📚 Novel</p>
-        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID')}</p>
+        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
       </div>
       <div class="komik-list-actions">
         <button class="btn-sm primary" onclick="gotoNovelDetail('${esc(bm.novel_slug)}')">Buka</button>
         <button class="btn-sm" onclick="hapusNovelBookmark('${esc(bm.novel_slug)}',this)">Hapus</button>
       </div>
     </div>`).join("");
+
+  if (!list.length) {
+    el.innerHTML = `<div class="profile-search-bar"><input placeholder="🔍 Cari judul novel..." disabled style="opacity:0.4"></div><div class="empty-state"><p>📭</p><p>Belum ada novel di kategori ini.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="profile-search-bar"><input id="novelBmSearch" placeholder="🔍 Cari judul novel..." oninput="filterNovelBmSearch(this.value)"></div><div id="novelBmItems">${renderItems(list)}</div>`;
+
+  window._novelBmCurrent = list;
+  window.filterNovelBmSearch = function(q) {
+    const s = q.toLowerCase().trim();
+    const filtered = s ? (window._novelBmCurrent||[]).filter(bm => (bm.novel_title||"").toLowerCase().includes(s) || (bm.novel_slug||"").toLowerCase().includes(s)) : (window._novelBmCurrent||[]);
+    const wrap = document.getElementById("novelBmItems");
+    if (!wrap) return;
+    wrap.innerHTML = filtered.length ? renderItems(filtered) : `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+  };
 }
 
 window.filterNovelKategori = function (kategori, btn) {
   activeNovelKategori = kategori;
   document.querySelectorAll("#content-novel-bookmark .kategori-btn").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
+  const si = document.getElementById("novelBmSearch");
+  if (si) si.value = "";
   renderNovelBookmarks(kategori);
 };
 
@@ -1511,53 +1566,72 @@ window.hapusNovelBookmark = async function (slug, btn) {
 
 /* ── NOVEL HISTORY ────────────────────────────────────── */
 async function loadNovelHistory() {
+  if (window._novelHistoryAll && document.getElementById("novelHistoryItems")) return;
+  const { history } = await getNovelHistory(currentUser.id);
   const el = document.getElementById("novelHistoryList");
-  if (!el) return;
-  el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
-  try {
-    const { history } = await getNovelHistory(currentUser.id);
-    if (!history?.length) {
-      el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca novel.</p></div>`;
-      return;
-    }
-    el.innerHTML = history.map((h, i) => {
-      const cover   = proxyNovelCover(h.novel_cover || "");
-      const dateStr = h.read_at
-        ? new Date(h.read_at).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"})
-        : "–";
-      const chTitle = h.chapter_title || h.chapter_slug || "–";
-      const chShort = chTitle.length > 30 ? chTitle.slice(0, 28) + "…" : chTitle;
-      return `
-        <div class="komik-list-item" style="animation:lbSlideIn 0.25s ease ${i*25}ms both">
-          <div class="novel-history-cover" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">
-            ${cover
-              ? `<img src="${esc(cover)}" alt="${esc(h.novel_title || '')}"
-                   onerror="this.onerror=null;this.parentElement.innerHTML='📖'">`
-              : "📖"}
-          </div>
-          <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">
-            <div class="title">${esc(h.novel_title || h.novel_slug || "–")}</div>
-            <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;
-               color:var(--acc);">${esc(chShort)}</p>
-            <p>⏱️ ${esc(dateStr)}</p>
+  if (!history?.length) {
+    el.innerHTML = `<div class="empty-state"><p>📭</p><p>Belum ada riwayat baca novel.</p></div>`;
+    return;
+  }
+
+  /* Dedup: 1 entry per novel_slug */
+  const seen = new Map();
+  for (const h of history) {
+    if (!h.novel_slug) continue;
+    if (!seen.has(h.novel_slug)) seen.set(h.novel_slug, h);
+  }
+  const deduped = Array.from(seen.values());
+
+  el.innerHTML = `
+    <div class="profile-search-bar">
+      <input id="novelHistorySearch" placeholder="🔍 Cari judul novel..." oninput="filterNovelHistory(this.value)">
+    </div>
+    <div id="novelHistoryItems">
+      ${deduped.map(h => `
+        <div class="komik-list-item">
+          <div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;
+            display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);cursor:pointer"
+            onclick="gotoNovelDetail('${esc(h.novel_slug)}')">📖</div>
+          <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer">
+            <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
+            <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${esc(h.chapter_title || h.chapter_slug || '')}</p>
+            <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
           </div>
           <div class="komik-list-actions">
-            <button class="btn-sm primary"
-              onclick="window.location.href='/baca-novel/${esc(h.chapter_slug || '')}'"
-            >▶ Lanjut</button>
-            <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug || '')}')">Detail</button>
+            <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
+            <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
           </div>
-        </div>`;
-    }).join("");
-  } catch(err) {
-    console.error("loadNovelHistory error:", err);
-    el.innerHTML = `<div class="empty-state"><p>😕</p><p>Gagal memuat riwayat novel.</p>
-      <button onclick="_tabLoaded.novelHistory=false;loadNovelHistory()"
-        style="margin-top:10px;padding:7px 18px;background:var(--acc);color:#fff;border:none;
-        border-radius:8px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;">
-        🔄 Coba Lagi
-      </button></div>`;
-  }
+        </div>`).join("")}
+    </div>`;
+
+  window._novelHistoryAll = deduped;
+  window.filterNovelHistory = function(q) {
+    const s = q.toLowerCase().trim();
+    const filtered = s ? window._novelHistoryAll.filter(h =>
+      (h.novel_title||"").toLowerCase().includes(s) ||
+      (h.novel_slug||"").toLowerCase().includes(s)
+    ) : window._novelHistoryAll;
+    const wrap = document.getElementById("novelHistoryItems");
+    if (!wrap) return;
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+      return;
+    }
+    wrap.innerHTML = filtered.map(h => `
+      <div class="komik-list-item">
+        <div style="width:52px;height:70px;background:var(--glass);border-radius:8px;flex-shrink:0;
+          display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--glass-b);">📖</div>
+        <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer">
+          <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
+          <p>${esc(h.chapter_title || h.chapter_slug || '')}</p>
+          <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
+        </div>
+        <div class="komik-list-actions">
+          <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
+          <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
+        </div>
+      </div>`).join("");
+  };
 }
 
 /* ── KOMENTAR SAYA ────────────────────────────────────── */
@@ -1705,18 +1779,9 @@ window.loadMyComments   = loadMyComments;
 window.gotoNovelDetail  = slug => window.location.href = `/novel/${slug}`;
 window.gotoDetail       = slug => window.location.href = `/komik/${slug}`;
 window.goHome           = () => window.location.href = "/";
-window.liveSearch       = () => {};  /* search dihandle oleh auth-header.js */
+window.liveSearch       = () => {};
 window.toggleMenu       = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display==="block"?"none":"block"; };
-window.toggleDarkMode   = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark"); const btn = document.querySelector('button[onclick="toggleDarkMode()"]'); if(btn) btn.textContent = document.body.classList.contains("light") ? "☀️" : "🌙"; };
-
-/* ── LOGOUT ──────────────────────────────────────────── */
-window.handleLogout = async function () {
-  if (!confirm("Yakin ingin keluar?")) return;
-  try {
-    await logout();
-  } catch(e) { console.error("Logout error:", e); }
-  window.location.href = "/masuk";
-};
+window.toggleDarkMode   = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark"); };
 
 </script>
 
