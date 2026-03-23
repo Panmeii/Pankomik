@@ -244,7 +244,12 @@ async function loadChapter() {
     const title = cleanText(d.title);
     document.title = `${title} — Pankomik`;
     const titleEl = document.getElementById("title");
-    if (titleEl) titleEl.innerText = title;
+    if (titleEl) {
+      /* Header hanya tampilkan nomor chapter: "Ch.15", "Ch.100.5", dll */
+      const chMatch = title.match(/chapter\s*([\d]+(?:[.,][\d]+)?)/i);
+      const chNum   = chMatch ? chMatch[1].replace(",", ".") : null;
+      titleEl.innerText = chNum ? `Ch.${chNum}` : title;
+    }
 
     /* Navigation slugs */
     nextSlug = d.navigation?.next || null;
