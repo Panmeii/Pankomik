@@ -1151,7 +1151,7 @@ window.hapusAnimeBookmark = async function(fullSlug, btn) {
   await loadAnimeBookmarks();
 };
 
-window.gotoAnimeDetail = slug => window.location.href = `/anime/detail/${slug}`;
+window.gotoAnimeDetail = slug => window.location.href = `/anime/${slug}`;
 
 function renderBookmarks(kategori) {
   const list = bookmarkData[kategori] || [];
