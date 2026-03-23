@@ -200,8 +200,20 @@ window._animeWatchURL = animeWatchURL;
 window._animeURL      = animeURL;
 window._animeGenreURL = animeGenreURL;
 
+// ===== SAFELINKU CONFIG =====
+const SAFELINKU_TOKEN = "ebe6859e5ffd04c913428f06f43cc1b54bf39836";
+
+function toSafelinku(url) {
+  if (!url) return "#";
+  // Handle mega.nz — ganti # dengan %23 sesuai instruksi Safelinku
+  let cleanUrl = url.includes("mega.nz")
+    ? url.replace(/#/g, "%23")
+    : url;
+  return `https://sfl.gl/st/?api=${SAFELINKU_TOKEN}&url=${encodeURIComponent(cleanUrl)}`;
+}
+// ============================
+
 let currentUser = null;
-/* Pre-fetch user, tapi loadEpisode juga akan fetch jika belum ada */
 getCurrentUser().then(u => { currentUser = u; }).catch(() => {});
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -262,7 +274,6 @@ async function loadEpisode() {
       document.getElementById("animeInfoTitle").textContent = `Detail Anime: ${currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim()}`;
       bar.style.display = "flex";
 
-      /* Simpan riwayat nonton ke DB — fetch user kalau belum ada */
       const saveUser = currentUser || await getCurrentUser().catch(() => null);
       if (saveUser) {
         currentUser = saveUser;
@@ -335,18 +346,28 @@ window.selectServer = async function(serverId, chipEl) {
   }
 };
 
+// ===== RENDER DOWNLOADS DENGAN SAFELINKU =====
 function renderDownloads(qualities) {
   const section = document.getElementById("downloadSection");
   const el      = document.getElementById("downloadLinks");
-  const hasLinks = qualities.some(q=>q.urls?.length);
-  if (!hasLinks) { section.style.display="none"; return; }
+  const hasLinks = qualities.some(q => q.urls?.length);
+  if (!hasLinks) { section.style.display = "none"; return; }
   section.style.display = "block";
-  el.innerHTML = qualities.filter(q=>q.urls?.length).map(q=>`
+  el.innerHTML = qualities.filter(q => q.urls?.length).map(q => `
     <div class="dl-quality-group">
-      <div class="dl-quality-label">${esc(q.title)}${q.size?` · ${esc(q.size)}`:""}</div>
-      <div class="dl-links">${q.urls.map(u=>`<a class="dl-link" href="${esc(u.url)}" target="_blank" rel="noopener">${esc(u.title)}</a>`).join("")}</div>
+      <div class="dl-quality-label">${esc(q.title)}${q.size ? ` · ${esc(q.size)}` : ""}</div>
+      <div class="dl-links">
+        ${q.urls.map(u => `
+          <a class="dl-link"
+             href="${esc(toSafelinku(u.url))}"
+             target="_blank"
+             rel="noopener">
+            ${esc(u.title)}
+          </a>`).join("")}
+      </div>
     </div>`).join("");
 }
+// =============================================
 
 function renderEpList(epList, currentId) {
   const wrap   = document.getElementById("epListWrap");
@@ -382,7 +403,6 @@ function showPlayerError(msg, epId, detail) {
 
 function navigateEpisode(episodeId) {
   pushAnimeURL(episodeId);
-  /* Track episode baru (SPA — tidak reload) */
   if (window.trackNow) window.trackNow();
   const frame   = document.getElementById("playerFrame");
   const loading = document.getElementById("playerLoading");
