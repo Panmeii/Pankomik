@@ -301,9 +301,6 @@ async function loadChapter() {
     /* Update browser URL ke pretty URL */
     pushURL(currentChapterSlug, komikSlug, `${title} — Pankomik`);
 
-    /* Track kunjungan chapter baru (SPA navigation — tidak reload) */
-    if (window.trackNow) window.trackNow();
-
     updateNavButtons();
 
     /* Chapter list
@@ -1203,3 +1200,34 @@ window.toggleAutoScroll = function () {
   }, 30);
   if (btn) { btn.textContent = "⏹️ Stop"; btn.classList.add("running"); }
 };
+
+/* ============================================================
+   TAP TO TOGGLE NAVIGASI
+   Daftar elemen yang TIDAK mentrigger toggle (UI elements):
+   - readerHeader, floatingBottomNav, settings, chapterListPanel,
+     chapterListOverlay, menuDropdown, singleControls, bottomChapterNav
+   Tap di luar semua itu → toggle show/hide navigasi.
+   ============================================================ */
+document.addEventListener("click", e => {
+  /* Tunggu sampai _navVisible tersedia dari inline script */
+  if (typeof window._navShow !== "function") return;
+
+  const UI_IDS = [
+    "readerHeader", "floatingBottomNav", "settings",
+    "chapterListPanel", "chapterListOverlay", "menuDropdown",
+    "singleControls", "bottomChapterNav", "readerCommentSection",
+    "readerToastWrap"
+  ];
+
+  for (const id of UI_IDS) {
+    const el = document.getElementById(id);
+    if (el && el.contains(e.target)) return; /* klik di UI → abaikan */
+  }
+
+  /* Klik di area konten → toggle */
+  if (window._navVisible()) {
+    window._navHide();
+  } else {
+    window._navShow();
+  }
+}, { capture: false });
