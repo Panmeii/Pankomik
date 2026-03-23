@@ -239,54 +239,71 @@
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
 
-    /* ─── TABS ───────────────────────────────────────────── */
-    .profile-tabs-wrap {
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* ─── NAVIGASI 2-LEVEL ──────────────────────────────── */
+    .nav-wrap {
+      position: sticky; top: 0; z-index: 100;
       background: var(--bg-card, #1a1a24);
       border-bottom: 1px solid var(--glass-b);
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
     }
 
-    .profile-tabs {
-      display: flex;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding: 0 12px;
-      gap: 2px;
+    /* Level 1 — Section utama */
+    .nav-l1 {
+      display: flex; padding: 0 8px; gap: 2px;
+      overflow-x: auto; scrollbar-width: none;
     }
-    .profile-tabs::-webkit-scrollbar { display: none; }
+    .nav-l1::-webkit-scrollbar { display: none; }
 
-    .profile-tab {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 12px 12px;
-      font-size: 12px; font-weight: 800;
+    .nav-l1-btn {
+      flex-shrink: 0;
+      display: flex; align-items: center; gap: 5px;
+      padding: 12px 14px;
+      font-size: 13px; font-weight: 900;
       color: var(--text-muted, #666);
       cursor: pointer;
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
+      border: none; border-bottom: 2px solid transparent;
       background: none;
-      border-top: none; border-left: none; border-right: none;
       font-family: 'Nunito', sans-serif;
-      transition: color 0.2s, border-color 0.2s;
-      letter-spacing: 0.2px;
+      transition: color 0.18s, border-color 0.18s;
+      white-space: nowrap;
     }
+    .nav-l1-btn.active { color: var(--acc); border-bottom-color: var(--acc); }
+    .nav-l1-btn:hover:not(.active) { color: var(--text, #eaeaf0); }
 
-    .profile-tab .tab-icon { font-size: 14px; }
-
-    .profile-tab.active {
-      color: var(--acc);
-      border-bottom-color: var(--acc);
+    /* Level 2 — Sub tabs per section (hidden by default) */
+    .nav-l2 {
+      display: none; padding: 6px 10px 8px; gap: 6px;
+      overflow-x: auto; scrollbar-width: none;
+      background: rgba(0,0,0,0.15);
+      border-top: 1px solid var(--glass-b);
     }
+    .nav-l2::-webkit-scrollbar { display: none; }
+    .nav-l2.show { display: flex; }
 
-    .profile-tab:hover:not(.active) { color: var(--text, #eaeaf0); }
+    .nav-l2-btn {
+      flex-shrink: 0;
+      padding: 5px 14px; border-radius: 99px;
+      border: 1.5px solid var(--glass-b);
+      background: transparent;
+      color: var(--text-muted, #666);
+      font-size: 12px; font-weight: 800;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .nav-l2-btn.active {
+      background: var(--acc); border-color: var(--acc);
+      color: #fff; box-shadow: 0 3px 10px var(--acc-glow);
+    }
+    .nav-l2-btn:hover:not(.active) { border-color: var(--acc); color: var(--acc); }
 
     /* ─── TAB CONTENT ────────────────────────────────────── */
     .tab-content { display: none; padding: 16px; }
     .tab-content.active { display: block; }
+
+    /* ─── PROFILE TAB (legacy compat) ────────────────────── */
+    .profile-tab { display:none; }
 
     /* ─── KATEGORI FILTER PILLS ──────────────────────────── */
     .kategori-tabs {
@@ -935,20 +952,28 @@ async function loadProfile() {
     <!-- Badge chips -->
     ${badgeCount > 0 ? `<div class="hero-badges">${ownedChips}</div>` : ""}
 
-    <!-- ══ TABS ══ -->
-    <div class="profile-tabs-wrap">
-      <div class="profile-tabs">
-        <button class="profile-tab active" id="tab-bookmark"       onclick="switchTab('bookmark')"><span class="tab-icon">🔖</span>Komik</button>
-        <button class="profile-tab"        id="tab-anime-bookmark" onclick="switchTab('anime-bookmark')"><span class="tab-icon">⚡</span>Anime</button>
-        <button class="profile-tab"        id="tab-novel-bookmark" onclick="switchTab('novel-bookmark')"><span class="tab-icon">📚</span>Novel</button>
-        <button class="profile-tab"        id="tab-history"        onclick="switchTab('history')"><span class="tab-icon">📖</span>Komik</button>
-        <button class="profile-tab"        id="tab-anime-history"  onclick="switchTab('anime-history')"><span class="tab-icon">⚡</span>Anime</button>
-        <button class="profile-tab"        id="tab-novel-history"  onclick="switchTab('novel-history')"><span class="tab-icon">📝</span>Novel</button>
-        <button class="profile-tab"        id="tab-progress"       onclick="switchTab('progress')"><span class="tab-icon">📊</span>Progress</button>
-        <button class="profile-tab"        id="tab-badge"          onclick="switchTab('badge')"><span class="tab-icon">🏅</span>Badge</button>
-        <button class="profile-tab"        id="tab-leaderboard"    onclick="switchTab('leaderboard')"><span class="tab-icon">🏆</span>Top</button>
-        <button class="profile-tab"        id="tab-comments"       onclick="switchTab('comments')"><span class="tab-icon">💬</span>Komen</button>
-        <button class="profile-tab"        id="tab-settings"       onclick="switchTab('settings')"><span class="tab-icon">⚙️</span>Edit</button>
+    <!-- ══ NAVIGASI 2-LEVEL ══ -->
+    <div class="nav-wrap" id="profileNav">
+      <!-- Level 1: Section utama -->
+      <div class="nav-l1">
+        <button class="nav-l1-btn active" id="l1-bookmark"    onclick="switchSection('bookmark')">🔖 Bookmark</button>
+        <button class="nav-l1-btn"        id="l1-history"     onclick="switchSection('history')">📖 Riwayat</button>
+        <button class="nav-l1-btn"        id="l1-progress"    onclick="switchSection('progress')">📊 Progress</button>
+        <button class="nav-l1-btn"        id="l1-badge"       onclick="switchSection('badge')">🏅 Badge</button>
+        <button class="nav-l1-btn"        id="l1-leaderboard" onclick="switchSection('leaderboard')">🏆 Top</button>
+        <button class="nav-l1-btn"        id="l1-comments"    onclick="switchSection('comments')">💬 Komen</button>
+        <button class="nav-l1-btn"        id="l1-settings"    onclick="switchSection('settings')">⚙️ Edit</button>
+      </div>
+      <!-- Level 2: Sub-tabs (muncul hanya untuk Bookmark & Riwayat) -->
+      <div class="nav-l2 show" id="l2-bookmark">
+        <button class="nav-l2-btn active" id="tab-bookmark"       onclick="switchTab('bookmark')">📚 Komik</button>
+        <button class="nav-l2-btn"        id="tab-anime-bookmark" onclick="switchTab('anime-bookmark')">⚡ Anime</button>
+        <button class="nav-l2-btn"        id="tab-novel-bookmark" onclick="switchTab('novel-bookmark')">📖 Novel</button>
+      </div>
+      <div class="nav-l2" id="l2-history">
+        <button class="nav-l2-btn" id="tab-history"        onclick="switchTab('history')">📚 Komik</button>
+        <button class="nav-l2-btn" id="tab-anime-history"  onclick="switchTab('anime-history')">⚡ Anime</button>
+        <button class="nav-l2-btn" id="tab-novel-history"  onclick="switchTab('novel-history')">📖 Novel</button>
       </div>
     </div>
 
@@ -1096,12 +1121,58 @@ async function loadProfile() {
 }
 
 /* ── SWITCH TAB ───────────────────────────────────────── */
+/* ── Section map: tab → section ── */
+const TAB_SECTION = {
+  "bookmark": "bookmark", "anime-bookmark": "bookmark", "novel-bookmark": "bookmark",
+  "history":  "history",  "anime-history":  "history",  "novel-history":  "history",
+  "progress": "progress", "badge": "badge", "leaderboard": "leaderboard",
+  "comments": "comments", "settings": "settings"
+};
+
+window.switchSection = function(section) {
+  /* Aktifkan L1 button */
+  document.querySelectorAll(".nav-l1-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(`l1-${section}`)?.classList.add("active");
+
+  /* Sembunyikan semua L2 */
+  document.querySelectorAll(".nav-l2").forEach(l => l.classList.remove("show"));
+
+  /* Tampilkan L2 kalau ada (bookmark / history) */
+  const l2 = document.getElementById(`l2-${section}`);
+  if (l2) {
+    l2.classList.add("show");
+    /* Aktifkan sub-tab pertama yang ada di section ini */
+    const firstBtn = l2.querySelector(".nav-l2-btn");
+    if (firstBtn) {
+      const firstTab = firstBtn.id.replace("tab-", "");
+      switchTab(firstTab);
+      return;
+    }
+  }
+
+  /* Tidak ada L2 → langsung tampilkan content */
+  switchTab(section);
+};
+
 window.switchTab = function (tab) {
-  document.querySelectorAll(".profile-tab").forEach(t => t.classList.remove("active"));
-  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+  /* Update L2 active state */
+  document.querySelectorAll(".nav-l2-btn").forEach(b => b.classList.remove("active"));
   document.getElementById(`tab-${tab}`)?.classList.add("active");
+
+  /* Update L1 active state */
+  const section = TAB_SECTION[tab] || tab;
+  document.querySelectorAll(".nav-l1-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById(`l1-${section}`)?.classList.add("active");
+
+  /* Pastikan L2 yang benar terlihat */
+  document.querySelectorAll(".nav-l2").forEach(l => l.classList.remove("show"));
+  document.getElementById(`l2-${section}`)?.classList.add("show");
+
+  /* Ganti content */
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
   document.getElementById(`content-${tab}`)?.classList.add("active");
 
+  /* Load data */
   if (tab === "history")        loadHistory();
   if (tab === "anime-history")  loadAnimeHistory();
   if (tab === "novel-history")  loadNovelHistory();
