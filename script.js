@@ -421,167 +421,198 @@ let isLoadingMore = false;
 let ioObserver    = null; /* IntersectionObserver untuk infinite scroll sentinel */
 
 /* ============================================================
-   TOP KOMIK
+   TOP KOMIK POPULER — Westmanga API
    ============================================================ */
-/* ── Cache per period ── */
-const _topCache = {};
-let _topActivePeriod = "week";
+const _popCache   = {};        /* cache: period → { list, pagination } */
+let   _popPeriod  = "week";
+let   _popPage    = 1;
+let   _popLoading = false;
 
-/* Dipanggil saat tab diklik */
 window.switchTopPeriod = function(period, btn) {
-  _topActivePeriod = period;
-  document.querySelectorAll(".top-period-btn").forEach(b => b.classList.remove("active"));
+  if (period === _popPeriod && _popCache[period]) return;
+  _popPeriod = period;
+  _popPage   = 1;
+  document.querySelectorAll(".pop-tab").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
-  getTopKomik(period);
+  const container = document.getElementById("topKomik");
+  if (container) container.innerHTML = "";
+  getTopKomik(period, 1);
 };
 
-async function getTopKomik(period) {
-  period = period || _topActivePeriod;
+window.loadMorePop = function() {
+  if (_popLoading) return;
+  _popPage++;
+  getTopKomik(_popPeriod, _popPage, true);
+};
+
+async function getTopKomik(period, page, append) {
+  period = period || _popPeriod;
+  page   = page   || 1;
   const container = document.getElementById("topKomik");
   if (!container) return;
 
-  /* Pakai cache kalau sudah pernah fetch */
-  if (_topCache[period]) {
-    container.innerHTML = "";
-    renderTopKomik(_topCache[period], container);
+  const cacheKey = `${period}_${page}`;
+
+  /* Pakai cache kalau ada */
+  if (_popCache[cacheKey]) {
+    if (!append) container.innerHTML = "";
+    renderTopKomik(_popCache[cacheKey].list, container, append ? container.querySelectorAll(".pop-card").length : 0);
+    updatePopLoadMore(_popCache[cacheKey].pagination, period);
     return;
   }
 
-  /* Skeleton 3-grid */
-  container.innerHTML = `<div class="top-grid">${
-    Array(9).fill(`
-      <div class="top-card-skel">
-        <div class="top-card-skel-img"></div>
-        <div class="top-card-skel-line"></div>
-        <div class="top-card-skel-line short"></div>
-      </div>`).join("")
-  }</div>`;
+  /* Skeleton — hanya saat pertama (bukan append) */
+  if (!append) {
+    container.innerHTML = `<div class="pop-grid">${
+      Array(9).fill(`<div class="pop-skel"><div class="pop-skel-img"></div><div class="pop-skel-info"><div class="pop-skel-l"></div><div class="pop-skel-l s"></div></div></div>`).join("")
+    }</div>`;
+  } else {
+    /* Append: tambah spinner di bawah */
+    const sp = document.createElement("div");
+    sp.id = "popAppendSpin";
+    sp.style.cssText = "padding:16px;text-align:center;color:var(--text-muted);font-size:12px;";
+    sp.textContent = "Memuat...";
+    container.appendChild(sp);
+  }
 
+  _popLoading = true;
   try {
-    /* Westmanga popular API: ?page=1&period=day|week|month|all */
-    const url = `https://www.sankavollerei.com/comic/westmanga/popular?page=1&period=${period}`;
+    const url  = `https://www.sankavollerei.com/comic/westmanga/popular?page=${page}&period=${period}`;
     const res  = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    const list = data.data || data.komikList || [];
+    const list = data.data || [];
+    const pag  = data.pagination || {};
 
-    _topCache[period] = list;   /* simpan ke cache */
-    container.innerHTML = "";
-    renderTopKomik(list, container);
+    _popCache[cacheKey] = { list, pagination: pag };
+
+    /* Hapus skeleton / spinner */
+    if (!append) container.innerHTML = "";
+    else document.getElementById("popAppendSpin")?.remove();
+
+    renderTopKomik(list, container, append ? container.querySelectorAll(".pop-card").length : 0);
+    updatePopLoadMore(pag, period);
   } catch (err) {
-    console.error("[Top] Gagal:", err);
-    container.innerHTML = `
-      <div style="padding:20px 14px;color:var(--text-muted);font-size:13px;display:flex;flex-direction:column;gap:8px;">
-        <p>😕 Gagal memuat Top Komik</p>
-        <button onclick="getTopKomik('${period}')" style="align-self:flex-start;padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;">Coba Lagi</button>
+    console.error("[Pop] Gagal:", err);
+    document.getElementById("popAppendSpin")?.remove();
+    if (!append) container.innerHTML = `
+      <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:13px;">
+        <div style="font-size:32px;margin-bottom:8px;">😕</div>
+        <p>Gagal memuat. <button onclick="getTopKomik('${period}',${page})" style="background:none;border:none;color:var(--accent);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px;">Coba lagi</button></p>
       </div>`;
   }
+  _popLoading = false;
 }
 
-/* Flag emoji berdasarkan country_id */
-function countryFlag(id) {
-  const flags = { JP:"🇯🇵", KR:"🇰🇷", CN:"🇨🇳", ID:"🇮🇩" };
-  return flags[(id||"").toUpperCase()] || "";
+function updatePopLoadMore(pag, period) {
+  const wrap = document.getElementById("popLoadMore");
+  if (!wrap) return;
+  /* Tampilkan tombol kalau masih ada halaman berikutnya */
+  const hasMore = pag.current_page < pag.last_page;
+  wrap.style.display = hasMore ? "flex" : "none";
 }
 
-/* Format angka views */
-function fmtViews(n) {
-  if (!n || n < 1000) return n ? String(n) : "–";
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1) + "jt";
-  return (n / 1000).toFixed(0) + "rb";
-}
+function renderTopKomik(list, container, startIdx) {
+  startIdx = startIdx || 0;
 
-function renderTopKomik(list, container) {
-  const grid = document.createElement("div");
-  grid.className = "top-grid";
+  /* Pastikan ada .pop-grid */
+  let grid = container.querySelector(".pop-grid");
+  if (!grid) {
+    grid = document.createElement("div");
+    grid.className = "pop-grid";
+    container.appendChild(grid);
+  }
 
-  list.slice(0, 18).forEach((komik, i) => {
+  list.forEach((komik, i) => {
     if (!komik?.slug) return;
+    const rank = startIdx + i;   /* rank global (0-based) */
 
     const rawCover = komik.cover || komik.image || "";
-    const isSvg    = !rawCover || rawCover.startsWith("data:image/svg");
-    const origUrl  = isSvg ? "" : rawCover.split("?")[0];
+    const origUrl  = rawCover && !rawCover.startsWith("data:") ? rawCover.split("?")[0] : "";
     const coverSrc = origUrl ? proxyImg(origUrl, 240) : "";
 
-    const latestCh = (komik.lastChapters || komik.chapters || [])[0] || {};
-    const chNum    = latestCh.number || latestCh.title || "";
-    const chSlug   = latestCh.slug   || "";
-
-    /* Timestamp dari created_at.time (unix) atau formatted */
-    const chTime   = latestCh.created_at?.formatted || latestCh.created_at?.time || "";
+    const latestCh = (komik.lastChapters || [])[0] || {};
+    const chNum    = latestCh.number  || "";
+    const chSlug   = latestCh.slug    || "";
+    const chTime   = latestCh.created_at?.time || latestCh.created_at?.formatted || "";
     const timeAgo  = chTime ? fmtTimeAgo(chTime) : "";
 
-    const rating   = komik.rating ? Number(komik.rating).toFixed(1) : "";
-    const flag     = countryFlag(komik.country_id);
-    const isHot    = komik.hot;
+    const rating   = komik.rating ? (+komik.rating).toFixed(1) : "";
+    const flag     = ({ JP:"🇯🇵", KR:"🇰🇷", CN:"🇨🇳", ID:"🇮🇩" })[(komik.country_id||"").toUpperCase()] || "";
     const isColor  = komik.color;
+    const isHot    = komik.hot;
 
     const card = document.createElement("div");
-    card.className = "top-card";
+    card.className = "pop-card";
     card.dataset.slug = komik.slug;
 
     card.innerHTML = `
-      <div class="top-card-img-wrap">
+      <div class="pop-cover">
         ${coverSrc
-          ? `<img src="${coverSrc}" alt="${escHtml(komik.title||"")}" loading="${i < 6 ? "eager" : "lazy"}">`
-          : `<div class="top-card-gen"></div>`}
-        ${flag ? `<span class="top-card-flag">${flag}</span>` : ""}
-        ${isColor ? `<span class="top-card-badge color-badge">🎨 COLOR</span>` : ""}
-        ${isHot   ? `<span class="top-card-hot">🔥</span>` : ""}
-        <span class="top-card-rank">${i < 3 ? ["🥇","🥈","🥉"][i] : `#${i+1}`}</span>
-      </div>
-      <div class="top-card-info">
-        <p class="top-card-title">${escHtml(komik.title || "Untitled")}</p>
-        <div class="top-card-meta">
-          ${chNum ? `<span class="top-card-ch">CH ${escHtml(String(chNum))}</span>` : ""}
-          ${timeAgo ? `<span class="top-card-time">${escHtml(timeAgo)}</span>` : ""}
-          ${rating  ? `<span class="top-card-rating">⭐ ${rating}</span>` : ""}
+          ? `<img src="${coverSrc}" alt="${escHtml(komik.title||"")}" loading="${rank < 6 ? "eager" : "lazy"}">`
+          : `<div class="pop-cover-placeholder"></div>`}
+        <div class="pop-cover-overlay"></div>
+        <span class="pop-rank${rank < 3 ? " pop-rank-top" : ""}">${rank < 3 ? ["🥇","🥈","🥉"][rank] : `#${rank+1}`}</span>
+        ${flag ? `<span class="pop-flag">${flag}</span>` : ""}
+        <div class="pop-cover-badges">
+          ${isColor ? `<span class="pop-badge-color">COLOR</span>` : ""}
+          ${isHot   ? `<span class="pop-badge-hot">🔥 HOT</span>` : ""}
         </div>
+      </div>
+      <div class="pop-body">
+        <p class="pop-name">${escHtml(komik.title || "Untitled")}</p>
+        <div class="pop-meta">
+          ${chNum   ? `<span class="pop-ch">Ch.${escHtml(String(chNum))}</span>` : ""}
+          ${timeAgo ? `<span class="pop-time">${escHtml(timeAgo)}</span>` : ""}
+        </div>
+        ${rating ? `<div class="pop-rating"><span class="pop-star">★</span>${rating}</div>` : ""}
       </div>`;
 
     if (coverSrc && origUrl) {
       const img = card.querySelector("img");
       if (img) imgFallback(img, origUrl);
     } else if (!coverSrc) {
-      const ph = card.querySelector(".top-card-gen");
+      const ph = card.querySelector(".pop-cover-placeholder");
       if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type || "manga", 155), ph);
     }
 
     card.onclick = async () => {
       card.style.opacity = "0.7";
       card.style.pointerEvents = "none";
-      const resolvedSrc = await resolveSource(komik.slug, "westmanga");
-      sessionStorage.setItem("komikSrcHint", resolvedSrc);
+      const src = await resolveSource(komik.slug, "westmanga");
+      sessionStorage.setItem("komikSrcHint", src);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
 
     grid.appendChild(card);
-    animateIn(card, i * 30);
+    animateIn(card, i * 25);
   });
-
-  container.appendChild(grid);
 }
 
-/* Format waktu dari unix timestamp atau string "19 Mar 2026 07:52" → "X jam lalu" */
+/* Format waktu dari unix timestamp atau string formatted */
 function fmtTimeAgo(val) {
-  let ts;
-  if (typeof val === "number") {
-    ts = val * 1000;
-  } else {
-    ts = Date.parse(val);
-  }
+  const ts = typeof val === "number" ? val * 1000 : Date.parse(val);
   if (!ts || isNaN(ts)) return String(val || "");
-  const diff = Date.now() - ts;
-  const m = Math.floor(diff / 60000);
-  if (m < 1)  return "baru saja";
-  if (m < 60) return m + " menit lalu";
-  const h = Math.floor(m / 60);
-  if (h < 24) return h + " jam lalu";
-  const d = Math.floor(h / 24);
-  if (d < 30) return d + " hari lalu";
-  return Math.floor(d / 30) + " bulan lalu";
+  const d = Math.floor((Date.now() - ts) / 86400000);
+  if (d === 0) {
+    const h = Math.floor((Date.now() - ts) / 3600000);
+    if (h === 0) return Math.floor((Date.now() - ts) / 60000) + " mnt lalu";
+    return h + " jam lalu";
+  }
+  if (d < 30)  return d + " hari lalu";
+  if (d < 365) return Math.floor(d / 30) + " bln lalu";
+  return Math.floor(d / 365) + " thn lalu";
 }
+
+/* Format views */
+function fmtViews(n) {
+  if (!n) return "–";
+  if (n >= 1e6) return (n/1e6).toFixed(n>=1e7?0:1)+"jt";
+  if (n >= 1e3) return (n/1e3).toFixed(0)+"rb";
+  return String(n);
+}
+
 
 /* ============================================================
    LATEST UPDATE
