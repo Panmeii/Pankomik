@@ -239,6 +239,31 @@
       flex-shrink: 0;
     }
 
+    /* Tombol tengah: chapter info + buka list */
+    .fbn-center-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 0 10px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.09);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.5);
+      font-size: 11px; font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s;
+    }
+    .fbn-center-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.85);
+    }
+    .fbn-center-btn:active { transform: scale(0.94); }
+    .fbn-center-icon { font-size: 14px; opacity: 0.7; }
+
     .fbn-chapter-info {
       font-size: 11px; color: rgba(255,255,255,0.4);
       font-weight: 700; white-space: nowrap;
@@ -436,7 +461,10 @@
 <div id="floatingBottomNav">
   <button id="fbnPrev" class="fbn-btn" onclick="prevChapter()" disabled>← Prev</button>
   <div class="fbn-sep"></div>
-  <span class="fbn-chapter-info" id="fbnInfo">—</span>
+  <button class="fbn-center-btn" onclick="toggleChapterList()" title="Daftar Chapter">
+    <span id="fbnInfo">—</span>
+    <span class="fbn-center-icon">📚</span>
+  </button>
   <div class="fbn-sep"></div>
   <button id="fbnNext" class="fbn-btn next-ch" onclick="nextChapter()" disabled>Next →</button>
 </div>
@@ -499,21 +527,18 @@
 <!-- ═══ SCROLL BEHAVIOR CONTROLLER ═══ -->
 <script>
 (function () {
-  const header = document.getElementById("readerHeader");
+  const header    = document.getElementById("readerHeader");
   const bottomNav = document.getElementById("floatingBottomNav");
 
-  let lastY      = window.scrollY;
-  let ticking    = false;
-  let hideTimer  = null;
-  let isVisible  = true;
-  let isUserScrolling = false;
+  let lastY     = window.scrollY;
+  let ticking   = false;
+  let hideTimer = null;
+  let isVisible = true;
 
-  /* Minimum scroll to trigger hide: 80px */
-  const HIDE_THRESHOLD = 80;
-  /* Show immediately on scroll up */
-  const SHOW_THRESHOLD = 8;
-  /* Auto-hide delay after scroll stops: 2.8s */
-  const AUTO_HIDE_MS   = 2800;
+  /* ── Konstanta ── */
+  const HIDE_SCROLL_DOWN = 60;   /* scroll down sekian px → hide */
+  const SHOW_SCROLL_UP   = 8;    /* scroll up sekian px → show */
+  const AUTO_HIDE_MS     = 4000; /* auto-hide setelah 4 detik diam */
 
   function show() {
     if (isVisible) return;
@@ -527,16 +552,18 @@
     isVisible = false;
     header.classList.add("hidden");
     bottomNav.classList.add("hidden");
+    clearTimeout(hideTimer);
   }
 
   function resetAutoHide() {
     clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => {
-      /* Only auto-hide if user is actively at reading position (past 200px) */
-      if (window.scrollY > 200) hide();
-    }, AUTO_HIDE_MS);
+    /* Auto-hide hanya kalau sudah scroll melewati header */
+    if (window.scrollY > 120) {
+      hideTimer = setTimeout(hide, AUTO_HIDE_MS);
+    }
   }
 
+  /* ── Scroll handler ── */
   window.addEventListener("scroll", () => {
     if (ticking) return;
     ticking = true;
@@ -544,12 +571,11 @@
       const y    = window.scrollY;
       const diff = y - lastY;
 
-      if (diff > HIDE_THRESHOLD) {
-        /* Scrolling DOWN fast → hide */
+      if (diff > HIDE_SCROLL_DOWN) {
+        /* Scroll DOWN cepat → hide, batalkan timer */
         hide();
-        clearTimeout(hideTimer);
-      } else if (diff < -SHOW_THRESHOLD) {
-        /* Scrolling UP → always show */
+      } else if (diff < -SHOW_SCROLL_UP) {
+        /* Scroll UP → show + reset timer */
         show();
         resetAutoHide();
       }
@@ -559,29 +585,36 @@
     });
   }, { passive: true });
 
-  /* TAP anywhere on reader area toggles header */
+  /* ── Tap di area reader ── TOGGLE show/hide ── */
   document.addEventListener("click", e => {
-    /* Don't toggle if clicking on header itself, settings, chapter panel */
     const isHeader   = header.contains(e.target);
     const isBottom   = bottomNav.contains(e.target);
     const isSettings = document.getElementById("settings")?.contains(e.target);
     const isPanel    = document.getElementById("chapterListPanel")?.contains(e.target);
+    const isOverlay  = document.getElementById("chapterListOverlay")?.contains(e.target);
     const isDropdown = document.getElementById("menuDropdown")?.contains(e.target);
 
-    if (isHeader || isBottom || isSettings || isPanel || isDropdown) return;
+    /* Klik pada UI element → jangan toggle */
+    if (isHeader || isBottom || isSettings || isPanel || isOverlay || isDropdown) return;
 
-    if (!isVisible) {
+    /* Tap di area komik → toggle */
+    if (isVisible) {
+      hide();
+    } else {
       show();
       resetAutoHide();
     }
-    /* Don't hide on tap — only scroll hides */
   });
 
-  /* When reader loads new chapter, show header briefly then auto-hide */
+  /* ── Saat chapter baru dimuat → show sebentar lalu hide ── */
   window.addEventListener("readerChapterLoaded", () => {
     show();
     resetAutoHide();
   });
+
+  /* ── Expose untuk dipakai reader.js ── */
+  window._navShow = show;
+  window._navHide = hide;
 })();
 </script>
 
@@ -624,6 +657,5 @@
     if (slug && !_commentSlug) initReaderComments(slug);
   }, 3000);
 </script>
-<script type="module" src="/tracker.js"></script>
 </body>
 </html>
