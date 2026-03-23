@@ -270,6 +270,17 @@
       padding: 0 6px;
     }
 
+    /* Overlay transparan menangkap tap saat nav visible */
+    #navTapOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1050; /* di bawah header(z:1200) & bottomNav(z:1100) tapi di atas konten */
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #navTapOverlay.active { display: block; }
+
     /* ═══════════════════════════════════════
        AUTH DROPDOWN
     ═══════════════════════════════════════ */
@@ -469,6 +480,9 @@
   <button id="fbnNext" class="fbn-btn next-ch" onclick="nextChapter()" disabled>Next →</button>
 </div>
 
+<!-- Overlay transparan untuk menangkap tap hide navigasi -->
+<div id="navTapOverlay"></div>
+
 <div id="menuDropdown" class="dropdown"></div>
 
 <!-- Settings panel -->
@@ -529,22 +543,25 @@
 (function () {
   const header    = document.getElementById("readerHeader");
   const bottomNav = document.getElementById("floatingBottomNav");
+  const overlay   = document.getElementById("navTapOverlay");
 
   let lastY     = window.scrollY;
   let ticking   = false;
   let hideTimer = null;
   let isVisible = true;
 
-  /* ── Konstanta ── */
-  const HIDE_SCROLL_DOWN = 60;   /* scroll down sekian px → hide */
-  const SHOW_SCROLL_UP   = 8;    /* scroll up sekian px → show */
-  const AUTO_HIDE_MS     = 4000; /* auto-hide setelah 4 detik diam */
+  const HIDE_SCROLL_DOWN = 60;
+  const SHOW_SCROLL_UP   = 8;
+  const AUTO_HIDE_MS     = 4000;
 
   function show() {
     if (isVisible) return;
     isVisible = true;
     header.classList.remove("hidden");
     bottomNav.classList.remove("hidden");
+    /* Aktifkan overlay — tap di mana saja akan hide */
+    overlay.classList.add("active");
+    resetAutoHide();
   }
 
   function hide() {
@@ -552,67 +569,65 @@
     isVisible = false;
     header.classList.add("hidden");
     bottomNav.classList.add("hidden");
+    /* Nonaktifkan overlay */
+    overlay.classList.remove("active");
     clearTimeout(hideTimer);
   }
 
   function resetAutoHide() {
     clearTimeout(hideTimer);
-    /* Auto-hide hanya kalau sudah scroll melewati header */
     if (window.scrollY > 120) {
       hideTimer = setTimeout(hide, AUTO_HIDE_MS);
     }
   }
 
-  /* ── Scroll handler ── */
+  /* Tap overlay → hide navigasi */
+  overlay.addEventListener("click", (e) => {
+    e.stopPropagation();
+    hide();
+  });
+
+  /* Tap di area reader (bukan di UI) → toggle */
+  document.addEventListener("click", e => {
+    /* Abaikan kalau overlay yang handle */
+    if (e.target === overlay) return;
+
+    const isHeader   = header.contains(e.target);
+    const isBottom   = bottomNav.contains(e.target);
+    const isSettings = document.getElementById("settings")?.contains(e.target);
+    const isPanel    = document.getElementById("chapterListPanel")?.contains(e.target);
+    const isOverlay2 = document.getElementById("chapterListOverlay")?.contains(e.target);
+    const isDropdown = document.getElementById("menuDropdown")?.contains(e.target);
+
+    if (isHeader || isBottom || isSettings || isPanel || isOverlay2 || isDropdown) return;
+
+    /* Area konten → toggle */
+    if (isVisible) {
+      hide();
+    } else {
+      show();
+    }
+  });
+
+  /* Scroll DOWN → hide */
   window.addEventListener("scroll", () => {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
       const y    = window.scrollY;
       const diff = y - lastY;
-
-      if (diff > HIDE_SCROLL_DOWN) {
-        /* Scroll DOWN cepat → hide, batalkan timer */
-        hide();
-      } else if (diff < -SHOW_SCROLL_UP) {
-        /* Scroll UP → show + reset timer */
-        show();
-        resetAutoHide();
-      }
-
+      if (diff > HIDE_SCROLL_DOWN)      hide();
+      else if (diff < -SHOW_SCROLL_UP)  show();
       lastY   = y;
       ticking = false;
     });
   }, { passive: true });
 
-  /* ── Tap di area reader ── TOGGLE show/hide ── */
-  document.addEventListener("click", e => {
-    const isHeader   = header.contains(e.target);
-    const isBottom   = bottomNav.contains(e.target);
-    const isSettings = document.getElementById("settings")?.contains(e.target);
-    const isPanel    = document.getElementById("chapterListPanel")?.contains(e.target);
-    const isOverlay  = document.getElementById("chapterListOverlay")?.contains(e.target);
-    const isDropdown = document.getElementById("menuDropdown")?.contains(e.target);
-
-    /* Klik pada UI element → jangan toggle */
-    if (isHeader || isBottom || isSettings || isPanel || isOverlay || isDropdown) return;
-
-    /* Tap di area komik → toggle */
-    if (isVisible) {
-      hide();
-    } else {
-      show();
-      resetAutoHide();
-    }
-  });
-
-  /* ── Saat chapter baru dimuat → show sebentar lalu hide ── */
+  /* Chapter baru dimuat → show */
   window.addEventListener("readerChapterLoaded", () => {
     show();
-    resetAutoHide();
   });
 
-  /* ── Expose untuk dipakai reader.js ── */
   window._navShow = show;
   window._navHide = hide;
 })();
