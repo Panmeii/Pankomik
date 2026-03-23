@@ -793,16 +793,42 @@ let activeKategori = "favorit";
 
 function proxyImg(url, w) {
   if (!url) return "";
-  if (url.includes("wsrv.nl") || url.includes("ui-avatars") || url.includes("proxy.sankavolereii")) return url;
-  /* Anime/sankavollerei cover — pakai proxy khusus */
-  if (url.includes("sankavollerei") || url.includes("cdn.myanimelist") || url.includes("cdn.animenewsnetwork")) {
-    return "https://proxy.sankavolereii.my.id/" + url;
+  if (url.includes("wsrv.nl") || url.includes("ui-avatars")) return url;
+  if (url.includes("sankavollerei")) return url; /* anime API - akses langsung */
+  if (url.includes("/api/img")) return url;
+  /* Novel cover (sakuranovel, dll) — pakai /api/img sama seperti novel.html */
+  var clean = url.split("?")[0];
+  return "/api/img?url=" + encodeURIComponent(clean);
+}
+
+/* Novel cover dengan fallback chain: /api/img → wsrv → direct */
+function novelCoverImg(url, altText, cssText) {
+  if (!url) return null;
+  var clean = url.split("?")[0];
+  var step  = 0;
+  var img   = document.createElement("img");
+  img.alt   = altText || "";
+  if (cssText) img.style.cssText = cssText;
+  img.style.background = "var(--bg-surface)";
+
+  function getUrl(n) {
+    if (n === 0) return "/api/img?url=" + encodeURIComponent(clean);
+    if (n === 1) {
+      try {
+        var h   = new URL(clean).hostname;
+        var ref = "https://" + h;
+        return "https://wsrv.nl/?url=" + encodeURIComponent(clean) + "&w=200&output=webp&q=80&n=-1&ref=" + encodeURIComponent(ref);
+      } catch(e) { return clean; }
+    }
+    return clean;
   }
-  /* Novel (sakuranovel, dll) — pakai proxy sankavolereii */
-  if (url.includes("sakuranovel") || url.includes("novelupdates") || url.includes("lightnovelworld")) {
-    return "https://proxy.sankavolereii.my.id/" + url;
-  }
-  return "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=" + (w||200) + "&output=webp&q=80";
+  img.onerror = function() {
+    step++;
+    if (step <= 2) { img.src = getUrl(step); }
+    else { img.style.display = "none"; }
+  };
+  img.src = getUrl(0);
+  return img;
 }
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
@@ -1102,7 +1128,7 @@ function renderAnimeBookmarks(kategori) {
     const cleanSlug = bm.komik_slug.replace(/^anime:/, "");
     return `<div class="komik-list-item">
       ${bm.komik_cover
-        ? `<img src="${esc(proxyImg(bm.komik_cover,80))}" alt="${esc(bm.komik_title)}"
+        ? `<img src="${esc(bm.komik_cover)}" alt="${esc(bm.komik_title)}"
             style="border:1px solid rgba(108,99,255,0.2);"
             onclick="gotoAnimeDetail('${esc(cleanSlug)}')"
             onerror="this.style.display='none'">`
@@ -1283,36 +1309,124 @@ async function loadHistory() {
 /* ── PROGRESS ─────────────────────────────────────────── */
 let _progressLoaded = false;
 async function loadProgressTab() {
-  if (_progressLoaded) return;
+  if (_progressLoaded && document.getElementById("progressItems")) return;
   const el = document.getElementById("progressList");
   el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
-  const { progress } = await getProgress(currentUser.id);
+
+  /* Ambil progress + history (untuk cover) secara paralel */
+  const [{ progress }, { history }] = await Promise.all([
+    getProgress(currentUser.id),
+    getHistory(currentUser.id),
+  ]);
   _progressLoaded = true;
-  if (!progress.length) { el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`; return; }
-  el.innerHTML = progress.map(p => {
+
+  if (!progress.length) {
+    el.innerHTML = `<div class="empty-state"><p>📊</p><p>Belum ada progress. Mulai baca komik dulu!</p></div>`;
+    return;
+  }
+
+  /* Buat cover map dari history */
+  const coverMap = {};
+  (history||[]).forEach(h => { if (h.komik_slug && h.komik_cover) coverMap[h.komik_slug] = h.komik_cover; });
+
+  window._progressAll  = progress;
+  window._progressPage = 1;
+  const PER_PAGE = 8;
+
+  function buildProgressItem(p) {
     const pct      = p.total_chapters > 0 ? Math.min(100, Math.round((p.read_chapters / p.total_chapters) * 100)) : 0;
     const pctLabel = p.total_chapters > 0 ? `${pct}%` : "—";
-    const chapLabel = p.total_chapters > 0 ? `${p.read_chapters} / ${p.total_chapters} chapter` : `${p.read_chapters} chapter dibaca`;
-    const updated   = new Date(p.updated_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
-    return `
-      <div class="komik-list-item" style="flex-direction:column;align-items:flex-start;gap:8px;">
-        <div style="display:flex;gap:12px;align-items:center;width:100%;">
-          <div style="flex:1;min-width:0;">
-            <div class="title" style="cursor:pointer;" onclick="gotoDetail('${esc(p.komik_slug)}')">${esc(p.komik_title)}</div>
-            <p style="font-size:11px;color:var(--text-muted);margin:0;">📖 ${esc(chapLabel)} · 🕒 ${esc(updated)}</p>
-          </div>
-          <div style="text-align:right;flex-shrink:0;">
-            <span style="font-size:18px;font-weight:900;color:var(--acc);font-family:'Bangers',cursive;letter-spacing:1px;">${esc(pctLabel)}</span>
-          </div>
-        </div>
-        ${p.total_chapters > 0 ? `<div class="progress-bar-wrap" style="width:100%;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>` : ""}
-        <div style="display:flex;gap:6px;width:100%;">
-          ${p.last_chapter_slug ? `<button class="btn-sm primary" onclick="window.location.href='/baca/${esc(p.last_chapter_slug)}'">▶️ Lanjut</button>` : ""}
-          <button class="btn-sm" onclick="gotoDetail('${esc(p.komik_slug)}')">Detail</button>
-        </div>
+    const chapLabel = p.total_chapters > 0
+      ? `${p.read_chapters} / ${p.total_chapters} ch`
+      : `${p.read_chapters} ch dibaca`;
+    const updated = new Date(p.updated_at).toLocaleDateString("id-ID", {day:"numeric",month:"short",year:"numeric"});
+    const cover   = coverMap[p.komik_slug] || "";
+
+    const wrap = document.createElement("div");
+    wrap.className = "komik-list-item";
+    wrap.style.cssText = "flex-direction:row;align-items:center;gap:10px;";
+
+    /* Cover */
+    const coverWrap = document.createElement("div");
+    coverWrap.style.cssText = "width:52px;height:70px;flex-shrink:0;border-radius:8px;overflow:hidden;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;";
+    coverWrap.onclick = () => gotoDetail(p.komik_slug);
+    if (cover) {
+      const img = document.createElement("img");
+      img.src   = proxyImg(cover, 80);
+      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+      img.onerror = () => { coverWrap.textContent = "📚"; img.remove(); };
+      coverWrap.appendChild(img);
+    } else {
+      coverWrap.textContent = "📚";
+    }
+    wrap.appendChild(coverWrap);
+
+    /* Info + progress */
+    const info = document.createElement("div");
+    info.style.cssText = "flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;";
+    info.innerHTML = `
+      <div class="title" style="cursor:pointer" onclick="gotoDetail('${esc(p.komik_slug)}')">${esc(p.komik_title)}</div>
+      <p style="font-size:11px;color:var(--text-muted);margin:0;">📖 ${esc(chapLabel)} · 🕒 ${esc(updated)}</p>
+      ${p.total_chapters > 0 ? `
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+        <div class="progress-bar-wrap" style="flex:1;"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        <span style="font-size:12px;font-weight:900;color:var(--acc);min-width:32px;text-align:right;">${esc(pctLabel)}</span>
+      </div>` : ""}
+      <div style="display:flex;gap:5px;margin-top:2px;">
+        ${p.last_chapter_slug ? `<button class="btn-sm primary" onclick="window.location.href='/baca/${esc(p.last_chapter_slug)}'">▶️ Lanjut</button>` : ""}
+        <button class="btn-sm" onclick="gotoDetail('${esc(p.komik_slug)}')">Detail</button>
       </div>`;
-  }).join("");
+    wrap.appendChild(info);
+    return wrap;
+  }
+
+  window.renderProgressPage = function() {
+    const src     = window._progressFiltered || window._progressAll;
+    const shown   = src.slice(0, window._progressPage * PER_PAGE);
+    const hasMore = shown.length < src.length;
+    const wrap    = document.getElementById("progressItems");
+    if (!wrap) return;
+    wrap.innerHTML = "";
+    shown.forEach(p => wrap.appendChild(buildProgressItem(p)));
+    if (hasMore) {
+      const btn = document.createElement("div");
+      btn.style.cssText = "text-align:center;padding:12px 0;";
+      btn.innerHTML = `<button onclick="window._progressPage++;window.renderProgressPage()"
+        style="padding:9px 28px;background:var(--acc);color:#fff;border:none;border-radius:10px;
+        font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+        Muat Lebih Banyak ↓</button>`;
+      wrap.appendChild(btn);
+    }
+  };
+
+  window.filterProgress = function(q) {
+    const s = q.toLowerCase().trim();
+    window._progressFiltered = s
+      ? window._progressAll.filter(p =>
+          (p.komik_title||"").toLowerCase().includes(s) ||
+          (p.komik_slug||"").toLowerCase().includes(s))
+      : null;
+    window._progressPage = 1;
+    window.renderProgressPage();
+  };
+
+  el.innerHTML = "";
+  const header = document.createElement("div");
+  header.style.cssText = "display:flex;align-items:center;justify-content:space-between;padding:8px 14px 0;";
+  header.innerHTML = `
+    <div class="profile-search-bar" style="flex:1;padding:0 8px 0 0;">
+      <input id="progressSearch" placeholder="🔍 Cari judul komik..." oninput="filterProgress(this.value)">
+    </div>
+    <button onclick="_progressLoaded=false;window._progressAll=null;loadProgressTab()"
+      style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;padding:4px 0;font-family:'Nunito',sans-serif;">
+      🔄 Refresh</button>`;
+  const itemsWrap = document.createElement("div");
+  itemsWrap.id = "progressItems";
+  el.appendChild(header);
+  el.appendChild(itemsWrap);
+  window.renderProgressPage();
 }
+
 
 /* ── BADGE & LEVEL ────────────────────────────────────── */
 let _badgeLoaded = false;
@@ -1516,34 +1630,74 @@ function renderNovelBookmarks(kategori) {
   const el   = document.getElementById("novelBookmarkList");
   if (!el) return;
 
-  const renderItems = (items) => items.map(bm => `
-    <div class="komik-list-item">
-      <div style="width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);cursor:pointer"
-        onclick="gotoNovelDetail('${esc(bm.novel_slug)}')">📖</div>
-      <div class="komik-list-info" onclick="gotoNovelDetail('${esc(bm.novel_slug)}')" style="cursor:pointer">
-        <div class="title">${esc(bm.novel_title || bm.novel_slug)}</div>
-        <p>📅 ${new Date(bm.created_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
-      </div>
-      <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="gotoNovelDetail('${esc(bm.novel_slug)}')">Buka</button>
-        <button class="btn-sm" onclick="hapusNovelBookmark('${esc(bm.novel_slug)}',this)">Hapus</button>
-      </div>
-    </div>`).join("");
-
   if (!list.length) {
     el.innerHTML = `<div class="profile-search-bar"><input placeholder="🔍 Cari judul novel..." disabled style="opacity:0.4"></div><div class="empty-state"><p>📭</p><p>Belum ada novel di kategori ini.</p></div>`;
     return;
   }
 
-  el.innerHTML = `<div class="profile-search-bar"><input id="novelBmSearch" placeholder="🔍 Cari judul novel..." oninput="filterNovelBmSearch(this.value)"></div><div id="novelBmItems">${renderItems(list)}</div>`;
+  function buildItem(bm) {
+    const wrap = document.createElement("div");
+    wrap.className = "komik-list-item";
+
+    /* Cover */
+    const coverWrap = document.createElement("div");
+    coverWrap.style.cssText = "width:52px;height:70px;flex-shrink:0;border-radius:8px;overflow:hidden;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;border:1px solid rgba(99,102,241,0.2);";
+    coverWrap.onclick = () => gotoNovelDetail(bm.novel_slug);
+    if (bm.novel_cover) {
+      const img = novelCoverImg(bm.novel_cover, bm.novel_title || "", "width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;");
+      img.onerror = function() { coverWrap.textContent = "📖"; img.remove(); };
+      coverWrap.appendChild(img);
+    } else {
+      coverWrap.textContent = "📖";
+    }
+    wrap.appendChild(coverWrap);
+
+    /* Info */
+    const info = document.createElement("div");
+    info.className = "komik-list-info";
+    info.style.cursor = "pointer";
+    info.onclick = () => gotoNovelDetail(bm.novel_slug);
+    info.innerHTML = `<div class="title">${esc(bm.novel_title || bm.novel_slug)}</div>
+      <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}</p>`;
+    wrap.appendChild(info);
+
+    /* Actions */
+    const acts = document.createElement("div");
+    acts.className = "komik-list-actions";
+    acts.innerHTML = `<button class="btn-sm primary" onclick="gotoNovelDetail('${esc(bm.novel_slug)}')">Buka</button>
+      <button class="btn-sm" onclick="hapusNovelBookmark('${esc(bm.novel_slug)}',this)">Hapus</button>`;
+    wrap.appendChild(acts);
+    return wrap;
+  }
+
+  /* Search bar */
+  const searchBar = document.createElement("div");
+  searchBar.className = "profile-search-bar";
+  searchBar.innerHTML = `<input id="novelBmSearch" placeholder="🔍 Cari judul novel..." oninput="filterNovelBmSearch(this.value)">`;
+
+  const itemsWrap = document.createElement("div");
+  itemsWrap.id = "novelBmItems";
+  list.forEach(bm => itemsWrap.appendChild(buildItem(bm)));
+
+  el.innerHTML = "";
+  el.appendChild(searchBar);
+  el.appendChild(itemsWrap);
 
   window._novelBmCurrent = list;
+  window._novelBmBuildItem = buildItem;
   window.filterNovelBmSearch = function(q) {
     const s = q.toLowerCase().trim();
-    const filtered = s ? (window._novelBmCurrent||[]).filter(bm => (bm.novel_title||"").toLowerCase().includes(s) || (bm.novel_slug||"").toLowerCase().includes(s)) : (window._novelBmCurrent||[]);
+    const filtered = s ? list.filter(bm =>
+      (bm.novel_title||"").toLowerCase().includes(s) ||
+      (bm.novel_slug||"").toLowerCase().includes(s)) : list;
     const wrap = document.getElementById("novelBmItems");
     if (!wrap) return;
-    wrap.innerHTML = filtered.length ? renderItems(filtered) : `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+    wrap.innerHTML = "";
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+    } else {
+      filtered.forEach(bm => wrap.appendChild(buildItem(bm)));
+    }
   };
 }
 
@@ -1572,52 +1726,66 @@ async function loadNovelHistory() {
     return;
   }
 
-  /* Dedup: 1 entry per novel_slug */
   const seen = new Map();
   for (const h of history) {
     if (!h.novel_slug) continue;
     if (!seen.has(h.novel_slug)) seen.set(h.novel_slug, h);
   }
-  window._novelHistoryAll = Array.from(seen.values());
+  window._novelHistoryAll  = Array.from(seen.values());
   window._novelHistoryPage = 1;
 
-  function novelHistItemHTML(h) {
-    const coverUrl = h.novel_cover
-      ? "https://proxy.sankavolereii.my.id/" + h.novel_cover
-      : "";
-    return `<div class="komik-list-item">
-      ${coverUrl
-        ? `<img src="${esc(coverUrl)}" alt="${esc(h.novel_title)}"
-            onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer"
-            onerror="this.outerHTML='<div style=&quot;width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);&quot;>📖</div>'">`
-        : `<div style="width:52px;height:70px;background:rgba(99,102,241,0.1);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid rgba(99,102,241,0.2);cursor:pointer"
-            onclick="gotoNovelDetail('${esc(h.novel_slug)}')">📖</div>`}
-      <div class="komik-list-info" onclick="gotoNovelDetail('${esc(h.novel_slug)}')" style="cursor:pointer">
-        <div class="title">${esc(h.novel_title || h.novel_slug || '–')}</div>
-        <p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${esc(h.chapter_title || h.chapter_slug || '')}</p>
-        <p>🕒 ${new Date(h.read_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}</p>
-      </div>
-      <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
-        <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>
-      </div>
-    </div>`;
+  function buildNovelHistItem(h) {
+    const wrap = document.createElement("div");
+    wrap.className = "komik-list-item";
+
+    const coverWrap = document.createElement("div");
+    coverWrap.style.cssText = "width:52px;height:70px;flex-shrink:0;border-radius:8px;overflow:hidden;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;border:1px solid rgba(99,102,241,0.2);";
+    coverWrap.onclick = () => gotoNovelDetail(h.novel_slug);
+    if (h.novel_cover) {
+      const img = novelCoverImg(h.novel_cover, h.novel_title || "", "width:100%;height:100%;object-fit:cover;display:block;");
+      img.onerror = function() { coverWrap.textContent = "📖"; img.remove(); };
+      coverWrap.appendChild(img);
+    } else {
+      coverWrap.textContent = "📖";
+    }
+    wrap.appendChild(coverWrap);
+
+    const info = document.createElement("div");
+    info.className = "komik-list-info";
+    info.style.cursor = "pointer";
+    info.onclick = () => gotoNovelDetail(h.novel_slug);
+    const chapterText = esc(h.chapter_title || h.chapter_slug || "");
+    info.innerHTML = `<div class="title">${esc(h.novel_title || h.novel_slug || "–")}</div>
+      ${chapterText ? `<p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">${chapterText}</p>` : ""}
+      <p>🕒 ${new Date(h.read_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}</p>`;
+    wrap.appendChild(info);
+
+    const acts = document.createElement("div");
+    acts.className = "komik-list-actions";
+    acts.innerHTML = `<button class="btn-sm primary" onclick="window.location.href='/baca-novel/${esc(h.chapter_slug)}'">▶️ Lanjut</button>
+      <button class="btn-sm" onclick="gotoNovelDetail('${esc(h.novel_slug)}')">Detail</button>`;
+    wrap.appendChild(acts);
+    return wrap;
   }
 
   window.renderNovelHistoryPage = function() {
     const src     = window._novelHistoryFiltered || window._novelHistoryAll;
-    const shown   = src.slice(0, window._novelHistoryPage * 8);
+    const perPage = 8;
+    const shown   = src.slice(0, window._novelHistoryPage * perPage);
     const hasMore = shown.length < src.length;
     const wrap    = document.getElementById("novelHistoryItems");
     if (!wrap) return;
-    wrap.innerHTML = shown.map(novelHistItemHTML).join("") +
-      (hasMore ? `<div style="text-align:center;padding:12px 0;">
-        <button onclick="window._novelHistoryPage++;window.renderNovelHistoryPage()"
-          style="padding:9px 28px;background:var(--acc);color:#fff;border:none;border-radius:10px;
-          font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
-          Muat Lebih Banyak ↓
-        </button>
-      </div>` : "");
+    wrap.innerHTML = "";
+    shown.forEach(h => wrap.appendChild(buildNovelHistItem(h)));
+    if (hasMore) {
+      const btn = document.createElement("div");
+      btn.style.cssText = "text-align:center;padding:12px 0;";
+      btn.innerHTML = `<button onclick="window._novelHistoryPage++;window.renderNovelHistoryPage()"
+        style="padding:9px 28px;background:var(--acc);color:#fff;border:none;border-radius:10px;
+        font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;">
+        Muat Lebih Banyak ↓</button>`;
+      wrap.appendChild(btn);
+    }
   };
 
   window.filterNovelHistory = function(q) {
@@ -1631,11 +1799,14 @@ async function loadNovelHistory() {
     window.renderNovelHistoryPage();
   };
 
-  el.innerHTML = `
-    <div class="profile-search-bar">
-      <input id="novelHistorySearch" placeholder="🔍 Cari judul novel..." oninput="filterNovelHistory(this.value)">
-    </div>
-    <div id="novelHistoryItems"></div>`;
+  el.innerHTML = "";
+  const searchBar = document.createElement("div");
+  searchBar.className = "profile-search-bar";
+  searchBar.innerHTML = `<input id="novelHistorySearch" placeholder="🔍 Cari judul novel..." oninput="filterNovelHistory(this.value)">`;
+  const itemsWrap = document.createElement("div");
+  itemsWrap.id = "novelHistoryItems";
+  el.appendChild(searchBar);
+  el.appendChild(itemsWrap);
   window.renderNovelHistoryPage();
 }
 
