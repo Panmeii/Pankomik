@@ -28,8 +28,16 @@
 <div class="toast-container" id="toastContainer"></div>
 <button id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Kembali ke atas">↑</button>
 
-<!-- Top Komik leaderboard -->
-<h2 class="section-title"><span>🔥</span>Top Komik</h2>
+<!-- Top Komik populer -->
+<div class="top-komik-header">
+  <h2 class="section-title" style="margin:0;padding:0;"><span>🔥</span>Populer</h2>
+  <div class="top-period-tabs" id="topPeriodTabs">
+    <button class="top-period-btn" data-period="day"   onclick="switchTopPeriod('day',this)">Hari ini</button>
+    <button class="top-period-btn active" data-period="week"  onclick="switchTopPeriod('week',this)">Minggu ini</button>
+    <button class="top-period-btn" data-period="month" onclick="switchTopPeriod('month',this)">Bulan ini</button>
+    <button class="top-period-btn" data-period="all"   onclick="switchTopPeriod('all',this)">Semua</button>
+  </div>
+</div>
 <div id="topKomik"></div>
 
 <!-- Genre chips -->
