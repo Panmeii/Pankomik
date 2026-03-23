@@ -475,11 +475,10 @@ async function getTopKomik(page, append) {
         </div>`).join("")
     }</div>`;
   } else {
-    const sp = Object.assign(document.createElement("div"), {
-      id: "popSpin",
-      innerHTML: `<div class="pop-spin-dot"></div><div class="pop-spin-dot"></div><div class="pop-spin-dot"></div>`
-    });
+    const sp = document.createElement("div");
+    sp.id = "popSpin";
     sp.className = "pop-spinner";
+    sp.innerHTML = `<div class="pop-spin-dot"></div><div class="pop-spin-dot"></div><div class="pop-spin-dot"></div>`;
     container.appendChild(sp);
   }
 
@@ -605,6 +604,7 @@ function fmtViews(n) {
   return String(n);
 }
 
+/* ============================================================
    LATEST UPDATE
    ============================================================ */
 async function getKomikLatest() {
