@@ -1,21 +1,8 @@
 /* ============================================================
-   PANKOMIK — tracker.js  v2
-   Track 9 jenis halaman, tetap ringan (upsert counter).
-
-   Halaman yang di-track:
-     home         →  /
-     komik-list   →  /komik
-     komik-detail →  /komik/{slug}
-     komik-read   →  /baca/{slug}  atau  /komik/{slug}/{chapter}
-     novel-list   →  /novel
-     novel-detail →  /novel/{slug}
-     novel-read   →  /baca-novel/{slug}
-     anime-list   →  /anime
-     anime-detail →  /anime/{id}
-     anime-watch  →  /anime-watch/{ep}
-
-   CARA PASANG di setiap HTML sebelum </body>:
-     <script type="module" src="/tracker.js"></script>
+   PANKOMIK — tracker.js  v3
+   - Track 10 jenis halaman via upsert counter
+   - Expose window.trackNow() untuk SPA navigation
+     (dipanggil dari reader.js / novel-reader saat ganti chapter)
    ============================================================ */
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -24,8 +11,9 @@ const SUPABASE_URL = "https://aaqhknkyrnsapvfywdsn.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ND-51tP1NF40HRZ3q05N5w_1ZnlPzlL";
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function getPage() {
-  const p = window.location.pathname.replace(/\/$/, "") || "/";
+/* ── Mapping path → page key ── */
+function getPage(path) {
+  const p = (path || window.location.pathname).replace(/\/$/, "") || "/";
   if (p === "" || p === "/" || p === "/index.html") return "home";
   if (/^\/komik\/[^/]+\/[^/]+/.test(p)) return "komik-read";
   if (/^\/komik\/[^/]+/.test(p))         return "komik-detail";
@@ -40,17 +28,18 @@ function getPage() {
   return null;
 }
 
-function shouldTrack(page) {
-  const key  = `_pk_${page}`;
-  const last = parseInt(sessionStorage.getItem(key) || "0");
+/* ── Throttle per page key: skip jika < 30 detik lalu ── */
+const _lastTracked = {};
+function shouldTrack(page, force) {
+  if (force) { _lastTracked[page] = Date.now(); return true; }
+  const last = _lastTracked[page] || 0;
   if (Date.now() - last < 30000) return false;
-  sessionStorage.setItem(key, String(Date.now()));
+  _lastTracked[page] = Date.now();
   return true;
 }
 
-async function track() {
-  const page = getPage();
-  if (!page || !shouldTrack(page)) return;
+/* ── Core upsert ── */
+async function doTrack(page) {
   const today = new Date().toISOString().slice(0, 10);
   try {
     const { data } = await sb.from("site_stats").select("views").eq("page", page).maybeSingle();
@@ -68,6 +57,29 @@ async function track() {
   } catch {}
 }
 
+/* ── Track otomatis saat halaman load ── */
+function track(force) {
+  const page = getPage();
+  if (!page || !shouldTrack(page, force)) return;
+  doTrack(page);
+}
+
+/* ── PUBLIC: dipanggil dari reader.js / novel-reader setelah pushURL ──
+   Contoh pemakaian di reader.js, setelah pushURL():
+     if (window.trackNow) window.trackNow();
+   Atau dengan path eksplisit:
+     if (window.trackNow) window.trackNow('/baca/' + chapterSlug);
+*/
+window.trackNow = function(path) {
+  const page = getPage(path);
+  if (!page) return;
+  /* Force = true: abaikan throttle, langsung track */
+  _lastTracked[page] = 0;
+  shouldTrack(page, true);
+  doTrack(page);
+};
+
+/* ── Jalankan saat halaman pertama load ── */
 if (document.readyState === "complete") {
   setTimeout(track, 1500);
 } else {
