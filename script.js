@@ -423,29 +423,49 @@ let ioObserver    = null; /* IntersectionObserver untuk infinite scroll sentinel
 /* ============================================================
    TOP KOMIK
    ============================================================ */
-async function getTopKomik() {
+/* ── Cache per period ── */
+const _topCache = {};
+let _topActivePeriod = "week";
+
+/* Dipanggil saat tab diklik */
+window.switchTopPeriod = function(period, btn) {
+  _topActivePeriod = period;
+  document.querySelectorAll(".top-period-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  getTopKomik(period);
+};
+
+async function getTopKomik(period) {
+  period = period || _topActivePeriod;
   const container = document.getElementById("topKomik");
   if (!container) return;
 
-  /* Skeleton — pakai style baru (list item) */
-  container.innerHTML = Array(8).fill(`
-    <div class="top-item-skel">
-      <div class="top-skel-rank"></div>
-      <div class="top-skel-cover"></div>
-      <div class="top-skel-info">
-        <div class="top-skel-line"></div>
-        <div class="top-skel-line short"></div>
-      </div>
-    </div>`).join("");
+  /* Pakai cache kalau sudah pernah fetch */
+  if (_topCache[period]) {
+    container.innerHTML = "";
+    renderTopKomik(_topCache[period], container);
+    return;
+  }
+
+  /* Skeleton 3-grid */
+  container.innerHTML = `<div class="top-grid">${
+    Array(9).fill(`
+      <div class="top-card-skel">
+        <div class="top-card-skel-img"></div>
+        <div class="top-card-skel-line"></div>
+        <div class="top-card-skel-line short"></div>
+      </div>`).join("")
+  }</div>`;
 
   try {
-    const res  = await fetch(API_TOP);
+    /* Westmanga popular API: ?page=1&period=day|week|month|all */
+    const url = `https://www.sankavollerei.com/comic/westmanga/popular?page=1&period=${period}`;
+    const res  = await fetch(url);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-
-    /* Westmanga: { success, data: [...] }
-       Setiap item: { slug, title, cover, rating, country_id, lastChapters, total_views } */
     const list = data.data || data.komikList || [];
+
+    _topCache[period] = list;   /* simpan ke cache */
     container.innerHTML = "";
     renderTopKomik(list, container);
   } catch (err) {
@@ -453,7 +473,7 @@ async function getTopKomik() {
     container.innerHTML = `
       <div style="padding:20px 14px;color:var(--text-muted);font-size:13px;display:flex;flex-direction:column;gap:8px;">
         <p>😕 Gagal memuat Top Komik</p>
-        <button onclick="getTopKomik()" style="align-self:flex-start;padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;">Coba Lagi</button>
+        <button onclick="getTopKomik('${period}')" style="align-self:flex-start;padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;">Coba Lagi</button>
       </div>`;
   }
 }
@@ -461,10 +481,10 @@ async function getTopKomik() {
 /* Flag emoji berdasarkan country_id */
 function countryFlag(id) {
   const flags = { JP:"🇯🇵", KR:"🇰🇷", CN:"🇨🇳", ID:"🇮🇩" };
-  return flags[(id||"").toUpperCase()] || "📚";
+  return flags[(id||"").toUpperCase()] || "";
 }
 
-/* Format angka views: 1234567 → "1.2jt", 23998533 → "24jt" */
+/* Format angka views */
 function fmtViews(n) {
   if (!n || n < 1000) return n ? String(n) : "–";
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1) + "jt";
@@ -472,72 +492,95 @@ function fmtViews(n) {
 }
 
 function renderTopKomik(list, container) {
-  list.slice(0, 15).forEach((komik, i) => {
+  const grid = document.createElement("div");
+  grid.className = "top-grid";
+
+  list.slice(0, 18).forEach((komik, i) => {
     if (!komik?.slug) return;
 
-    /* Westmanga field: cover (URL lengkap), lastChapters[0].number, rating, total_views */
-    const rawCover  = komik.cover  || komik.image || "";
-    const isSvg     = !rawCover || rawCover.startsWith("data:image/svg");
-    const origUrl   = isSvg ? "" : rawCover.split("?")[0];
-    const coverSrc  = origUrl ? proxyImg(origUrl, 200) : "";
+    const rawCover = komik.cover || komik.image || "";
+    const isSvg    = !rawCover || rawCover.startsWith("data:image/svg");
+    const origUrl  = isSvg ? "" : rawCover.split("?")[0];
+    const coverSrc = origUrl ? proxyImg(origUrl, 240) : "";
 
-    const latestCh  = (komik.lastChapters || komik.chapters || [])[0] || {};
-    const chNum     = latestCh.number || latestCh.title || "";
-    const chLabel   = chNum ? `Ch.${chNum}` : "–";
-    const chSlug    = latestCh.slug || "";
+    const latestCh = (komik.lastChapters || komik.chapters || [])[0] || {};
+    const chNum    = latestCh.number || latestCh.title || "";
+    const chSlug   = latestCh.slug   || "";
 
-    const rating    = komik.rating  ? Number(komik.rating).toFixed(1) : "–";
-    const views     = fmtViews(komik.total_views);
-    const flag      = countryFlag(komik.country_id);
+    /* Timestamp dari created_at.time (unix) atau formatted */
+    const chTime   = latestCh.created_at?.formatted || latestCh.created_at?.time || "";
+    const timeAgo  = chTime ? fmtTimeAgo(chTime) : "";
 
-    /* Rank badge style: top3 lebih menonjol */
-    const rankClass = i === 0 ? "rank-gold" : i === 1 ? "rank-silver" : i === 2 ? "rank-bronze" : "rank-normal";
-    const rankLabel = i < 3 ? ["🥇","🥈","🥉"][i] : `#${i+1}`;
+    const rating   = komik.rating ? Number(komik.rating).toFixed(1) : "";
+    const flag     = countryFlag(komik.country_id);
+    const isHot    = komik.hot;
+    const isColor  = komik.color;
 
-    const item = document.createElement("div");
-    item.className = "top-item";
-    item.dataset.slug = komik.slug;
+    const card = document.createElement("div");
+    card.className = "top-card";
+    card.dataset.slug = komik.slug;
 
-    item.innerHTML = `
-      <div class="top-rank ${rankClass}">${rankLabel}</div>
-      <div class="top-cover">
+    card.innerHTML = `
+      <div class="top-card-img-wrap">
         ${coverSrc
-          ? `<img src="${coverSrc}" alt="${escHtml(komik.title||"")}" loading="${i < 4 ? "eager" : "lazy"}">`
-          : `<div class="top-cover-gen"></div>`}
+          ? `<img src="${coverSrc}" alt="${escHtml(komik.title||"")}" loading="${i < 6 ? "eager" : "lazy"}">`
+          : `<div class="top-card-gen"></div>`}
+        ${flag ? `<span class="top-card-flag">${flag}</span>` : ""}
+        ${isColor ? `<span class="top-card-badge color-badge">🎨 COLOR</span>` : ""}
+        ${isHot   ? `<span class="top-card-hot">🔥</span>` : ""}
+        <span class="top-card-rank">${i < 3 ? ["🥇","🥈","🥉"][i] : `#${i+1}`}</span>
       </div>
-      <div class="top-info">
-        <p class="top-title">${escHtml(komik.title || "Untitled")}</p>
-        <div class="top-meta">
-          <span class="top-flag">${flag}</span>
-          <span class="top-ch">${escHtml(chLabel)}</span>
-          ${rating !== "–" ? `<span class="top-rating">⭐ ${rating}</span>` : ""}
-          ${views !== "–"  ? `<span class="top-views">👁 ${views}</span>`  : ""}
+      <div class="top-card-info">
+        <p class="top-card-title">${escHtml(komik.title || "Untitled")}</p>
+        <div class="top-card-meta">
+          ${chNum ? `<span class="top-card-ch">CH ${escHtml(String(chNum))}</span>` : ""}
+          ${timeAgo ? `<span class="top-card-time">${escHtml(timeAgo)}</span>` : ""}
+          ${rating  ? `<span class="top-card-rating">⭐ ${rating}</span>` : ""}
         </div>
-      </div>
-      ${chSlug ? `<a class="top-read-btn" href="/baca/${escHtml(chSlug)}" onclick="event.stopPropagation()">Baca</a>` : ""}
-    `;
+      </div>`;
 
     if (coverSrc && origUrl) {
-      const img = item.querySelector("img");
+      const img = card.querySelector("img");
       if (img) imgFallback(img, origUrl);
     } else if (!coverSrc) {
-      const ph = item.querySelector(".top-cover-gen");
-      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type || "manga", 64), ph);
+      const ph = card.querySelector(".top-card-gen");
+      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type || "manga", 155), ph);
     }
 
-    item.onclick = async (e) => {
-      if (e.target.closest(".top-read-btn")) return;
-      item.style.opacity = "0.7";
-      item.style.pointerEvents = "none";
+    card.onclick = async () => {
+      card.style.opacity = "0.7";
+      card.style.pointerEvents = "none";
       const resolvedSrc = await resolveSource(komik.slug, "westmanga");
       sessionStorage.setItem("komikSrcHint", resolvedSrc);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
 
-    container.appendChild(item);
-    animateIn(item, i * 35);
+    grid.appendChild(card);
+    animateIn(card, i * 30);
   });
+
+  container.appendChild(grid);
+}
+
+/* Format waktu dari unix timestamp atau string "19 Mar 2026 07:52" → "X jam lalu" */
+function fmtTimeAgo(val) {
+  let ts;
+  if (typeof val === "number") {
+    ts = val * 1000;
+  } else {
+    ts = Date.parse(val);
+  }
+  if (!ts || isNaN(ts)) return String(val || "");
+  const diff = Date.now() - ts;
+  const m = Math.floor(diff / 60000);
+  if (m < 1)  return "baru saja";
+  if (m < 60) return m + " menit lalu";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + " jam lalu";
+  const d = Math.floor(h / 24);
+  if (d < 30) return d + " hari lalu";
+  return Math.floor(d / 30) + " bulan lalu";
 }
 
 /* ============================================================
@@ -1156,7 +1199,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* Fetch semua konten */
-  getTopKomik();
+  getTopKomik("week");
   getKomikLatest();
   getKomikRekomen();
   getGenreChips();
