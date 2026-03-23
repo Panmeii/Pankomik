@@ -13,7 +13,7 @@
    ============================================================ */
 
 /* ── API ENDPOINTS ──────────────────────────────────────── */
-const API_TOP         = "https://www.sankavollerei.com/comic/bacakomik/top";
+const API_TOP         = "https://www.sankavollerei.com/comic/westmanga/popular?page=1";
 const API_LATEST      = "https://www.sankavollerei.com/comic/komikindo/latest";
 const API_LATEST_MK   = "https://www.sankavollerei.com/comic/mangakita/home";
 const API_LATEST_KS   = "https://www.sankavollerei.com/comic/komikstation/home"; /* komikstation */
@@ -427,15 +427,27 @@ async function getTopKomik() {
   const container = document.getElementById("topKomik");
   if (!container) return;
 
-  /* Skeleton */
-  container.innerHTML = Array(6).fill(`<div class="card skeleton skeleton-card"></div>`).join("");
+  /* Skeleton — pakai style baru (list item) */
+  container.innerHTML = Array(8).fill(`
+    <div class="top-item-skel">
+      <div class="top-skel-rank"></div>
+      <div class="top-skel-cover"></div>
+      <div class="top-skel-info">
+        <div class="top-skel-line"></div>
+        <div class="top-skel-line short"></div>
+      </div>
+    </div>`).join("");
 
   try {
     const res  = await fetch(API_TOP);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+
+    /* Westmanga: { success, data: [...] }
+       Setiap item: { slug, title, cover, rating, country_id, lastChapters, total_views } */
+    const list = data.data || data.komikList || [];
     container.innerHTML = "";
-    renderTopKomik(data.komikList || [], container);
+    renderTopKomik(list, container);
   } catch (err) {
     console.error("[Top] Gagal:", err);
     container.innerHTML = `
@@ -446,44 +458,85 @@ async function getTopKomik() {
   }
 }
 
+/* Flag emoji berdasarkan country_id */
+function countryFlag(id) {
+  const flags = { JP:"🇯🇵", KR:"🇰🇷", CN:"🇨🇳", ID:"🇮🇩" };
+  return flags[(id||"").toUpperCase()] || "📚";
+}
+
+/* Format angka views: 1234567 → "1.2jt", 23998533 → "24jt" */
+function fmtViews(n) {
+  if (!n || n < 1000) return n ? String(n) : "–";
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1) + "jt";
+  return (n / 1000).toFixed(0) + "rb";
+}
+
 function renderTopKomik(list, container) {
-  list.slice(0, 10).forEach((komik, i) => {
+  list.slice(0, 15).forEach((komik, i) => {
     if (!komik?.slug) return;
-    const rawImg  = komik.image || komik.cover || "";
-    const isSvg   = !rawImg || rawImg.startsWith("data:image/svg") || rawImg.startsWith("data:image/gif");
-    const origUrl = isSvg ? "" : rawImg.split("?")[0];
-    const cover   = origUrl ? proxyImg(origUrl, 260) : "";
-    const card    = document.createElement("div");
-    card.className = "card";
 
-    card.innerHTML = `
-      <div class="rank">#${i + 1}</div>
-      ${cover
-        ? `<img src="${cover}" alt="${escHtml(komik.title || "")}" loading="${i < 3 ? "eager" : "lazy"}" style="background:var(--bg-surface);">`
-        : `<div class="card-generated-cover" data-title="${escHtml(komik.title||"")}" data-type="${escHtml(komik.type||"")}"></div>`}
-      <div class="info">
-        <p class="card-title">${escHtml(komik.title || "Untitled")}</p>
-        <p>⭐ ${komik.rating || "–"}</p>
-      </div>`;
+    /* Westmanga field: cover (URL lengkap), lastChapters[0].number, rating, total_views */
+    const rawCover  = komik.cover  || komik.image || "";
+    const isSvg     = !rawCover || rawCover.startsWith("data:image/svg");
+    const origUrl   = isSvg ? "" : rawCover.split("?")[0];
+    const coverSrc  = origUrl ? proxyImg(origUrl, 200) : "";
 
-    if (cover && origUrl) {
-      const img = card.querySelector("img");
+    const latestCh  = (komik.lastChapters || komik.chapters || [])[0] || {};
+    const chNum     = latestCh.number || latestCh.title || "";
+    const chLabel   = chNum ? `Ch.${chNum}` : "–";
+    const chSlug    = latestCh.slug || "";
+
+    const rating    = komik.rating  ? Number(komik.rating).toFixed(1) : "–";
+    const views     = fmtViews(komik.total_views);
+    const flag      = countryFlag(komik.country_id);
+
+    /* Rank badge style: top3 lebih menonjol */
+    const rankClass = i === 0 ? "rank-gold" : i === 1 ? "rank-silver" : i === 2 ? "rank-bronze" : "rank-normal";
+    const rankLabel = i < 3 ? ["🥇","🥈","🥉"][i] : `#${i+1}`;
+
+    const item = document.createElement("div");
+    item.className = "top-item";
+    item.dataset.slug = komik.slug;
+
+    item.innerHTML = `
+      <div class="top-rank ${rankClass}">${rankLabel}</div>
+      <div class="top-cover">
+        ${coverSrc
+          ? `<img src="${coverSrc}" alt="${escHtml(komik.title||"")}" loading="${i < 4 ? "eager" : "lazy"}">`
+          : `<div class="top-cover-gen"></div>`}
+      </div>
+      <div class="top-info">
+        <p class="top-title">${escHtml(komik.title || "Untitled")}</p>
+        <div class="top-meta">
+          <span class="top-flag">${flag}</span>
+          <span class="top-ch">${escHtml(chLabel)}</span>
+          ${rating !== "–" ? `<span class="top-rating">⭐ ${rating}</span>` : ""}
+          ${views !== "–"  ? `<span class="top-views">👁 ${views}</span>`  : ""}
+        </div>
+      </div>
+      ${chSlug ? `<a class="top-read-btn" href="/baca/${escHtml(chSlug)}" onclick="event.stopPropagation()">Baca</a>` : ""}
+    `;
+
+    if (coverSrc && origUrl) {
+      const img = item.querySelector("img");
       if (img) imgFallback(img, origUrl);
-    } else if (!cover) {
-      const ph = card.querySelector(".card-generated-cover");
-      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type, 175), ph);
+    } else if (!coverSrc) {
+      const ph = item.querySelector(".top-cover-gen");
+      if (ph) ph.parentNode.replaceChild(makeGeneratedCover(komik.title, komik.type || "manga", 64), ph);
     }
 
-    card.onclick = async () => {
-      card.style.opacity = "0.7";
-      card.style.pointerEvents = "none";
-      const resolvedSrc = await resolveSource(komik.slug, "bacakomik");
+    item.onclick = async (e) => {
+      if (e.target.closest(".top-read-btn")) return;
+      item.style.opacity = "0.7";
+      item.style.pointerEvents = "none";
+      const resolvedSrc = await resolveSource(komik.slug, "westmanga");
       sessionStorage.setItem("komikSrcHint", resolvedSrc);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
       window.location.href = komikURL(komik.slug);
     };
-    container.appendChild(card);
-    animateIn(card, i * 40);
+
+    container.appendChild(item);
+    animateIn(item, i * 35);
   });
 }
 
