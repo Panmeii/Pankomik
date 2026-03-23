@@ -958,8 +958,8 @@ async function loadProfile() {
     <div class="tab-content" id="content-anime-bookmark">
       <div class="kategori-tabs">
         <button class="kategori-btn active" onclick="filterAnimeKategori('favorit',this)">❤️ Favorit</button>
-        <button class="kategori-btn" onclick="filterAnimeKategori('lagi_menonton',this)">📺 Nonton</button>
-        <button class="kategori-btn" onclick="filterAnimeKategori('selesai',this)">✅ Selesai</button>
+        <button class="kategori-btn" onclick="filterAnimeKategori('lagi_dibaca',this)">📺 Nonton</button>
+        <button class="kategori-btn" onclick="filterAnimeKategori('tamat',this)">✅ Selesai</button>
       </div>
       <div id="animeBookmarkList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
@@ -1124,40 +1124,104 @@ function renderAnimeBookmarks(kategori) {
   const list = animeBookmarkData[kategori] || [];
   const el   = document.getElementById("animeBookmarkList");
   if (!el) return;
-  const renderAnimeItems = (items) => items.map(bm => {
+
+  /* Badge label per kategori */
+  const katLabel = { favorit:"❤️ Favorit", lagi_dibaca:"📺 Nonton", tamat:"✅ Selesai" };
+
+  function buildAnimeItem(bm) {
     const cleanSlug = bm.komik_slug.replace(/^anime:/, "");
-    return `<div class="komik-list-item">
-      ${bm.komik_cover
-        ? `<img src="${esc(bm.komik_cover)}" alt="${esc(bm.komik_title)}"
-            style="border:1px solid rgba(108,99,255,0.2);"
-            onclick="gotoAnimeDetail('${esc(cleanSlug)}')"
-            onerror="this.style.display='none'">`
-        : `<div style="width:52px;height:70px;background:rgba(108,99,255,0.08);border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;">⚡</div>`}
-      <div class="komik-list-info" onclick="gotoAnimeDetail('${esc(cleanSlug)}')" style="cursor:pointer">
-        <div class="title">${esc(bm.komik_title || cleanSlug)}</div>
-        <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}</p>
-      </div>
-      <div class="komik-list-actions">
-        <button class="btn-sm primary" onclick="gotoAnimeDetail('${esc(cleanSlug)}')">Buka</button>
-        <button class="btn-sm" onclick="hapusAnimeBookmark('${esc(bm.komik_slug)}',this)">Hapus</button>
-      </div>
-    </div>`;
-  }).join("");
+    const wrap = document.createElement("div");
+    wrap.className = "komik-list-item";
+    wrap.style.cssText = "position:relative;";
+
+    /* Cover — anime URL langsung dari sankavollerei */
+    const coverWrap = document.createElement("div");
+    coverWrap.style.cssText = "width:60px;height:84px;flex-shrink:0;border-radius:9px;overflow:hidden;background:rgba(108,99,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:28px;border:1.5px solid rgba(108,99,255,0.25);position:relative;";
+    coverWrap.onclick = () => gotoAnimeDetail(cleanSlug);
+
+    if (bm.komik_cover) {
+      const img = document.createElement("img");
+      img.src = bm.komik_cover; /* anime URL langsung */
+      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+      img.onerror = function() {
+        coverWrap.innerHTML = "⚡";
+        img.remove();
+      };
+      coverWrap.appendChild(img);
+    } else {
+      coverWrap.innerHTML = "⚡";
+    }
+    wrap.appendChild(coverWrap);
+
+    /* Info */
+    const info = document.createElement("div");
+    info.className = "komik-list-info";
+    info.style.cursor = "pointer";
+    info.onclick = () => gotoAnimeDetail(cleanSlug);
+    info.innerHTML = `
+      <div class="title">${esc(bm.komik_title || cleanSlug)}</div>
+      <p style="display:inline-flex;align-items:center;gap:4px;background:rgba(108,99,255,0.1);
+        border:1px solid rgba(108,99,255,0.2);border-radius:99px;padding:2px 8px;
+        font-size:10px;font-weight:800;color:#a78bfa;margin:3px 0;">
+        ${esc(katLabel[kategori] || kategori)}
+      </p>
+      <p>📅 ${new Date(bm.created_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}</p>`;
+    wrap.appendChild(info);
+
+    /* Actions */
+    const acts = document.createElement("div");
+    acts.className = "komik-list-actions";
+    acts.innerHTML = `
+      <button class="btn-sm primary" onclick="gotoAnimeDetail('${esc(cleanSlug)}')"
+        style="background:linear-gradient(135deg,#6c63ff,#4f46e5);border-color:#6c63ff;">▶ Tonton</button>
+      <button class="btn-sm" onclick="hapusAnimeBookmark('${esc(bm.komik_slug)}',this)">Hapus</button>`;
+    wrap.appendChild(acts);
+    return wrap;
+  }
 
   if (!list.length) {
-    el.innerHTML = `<div class="profile-search-bar"><input placeholder="🔍 Cari anime..." disabled style="opacity:0.4"></div><div class="empty-state"><p>📭</p><p>Belum ada anime di kategori ini.</p></div>`;
+    el.innerHTML = `
+      <div class="profile-search-bar">
+        <input placeholder="🔍 Cari anime..." disabled style="opacity:0.4">
+      </div>
+      <div class="empty-state">
+        <p>⚡</p>
+        <p>Belum ada anime di kategori ini.</p>
+        <p style="font-size:12px;margin-top:4px;color:var(--text-muted);">Tambahkan dari halaman detail anime</p>
+      </div>`;
     return;
   }
 
-  el.innerHTML = `<div class="profile-search-bar"><input id="animeBmSearch" placeholder="🔍 Cari anime..." oninput="filterAnimeBmSearch(this.value)"></div><div id="animeBmItems">${renderAnimeItems(list)}</div>`;
+  /* Search bar + items */
+  const searchBar = document.createElement("div");
+  searchBar.className = "profile-search-bar";
+  searchBar.innerHTML = `<input id="animeBmSearch" placeholder="🔍 Cari anime..." oninput="filterAnimeBmSearch(this.value)">`;
+
+  const itemsWrap = document.createElement("div");
+  itemsWrap.id = "animeBmItems";
+  list.forEach(bm => itemsWrap.appendChild(buildAnimeItem(bm)));
+
+  el.innerHTML = "";
+  el.appendChild(searchBar);
+  el.appendChild(itemsWrap);
 
   window._animeBmCurrent = list;
+  window._animeBmBuildItem = buildAnimeItem;
   window.filterAnimeBmSearch = function(q) {
     const s = q.toLowerCase().trim();
-    const filtered = s ? (window._animeBmCurrent||[]).filter(bm => (bm.komik_title||"").toLowerCase().includes(s) || bm.komik_slug.replace(/^anime:/,"").toLowerCase().includes(s)) : (window._animeBmCurrent||[]);
+    const filtered = s
+      ? list.filter(bm =>
+          (bm.komik_title||"").toLowerCase().includes(s) ||
+          bm.komik_slug.replace(/^anime:/,"").toLowerCase().includes(s))
+      : list;
     const wrap = document.getElementById("animeBmItems");
     if (!wrap) return;
-    wrap.innerHTML = filtered.length ? renderAnimeItems(filtered) : `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+    wrap.innerHTML = "";
+    if (!filtered.length) {
+      wrap.innerHTML = `<div class="empty-state" style="padding:30px"><p>🔍</p><p>Tidak ada hasil.</p></div>`;
+    } else {
+      filtered.forEach(bm => wrap.appendChild(buildAnimeItem(bm)));
+    }
   };
 }
 
@@ -1177,7 +1241,7 @@ window.hapusAnimeBookmark = async function(fullSlug, btn) {
   await loadAnimeBookmarks();
 };
 
-window.gotoAnimeDetail = slug => window.location.href = `/anime/${slug}`;
+window.gotoAnimeDetail = slug => window.location.href = `/anime/detail/${slug}`;
 
 function renderBookmarks(kategori) {
   const list = bookmarkData[kategori] || [];
