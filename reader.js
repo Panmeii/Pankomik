@@ -582,24 +582,6 @@ function formatChapterTitle(title, slug) {
   const padded = parseInt(main) < 100 ? main.padStart(2, "0") : main;
   return sub ? `Ch.${padded}.${sub}` : `Ch.${padded}`;
 }
-    return `
-      <div class="chapter-item-panel ${isActive ? "active" : ""}"
-           onclick="navigateToChapter('${ch.slug}')">
-        <span class="chapter-num">${title}</span>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span class="chapter-date">${date}</span>
-          ${isActive ? '<span class="current-badge">📖</span>' : ""}
-        </div>
-      </div>`;
-  }).join("");
-
-  panel.innerHTML = `
-    <div class="chapter-list-header">
-      <h3>📚 Daftar Chapter</h3>
-      <button onclick="toggleChapterList()" class="close-btn">✕</button>
-    </div>
-    <div class="chapter-list-content">${listHtml}</div>`;
-}
 
 window.toggleChapterList = function () {
   const panel   = document.getElementById("chapterListPanel");
