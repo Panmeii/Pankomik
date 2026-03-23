@@ -201,7 +201,7 @@ window._animeURL      = animeURL;
 window._animeGenreURL = animeGenreURL;
 
 let currentUser = null;
-/* Ambil user di background — tidak blocking load episode */
+/* Pre-fetch user, tapi loadEpisode juga akan fetch jika belum ada */
 getCurrentUser().then(u => { currentUser = u; }).catch(() => {});
 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -262,18 +262,22 @@ async function loadEpisode() {
       document.getElementById("animeInfoTitle").textContent = `Detail Anime: ${currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim()}`;
       bar.style.display = "flex";
 
-      /* Simpan riwayat nonton ke DB (seperti komik & novel) */
-      if (currentUser) {
-        const epNum = d.eps || (rawTitle.match(/episode\s*(\d+)/i)?.[1] || "");
-        saveAnimeHistory(currentUser, {
+      /* Simpan riwayat nonton ke DB — fetch user kalau belum ada */
+      const saveUser = currentUser || await getCurrentUser().catch(() => null);
+      if (saveUser) {
+        currentUser = saveUser;
+        const epNum  = d.eps || (rawTitle.match(/episode\s*(\d+)/i)?.[1] || "");
+        const aTitle = d.info?.title || currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim();
+        const aCover = d.info?.poster || d.poster || "";
+        saveAnimeHistory(saveUser.id, {
           id:    currentAnimeId,
-          title: currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim(),
-          cover: d.info?.poster || ""
+          title: aTitle,
+          cover: aCover
         }, {
           id:     epId,
           title:  rawTitle || shortTitle,
           number: epNum
-        }).catch(() => {});
+        }).catch(e => console.warn("[AnimeWatch] saveAnimeHistory error:", e));
       }
     }
 
