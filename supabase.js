@@ -943,15 +943,9 @@ export async function removeNovelBookmark(userId, novelSlug) {
 }
 
 export async function checkNovelBookmark(userId, novelSlug) {
-  if (!userId || !novelSlug) return { isBookmarked: false, kategori: null };
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("novel_bookmarks").select("kategori")
-    .eq("user_id", userId).eq("novel_slug", novelSlug)
-    .maybeSingle();   /* maybeSingle: tidak throw jika 0 baris */
-  if (error) {
-    console.warn("[checkNovelBookmark] Error:", error.message);
-    return { isBookmarked: false, kategori: null };
-  }
+    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
   return { isBookmarked: !!data, kategori: data?.kategori || null };
 }
 
@@ -1001,34 +995,6 @@ export async function saveNovelHistory(userId, novel, chapter) {
   return { history: data, error };
 }
 
-/**
- * Update progress baca novel (chapter terakhir, untuk lanjut baca).
- * Dipanggil dari novel-reader.html setelah chapter selesai dimuat.
- * @param {string} userId
- * @param {{ slug, title, cover, lastChapterSlug }} novel
- * @param {string} chapterTitle
- */
-export async function updateNovelProgress(userId, novel, chapterTitle) {
-  if (!userId || !novel?.slug) return { error: new Error("Invalid params") };
-  try {
-    const { error } = await supabase
-      .from("novel_reading_history")
-      .upsert({
-        user_id:       userId,
-        novel_slug:    novel.slug,
-        novel_title:   novel.title   || "",
-        novel_cover:   novel.cover   || "",
-        chapter_slug:  novel.lastChapterSlug || "",
-        chapter_title: chapterTitle  || "",
-        read_at:       new Date().toISOString()
-      }, { onConflict: "user_id,novel_slug" });
-    return { error };
-  } catch (err) {
-    console.error("[updateNovelProgress] Error:", err);
-    return { error: err };
-  }
-}
-
 export async function getNovelHistory(userId) {
   const { data, error } = await supabase
     .from("novel_reading_history").select("*")
@@ -1037,19 +1003,10 @@ export async function getNovelHistory(userId) {
 }
 
 export async function getLastNovelRead(userId, novelSlug) {
-  if (!userId || !novelSlug) return null;
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("novel_reading_history")
     .select("chapter_slug, chapter_title, read_at")
-    .eq("user_id", userId)
-    .eq("novel_slug", novelSlug)
-    .order("read_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();   /* maybeSingle: tidak throw jika 0 baris */
-  if (error) {
-    console.warn("[getLastNovelRead] Error:", error.message);
-    return null;
-  }
+    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
   return data || null;
 }
 
@@ -1241,4 +1198,82 @@ export async function getMyComments(userId, limit = 30) {
     console.error("Error in getMyComments:", err);
     return { comments: [], error: err };
   }
+}
+
+
+/* ============================================================
+   ANIME — WATCH HISTORY
+   Tabel: anime_watch_history
+   Kolom: user_id, anime_id, anime_title, anime_cover,
+          episode_id, episode_title, episode_number, watched_at
+
+   SQL (jalankan di Supabase SQL Editor):
+   ─────────────────────────────────────────────────────────────
+   CREATE TABLE IF NOT EXISTS anime_watch_history (
+     id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+     user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE,
+     anime_id    text NOT NULL,
+     anime_title text NOT NULL DEFAULT '',
+     anime_cover text NOT NULL DEFAULT '',
+     episode_id    text NOT NULL,
+     episode_title text NOT NULL DEFAULT '',
+     episode_number text NOT NULL DEFAULT '',
+     watched_at  timestamptz DEFAULT now(),
+     UNIQUE (user_id, anime_id)
+   );
+   ALTER TABLE anime_watch_history ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "user_own_anime_history" ON anime_watch_history
+     FOR ALL USING (auth.uid() = user_id);
+   ─────────────────────────────────────────────────────────────
+   ============================================================ */
+
+/**
+ * Simpan/update riwayat nonton anime.
+ * Upsert per anime_id — 1 baris per anime = episode terakhir ditonton.
+ */
+export async function saveAnimeHistory(userId, anime, episode) {
+  const { data, error } = await supabase
+    .from("anime_watch_history")
+    .upsert({
+      user_id:        userId,
+      anime_id:       anime.id,
+      anime_title:    anime.title   || "",
+      anime_cover:    anime.cover   || "",
+      episode_id:     episode.id,
+      episode_title:  episode.title || "",
+      episode_number: episode.number || "",
+      watched_at:     new Date().toISOString()
+    }, { onConflict: "user_id,anime_id" })
+    .select()
+    .single();
+  return { history: data, error };
+}
+
+/**
+ * Ambil episode terakhir yang ditonton untuk satu anime.
+ * Dipakai di anime-detail untuk tombol "Lanjut Nonton".
+ */
+export async function getLastAnimeWatch(userId, animeId) {
+  if (!userId || !animeId) return null;
+  const { data, error } = await supabase
+    .from("anime_watch_history")
+    .select("episode_id, episode_title, episode_number, watched_at")
+    .eq("user_id", userId)
+    .eq("anime_id", animeId)
+    .maybeSingle();
+  if (error) { console.warn("[getLastAnimeWatch] Error:", error.message); return null; }
+  return data || null;
+}
+
+/**
+ * Ambil semua riwayat nonton anime user (terbaru dulu).
+ */
+export async function getAnimeHistory(userId) {
+  const { data, error } = await supabase
+    .from("anime_watch_history")
+    .select("*")
+    .eq("user_id", userId)
+    .order("watched_at", { ascending: false })
+    .limit(50);
+  return { history: data || [], error };
 }
