@@ -1,8 +1,8 @@
 /* ============================================================
-   PANKOMIK — reader.css  (Updated for Floating Pill Header)
+   PANKOMIK — reader.css  (Enhanced v2)
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap');
 
 /* ── RESET & BASE ────────────────────────────────────────── */
 *, *::before, *::after {
@@ -14,72 +14,62 @@
 html { scroll-behavior: smooth; }
 
 body {
-  background: #09090f;
+  background: #06060d;
   color: #eaeaf0;
   font-family: 'Nunito', sans-serif;
-  overscroll-behavior: none; /* cegah bounce di iOS */
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ══════════════════════════════════════════════════════════
    READER HEADER — FLOATING PILL
-   (Style utama ada di reader.html inline, ini override/support)
 ══════════════════════════════════════════════════════════ */
-
-/* Override reader.css lama — header sekarang pill, bukan bar */
 .reader-header {
-  /* Semua layout/glass dihandle di reader.html inline style */
-  /* reader.css hanya perlu reset style lama yang override */
   position: fixed !important;
-  top: 12px !important;
+  top: 14px !important;
   left: 50% !important;
-  right: auto !important;        /* hapus right:0 dari CSS lama */
-  padding: 8px 10px !important;  /* override padding lama */
-  border-bottom: none !important; /* hapus border-bottom lama */
-  background: rgba(10,10,18,0.88) !important;
-  backdrop-filter: blur(24px) saturate(1.6) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(1.6) !important;
-  border: 1px solid rgba(255,255,255,0.06) !important;
+  right: auto !important;
+  padding: 7px 9px !important;
+  border-bottom: none !important;
+  background: rgba(8,8,16,0.92) !important;
+  backdrop-filter: blur(28px) saturate(1.8) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.8) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
   border-radius: 999px !important;
   box-shadow:
-    0 8px 32px rgba(0,0,0,0.6),
+    0 10px 40px rgba(0,0,0,0.7),
     0 0 0 1px rgba(255,255,255,0.04),
-    inset 0 1px 0 rgba(255,255,255,0.07) !important;
-  /* Disable lama h3 centering */
+    inset 0 1px 0 rgba(255,255,255,0.08) !important;
   justify-content: flex-start !important;
 }
 
-/* Lama: .hide pakai transform:translateY(-100%) — sekarang pakai .hidden */
-/* Tetap support .hide untuk fallback */
 .reader-header.hide,
 .reader-header.hidden {
   opacity: 0 !important;
-  transform: translateX(-50%) translateY(-68px) !important;
+  transform: translateX(-50%) translateY(-72px) !important;
   pointer-events: none !important;
 }
 
-/* Override h3 lama di dalam header */
-.reader-header h3 {
-  display: none; /* h3 lama diganti .rh-title di HTML baru */
-}
+.reader-header h3 { display: none; }
 
-/* Override button style lama di header — sekarang pakai rh-btn / rh-nav-btn */
 .reader-header > button:not(.rh-home):not(.rh-btn):not(.rh-nav-btn) {
-  display: none; /* sembunyikan tombol format lama */
+  display: none;
 }
 
-/* ── AREA GAMBAR ─────────────────────────────────────────── */
+/* ── AREA READER ─────────────────────────────────────────── */
 #reader {
-  /* Tidak perlu margin-top besar karena header sekarang floating pill */
   margin-top: 0;
-  padding-top: 64px; /* ruang di atas konten agar tidak tertutup pill */
+  padding-top: 66px;
   text-align: center;
-  padding-bottom: 100px; /* ruang untuk bottom nav */
+  padding-bottom: 110px;
   min-height: 100vh;
+  background: #06060d;
 }
 
 #reader img {
   width: 100%;
-  max-width: 720px;
+  max-width: 800px;
   margin: 0 auto;
   display: block;
 }
@@ -87,8 +77,9 @@ body {
 /* ── IMAGE WRAPPER ───────────────────────────────────────── */
 .image-wrapper {
   position: relative;
-  margin-bottom: 2px;
-  background: #09090f;
+  margin-bottom: 1px;
+  background: #06060d;
+  overflow: hidden;
 }
 
 .image-wrapper:last-child {
@@ -98,30 +89,49 @@ body {
 .image-wrapper img {
   display: block;
   width: 100%;
-  max-width: 720px;
+  max-width: 800px;
   margin: 0 auto;
   opacity: 0;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.25s ease;
   -webkit-user-drag: none;
   user-drag: none;
   -webkit-user-select: none;
   user-select: none;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 
-/* ── IMAGE SKELETON ──────────────────────────────────────── */
+/* ── IMAGE SKELETON — improved shimmer ──────────────────── */
 .image-skeleton {
   width: 100%;
-  max-width: 720px;
+  max-width: 800px;
   margin: 0 auto;
   background: linear-gradient(
-    90deg,
-    #141419 0%,
-    #1e1e26 50%,
-    #141419 100%
+    105deg,
+    #0d0d16 0%,
+    #12121e 40%,
+    #1a1a28 50%,
+    #12121e 60%,
+    #0d0d16 100%
   );
-  background-size: 200% 100%;
-  animation: skeletonLoad 1.4s infinite;
+  background-size: 300% 100%;
+  animation: skeletonLoad 1.6s ease infinite;
   display: block;
+  position: relative;
+}
+
+.image-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(232,82,42,0.04) 50%,
+    transparent 70%
+  );
+  background-size: 300% 100%;
+  animation: skeletonLoad 1.6s ease infinite;
 }
 
 @keyframes skeletonLoad {
@@ -134,50 +144,55 @@ body {
   border-radius: 4px;
   -webkit-user-drag: none;
   user-drag: none;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 /* ══════════════════════════════════════════════════════════
-   SETTINGS PANEL
+   SETTINGS PANEL — redesigned
 ══════════════════════════════════════════════════════════ */
 .settings {
   position: fixed;
-  right: 12px;
-  top: 72px;  /* sedikit lebih bawah karena header pill lebih kecil */
-  width: 210px;
-  background: rgba(12, 12, 20, 0.97);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 14px;
-  padding: 16px;
+  right: 14px;
+  top: 76px;
+  width: 220px;
+  background: rgba(10, 10, 18, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 18px;
+  padding: 18px;
   z-index: 1050;
   display: none;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.55);
-  animation: popIn 0.15s ease;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(255,255,255,0.03);
+  animation: popIn 0.18s cubic-bezier(0.34,1.56,0.64,1);
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: scale(0.95) translateY(-6px); }
-  to   { opacity: 1; transform: scale(1)    translateY(0); }
+  from { opacity: 0; transform: scale(0.9) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .settings.active { display: block; }
 
 .settings h3 {
-  font-size: 14px;
-  font-weight: 800;
-  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 14px;
   color: #e8522a;
+  letter-spacing: 0.5px;
+  font-family: 'Syne', sans-serif;
 }
 
 .settings label {
   display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #888;
+  font-size: 10px;
+  font-weight: 800;
+  color: #666;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 12px 0 4px;
+  letter-spacing: 1px;
+  margin: 14px 0 5px;
 }
 
 .settings select,
@@ -187,41 +202,67 @@ body {
 }
 
 .settings select {
-  padding: 6px 28px 6px 8px;
-  background: rgba(255,255,255,0.06);
+  padding: 7px 28px 7px 10px;
+  background: rgba(255,255,255,0.05);
   color: #eaeaf0;
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 13px;
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-}
-
-.settings .btn-auto {
-  margin-top: 12px;
-  width: 100%;
-  padding: 8px;
-  background: #e8522a;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
   font-family: 'Nunito', sans-serif;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.2s, background 0.2s;
 }
-.settings .btn-auto:hover  { background: #c73f1c; }
+.settings select:focus {
+  outline: none;
+  border-color: rgba(232,82,42,0.5);
+  background-color: rgba(255,255,255,0.07);
+}
+
+.settings input[type="range"] {
+  -webkit-appearance: none;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.08);
+  margin-top: 4px;
+}
+.settings input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #e8522a;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(232,82,42,0.5);
+}
+
+.settings .btn-auto {
+  margin-top: 14px;
+  width: 100%;
+  padding: 9px;
+  background: linear-gradient(135deg, #e8522a, #c73f1c);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(232,82,42,0.3);
+}
+.settings .btn-auto:hover  { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,82,42,0.4); }
 .settings .btn-auto:active { transform: scale(0.96); }
-.settings .btn-auto.running { background: #27ae60; }
-.settings .btn-auto.running:hover { background: #1e8449; }
+.settings .btn-auto.running {
+  background: linear-gradient(135deg, #27ae60, #1e8449);
+  box-shadow: 0 4px 14px rgba(39,174,96,0.35);
+}
 
 /* ══════════════════════════════════════════════════════════
-   CHAPTER LIST PANEL
+   CHAPTER LIST PANEL — enhanced
 ══════════════════════════════════════════════════════════ */
 #chapterListPanel.open { left: 0 !important; }
 
@@ -229,34 +270,39 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
-  background: rgba(232,82,42,0.08);
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  background: linear-gradient(135deg, rgba(232,82,42,0.12), rgba(232,82,42,0.04));
   flex-shrink: 0;
 }
 .chapter-list-header h3 {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 900;
   color: #e8522a;
   margin: 0;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 0.5px;
 }
 .chapter-list-header .close-btn {
   background: rgba(255,255,255,0.07);
-  border: none;
+  border: 1px solid rgba(255,255,255,0.1);
   color: #eaeaf0;
-  width: 28px; height: 28px;
-  border-radius: 8px;
+  width: 30px; height: 30px;
+  border-radius: 9px;
   cursor: pointer;
   font-size: 14px;
   display: flex; align-items: center; justify-content: center;
-  transition: background 0.12s;
+  transition: all 0.15s;
 }
-.chapter-list-header .close-btn:hover { background: rgba(255,255,255,0.14); }
+.chapter-list-header .close-btn:hover {
+  background: rgba(255,255,255,0.14);
+  transform: rotate(90deg);
+}
 
 .chapter-list-content {
   flex: 1;
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 6px 0;
   scrollbar-width: thin;
   scrollbar-color: rgba(232,82,42,0.3) transparent;
 }
@@ -270,35 +316,35 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 11px 16px;
+  padding: 12px 18px;
   cursor: pointer;
   font-size: 13px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
   border-left: 3px solid transparent;
-  transition: background 0.12s, border-color 0.12s, padding-left 0.12s;
+  transition: all 0.14s;
   -webkit-tap-highlight-color: transparent;
 }
-.chapter-item-panel:hover { background: rgba(255,255,255,0.05); }
+.chapter-item-panel:hover {
+  background: rgba(255,255,255,0.04);
+  padding-left: 22px;
+}
 .chapter-item-panel.active {
-  background: rgba(232,82,42,0.12);
+  background: rgba(232,82,42,0.1);
   border-left-color: #e8522a;
   color: #e8522a;
-  font-weight: 700;
+  font-weight: 800;
 }
 .chapter-item-panel.active .chapter-num { color: #e8522a; }
-.chapter-num  { font-weight: 600; color: #eaeaf0; }
+.chapter-num  { font-weight: 700; color: #eaeaf0; }
 .chapter-date { font-size: 11px; color: #555; }
-.current-badge {
-  font-size: 12px;
-}
+.current-badge { font-size: 12px; }
 
 /* ══════════════════════════════════════════════════════════
-   BOTTOM CHAPTER NAV (ditambahkan oleh reader.js di akhir komik)
-   Ini yang tampil setelah semua halaman habis di scroll mode
+   BOTTOM CHAPTER NAV
 ══════════════════════════════════════════════════════════ */
 #bottomChapterNav {
   user-select: none;
-  padding-bottom: 80px; /* ruang ekstra untuk floating bottom nav */
+  padding-bottom: 90px;
 }
 
 #bottomChapterNav button:focus-visible {
@@ -307,7 +353,7 @@ body {
 }
 
 /* ══════════════════════════════════════════════════════════
-   READER LOADING & ERROR
+   LOADING & ERROR
 ══════════════════════════════════════════════════════════ */
 .reader-loading {
   display: flex;
@@ -315,16 +361,17 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  gap: 16px;
+  gap: 18px;
   color: #555;
 }
 
 .reader-spinner {
-  width: 40px; height: 40px;
-  border: 3px solid rgba(232,82,42,0.18);
+  width: 44px; height: 44px;
+  border: 3px solid rgba(232,82,42,0.12);
   border-top-color: #e8522a;
   border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  animation: spin 0.65s linear infinite;
+  box-shadow: 0 0 20px rgba(232,82,42,0.15);
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -335,32 +382,34 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 60vh;
-  gap: 12px;
+  gap: 14px;
   color: #666;
   text-align: center;
 }
 
 .btn-retry {
-  padding: 10px 24px;
+  padding: 11px 28px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   font-weight: 800;
   font-size: 13px;
   font-family: 'Nunito', sans-serif;
-  background: #e8522a;
+  background: linear-gradient(135deg, #e8522a, #c73f1c);
   color: #fff;
-  transition: background 0.14s, transform 0.1s;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(232,82,42,0.3);
 }
-.btn-retry:hover  { background: #b83a18; }
+.btn-retry:hover  { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,82,42,0.4); }
 .btn-retry:active { transform: scale(0.95); }
 
 .btn-home {
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.07);
   color: #eaeaf0;
   border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: none;
 }
-.btn-home:hover { background: rgba(255,255,255,0.14); }
+.btn-home:hover { background: rgba(255,255,255,0.12); transform: translateY(-1px); }
 
 /* ══════════════════════════════════════════════════════════
    SINGLE PAGE CONTROLS
@@ -370,50 +419,53 @@ body {
   position: fixed;
   bottom: 0; left: 0; right: 0;
   z-index: 990;
-  background: rgba(9,9,15,0.93);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid rgba(255,255,255,0.07);
-  padding: 10px 16px;
+  background: rgba(6,6,13,0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 12px 16px;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 #singleControls button {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.09);
   color: #eaeaf0;
-  padding: 9px 18px;
-  border-radius: 10px;
+  padding: 10px 20px;
+  border-radius: 12px;
   cursor: pointer;
   font-size: 14px;
   font-family: 'Nunito', sans-serif;
-  font-weight: 700;
-  transition: background 0.14s, transform 0.1s;
+  font-weight: 800;
+  transition: all 0.15s;
   display: flex; align-items: center; gap: 6px;
   -webkit-tap-highlight-color: transparent;
 }
-#singleControls button:hover  { background: rgba(255,255,255,0.13); }
+#singleControls button:hover  { background: rgba(255,255,255,0.12); }
 #singleControls button:active { transform: scale(0.94); }
 #singleControls button:disabled {
-  opacity: 0.28;
+  opacity: 0.22;
   cursor: not-allowed;
   pointer-events: none;
 }
 #singleControls button.primary {
-  background: #e8522a;
-  border-color: #e8522a;
+  background: linear-gradient(135deg, #e8522a, #c73f1c);
+  border-color: transparent;
   color: #fff;
   flex: 1;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(232,82,42,0.28);
+  box-shadow: 0 4px 16px rgba(232,82,42,0.3);
 }
-#singleControls button.primary:hover { background: #b83a18; }
+#singleControls button.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(232,82,42,0.4);
+}
 
 #pageCounter {
   font-size: 13px;
-  font-weight: 700;
-  color: #666;
+  font-weight: 800;
+  color: #555;
   white-space: nowrap;
   min-width: 60px;
   text-align: center;
@@ -423,21 +475,38 @@ body {
    TOAST
 ══════════════════════════════════════════════════════════ */
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ══════════════════════════════════════════════════════════
    SCROLLBAR
 ══════════════════════════════════════════════════════════ */
-::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #e8522a; border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: rgba(232,82,42,0.4); border-radius: 99px; }
 
-body::-webkit-scrollbar { width: 4px; }
-body::-webkit-scrollbar-track { background: #09090f; }
-body::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 99px; }
-body::-webkit-scrollbar-thumb:hover { background: #e8522a; }
+body::-webkit-scrollbar { width: 3px; }
+body::-webkit-scrollbar-track { background: #06060d; }
+body::-webkit-scrollbar-thumb { background: #1e1e2a; border-radius: 99px; }
+body::-webkit-scrollbar-thumb:hover { background: rgba(232,82,42,0.5); }
+
+/* ══════════════════════════════════════════════════════════
+   PAGE NUMBER BADGE
+══════════════════════════════════════════════════════════ */
+.page-num-badge {
+  position: absolute;
+  bottom: 8px; right: 10px;
+  font-size: 10px; font-weight: 800;
+  color: rgba(255,255,255,0.25);
+  pointer-events: none; z-index: 2;
+  font-family: 'Syne', sans-serif;
+  letter-spacing: 0.5px;
+  background: rgba(0,0,0,0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  backdrop-filter: blur(4px);
+}
 
 /* ══════════════════════════════════════════════════════════
    MOBILE OPTIMIZATIONS
@@ -449,12 +518,10 @@ body::-webkit-scrollbar-thumb:hover { background: #e8522a; }
   }
   #chapterListPanel.open { left: 0; }
 
-  /* Pill header lebih compact di mobile */
   .reader-header {
     max-width: calc(100vw - 16px) !important;
   }
 
-  /* Sembunyikan label teks di nav button kalau layar kecil banget */
   .rh-nav-label {
     display: none;
   }
@@ -462,4 +529,16 @@ body::-webkit-scrollbar-thumb:hover { background: #e8522a; }
 
 @media (min-width: 481px) {
   .rh-nav-label { display: inline; }
+}
+
+/* ══════════════════════════════════════════════════════════
+   SMOOTH FADE-IN FOR IMAGES
+══════════════════════════════════════════════════════════ */
+@keyframes imgReveal {
+  from { opacity: 0; filter: blur(4px); }
+  to   { opacity: 1; filter: blur(0); }
+}
+
+.img-loaded {
+  animation: imgReveal 0.3s ease forwards;
 }
