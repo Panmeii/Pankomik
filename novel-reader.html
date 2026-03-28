@@ -2,1188 +2,941 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Baca Novel — Pankomik</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Cinzel:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Nunito:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
   <style>
     /* ═══════════════════════════════════════════════════════
-       NOVEL READER — PREMIUM RESPONSIVE THEME
-       Dengan dukungan optimal untuk ilustrasi/illustrasi novel
+       PANKOMIK NOVEL READER — PREMIUM READING EXPERIENCE
+       Themes: Dark Ink / Warm Candlelight / Parchment
     ═══════════════════════════════════════════════════════ */
+
+    /* ── Theme: Dark (default) ── */
     :root {
-      --ink:         #0d0b14;
-      --ink2:        #13101e;
-      --ink3:        #1a1728;
-      --ink4:        #221f32;
-      --gold:        #c9a84c;
-      --gold-light:  #e8c96a;
-      --gold-dim:    rgba(201,168,76,0.16);
-      --gold-glow:   rgba(201,168,76,0.08);
-      --crimson:     #8b1a1a;
-      --crimson-bg:  rgba(139,26,26,0.15);
-      --text:        #ede8f5;
-      --text2:       #c4bdd6;
-      --muted:       #6e6480;
-      --border:      rgba(255,255,255,0.06);
-      --border-gold: rgba(201,168,76,0.18);
-      --r:           12px;
-      --header-h:    54px;
-      --reader-max:  800px;
-      --font-base:   18px;
-      --line-height: 1.9;
+      --bg:         #0d0b14;
+      --surface:    #13101e;
+      --surface2:   #1a1728;
+      --text:       #ddd8ee;
+      --text2:      #c4bdd6;
+      --muted:      #6e6480;
+      --border:     rgba(255,255,255,0.06);
+      --border-gold:rgba(201,168,76,0.18);
+      --gold:       #c9a84c;
+      --gold-light: #e8c96a;
+      --gold-dim:   rgba(201,168,76,0.12);
+      --crimson:    #8b1a1a;
+      --accent:     #c9a84c;
+      --header-h:   52px;
+      /* Reader vars */
+      --reader-fs:  17px;
+      --reader-lh:  2.0;
+      --reader-ff:  'Lora', serif;
+      --reader-bg:  #0d0b14;
+      --reader-text:#ddd8ee;
+      --reader-max: 680px;
     }
 
-    /* Light mode variables */
-    body.light-mode {
-      --ink:         #faf8f5;
-      --ink2:        #f5f2ed;
-      --ink3:        #ebe7e0;
-      --ink4:        #e0dcd4;
-      --text:        #2d2a33;
-      --text2:       #4a4652;
-      --muted:       #8a8494;
-      --border:      rgba(0,0,0,0.08);
-      --border-gold: rgba(201,168,76,0.4);
+    /* ── Theme: Candlelight ── */
+    body.candlelight {
+      --bg:         #1a1208;
+      --surface:    #221808;
+      --surface2:   #2d2010;
+      --text:       #f0e4c0;
+      --text2:      #d4c090;
+      --muted:      #8a7a55;
+      --border:     rgba(255,230,150,0.1);
+      --border-gold:rgba(201,168,76,0.25);
+      --reader-bg:  #1a1208;
+      --reader-text:#f0e4c0;
+    }
+
+    /* ── Theme: Parchment ── */
+    body.parchment {
+      --bg:         #f5eedc;
+      --surface:    #fdf6e3;
+      --surface2:   #ede5cc;
+      --text:       #2c1f0e;
+      --text2:      #5c4020;
+      --muted:      #9a7a50;
+      --border:     rgba(100,70,30,0.12);
+      --border-gold:rgba(139,104,34,0.3);
+      --gold:       #8b6822;
+      --gold-light: #a07828;
+      --gold-dim:   rgba(139,104,34,0.1);
+      --reader-bg:  #f5eedc;
+      --reader-text:#2c1f0e;
+    }
+
+    /* ── Theme: Night Blue ── */
+    body.nightblue {
+      --bg:         #070c1a;
+      --surface:    #0d1424;
+      --surface2:   #121c30;
+      --text:       #c8d8f0;
+      --text2:      #90a8cc;
+      --muted:      #4a5a7a;
+      --border:     rgba(100,150,255,0.08);
+      --border-gold:rgba(100,150,255,0.15);
+      --gold:       #6090d0;
+      --gold-light: #80aae0;
+      --gold-dim:   rgba(100,150,255,0.1);
+      --reader-bg:  #070c1a;
+      --reader-text:#c8d8f0;
     }
 
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior: smooth; }
 
     body {
-      background: var(--ink);
+      background: var(--bg);
       color: var(--text);
-      font-family: 'Cormorant Garamond', serif;
-      font-size: var(--font-base);
-      line-height: var(--line-height);
-      min-height: 100vh;
-      overflow-x: hidden;
+      font-family: 'Nunito', sans-serif;
+      transition: background 0.4s, color 0.4s;
+      overscroll-behavior: none;
     }
 
-    /* ── HEADER ─────────────────────────────────────────── */
+    /* ── READING PROGRESS BAR ─────────────────────────────── */
+    #progressBar {
+      position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+      background: linear-gradient(90deg, var(--crimson), var(--gold), var(--gold-light));
+      z-index: 1100; transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(201,168,76,0.4);
+    }
+
+    /* ── HEADER ───────────────────────────────────────────── */
     .reader-header {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
       height: var(--header-h);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 16px;
-      background: rgba(13,11,20,0.96);
+      padding: 0 12px; gap: 8px;
+      background: rgba(13,11,20,0.94);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border-gold);
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
-    body.light-mode .reader-header {
-      background: rgba(250,248,245,0.96);
+    body.parchment .reader-header {
+      background: rgba(245,238,220,0.94);
     }
-    .reader-header.hidden {
-      transform: translateY(-100%);
-      opacity: 0;
+    body.candlelight .reader-header {
+      background: rgba(26,18,8,0.94);
     }
-    .header-left, .header-right { display: flex; align-items: center; gap: 8px; }
-    .back-btn, .menu-btn {
-      width: 40px; height: 40px; border-radius: 10px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      color: var(--muted); font-size: 18px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
+    body.nightblue .reader-header {
+      background: rgba(7,12,26,0.94);
     }
-    .back-btn:hover, .menu-btn:hover { 
-      background: var(--gold-dim); 
-      border-color: var(--border-gold); 
-      color: var(--gold); 
+    .reader-header.hide { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+
+    .header-back {
+      width: 34px; height: 34px; border-radius: 7px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      color: var(--muted); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
     }
-    .novel-title {
-      font-family: 'Cinzel', serif; 
-      font-size: 13px; 
-      font-weight: 600;
-      letter-spacing: 1px;
-      color: var(--text);
-      max-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .header-back:hover { background: var(--gold-dim); border-color: var(--border-gold); color: var(--gold); }
+
+    .header-title {
+      flex: 1; font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; font-weight: 500; font-style: italic;
+      color: var(--muted); text-align: center;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
 
-    /* ── SETTINGS PANEL ───────────────────────────────── */
-    .settings-panel {
-      position: fixed; top: var(--header-h); right: -320px;
-      width: 320px; max-height: calc(100vh - var(--header-h));
-      background: var(--ink2);
-      border-left: 1px solid var(--border-gold);
-      z-index: 999;
-      transition: right 0.3s ease;
-      overflow-y: auto;
-      padding: 20px;
-    }
-    .settings-panel.open { right: 0; }
-    .settings-title {
-      font-family: 'Cinzel', serif;
-      font-size: 12px; letter-spacing: 2px;
-      color: var(--gold);
-      text-transform: uppercase;
-      margin-bottom: 20px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--border-gold);
-    }
-    .setting-group { margin-bottom: 24px; }
-    .setting-label {
-      font-size: 11px; font-weight: 700;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 10px;
-      display: block;
-    }
-    .font-size-controls {
-      display: flex; align-items: center; gap: 12px;
-    }
-    .font-btn {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      border: 1px solid var(--border-gold);
-      background: var(--gold-dim);
-      color: var(--gold);
-      font-size: 18px;
-      cursor: pointer;
+    .header-btns { display: flex; gap: 5px; flex-shrink: 0; }
+    .hbtn {
+      width: 34px; height: 34px; border-radius: 7px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      color: var(--muted); font-size: 14px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.2s;
     }
-    .font-btn:hover { background: rgba(201,168,76,0.25); }
-    .font-display {
-      font-size: 14px; color: var(--text);
-      min-width: 50px; text-align: center;
-    }
-    .theme-toggle {
-      display: flex; gap: 10px;
-    }
-    .theme-btn {
-      flex: 1; padding: 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text2);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .theme-btn.active {
-      border-color: var(--gold);
-      background: var(--gold-dim);
-      color: var(--gold);
-    }
-    .line-height-options {
-      display: flex; gap: 8px;
-    }
-    .lh-btn {
-      flex: 1; padding: 8px;
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text2);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .lh-btn.active {
-      border-color: var(--gold);
-      background: var(--gold-dim);
-      color: var(--gold);
-    }
+    .hbtn:hover { background: var(--gold-dim); border-color: var(--border-gold); color: var(--gold); }
 
-    /* ── READER CONTAINER ──────────────────────────────── */
-    .reader-container {
-      max-width: var(--reader-max);
-      margin: 0 auto;
-      padding: calc(var(--header-h) + 30px) 24px 100px;
-      position: relative;
+    /* ── SETTINGS PANEL ───────────────────────────────────── */
+    .settings-panel {
+      position: fixed; right: 10px; top: 60px; z-index: 1000;
+      width: 240px; padding: 18px;
+      background: rgba(13,11,20,0.97);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-gold);
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.05) inset;
+      display: none;
+      animation: panelIn 0.18s ease;
     }
-
-    /* ── CHAPTER HEADER ───────────────────────────────── */
-    .chapter-header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding-bottom: 30px;
-      border-bottom: 1px solid var(--border-gold);
+    body.parchment .settings-panel { background: rgba(245,238,220,0.97); }
+    .settings-panel.open { display: block; }
+    @keyframes panelIn {
+      from { opacity:0; transform: scale(0.95) translateY(-6px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
     }
-    .chapter-number {
+    .settings-heading {
       font-family: 'Cinzel', serif;
-      font-size: 11px; letter-spacing: 3px;
-      color: var(--gold);
-      text-transform: uppercase;
-      margin-bottom: 12px;
+      font-size: 11px; font-weight: 600; letter-spacing: 2px;
+      color: var(--gold); text-transform: uppercase; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border-gold);
+    }
+    .settings-label {
+      font-size: 9.5px; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px; margin: 14px 0 7px;
+    }
+
+    /* Font size row */
+    .fs-row { display: flex; align-items: center; gap: 8px; }
+    .fs-btn {
+      width: 30px; height: 30px; border-radius: 7px;
+      border: 1px solid var(--border-gold);
+      background: var(--gold-dim); color: var(--gold); font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .fs-btn:hover { background: rgba(201,168,76,0.25); }
+    .fs-num { flex: 1; text-align: center; font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600; color: var(--text); }
+
+    /* Font btns */
+    .ff-btns { display: flex; gap: 5px; }
+    .ff-btn {
+      flex: 1; padding: 7px 4px; border-radius: 7px;
+      border: 1px solid var(--border-gold);
+      background: transparent; color: var(--muted);
+      font-size: 11px; font-weight: 700; cursor: pointer;
+      text-align: center; transition: all 0.15s;
+      font-family: 'Nunito', sans-serif;
+    }
+    .ff-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
+    .ff-btn:hover:not(.active) { border-color: var(--border-gold); color: var(--text2); }
+
+    /* Theme btns */
+    .theme-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .theme-btn {
+      padding: 8px 6px; border-radius: 7px;
+      border: 2px solid var(--border);
+      font-size: 10px; font-weight: 800; cursor: pointer;
+      text-align: center; transition: border-color 0.15s;
+      font-family: 'Nunito', sans-serif;
+    }
+    .theme-btn.t-dark        { background: #0d0b14; color: #ddd8ee; }
+    .theme-btn.t-candlelight { background: #1a1208; color: #f0e4c0; }
+    .theme-btn.t-parchment   { background: #f5eedc; color: #2c1f0e; }
+    .theme-btn.t-nightblue   { background: #070c1a; color: #c8d8f0; }
+    .theme-btn.active { border-color: var(--gold) !important; }
+
+    /* Line height slider */
+    .lh-slider {
+      width: 100%; height: 4px;
+      -webkit-appearance: none; appearance: none;
+      background: var(--border-gold);
+      border-radius: 99px; outline: none; cursor: pointer;
+    }
+    .lh-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--gold); cursor: pointer;
+      box-shadow: 0 0 8px rgba(201,168,76,0.4);
+    }
+
+    /* ── CHAPTER PANEL ────────────────────────────────────── */
+    .ch-overlay {
+      display: none; position: fixed; inset: 0;
+      z-index: 1499; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(2px);
+    }
+    .ch-overlay.open { display: block; }
+    .ch-panel {
+      position: fixed; top: 0; left: -310px; width: 290px; height: 100vh;
+      z-index: 1500; display: flex; flex-direction: column;
+      background: rgba(13,11,20,0.99);
+      border-right: 1px solid var(--border-gold);
+      box-shadow: 4px 0 32px rgba(0,0,0,0.7);
+      transition: left 0.32s cubic-bezier(.25,.46,.45,.94);
+    }
+    body.parchment .ch-panel { background: rgba(245,238,220,0.99); }
+    .ch-panel.open { left: 0; }
+
+    .ch-panel-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-gold);
+      flex-shrink: 0;
+    }
+    .ch-panel-head-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 2px; color: var(--gold); text-transform: uppercase;
+    }
+    .ch-panel-close {
+      width: 28px; height: 28px; border-radius: 7px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 13px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .ch-panel-close:hover { border-color: var(--border-gold); color: var(--gold); }
+
+    .ch-panel-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+    .ch-panel-list::-webkit-scrollbar { width: 3px; }
+    .ch-panel-list::-webkit-scrollbar-thumb { background: var(--border-gold); }
+
+    .ch-panel-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 11px 16px; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      transition: background 0.15s;
+    }
+    .ch-panel-item:hover { background: rgba(201,168,76,0.04); }
+    .ch-panel-item.active { background: rgba(201,168,76,0.07); }
+    .ch-panel-item-title {
+      flex: 1; font-family: 'Cormorant Garamond', serif;
+      font-size: 13.5px; font-weight: 500; color: var(--text2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ch-panel-item.active .ch-panel-item-title { color: var(--gold-light); font-weight: 600; }
+    .ch-panel-item-badge { font-size: 12px; flex-shrink: 0; margin-left: 8px; }
+    .ch-panel-date { font-size: 10px; color: var(--muted); margin-left: 8px; flex-shrink: 0; }
+
+    /* ── MAIN READER ──────────────────────────────────────── */
+    #readerWrap {
+      min-height: 100vh;
+      padding-top: var(--header-h);
+    }
+
+    /* Chapter head */
+    .chapter-head {
+      padding: 32px 20px 24px;
+      border-bottom: 1px solid var(--border-gold);
+      background: var(--surface);
+      text-align: center; position: relative;
+    }
+    .chapter-head::before {
+      content: '— ✦ —';
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px; letter-spacing: 6px;
+      color: var(--gold); opacity: 0.4;
+      display: block; margin-bottom: 16px;
+    }
+    .chapter-novel-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 3px;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 10px; display: block; opacity: 0.7;
     }
     .chapter-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(24px, 5vw, 36px);
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.3;
+      font-size: 20px; font-weight: 700; line-height: 1.3;
+      color: var(--text); margin-bottom: 16px;
     }
-    .chapter-meta {
-      margin-top: 16px;
-      font-size: 12px; color: var(--muted);
-      font-family: 'Nunito', sans-serif;
-    }
-
-    /* ── NOVEL CONTENT — RESPONSIVE ILLUSTRATIONS ───────── */
-    .novel-content {
-      font-size: var(--font-base);
-      line-height: var(--line-height);
-      color: var(--text);
-    }
-    .novel-content p {
-      margin-bottom: 1.5em;
-      text-align: justify;
-      text-indent: 2em;
-    }
-    .novel-content p:first-of-type::first-letter {
-      font-size: 3em;
-      float: left;
-      line-height: 0.8;
-      padding-right: 8px;
-      color: var(--gold);
-      font-weight: 600;
-    }
-
-    /* ═══════════════════════════════════════════════════════
-       RESPONSIVE ILLUSTRATION STYLES
-    ═══════════════════════════════════════════════════════ */
-    
-    /* Container untuk ilustrasi */
-    .novel-content .illustration,
-    .novel-content .illust,
-    .novel-content figure,
-    .novel-content .img-container {
-      margin: 2.5em auto;
-      text-align: center;
-      max-width: 100%;
-    }
-
-    /* Gambar ilustrasi — responsif */
-    .novel-content .illustration img,
-    .novel-content .illust img,
-    .novel-content figure img,
-    .novel-content img.illust,
-    .novel-content img.illustration,
-    .novel-content .img-container img {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-      border-radius: 8px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    
-    body.light-mode .novel-content img {
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-    }
-
-    /* Hover effect untuk desktop */
-    @media (hover: hover) {
-      .novel-content img:hover {
-        transform: scale(1.02);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-      }
-    }
-
-    /* Caption untuk ilustrasi */
-    .novel-content figcaption,
-    .novel-content .illust-caption,
-    .novel-content .caption {
-      font-size: 0.85em;
-      color: var(--muted);
-      font-style: italic;
-      margin-top: 12px;
-      text-align: center;
+    .chapter-head::after {
+      content: '— ✦ —';
       font-family: 'Cormorant Garamond', serif;
+      font-size: 11px; letter-spacing: 6px;
+      color: var(--gold); opacity: 0.4;
+      display: block; margin-top: 16px;
     }
 
-    /* Ilustrasi full-width pada mobile */
-    @media (max-width: 768px) {
-      .reader-container {
-        padding: calc(var(--header-h) + 20px) 16px 80px;
-      }
-      .novel-content p {
-        text-indent: 1.5em;
-      }
-      
-      /* Ilustrasi full bleed pada mobile */
-      .novel-content .illustration,
-      .novel-content .illust,
-      .novel-content figure,
-      .novel-content .img-container {
-        margin: 2em -16px; /* Full width dengan negatif margin */
-        padding: 0;
-      }
-      
-      .novel-content .illustration img,
-      .novel-content .illust img,
-      .novel-content figure img,
-      .novel-content img.illust,
-      .novel-content img.illustration,
-      .novel-content .img-container img {
-        border-radius: 0; /* No border radius untuk full bleed */
-        width: 100%;
-        max-width: 100vw;
-      }
-      
-      /* Caption tetap dengan padding */
-      .novel-content figcaption,
-      .novel-content .illust-caption,
-      .novel-content .caption {
-        padding: 0 16px;
-      }
+    /* Nav pills */
+    .nav-pills {
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
     }
-
-    /* Ilustrasi landscape mode */
-    @media (max-width: 768px) and (orientation: landscape) {
-      .novel-content .illustration,
-      .novel-content .illust,
-      .novel-content figure,
-      .novel-content .img-container {
-        max-width: 80%;
-        margin: 2em auto;
-      }
-      
-      .novel-content .illustration img,
-      .novel-content .illust img,
-      .novel-content figure img {
-        border-radius: 8px;
-      }
-    }
-
-    /* Tablet optimization */
-    @media (min-width: 769px) and (max-width: 1024px) {
-      .novel-content .illustration,
-      .novel-content .illust,
-      .novel-content figure,
-      .novel-content .img-container {
-        max-width: 90%;
-      }
-    }
-
-    /* Lightbox untuk ilustrasi */
-    .img-lightbox {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.95);
-      z-index: 2000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      cursor: zoom-out;
-    }
-    .img-lightbox.active { display: flex; }
-    .img-lightbox img {
-      max-width: 100%;
-      max-height: 100vh;
-      object-fit: contain;
-      border-radius: 4px;
-    }
-    .img-lightbox .close-btn {
-      position: absolute; top: 20px; right: 20px;
-      width: 44px; height: 44px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: #fff;
-      font-size: 20px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-
-    /* ── NAVIGATION ───────────────────────────────────── */
-    .chapter-nav {
-      display: flex; gap: 12px;
-      margin-top: 60px;
-      padding-top: 30px;
-      border-top: 1px solid var(--border-gold);
-    }
-    .nav-btn {
-      flex: 1; padding: 16px 20px;
-      border-radius: 10px;
+    .nav-pill {
+      padding: 6px 14px; border-radius: 99px;
       border: 1px solid var(--border-gold);
-      background: var(--gold-dim);
-      color: var(--gold);
-      font-family: 'Cinzel', serif;
-      font-size: 12px; letter-spacing: 1px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      gap: 8px;
+      background: var(--gold-dim); color: var(--gold);
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px; font-weight: 700; cursor: pointer;
+      text-decoration: none; display: inline-block;
       transition: all 0.2s;
     }
-    .nav-btn:hover:not(:disabled) {
-      background: rgba(201,168,76,0.25);
-      transform: translateY(-2px);
-    }
-    .nav-btn:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    .nav-btn.primary {
-      background: linear-gradient(135deg, var(--crimson), #c9291c);
-      border-color: transparent;
-      color: #fff;
-    }
-    .nav-btn.primary:hover:not(:disabled) {
-      box-shadow: 0 6px 20px rgba(139,26,26,0.4);
+    .nav-pill:hover, .nav-pill.primary {
+      background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(139,26,26,0.15));
+      border-color: rgba(201,168,76,0.4);
     }
 
-    /* ── PROGRESS BAR ─────────────────────────────────── */
-    .progress-bar {
-      position: fixed; top: 0; left: 0; right: 0;
-      height: 3px;
-      background: transparent;
-      z-index: 1001;
+    /* ── NOVEL TEXT ───────────────────────────────────────── */
+    #novelContent {
+      max-width: var(--reader-max);
+      margin: 0 auto;
+      padding: 36px 22px 40px;
     }
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--gold), var(--gold-light));
-      width: 0%;
-      transition: width 0.1s;
+    #novelContent p {
+      margin-bottom: 1.1em;
+      color: var(--reader-text);
+      line-height: var(--reader-lh);
+      font-size: var(--reader-fs);
+      font-family: var(--reader-ff);
+      transition: font-size 0.2s, line-height 0.2s, font-family 0.2s;
+      text-align: justify;
+      hyphens: auto;
     }
-
-    /* ── BOTTOM TOOLBAR ───────────────────────────────── */
-    .bottom-toolbar {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: 60px;
-      background: rgba(13,11,20,0.96);
-      backdrop-filter: blur(20px);
-      border-top: 1px solid var(--border-gold);
-      display: flex; align-items: center; justify-content: center;
-      gap: 40px;
-      padding: 0 20px;
-      z-index: 999;
-      transition: transform 0.3s ease;
-    }
-    body.light-mode .bottom-toolbar {
-      background: rgba(250,248,245,0.96);
-    }
-    .bottom-toolbar.hidden {
-      transform: translateY(100%);
-    }
-    .tool-btn {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 4px;
-      background: none; border: none;
-      color: var(--muted);
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .tool-btn:hover, .tool-btn.active { color: var(--gold); }
-    .tool-icon { font-size: 20px; }
-    .tool-label { font-size: 9px; font-family: 'Nunito', sans-serif; font-weight: 700; }
-
-    /* ── COMMENT SECTION ──────────────────────────────── */
-    .comment-section {
-      margin-top: 50px;
-      padding-top: 30px;
-      border-top: 1px solid var(--border-gold);
-    }
-    .comment-title {
+    /* First paragraph drop cap */
+    #novelContent > p:first-of-type::first-letter {
       font-family: 'Cinzel', serif;
-      font-size: 14px; letter-spacing: 2px;
+      font-size: calc(var(--reader-fs) * 3.2);
+      font-weight: 700;
+      float: left;
+      line-height: 0.8;
+      margin-right: 6px;
+      margin-top: 4px;
       color: var(--gold);
-      text-transform: uppercase;
-      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(201,168,76,0.3);
+    }
+    #novelContent p:empty { margin-bottom: 0.4em; }
+    #novelContent b, #novelContent strong { font-weight: 700; }
+    #novelContent i, #novelContent em { font-style: italic; }
+    #novelContent hr {
+      border: none; border-top: 1px solid var(--border-gold);
+      margin: 28px auto; width: 60%;
     }
 
-    /* ── LOADING STATES ───────────────────────────────── */
-    .skeleton-text {
-      background: linear-gradient(90deg, var(--ink3) 0%, var(--ink4) 50%, var(--ink3) 100%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      height: 1em;
-      border-radius: 4px;
-      margin-bottom: 0.8em;
-    }
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
+    /* Chapter ornament between paragraphs */
+    .chapter-break {
+      text-align: center;
+      padding: 8px 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px; letter-spacing: 6px;
+      color: var(--gold); opacity: 0.3;
     }
 
-    /* ── SCROLL TO TOP ─────────────────────────────────── */
-    .scroll-top {
-      position: fixed; bottom: 80px; right: 20px;
-      width: 44px; height: 44px;
-      border-radius: 50%;
-      background: var(--gold-dim);
+    /* ── BOTTOM NAV ───────────────────────────────────────── */
+    .chapter-nav {
+      display: flex; gap: 8px; padding: 14px 16px 30px;
+      border-top: 1px solid var(--border-gold);
+      background: var(--surface);
+    }
+    .cnav-btn {
+      flex: 1; padding: 13px; border-radius: 8px;
       border: 1px solid var(--border-gold);
-      color: var(--gold);
-      font-size: 18px;
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; visibility: hidden;
-      transition: all 0.3s;
-      z-index: 998;
+      background: var(--gold-dim); color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      cursor: pointer; transition: all 0.25s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
     }
-    .scroll-top.visible {
-      opacity: 1; visibility: visible;
+    .cnav-btn:hover:not(:disabled) {
+      background: rgba(201,168,76,0.22);
+      box-shadow: 0 0 20px rgba(201,168,76,0.1);
     }
-    .scroll-top:hover {
-      background: rgba(201,168,76,0.25);
-      transform: translateY(-3px);
+    .cnav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cnav-btn.primary {
+      flex: 2;
+      background: linear-gradient(135deg, #8b1a1a, #c9291c);
+      border-color: transparent; color: #fff;
+      box-shadow: 0 4px 16px rgba(139,26,26,0.35);
+    }
+    .cnav-btn.primary:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(139,26,26,0.5);
+      transform: translateY(-1px);
     }
 
-    /* ── TOAST ────────────────────────────────────────── */
+    /* ── LOADING & ERROR ──────────────────────────────────── */
+    .reader-loading {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 70vh; gap: 20px; color: var(--muted);
+    }
+    .loading-ornament {
+      font-family: 'Cinzel', serif;
+      font-size: 12px; letter-spacing: 4px; color: var(--gold); opacity: 0.5;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.7} }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 2px solid rgba(201,168,76,0.15);
+      border-top-color: var(--gold);
+      border-radius: 50%; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TOAST ────────────────────────────────────────────── */
     #toastWrap {
-      position: fixed; bottom: 80px; left: 50%;
-      transform: translateX(-50%);
-      z-index: 3000;
-      pointer-events: none;
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%); z-index: 3000;
+      pointer-events: none; white-space: nowrap;
     }
-    .toast {
-      padding: 12px 24px;
-      border-radius: 99px;
-      font-size: 13px;
-      font-weight: 700;
-      color: #fff;
-      background: linear-gradient(135deg, var(--crimson), #c9291c);
+    .toast-item {
+      padding: 10px 20px; border-radius: 99px;
+      font-size: 12px; font-weight: 700; color: #fff;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-      margin-top: 8px;
-      animation: toastIn 0.3s ease;
-      font-family: 'Nunito', sans-serif;
+      margin-top: 6px; font-family: 'Nunito', sans-serif;
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: toastIn 0.2s ease;
     }
-    @keyframes toastIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ── SELECTION POPUP (Quote) ──────────────────────── */
-    .selection-popup {
-      position: absolute;
-      background: var(--ink3);
-      border: 1px solid var(--border-gold);
-      border-radius: 8px;
-      padding: 8px 12px;
-      display: none;
-      gap: 8px;
-      z-index: 500;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-    }
-    .selection-popup button {
-      background: none; border: none;
-      color: var(--gold);
-      font-size: 12px;
-      cursor: pointer;
-      font-family: 'Nunito', sans-serif;
-      font-weight: 700;
-    }
+    /* ── SCROLLBAR ────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 99px; }
 
-    /* ── RESPONSIVE BREAKPOINTS ───────────────────────── */
-    @media (max-width: 480px) {
-      :root { --font-base: 16px; }
-      .novel-title { max-width: 140px; font-size: 11px; }
-      .settings-panel { width: 100%; right: -100%; }
-    }
-
-    @media (min-width: 1200px) {
-      :root { --font-base: 20px; }
-      .reader-container { padding-top: calc(var(--header-h) + 40px); }
+    /* ── COMMENT SECTION ──────────────────────────────────── */
+    #novelReaderCommentSection {
+      max-width: var(--reader-max);
+      margin: 0 auto;
+      padding: 0 20px 40px;
     }
   </style>
 </head>
 <body>
 
-  <!-- Progress Bar -->
-  <div class="progress-bar">
-    <div class="progress-fill" id="progressFill"></div>
+<!-- Progress bar -->
+<div id="progressBar"></div>
+
+<!-- Header -->
+<div class="reader-header" id="readerHeader">
+  <button class="header-back" onclick="goBack()">←</button>
+  <span class="header-title" id="headerTitle">Memuat...</span>
+  <div class="header-btns">
+    <button class="hbtn" onclick="toggleChPanel()" title="Daftar Chapter">📚</button>
+    <button class="hbtn" onclick="toggleSettings()" title="Pengaturan">⚙️</button>
+    <button class="hbtn" onclick="goToDetail()" title="Detail Novel">📋</button>
+  </div>
+</div>
+
+<!-- Settings Panel -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-heading">✦ Pengaturan Baca</div>
+
+  <div class="settings-label">Ukuran Teks</div>
+  <div class="fs-row">
+    <button class="fs-btn" onclick="changeFontSize(-1)">−</button>
+    <span class="fs-num" id="fsNum">17px</span>
+    <button class="fs-btn" onclick="changeFontSize(1)">＋</button>
   </div>
 
-  <!-- Header -->
-  <header class="reader-header" id="readerHeader">
-    <div class="header-left">
-      <button class="back-btn" onclick="goBack()">←</button>
-      <span class="novel-title" id="novelTitle">Memuat...</span>
-    </div>
-    <div class="header-right">
-      <button class="menu-btn" onclick="toggleSettings()" title="Pengaturan">⚙️</button>
-    </div>
-  </header>
-
-  <!-- Settings Panel -->
-  <div class="settings-panel" id="settingsPanel">
-    <div class="settings-title">⚙️ Pengaturan Baca</div>
-    
-    <div class="setting-group">
-      <span class="setting-label">Ukuran Teks</span>
-      <div class="font-size-controls">
-        <button class="font-btn" onclick="changeFontSize(-1)">−</button>
-        <span class="font-display" id="fontDisplay">18px</span>
-        <button class="font-btn" onclick="changeFontSize(1)">+</button>
-      </div>
-    </div>
-
-    <div class="setting-group">
-      <span class="setting-label">Tema</span>
-      <div class="theme-toggle">
-        <button class="theme-btn active" onclick="setTheme('dark')" id="themeDark">🌙 Gelap</button>
-        <button class="theme-btn" onclick="setTheme('light')" id="themeLight">☀️ Terang</button>
-      </div>
-    </div>
-
-    <div class="setting-group">
-      <span class="setting-label">Jarak Baris</span>
-      <div class="line-height-options">
-        <button class="lh-btn" onclick="setLineHeight(1.6)">Rapat</button>
-        <button class="lh-btn active" onclick="setLineHeight(1.9)">Normal</button>
-        <button class="lh-btn" onclick="setLineHeight(2.2)">Longgar</button>
-      </div>
-    </div>
+  <div class="settings-label">Tipografi</div>
+  <div class="ff-btns">
+    <button class="ff-btn" id="ff-lora" onclick="setFont('Lora')">Lora</button>
+    <button class="ff-btn" id="ff-cormorant" onclick="setFont('Cormorant')">Crmt</button>
+    <button class="ff-btn" id="ff-nunito" onclick="setFont('Nunito')">Sans</button>
   </div>
 
-  <!-- Reader Container -->
-  <main class="reader-container" id="readerContainer">
-    <!-- Chapter Header -->
-    <div class="chapter-header">
-      <div class="chapter-number" id="chapterNumber">CHAPTER 1</div>
-      <h1 class="chapter-title" id="chapterTitle">Memuat Chapter...</h1>
-      <div class="chapter-meta" id="chapterMeta"></div>
-    </div>
+  <div class="settings-label">Jarak Baris</div>
+  <input type="range" class="lh-slider" id="lhSlider"
+    min="1.5" max="3.0" step="0.1" value="2.0"
+    oninput="setLineHeight(this.value)">
 
-    <!-- Novel Content -->
-    <article class="novel-content" id="novelContent">
-      <!-- Skeleton Loading -->
-      <div class="skeleton-text" style="width: 100%; height: 1.2em;"></div>
-      <div class="skeleton-text" style="width: 95%;"></div>
-      <div class="skeleton-text" style="width: 98%;"></div>
-      <div class="skeleton-text" style="width: 92%;"></div>
-      <div class="skeleton-text" style="width: 100%; height: 1.2em;"></div>
-      <div class="skeleton-text" style="width: 96%;"></div>
-      <div class="skeleton-text" style="width: 94%;"></div>
-      <div class="skeleton-text" style="width: 100%;"></div>
-      <div class="skeleton-text" style="width: 90%;"></div>
-      <div class="skeleton-text" style="width: 100%; height: 1.2em;"></div>
-      <div class="skeleton-text" style="width: 95%;"></div>
-      <div class="skeleton-text" style="width: 88%;"></div>
-    </article>
-
-    <!-- Chapter Navigation -->
-    <nav class="chapter-nav">
-      <button class="nav-btn" id="prevBtn" onclick="goToChapter('prev')">
-        ← Sebelumnya
-      </button>
-      <button class="nav-btn primary" onclick="showChapterList()">
-        📑 Daftar Chapter
-      </button>
-      <button class="nav-btn" id="nextBtn" onclick="goToChapter('next')">
-        Selanjutnya →
-      </button>
-    </nav>
-
-    <!-- Comment Section -->
-    <div class="comment-section" id="commentSection">
-      <h3 class="comment-title">💬 Komentar Chapter</h3>
-      <div id="chapterComments"></div>
-    </div>
-  </main>
-
-  <!-- Bottom Toolbar -->
-  <div class="bottom-toolbar" id="bottomToolbar">
-    <button class="tool-btn" onclick="toggleSettings()">
-      <span class="tool-icon">⚙️</span>
-      <span class="tool-label">Setting</span>
-    </button>
-    <button class="tool-btn" onclick="toggleFullscreen()">
-      <span class="tool-icon" id="fullscreenIcon">⛶</span>
-      <span class="tool-label">Layar Penuh</span>
-    </button>
-    <button class="tool-btn" onclick="scrollToComments()">
-      <span class="tool-icon">💬</span>
-      <span class="tool-label">Komentar</span>
-    </button>
+  <div class="settings-label">Tema</div>
+  <div class="theme-btns">
+    <button class="theme-btn t-dark        active" id="t-dark"        onclick="setTheme('dark')">🌙 Gelap</button>
+    <button class="theme-btn t-candlelight"        id="t-candlelight" onclick="setTheme('candlelight')">🕯️ Lilin</button>
+    <button class="theme-btn t-parchment"          id="t-parchment"   onclick="setTheme('parchment')">📜 Perkamen</button>
+    <button class="theme-btn t-nightblue"          id="t-nightblue"   onclick="setTheme('nightblue')">🔵 Malam</button>
   </div>
+</div>
 
-  <!-- Scroll to Top -->
-  <button class="scroll-top" id="scrollTop" onclick="scrollToTop()">↑</button>
+<!-- Chapter panel overlay -->
+<div class="ch-overlay" id="chOverlay" onclick="toggleChPanel()"></div>
 
-  <!-- Image Lightbox -->
-  <div class="img-lightbox" id="imgLightbox" onclick="closeLightbox()">
-    <button class="close-btn" onclick="closeLightbox()">✕</button>
-    <img src="" alt="Illustration" id="lightboxImg">
+<!-- Chapter list panel -->
+<div class="ch-panel" id="chPanel">
+  <div class="ch-panel-head">
+    <span class="ch-panel-head-title">Daftar Chapter</span>
+    <button class="ch-panel-close" onclick="toggleChPanel()">✕</button>
   </div>
-
-  <!-- Selection Popup -->
-  <div class="selection-popup" id="selectionPopup">
-    <button onclick="copySelection()">📋 Salin</button>
-    <button onclick="shareSelection()">📤 Bagikan</button>
+  <div class="ch-panel-list" id="chPanelList">
+    <div style="padding:20px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);font-size:14px;">Memuat...</div>
   </div>
+</div>
 
-  <!-- Toast -->
-  <div id="toastWrap"></div>
+<!-- Reader -->
+<div id="readerWrap">
+  <div class="reader-loading">
+    <div class="loading-ornament">— ✦ —</div>
+    <div class="loading-spinner"></div>
+    <div class="loading-ornament">Membuka halaman...</div>
+  </div>
+</div>
 
-  <script type="module">
-    import { initAuthHeader } from "/auth-header.js";
-    import { getCurrentUser, saveNovelHistory } from "/supabase.js";
-    import { initComments } from "/comment-system.js";
+<!-- Comments -->
+<div id="novelReaderCommentSection"></div>
 
-    initAuthHeader();
+<div id="toastWrap"></div>
 
-    // State
-    let currentUser = null;
-    let novelData = null;
-    let chapterData = null;
-    let settings = {
-      fontSize: parseInt(localStorage.getItem('reader_fontSize')) || 18,
-      theme: localStorage.getItem('reader_theme') || 'dark',
-      lineHeight: parseFloat(localStorage.getItem('reader_lineHeight')) || 1.9
-    };
-
-    // Initialize
-    window.addEventListener('DOMContentLoaded', async () => {
-      if (window._supabase) {
-        currentUser = await window._supabase.getCurrentUser();
-      }
-      
-      applySettings();
-      await loadChapter();
-      setupEventListeners();
-      setupImageHandlers();
+<script type="module">
+  import { getCurrentUser, saveNovelHistory, updateNovelProgress } from "/supabase.js";
+  import { initComments } from "/comment-system.js";
+  window._novelAuth = { getCurrentUser, saveNovelHistory, updateNovelProgress };
+  window._initChComments = async function(chSlug) {
+    const user = await getCurrentUser();
+    await initComments({
+      containerId: "novelReaderCommentSection",
+      contentSlug: `novel-chapter:${chSlug}`,
+      accentColor: "#c9a84c",
+      user,
     });
+  };
+</script>
 
-    // Load Chapter Data
-    async function loadChapter() {
-      const slug = getChapterSlug();
-      if (!slug) {
-        showError('Chapter tidak ditemukan');
-        return;
+<script>
+/* ============================================================
+   NOVEL READER — Premium redesign
+   API: GET /novel/sakuranovel/read/{chapter-slug}
+   ============================================================ */
+
+const BASE = "https://www.sankavollerei.com/novel/sakuranovel/read";
+
+function getChapterSlug() {
+  const m = window.location.pathname.match(/^\/baca-novel\/([^/]+)\/?$/);
+  if (m) return m[1];
+  return new URLSearchParams(window.location.search).get("slug");
+}
+const chapterSlug = getChapterSlug();
+if (!chapterSlug) window.location.href = "/novel/";
+
+/* ── State ─────────────────────────────────────────── */
+let currentSlug  = chapterSlug;
+let navigation   = {};
+let currentUser  = null;
+let historySaved = false;
+let parentSlug   = null;
+
+/* ── Settings ───────────────────────────────────────── */
+let fontSize   = parseInt(localStorage.getItem("nv_fs")  || "17");
+let fontFamily = localStorage.getItem("nv_ff")            || "Lora";
+let lineHeight = parseFloat(localStorage.getItem("nv_lh") || "2.0");
+let theme      = localStorage.getItem("nv_theme")         || "dark";
+
+/* ── INIT ─────────────────────────────────────────── */
+window.addEventListener("DOMContentLoaded", async () => {
+  applySettings(false);
+  initProgressBar();
+  initHeaderHide();
+
+  await new Promise(r => setTimeout(r, 80));
+  if (window._novelAuth) currentUser = await window._novelAuth.getCurrentUser();
+  await loadChapter(currentSlug);
+});
+
+/* ── FETCH & RENDER ──────────────────────────────── */
+async function loadChapter(slug) {
+  document.getElementById("readerWrap").innerHTML = `
+    <div class="reader-loading">
+      <div class="loading-ornament">— ✦ —</div>
+      <div class="loading-spinner"></div>
+      <div class="loading-ornament">Membuka halaman...</div>
+    </div>`;
+  historySaved = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  document.getElementById("progressBar").style.width = "0%";
+
+  try {
+    const res  = await fetch(`${BASE}/${slug}`);
+    const json = await res.json();
+    if (!json.data) throw new Error("No data");
+
+    const d    = json.data;
+    navigation = d.navigation || {};
+    parentSlug = navigation.parent_slug || null;
+    currentSlug = slug;
+
+    if (window.trackNow) window.trackNow();
+
+    document.title = (d.title || "Baca Novel") + " — Pankomik";
+    document.getElementById("headerTitle").textContent = d.title || "Novel";
+
+    renderChapter(d);
+
+    /* Update chapter panel active state */
+    renderChPanelActive();
+
+    /* Init comments */
+    if (typeof window._initChComments === "function") window._initChComments(slug);
+
+    /* Save history */
+    if (currentUser && !historySaved && window._novelAuth) {
+      historySaved = true;
+      const novelSlug  = parentSlug || chapterSlug;
+      const novelTitle = extractNovelTitle(d.title || "");
+      const chTitle    = d.title || chapterSlug;
+
+      window._novelAuth.saveNovelHistory(currentUser.id, {
+        slug: novelSlug, title: novelTitle, cover: d.cover || ""
+      }, {
+        slug: chapterSlug, title: chTitle
+      }).catch(console.error);
+
+      window._novelAuth.updateNovelProgress?.(currentUser.id, {
+        slug: novelSlug, title: novelTitle, cover: d.cover || "",
+        lastChapterSlug: chapterSlug
+      }, chTitle).catch(console.error);
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("readerWrap").innerHTML = `
+      <div class="reader-loading">
+        <div class="loading-ornament" style="opacity:1;animation:none;">Gagal memuat chapter</div>
+        <button onclick="loadChapter('${slug}')" style="
+          padding:10px 24px;
+          background:linear-gradient(135deg,#8b1a1a,#c9291c);
+          color:#fff;border:none;border-radius:8px;cursor:pointer;
+          font-family:'Cinzel',serif;font-size:12px;letter-spacing:1.5px;
+          box-shadow:0 4px 16px rgba(139,26,26,0.4);">
+          ✦ Coba Lagi
+        </button>
+      </div>`;
+  }
+}
+
+function renderChapter(d) {
+  const prev = navigation.prev_slug;
+  const next = navigation.next_slug;
+  const clean = sanitizeContent(d.content || "<p>Tidak ada konten.</p>");
+
+  document.getElementById("readerWrap").innerHTML = `
+    <div class="chapter-head">
+      <span class="chapter-novel-label">Novel</span>
+      <h2 class="chapter-title">${esc(d.title || "")}</h2>
+      <div class="nav-pills">
+        ${parentSlug ? `<a class="nav-pill" href="/novel/${parentSlug}">← Detail Novel</a>` : ""}
+        ${prev ? `<span class="nav-pill" onclick="goToChapter('${prev}')">⬅ Sebelumnya</span>` : ""}
+        ${next ? `<span class="nav-pill primary" onclick="goToChapter('${next}')">Selanjutnya ➡</span>` : ""}
+      </div>
+    </div>
+
+    <div id="novelContent">${clean}</div>
+
+    <div class="chapter-nav">
+      <button class="cnav-btn" ${!prev ? "disabled" : ""} onclick="goToChapter('${prev}')">⬅ Sebelumnya</button>
+      ${next
+        ? `<button class="cnav-btn primary" onclick="goToChapter('${next}')">Selanjutnya ➡</button>`
+        : parentSlug
+          ? `<button class="cnav-btn primary" onclick="window.location.href='/novel/${parentSlug}'">📋 Kembali ke Detail</button>`
+          : `<button class="cnav-btn" disabled>✦ Selesai ✦</button>`
       }
+    </div>
+  `;
 
-      try {
-        const res = await fetch(`/novel/sakuranovel/chapter/${slug}`);
-        const data = await res.json();
-        
-        if (!data.data) throw new Error('No data');
-        
-        chapterData = data.data;
-        novelData = data.novel || {};
-        
-        renderChapter();
-        saveHistory();
-        initComments({
-          containerId: 'chapterComments',
-          contentSlug: `chapter:${slug}`,
-          accentColor: '#c9a84c',
-          user: currentUser
-        });
-      } catch (err) {
-        console.error(err);
-        showError('Gagal memuat chapter');
-      }
+  applySettings(false);
+}
+
+function sanitizeContent(html) {
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "")
+    .replace(/href="https?:\/\/(?!pankomik)[^"]*"/gi, 'href="#"')
+    .replace(/src="(https?:\/\/[^"]+)"/gi, (m, url) =>
+      `src="https://wsrv.nl/?url=${encodeURIComponent(url)}&w=680&output=webp&q=85"`)
+    .replace(/<p[^>]*>.*?(Ko-fi|sakuranovel|Baca novel lain).*?<\/p>/gi, "");
+}
+
+/* ── NAVIGATION ───────────────────────────────────── */
+window.goToChapter = function(slug) {
+  if (!slug) return;
+  currentSlug  = slug;
+  historySaved = false;
+  const cs = document.getElementById("novelReaderCommentSection");
+  if (cs) cs.innerHTML = "";
+  loadChapter(slug);
+};
+
+window.goBack    = () => { if (parentSlug) window.location.href = `/novel/${parentSlug}`; else history.back(); };
+window.goToDetail = () => { if (parentSlug) window.location.href = `/novel/${parentSlug}`; else history.back(); };
+
+/* ── CHAPTER PANEL ───────────────────────────────── */
+let _chList = [], _chPanelLoaded = false;
+
+window.toggleChPanel = function() {
+  const panel   = document.getElementById("chPanel");
+  const overlay = document.getElementById("chOverlay");
+  if (!panel) return;
+  const wasOpen = panel.classList.contains("open");
+  panel.classList.toggle("open");
+  overlay.classList.toggle("open");
+
+  if (!wasOpen && !_chPanelLoaded && parentSlug) loadChPanelData(parentSlug);
+  if (!wasOpen) {
+    setTimeout(() => {
+      document.querySelector(".ch-panel-item.active")
+        ?.scrollIntoView({ behavior:"smooth", block:"center" });
+    }, 350);
+  }
+};
+
+async function loadChPanelData(novelSlug) {
+  try {
+    const res  = await fetch(`https://www.sankavollerei.com/novel/sakuranovel/detail/${novelSlug}`);
+    const json = await res.json();
+    if (!json.data?.chapters?.length) {
+      document.getElementById("chPanelList").innerHTML =
+        `<div style="padding:20px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);font-size:14px;">Tidak ada chapter.</div>`;
+      return;
     }
+    _chList = json.data.chapters;
+    _chPanelLoaded = true;
+    renderChPanel();
+  } catch (e) {
+    console.error(e);
+  }
+}
 
-    function getChapterSlug() {
-      const path = window.location.pathname;
-      const match = path.match(/\/baca-novel\/([^/]+)/);
-      return match ? match[1] : new URLSearchParams(window.location.search).get('chapter');
-    }
+function renderChPanel() {
+  const listEl = document.getElementById("chPanelList");
+  if (!listEl || !_chList.length) return;
+  listEl.innerHTML = _chList.map((ch, i) => {
+    const isActive = ch.slug === currentSlug;
+    const title = ch.title || `Chapter ${i + 1}`;
+    const short = title.length > 42 ? title.slice(0, 39) + "…" : title;
+    return `
+      <div class="ch-panel-item${isActive ? " active" : ""}"
+           onclick="goChFromPanel('${ch.slug}')">
+        <span class="ch-panel-item-title">${esc(short)}</span>
+        ${ch.date ? `<span class="ch-panel-date">${ch.date}</span>` : ""}
+        ${isActive ? `<span class="ch-panel-item-badge">📖</span>` : ""}
+      </div>`;
+  }).join("");
+}
 
-    function renderChapter() {
-      // Update header
-      document.getElementById('novelTitle').textContent = novelData.title || 'Novel';
-      document.getElementById('chapterNumber').textContent = `CHAPTER ${chapterData.number || 1}`;
-      document.getElementById('chapterTitle').textContent = chapterData.title || 'Untitled';
-      
-      // Update meta
-      const meta = [];
-      if (chapterData.date) meta.push(`📅 ${formatDate(chapterData.date)}`);
-      if (chapterData.translator) meta.push(`👤 ${chapterData.translator}`);
-      document.getElementById('chapterMeta').textContent = meta.join(' · ');
+function renderChPanelActive() {
+  if (!_chPanelLoaded) return;
+  document.querySelectorAll(".ch-panel-item").forEach(el => {
+    const slug = el.getAttribute("onclick")?.match(/'([^']+)'/)?.[1];
+    el.classList.toggle("active", slug === currentSlug);
+  });
+}
 
-      // Render content dengan ilustrasi yang responsif
-      const content = processContent(chapterData.content);
-      document.getElementById('novelContent').innerHTML = content;
+window.goChFromPanel = function(slug) {
+  if (slug === currentSlug) { toggleChPanel(); return; }
+  toggleChPanel();
+  goToChapter(slug);
+  setTimeout(renderChPanelActive, 800);
+};
 
-      // Update navigation
-      updateNavigation();
+/* ── SETTINGS ────────────────────────────────────── */
+window.toggleSettings = function() {
+  document.getElementById("settingsPanel").classList.toggle("open");
+};
 
-      // Setup image handlers untuk ilustrasi
-      setupImageHandlers();
+const FF_MAP = {
+  "Lora":       "'Lora', serif",
+  "Cormorant":  "'Cormorant Garamond', serif",
+  "Nunito":     "'Nunito', sans-serif",
+};
 
-      // Update title
-      document.title = `${chapterData.title} — ${novelData.title || 'Pankomik'}`;
-    }
+function applySettings(save = true) {
+  const content = document.getElementById("novelContent");
+  if (content) {
+    content.style.setProperty("--reader-fs", fontSize + "px");
+    content.style.setProperty("--reader-lh", lineHeight);
+    content.style.setProperty("--reader-ff", FF_MAP[fontFamily] || "'Lora', serif");
+  }
 
-    // Process content untuk memastikan ilustrasi responsif
-    function processContent(html) {
-      if (!html) return '<p>Tidak ada konten.</p>';
+  const fsNum = document.getElementById("fsNum");
+  if (fsNum) fsNum.textContent = fontSize + "px";
 
-      // Parse HTML
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Process images untuk responsivitas
-      const images = doc.querySelectorAll('img');
-      images.forEach(img => {
-        // Hapus atribut width/height fixed
-        img.removeAttribute('width');
-        img.removeAttribute('height');
-        
-        // Tambahkan class untuk styling
-        img.classList.add('illust');
-        
-        // Pastikan ada container jika belum ada
-        const parent = img.parentElement;
-        if (parent && !parent.matches('figure, .illustration, .illust, .img-container')) {
-          const wrapper = document.createElement('figure');
-          wrapper.className = 'illustration';
-          parent.insertBefore(wrapper, img);
-          wrapper.appendChild(img);
-          
-          // Tambahkan caption jika ada alt text
-          if (img.alt) {
-            const caption = document.createElement('figcaption');
-            caption.textContent = img.alt;
-            wrapper.appendChild(caption);
-          }
-        }
-        
-        // Lazy loading
-        img.loading = 'lazy';
-        img.decoding = 'async';
-      });
+  const lhSlider = document.getElementById("lhSlider");
+  if (lhSlider) lhSlider.value = lineHeight;
 
-      // Wrap text nodes in paragraphs jika belum
-      const body = doc.body;
-      let currentP = null;
-      
-      Array.from(body.childNodes).forEach(node => {
-        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-          if (!currentP) {
-            currentP = document.createElement('p');
-            node.parentNode.insertBefore(currentP, node);
-          }
-          currentP.appendChild(node);
-        } else if (node.nodeType === Node.ELEMENT_NODE) {
-          currentP = null;
-        }
-      });
+  /* Font buttons */
+  document.querySelectorAll(".ff-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("ff-" + fontFamily.toLowerCase())?.classList.add("active");
 
-      return body.innerHTML;
-    }
+  /* Theme */
+  document.body.className = theme;
+  document.querySelectorAll(".theme-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("t-" + theme)?.classList.add("active");
 
-    // Setup image click handlers untuk lightbox
-    function setupImageHandlers() {
-      const images = document.querySelectorAll('.novel-content img');
-      const lightbox = document.getElementById('imgLightbox');
-      const lightboxImg = document.getElementById('lightboxImg');
+  /* Adjust header for parchment */
+  const header = document.querySelector(".reader-header");
+  if (header) {
+    header.style.borderBottomColor =
+      theme === "parchment" ? "rgba(139,104,34,0.3)" :
+      theme === "nightblue" ? "rgba(100,150,255,0.15)" :
+      "rgba(201,168,76,0.18)";
+  }
 
-      images.forEach(img => {
-        img.style.cursor = 'zoom-in';
-        img.addEventListener('click', (e) => {
-          e.preventDefault();
-          lightboxImg.src = img.src;
-          lightboxImg.alt = img.alt || 'Illustration';
-          lightbox.classList.add('active');
-          document.body.style.overflow = 'hidden';
-        });
-      });
-    }
+  if (save) {
+    localStorage.setItem("nv_fs", fontSize);
+    localStorage.setItem("nv_ff", fontFamily);
+    localStorage.setItem("nv_lh", lineHeight);
+    localStorage.setItem("nv_theme", theme);
+  }
+}
 
-    window.closeLightbox = function() {
-      const lightbox = document.getElementById('imgLightbox');
-      lightbox.classList.remove('active');
-      document.body.style.overflow = '';
-    };
+window.changeFontSize = function(d) {
+  fontSize = Math.min(24, Math.max(12, fontSize + d));
+  applySettings();
+};
+window.setFont = function(ff) { fontFamily = ff; applySettings(); };
+window.setLineHeight = function(v) { lineHeight = parseFloat(v); applySettings(); };
+window.setTheme = function(t) { theme = t; applySettings(); };
 
-    // Navigation
-    function updateNavigation() {
-      const prevBtn = document.getElementById('prevBtn');
-      const nextBtn = document.getElementById('nextBtn');
-      
-      prevBtn.disabled = !chapterData.prev_slug;
-      nextBtn.disabled = !chapterData.next_slug;
-    }
-
-    window.goToChapter = function(direction) {
-      const slug = direction === 'prev' ? chapterData.prev_slug : chapterData.next_slug;
-      if (slug) {
-        window.location.href = `/baca-novel/${slug}`;
-      }
-    };
-
-    window.goBack = function() {
-      if (novelData.slug) {
-        window.location.href = `/novel/${novelData.slug}`;
+/* ── PROGRESS BAR ─────────────────────────────────── */
+function initProgressBar() {
+  const bar = document.getElementById("progressBar");
+  window.addEventListener("scroll", () => {
+    const d = document.body.scrollHeight - window.innerHeight;
+    if (d > 0 && bar) {
+      const pct = Math.min((window.scrollY / d) * 100, 100);
+      bar.style.width = pct + "%";
+      /* Darken near end */
+      if (pct >= 95) {
+        bar.style.background = "linear-gradient(90deg, #1a5c2e, #27ae60)";
       } else {
-        history.back();
-      }
-    };
-
-    window.showChapterList = function() {
-      if (novelData.slug) {
-        window.location.href = `/novel/${novelData.slug}#chapters`;
-      }
-    };
-
-    // Settings
-    window.toggleSettings = function() {
-      const panel = document.getElementById('settingsPanel');
-      panel.classList.toggle('open');
-    };
-
-    window.changeFontSize = function(delta) {
-      settings.fontSize = Math.max(14, Math.min(24, settings.fontSize + delta));
-      applySettings();
-      saveSettings();
-    };
-
-    window.setTheme = function(theme) {
-      settings.theme = theme;
-      applySettings();
-      saveSettings();
-    };
-
-    window.setLineHeight = function(lh) {
-      settings.lineHeight = lh;
-      applySettings();
-      saveSettings();
-    };
-
-    function applySettings() {
-      const root = document.documentElement;
-      
-      // Font size
-      root.style.setProperty('--font-base', settings.fontSize + 'px');
-      document.getElementById('fontDisplay').textContent = settings.fontSize + 'px';
-      
-      // Theme
-      if (settings.theme === 'light') {
-        document.body.classList.add('light-mode');
-        document.getElementById('themeLight').classList.add('active');
-        document.getElementById('themeDark').classList.remove('active');
-      } else {
-        document.body.classList.remove('light-mode');
-        document.getElementById('themeDark').classList.add('active');
-        document.getElementById('themeLight').classList.remove('active');
-      }
-      
-      // Line height
-      root.style.setProperty('--line-height', settings.lineHeight);
-      document.querySelectorAll('.lh-btn').forEach(btn => {
-        btn.classList.toggle('active', 
-          Math.abs(parseFloat(btn.onclick.toString().match(/[\d.]+/)) - settings.lineHeight) < 0.1
-        );
-      });
-    }
-
-    function saveSettings() {
-      localStorage.setItem('reader_fontSize', settings.fontSize);
-      localStorage.setItem('reader_theme', settings.theme);
-      localStorage.setItem('reader_lineHeight', settings.lineHeight);
-    }
-
-    // Fullscreen
-    window.toggleFullscreen = function() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(() => {});
-      } else {
-        document.exitFullscreen().catch(() => {});
-      }
-    };
-
-    // Scroll handlers
-    window.scrollToTop = function() {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    window.scrollToComments = function() {
-      document.getElementById('commentSection').scrollIntoView({ behavior: 'smooth' });
-    };
-
-    // Progress bar
-    function updateProgress() {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = (scrollTop / docHeight) * 100;
-      document.getElementById('progressFill').style.width = progress + '%';
-    }
-
-    // Auto-hide header/toolbar on scroll
-    let lastScroll = 0;
-    let scrollTimeout;
-    
-    function handleScroll() {
-      const currentScroll = window.scrollY;
-      const header = document.getElementById('readerHeader');
-      const toolbar = document.getElementById('bottomToolbar');
-      const scrollTop = document.getElementById('scrollTop');
-      
-      // Progress bar
-      updateProgress();
-      
-      // Show/hide scroll to top
-      scrollTop.classList.toggle('visible', currentScroll > 500);
-      
-      // Auto hide/show header & toolbar
-      if (currentScroll > lastScroll && currentScroll > 100) {
-        header.classList.add('hidden');
-        toolbar.classList.add('hidden');
-      } else {
-        header.classList.remove('hidden');
-        toolbar.classList.remove('hidden');
-      }
-      
-      lastScroll = currentScroll;
-      
-      // Clear timeout untuk save history
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(saveReadingPosition, 3000);
-    }
-
-    // Save reading position
-    function saveReadingPosition() {
-      const slug = getChapterSlug();
-      if (slug) {
-        localStorage.setItem(`read_pos_${slug}`, window.scrollY);
+        bar.style.background = "linear-gradient(90deg, var(--crimson), var(--gold), var(--gold-light))";
       }
     }
+  }, { passive: true });
+}
 
-    // Restore reading position
-    function restoreReadingPosition() {
-      const slug = getChapterSlug();
-      const pos = localStorage.getItem(`read_pos_${slug}`);
-      if (pos) {
-        window.scrollTo({ top: parseInt(pos), behavior: 'auto' });
-      }
-    }
+/* ── HEADER AUTO-HIDE ─────────────────────────────── */
+function initHeaderHide() {
+  const header = document.getElementById("readerHeader");
+  let timer = null;
+  window.addEventListener("scroll", () => {
+    header?.classList.add("hide");
+    clearTimeout(timer);
+    timer = setTimeout(() => header?.classList.remove("hide"), 2000);
+  }, { passive: true });
+  document.getElementById("readerWrap")?.addEventListener("click", e => {
+    if (e.target.closest("button") || e.target.closest("a")) return;
+    header?.classList.toggle("hide");
+  });
+}
 
-    // Save to history
-    async function saveHistory() {
-      if (!currentUser || !window._supabase) return;
-      
-      try {
-        await window._supabase.saveNovelHistory(currentUser.id, {
-          novel_slug: novelData.slug,
-          novel_title: novelData.title,
-          chapter_slug: chapterData.slug,
-          chapter_title: chapterData.title,
-          chapter_number: chapterData.number,
-          cover: novelData.poster || ''
-        });
-      } catch (e) {
-        console.warn('Failed to save history:', e);
-      }
-    }
+/* ── KEYBOARD NAV ─────────────────────────────────── */
+document.addEventListener("keydown", e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if ((e.key === "ArrowRight" || e.key === "d") && navigation.next_slug) goToChapter(navigation.next_slug);
+  if ((e.key === "ArrowLeft"  || e.key === "a") && navigation.prev_slug) goToChapter(navigation.prev_slug);
+});
 
-    // Event listeners
-    function setupEventListeners() {
-      window.addEventListener('scroll', handleScroll, { passive: true });
-      
-      // Keyboard shortcuts
-      document.addEventListener('keydown', (e) => {
-        if (e.target.matches('input, textarea')) return;
-        
-        switch(e.key) {
-          case 'ArrowLeft':
-            if (chapterData?.prev_slug) goToChapter('prev');
-            break;
-          case 'ArrowRight':
-          case ' ':
-            if (chapterData?.next_slug) goToChapter('next');
-            break;
-          case 'Escape':
-            closeLightbox();
-            document.getElementById('settingsPanel').classList.remove('open');
-            break;
-          case 'f':
-            toggleFullscreen();
-            break;
-        }
-      });
-      
-      // Close settings on outside click
-      document.addEventListener('click', (e) => {
-        const panel = document.getElementById('settingsPanel');
-        const btn = e.target.closest('.menu-btn');
-        if (!panel.contains(e.target) && !btn) {
-          panel.classList.remove('open');
-        }
-      });
-      
-      // Text selection popup
-      document.addEventListener('selectionchange', () => {
-        const selection = window.getSelection();
-        const popup = document.getElementById('selectionPopup');
-        
-        if (selection.toString().trim().length > 0) {
-          const range = selection.getRangeAt(0);
-          const rect = range.getBoundingClientRect();
-          popup.style.display = 'flex';
-          popup.style.top = (rect.top - 40) + 'px';
-          popup.style.left = (rect.left + rect.width / 2 - 50) + 'px';
-        } else {
-          popup.style.display = 'none';
-        }
-      });
-      
-      // Restore position after load
-      setTimeout(restoreReadingPosition, 100);
-    }
+/* ── CLOSE SETTINGS OUTSIDE ────────────────────────── */
+document.addEventListener("click", e => {
+  const panel = document.getElementById("settingsPanel");
+  const btn   = document.querySelector('.hbtn[onclick="toggleSettings()"]');
+  if (panel?.classList.contains("open") && !panel.contains(e.target) && !btn?.contains(e.target)) {
+    panel.classList.remove("open");
+  }
+});
 
-    // Helpers
-    function formatDate(dateStr) {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('id-ID', { 
-        day: 'numeric', 
-        month: 'short', 
-        year: 'numeric' 
-      });
-    }
+/* ── HELPERS ──────────────────────────────────────── */
+function extractNovelTitle(t) {
+  return t.replace(/\s*(volume\s*\d+)?\s*chapter\s*[\d.]+.*$/i, "")
+           .replace(/\s*(short story|afterword|prologue|epilogue).*$/i, "")
+           .replace(/\s*bahasa indonesia\s*/i, "")
+           .trim() || t;
+}
 
-    function showError(msg) {
-      document.getElementById('novelContent').innerHTML = `
-        <div style="text-align:center;padding:60px 20px;color:var(--muted);">
-          <p style="font-size:40px;margin-bottom:16px;">📖</p>
-          <p style="font-style:italic;font-size:16px;margin-bottom:20px;">${msg}</p>
-          <button onclick="location.reload()" style="
-            padding:12px 24px;
-            background:linear-gradient(135deg,var(--crimson),#c9291c);
-            color:#fff;border:none;border-radius:8px;
-            cursor:pointer;font-family:'Cinzel',serif;font-size:12px;
-          ">Coba Lagi</button>
-        </div>
-      `;
-    }
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                      .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
 
-    // Text selection actions
-    window.copySelection = function() {
-      const text = window.getSelection().toString();
-      navigator.clipboard.writeText(text).then(() => {
-        toast('Teks disalin!');
-      });
-      document.getElementById('selectionPopup').style.display = 'none';
-    };
-
-    window.shareSelection = function() {
-      const text = window.getSelection().toString();
-      if (navigator.share) {
-        navigator.share({
-          title: document.title,
-          text: text,
-          url: window.location.href
-        });
-      } else {
-        navigator.clipboard.writeText(`"${text}" — ${window.location.href}`).then(() => {
-          toast('Kutipan disalin!');
-        });
-      }
-      document.getElementById('selectionPopup').style.display = 'none';
-    };
-
-    // Toast notification
-    function toast(msg) {
-      const wrap = document.getElementById('toastWrap');
-      const t = document.createElement('div');
-      t.className = 'toast';
-      t.textContent = msg;
-      wrap.appendChild(t);
-      setTimeout(() => t.remove(), 3000);
-    }
-
-    // Expose to window
-    window._supabase = { getCurrentUser, saveNovelHistory };
-  </script>
+function showToast(msg, type = "info") {
+  const wrap = document.getElementById("toastWrap");
+  if (!wrap) return;
+  const t  = document.createElement("div");
+  const bg = type === "success" ? "linear-gradient(135deg,#1a5c2e,#27ae60)"
+           : type === "error"   ? "linear-gradient(135deg,#8b1a1a,#c9291c)"
+           : "rgba(20,17,30,0.95)";
+  t.className  = "toast-item";
+  t.style.background = bg;
+  t.textContent = msg;
+  wrap.appendChild(t);
+  setTimeout(() => t.remove(), 2800);
+}
+</script>
+<script type="module" src="/tracker.js"></script>
 </body>
 </html>
