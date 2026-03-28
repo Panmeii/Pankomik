@@ -5,125 +5,496 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Anime — Pankomik</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root { --ap:#6c63ff;--ap2:#a78bfa;--ag:rgba(108,99,255,0.3);--as:rgba(108,99,255,0.08); }
-    .d-hero{position:relative;overflow:hidden;min-height:230px;}
-    .d-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center top;filter:blur(22px) brightness(0.22) saturate(1.5);transform:scale(1.12);}
-    .d-hero-grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0.05) 0%,rgba(0,0,0,0.78) 100%);}
-    .d-hero-body{position:relative;z-index:2;display:flex;flex-direction:row;align-items:flex-end;gap:14px;padding:56px 14px 20px;width:100%;box-sizing:border-box;}
-    .d-poster{width:106px;height:150px;border-radius:10px;object-fit:cover;flex-shrink:0;display:block;box-shadow:0 8px 28px rgba(0,0,0,0.85);border:2px solid rgba(108,99,255,0.55);}
-    .d-poster-ph{width:106px;height:150px;border-radius:10px;flex-shrink:0;background:rgba(108,99,255,0.15);border:2px solid rgba(108,99,255,0.3);display:flex;align-items:center;justify-content:center;font-size:44px;}
-    .d-info{flex:1;min-width:0;padding-bottom:2px;}
-    .d-title{font-size:15px;font-weight:900;color:#fff;line-height:1.35;margin-bottom:5px;text-shadow:0 1px 8px rgba(0,0,0,0.9);word-break:break-word;}
-    .d-jp{font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:8px;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .d-chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px;}
-    .d-chip{padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700;color:rgba(255,255,255,0.92);background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.2);}
-    .chip-purple{background:rgba(108,99,255,0.75)!important;border-color:rgba(108,99,255,0.9)!important;}
-    .chip-orange{background:rgba(232,82,42,0.8)!important;border-color:rgba(232,82,42,0.95)!important;}
-    .chip-green{background:rgba(39,174,96,0.8)!important;border-color:rgba(39,174,96,0.95)!important;}
-    .d-score{font-size:13px;font-weight:800;color:#f5a623;}
-    .d-actions{display:flex;gap:8px;padding:12px 14px;align-items:stretch;flex-wrap:wrap;}
-    .d-btn{flex:1;min-width:100px;padding:12px 8px;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;-webkit-tap-highlight-color:transparent;}
-    .d-btn:active{opacity:0.8;transform:scale(0.96);}
-    .d-btn-ep1{background:var(--ap);color:#fff;box-shadow:0 4px 14px var(--ag);}
-    .d-btn-new{background:var(--as);color:var(--ap2);border:1.5px solid rgba(108,99,255,0.35);}
-    .d-btn-bm{flex:none;width:46px;padding:0;background:var(--bg-card,#1e1e28);border:1.5px solid var(--border,rgba(255,255,255,0.1));border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
-    .d-btn-bm svg{width:22px;height:22px;}
-    .d-btn-bm.saved{background:rgba(245,166,35,0.15);border-color:#f5a623;}
-    .d-btn-bm.saved svg path{fill:#f5a623;stroke:#f5a623;}
-    .d-btn-bm:active{transform:scale(0.88);}
-    .bm-overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);display:flex;align-items:flex-end;animation:bmo .15s ease;}
-    @keyframes bmo{from{opacity:0}to{opacity:1}}
-    .bm-sheet{width:100%;background:var(--bg-card,#1a1a24);border-radius:20px 20px 0 0;padding:0 14px 40px;animation:bms .22s ease;}
-    @keyframes bms{from{transform:translateY(100%)}to{transform:translateY(0)}}
-    .bm-handle{width:36px;height:4px;background:var(--border,rgba(255,255,255,0.12));border-radius:99px;margin:10px auto 14px;}
-    .bm-ttl{font-size:14px;font-weight:800;text-align:center;margin-bottom:14px;color:var(--text,#eaeaf0);}
-    .bm-ttl span{color:var(--ap2);}
-    .bm-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;cursor:pointer;margin-bottom:6px;background:var(--bg-surface,rgba(255,255,255,0.05));border:1.5px solid var(--border,rgba(255,255,255,0.08));-webkit-tap-highlight-color:transparent;}
-    .bm-opt.active{background:var(--as);border-color:var(--ap);}
-    .bm-opt:active{transform:scale(0.98);}
-    .bm-opt-ico{font-size:22px;line-height:1;}
-    .bm-opt-lbl{font-size:13px;font-weight:700;color:var(--text,#eaeaf0);}
-    .bm-opt-desc{font-size:11px;color:var(--text-muted,#888);margin-top:1px;}
-    .bm-check{margin-left:auto;color:var(--ap);font-size:16px;font-weight:900;}
-    .bm-btn{width:100%;padding:12px;border-radius:10px;margin-top:6px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-    .bm-del{background:rgba(231,76,60,0.1);border:1.5px solid rgba(231,76,60,0.3);color:#e74c3c;}
-    .bm-cls{background:var(--bg-surface,rgba(255,255,255,0.05));border:1.5px solid var(--border,rgba(255,255,255,0.08));color:var(--text-muted,#888);}
-    .d-table{margin:0 14px 16px;background:var(--bg-card,#1a1a24);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:12px;overflow:hidden;}
-    .d-row{display:flex;padding:9px 13px;border-bottom:1px solid var(--border,rgba(255,255,255,0.06));font-size:12px;}
-    .d-row:last-child{border-bottom:none;}
-    .d-lbl{color:var(--text-muted,#888);font-weight:600;min-width:86px;flex-shrink:0;}
-    .d-val{font-weight:700;color:var(--text,#eaeaf0);}
-    .sec-h{font-family:'Bangers',cursive;font-size:17px;letter-spacing:1.5px;color:var(--text,#eaeaf0);margin-bottom:8px;}
-    .d-syn-box{padding:0 14px 16px;}
-    .d-syn-text{font-size:13px;line-height:1.75;color:var(--text-muted,#888);display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
-    .d-syn-text.open{display:block;}
-    .d-syn-more{margin-top:7px;background:none;border:none;color:var(--ap2);font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;padding:0;}
-    .d-genres{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 16px;}
-    .d-genre{padding:4px 11px;background:var(--as);border:1px solid rgba(108,99,255,0.2);border-radius:99px;cursor:pointer;font-size:11px;font-weight:700;color:var(--ap2);-webkit-tap-highlight-color:transparent;}
-    .d-genre:active{background:var(--ap);color:#fff;}
-    .d-ep-sec{padding:0 14px 16px;}
-    .d-ep-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-    .d-ep-badge{font-size:11px;font-weight:800;background:var(--as);color:var(--ap2);padding:3px 9px;border-radius:99px;border:1px solid rgba(108,99,255,0.2);}
-    .d-ep{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card,#1a1a24);border:1px solid var(--border,rgba(255,255,255,0.08));border-radius:10px;margin-bottom:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-    .d-ep:active{border-color:var(--ap);background:var(--as);}
-    .d-ep-num{width:34px;height:34px;border-radius:8px;background:var(--bg-surface,rgba(255,255,255,0.05));flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--ap2);border:1px solid rgba(108,99,255,0.15);}
-    .d-ep-info{flex:1;min-width:0;}
-    .d-ep-ttl{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text,#eaeaf0);}
-    .d-ep-date{font-size:10px;color:var(--text-muted,#888);margin-top:2px;}
-    .d-ep-play{font-size:17px;color:var(--ap);opacity:0.75;flex-shrink:0;}
-    .d-batch{display:flex;align-items:center;gap:7px;padding:10px 13px;margin:0 14px 16px;background:rgba(39,174,96,0.1);border:1px solid rgba(39,174,96,0.3);border-radius:10px;color:#27ae60;font-size:12px;font-weight:800;text-decoration:none;}
-    .d-rec-sec{padding:0 14px 16px;}
-    .d-rec-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;}
-    .d-rec-row::-webkit-scrollbar{display:none;}
-    .d-rec-card{flex-shrink:0;width:88px;cursor:pointer;}
-    .d-rec-card img{width:88px;height:124px;object-fit:cover;border-radius:8px;display:block;border:1px solid rgba(108,99,255,0.2);background:var(--bg-surface,rgba(255,255,255,0.05));}
-    .d-rec-ttl{font-size:10px;font-weight:700;color:var(--text,#eaeaf0);margin-top:5px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-    .d-divider{height:1px;background:var(--border,rgba(255,255,255,0.07));margin:0 0 16px;}
-    .skel{background:linear-gradient(90deg,var(--bg-card,#1a1a24) 25%,var(--bg-surface,rgba(255,255,255,0.05)) 50%,var(--bg-card,#1a1a24) 75%);background-size:200% 100%;animation:sk 1.4s infinite;border-radius:8px;}
-    @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
-    .d-toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(12px);background:rgba(18,18,26,0.96);backdrop-filter:blur(10px);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:700;z-index:9999;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);opacity:0;transition:all 0.25s ease;pointer-events:none;}
-    .d-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-    .d-err{text-align:center;padding:60px 20px;color:var(--text-muted,#888);}
-    .d-err-ico{font-size:44px;margin-bottom:14px;}
-    .d-err-btn{display:inline-block;margin-top:20px;padding:10px 26px;background:#6c63ff;color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;font-size:14px;}
+    :root {
+      --pk: #e63946; --pk2: #ff6b6b; --pk-glow: rgba(230,57,70,0.35); --pk-dim: rgba(230,57,70,0.1);
+      --gold: #f5a623; --cyan: #00d4ff;
+      --bg: #060608; --bg2: #0d0d12; --bg3: #13131a; --card: #0f0f16;
+      --border: rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.1);
+      --text: #f0f0f5; --text2: #9090a8; --text3: #5a5a72;
+      --radius: 12px; --font: 'Outfit', sans-serif; --mono: 'Space Mono', monospace;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:var(--bg); color:var(--text); font-family:var(--font); -webkit-font-smoothing:antialiased; padding-bottom:80px; }
+    ::-webkit-scrollbar { width:3px; }
+    ::-webkit-scrollbar-thumb { background:var(--pk); border-radius:99px; }
+
+    /* ═══ HEADER ═══ */
+    .pk-header {
+      position:sticky; top:0; z-index:400;
+      display:flex; align-items:center; gap:10px;
+      padding:0 14px; height:52px;
+      background:rgba(6,6,8,0.85);
+      backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--border);
+    }
+    .pk-back {
+      width:34px; height:34px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--border2); border-radius:10px;
+      color:var(--text2); font-size:16px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all 0.15s; flex-shrink:0;
+    }
+    .pk-back:hover { background:rgba(255,255,255,0.09); color:var(--text); }
+    #hTitle {
+      flex:1; font-size:13px; font-weight:800;
+      color:var(--text2); white-space:nowrap;
+      overflow:hidden; text-overflow:ellipsis;
+    }
+    .pk-icon-btn {
+      width:34px; height:34px;
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(255,255,255,0.04); border:1px solid var(--border2);
+      border-radius:9px; cursor:pointer; font-size:15px;
+      transition:all 0.15s;
+    }
+    .pk-icon-btn:hover { background:rgba(255,255,255,0.09); }
+
+    /* ═══ CINEMATIC HERO ═══ */
+    .d-hero {
+      position:relative; overflow:hidden;
+      min-height:280px;
+    }
+    .d-hero-bg {
+      position:absolute; inset:-20px;
+      background-size:cover; background-position:center top;
+      filter:blur(30px) brightness(0.18) saturate(1.8);
+      transform:scale(1.15);
+    }
+    .d-hero-vignette {
+      position:absolute; inset:0;
+      background:
+        linear-gradient(180deg, rgba(6,6,8,0.2) 0%, rgba(6,6,8,0.92) 85%, var(--bg) 100%),
+        linear-gradient(90deg, rgba(6,6,8,0.4) 0%, transparent 60%);
+    }
+    .d-hero-body {
+      position:relative; z-index:2;
+      display:flex; gap:16px;
+      padding:60px 16px 24px;
+      align-items:flex-end;
+    }
+    /* Poster */
+    .d-poster-wrap {
+      flex-shrink:0;
+      position:relative;
+    }
+    .d-poster {
+      width:108px; height:155px;
+      border-radius:12px; object-fit:cover;
+      display:block;
+      box-shadow:0 16px 40px rgba(0,0,0,0.8);
+      border:2px solid rgba(255,255,255,0.1);
+    }
+    .d-poster-ph {
+      width:108px; height:155px;
+      border-radius:12px; flex-shrink:0;
+      background:var(--bg3); border:2px solid var(--border2);
+      display:flex; align-items:center; justify-content:center;
+      font-size:44px;
+    }
+    /* Rating badge on poster */
+    .d-score-badge {
+      position:absolute; bottom:-10px; right:-10px;
+      background:rgba(6,6,8,0.95);
+      border:1.5px solid rgba(245,166,35,0.5);
+      border-radius:8px;
+      padding:4px 8px;
+      display:flex; align-items:center; gap:4px;
+      font-size:12px; font-weight:800;
+      color:var(--gold);
+      box-shadow:0 4px 16px rgba(0,0,0,0.5);
+    }
+    .d-info { flex:1; min-width:0; padding-bottom:4px; }
+    .d-title {
+      font-size:18px; font-weight:900;
+      color:#fff; line-height:1.25;
+      margin-bottom:6px;
+      text-shadow:0 2px 12px rgba(0,0,0,0.9);
+    }
+    .d-jp {
+      font-size:11px; color:rgba(255,255,255,0.38);
+      margin-bottom:10px; font-style:italic;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      font-family:var(--mono);
+    }
+    .d-chips { display:flex; flex-wrap:wrap; gap:5px; }
+    .d-chip {
+      padding:3px 9px; border-radius:5px;
+      font-size:10px; font-weight:700;
+      font-family:var(--mono);
+      letter-spacing:0.5px;
+    }
+    .chip-type { background:rgba(108,99,255,0.2); color:#a78bfa; border:1px solid rgba(108,99,255,0.3); }
+    .chip-ongoing { background:rgba(245,166,35,0.15); color:var(--gold); border:1px solid rgba(245,166,35,0.3); }
+    .chip-ended { background:rgba(74,222,128,0.12); color:#4ade80; border:1px solid rgba(74,222,128,0.25); }
+    .chip-eps { background:rgba(255,255,255,0.07); color:var(--text2); border:1px solid var(--border2); }
+
+    /* ═══ ACTION BUTTONS ═══ */
+    .d-actions {
+      display:flex; gap:8px;
+      padding:16px 14px 12px;
+      align-items:stretch;
+    }
+    .d-btn {
+      flex:1; min-width:90px; height:44px;
+      border:none; border-radius:11px;
+      font-family:var(--font); font-size:12px; font-weight:800;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center; gap:6px;
+      transition:all 0.18s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .d-btn:active { transform:scale(0.95); }
+    .d-btn-primary {
+      background:var(--pk);
+      color:#fff;
+      box-shadow:0 6px 20px var(--pk-glow);
+    }
+    .d-btn-primary:hover { filter:brightness(1.1); transform:translateY(-1px); }
+    .d-btn-secondary {
+      background:var(--bg3);
+      color:var(--text2);
+      border:1.5px solid var(--border2);
+    }
+    .d-btn-secondary:hover { border-color:var(--pk); color:var(--pk2); }
+    .d-btn-continue {
+      display:none;
+      background:rgba(74,222,128,0.1);
+      color:#4ade80;
+      border:1.5px solid rgba(74,222,128,0.3);
+    }
+    .d-btn-bm {
+      flex:none; width:44px; height:44px; padding:0;
+      background:var(--bg3);
+      border:1.5px solid var(--border2);
+      border-radius:11px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      transition:all 0.18s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .d-btn-bm svg { width:20px; height:20px; }
+    .d-btn-bm.saved { background:rgba(245,166,35,0.1); border-color:rgba(245,166,35,0.5); }
+    .d-btn-bm.saved svg path { fill:var(--gold); stroke:var(--gold); }
+    .d-btn-bm:active { transform:scale(0.88); }
+
+    /* ═══ GENRES ═══ */
+    .d-genres { display:flex; flex-wrap:wrap; gap:6px; padding:0 14px 14px; }
+    .d-genre {
+      padding:4px 12px; background:var(--bg3);
+      border:1px solid var(--border2); border-radius:999px;
+      font-size:11px; font-weight:700; color:var(--text2);
+      cursor:pointer; transition:all 0.15s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .d-genre:hover { border-color:var(--pk); color:var(--pk2); background:var(--pk-dim); }
+
+    /* ═══ BATCH BANNER ═══ */
+    .d-batch {
+      display:flex; align-items:center; gap:10px;
+      margin:0 14px 14px;
+      padding:12px 14px;
+      background:rgba(74,222,128,0.06);
+      border:1px solid rgba(74,222,128,0.2);
+      border-radius:12px; color:#4ade80;
+      font-size:12px; font-weight:800;
+      text-decoration:none; cursor:pointer;
+      transition:background 0.2s;
+    }
+    .d-batch:hover { background:rgba(74,222,128,0.1); }
+
+    /* ═══ SYNOPSIS ═══ */
+    .d-syn-box { padding:0 14px 16px; }
+    .d-syn-label {
+      font-size:10px; font-weight:700;
+      color:var(--pk); text-transform:uppercase;
+      letter-spacing:2px; font-family:var(--mono);
+      margin-bottom:8px;
+    }
+    .d-syn-text {
+      font-size:13px; line-height:1.8;
+      color:var(--text2);
+      display:-webkit-box;
+      -webkit-line-clamp:4; -webkit-box-orient:vertical;
+      overflow:hidden;
+    }
+    .d-syn-text.open { display:block; }
+    .d-syn-more {
+      margin-top:8px; background:none; border:none;
+      color:var(--pk2); font-family:var(--font);
+      font-size:12px; font-weight:700; cursor:pointer; padding:0;
+      transition:color 0.15s;
+    }
+    .d-syn-more:hover { color:var(--pk); }
+
+    /* ═══ INFO TABLE ═══ */
+    .d-info-card {
+      margin:0 14px 16px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+    }
+    .d-info-row {
+      display:flex; padding:10px 14px;
+      border-bottom:1px solid var(--border);
+      font-size:12px;
+    }
+    .d-info-row:last-child { border-bottom:none; }
+    .d-info-lbl { color:var(--text3); font-weight:600; min-width:90px; flex-shrink:0; }
+    .d-info-val { font-weight:700; color:var(--text); }
+
+    /* ═══ DIVIDER ═══ */
+    .d-divider { height:1px; background:var(--border); margin:0 0 16px; }
+
+    /* ═══ EPISODE SECTION ═══ */
+    .d-ep-sec { padding:0 14px 16px; }
+    .d-ep-head {
+      display:flex; align-items:center;
+      justify-content:space-between;
+      margin-bottom:12px;
+    }
+    .d-sec-label {
+      font-size:10px; font-weight:700;
+      color:var(--pk); text-transform:uppercase;
+      letter-spacing:2px; font-family:var(--mono);
+    }
+    .d-ep-count {
+      font-size:10px; font-weight:700;
+      color:var(--text3); font-family:var(--mono);
+      background:var(--bg3); padding:3px 9px;
+      border:1px solid var(--border2); border-radius:5px;
+    }
+    .d-ep {
+      display:flex; align-items:center; gap:12px;
+      padding:11px 13px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:11px; margin-bottom:6px;
+      cursor:pointer; transition:all 0.15s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .d-ep:hover { border-color:rgba(230,57,70,0.35); background:var(--bg2); }
+    .d-ep:active { transform:scale(0.98); }
+    .d-ep-num {
+      width:36px; height:36px; border-radius:9px;
+      background:var(--bg3); flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:12px; font-weight:900; color:var(--text2);
+      border:1px solid var(--border2);
+      font-family:var(--mono);
+    }
+    .d-ep-info { flex:1; min-width:0; }
+    .d-ep-ttl {
+      font-size:12px; font-weight:700;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      color:var(--text); margin-bottom:2px;
+    }
+    .d-ep-date { font-size:10px; color:var(--text3); }
+    .d-ep-play { font-size:16px; color:var(--pk); opacity:0.6; flex-shrink:0; }
+    .d-ep:hover .d-ep-play { opacity:1; }
+
+    /* ═══ RECOMMENDATIONS ═══ */
+    .d-rec-sec { padding:0 14px 20px; }
+    .d-rec-row {
+      display:flex; gap:10px;
+      overflow-x:auto; padding-bottom:6px;
+      scrollbar-width:none;
+    }
+    .d-rec-row::-webkit-scrollbar { display:none; }
+    .d-rec-card { flex-shrink:0; width:90px; cursor:pointer; }
+    .d-rec-card img {
+      width:90px; height:128px;
+      object-fit:cover; border-radius:10px;
+      display:block; border:1px solid var(--border);
+      background:var(--bg3);
+      transition:transform 0.2s;
+    }
+    .d-rec-card:hover img { transform:scale(1.04); }
+    .d-rec-ttl {
+      font-size:10px; font-weight:700;
+      color:var(--text2); margin-top:6px;
+      line-height:1.4;
+      display:-webkit-box; -webkit-line-clamp:2;
+      -webkit-box-orient:vertical; overflow:hidden;
+    }
+
+    /* ═══ SKELETON ═══ */
+    .skel {
+      background:linear-gradient(110deg, var(--card) 30%, var(--bg3) 50%, var(--card) 70%);
+      background-size:300% 100%;
+      animation:skelAnim 1.5s ease infinite;
+      border-radius:var(--radius);
+    }
+    @keyframes skelAnim { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ═══ BOOKMARK SHEET ═══ */
+    .bm-overlay {
+      position:fixed; inset:0; z-index:9000;
+      background:rgba(0,0,0,0.65);
+      backdrop-filter:blur(6px);
+      display:flex; align-items:flex-end;
+      animation:bmo .2s ease;
+    }
+    @keyframes bmo { from{opacity:0} to{opacity:1} }
+    .bm-sheet {
+      width:100%;
+      background:var(--bg2);
+      border-radius:22px 22px 0 0;
+      border-top:1px solid var(--border2);
+      padding:0 16px 44px;
+      animation:bms .25s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes bms { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .bm-handle {
+      width:38px; height:4px;
+      background:var(--border2); border-radius:99px;
+      margin:12px auto 16px;
+    }
+    .bm-ttl {
+      font-size:15px; font-weight:800;
+      text-align:center; margin-bottom:16px;
+      color:var(--text);
+    }
+    .bm-ttl span { color:var(--gold); }
+    .bm-opt {
+      display:flex; align-items:center; gap:14px;
+      padding:13px 14px; border-radius:13px;
+      cursor:pointer; margin-bottom:8px;
+      background:var(--bg3); border:1.5px solid var(--border2);
+      transition:all 0.15s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .bm-opt.active { background:rgba(230,57,70,0.08); border-color:rgba(230,57,70,0.3); }
+    .bm-opt:active { transform:scale(0.98); }
+    .bm-opt-ico { font-size:22px; line-height:1; }
+    .bm-opt-lbl { font-size:13px; font-weight:700; color:var(--text); }
+    .bm-opt-desc { font-size:11px; color:var(--text3); margin-top:1px; }
+    .bm-check { margin-left:auto; color:var(--pk); font-size:16px; }
+    .bm-btn {
+      width:100%; padding:13px; border-radius:11px;
+      margin-top:8px; font-family:var(--font);
+      font-size:13px; font-weight:800; cursor:pointer;
+      transition:all 0.15s;
+    }
+    .bm-del { background:rgba(231,76,60,0.08); border:1.5px solid rgba(231,76,60,0.25); color:#e74c3c; }
+    .bm-cls { background:var(--bg3); border:1.5px solid var(--border2); color:var(--text2); }
+
+    /* ═══ TOAST ═══ */
+    .d-toast {
+      position:fixed; bottom:80px; left:50%;
+      transform:translateX(-50%) translateY(14px);
+      background:rgba(10,10,16,0.97);
+      backdrop-filter:blur(16px);
+      color:#fff; padding:11px 22px;
+      border-radius:999px; font-size:13px; font-weight:700;
+      z-index:9999; white-space:nowrap;
+      border:1px solid var(--border2);
+      opacity:0; transition:all 0.25s ease;
+      pointer-events:none;
+      box-shadow:0 8px 30px rgba(0,0,0,0.5);
+    }
+    .d-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+    /* ═══ ERROR ═══ */
+    .d-err { text-align:center; padding:60px 20px; color:var(--text3); }
+    .d-err-btn {
+      display:inline-block; margin-top:20px;
+      padding:11px 28px; background:var(--pk);
+      color:#fff; border:none; border-radius:11px;
+      cursor:pointer; font-weight:800;
+      font-family:var(--font); font-size:14px;
+      box-shadow:0 4px 16px var(--pk-glow);
+    }
+
+    /* ═══ BOTTOM NAV ═══ */
+    .pk-bottom-nav {
+      position:fixed; bottom:0; left:0; right:0; z-index:400;
+      height:60px;
+      background:rgba(6,6,8,0.95);
+      backdrop-filter:blur(24px);
+      border-top:1px solid var(--border);
+      display:flex; align-items:stretch;
+    }
+    .pk-nav-item {
+      flex:1; display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:3px; cursor:pointer;
+      background:none; border:none;
+      color:var(--text3); font-family:var(--font);
+      font-size:10px; font-weight:700;
+      transition:color 0.15s;
+      -webkit-tap-highlight-color:transparent;
+      position:relative;
+    }
+    .pk-nav-item.active { color:var(--pk); }
+    .pk-nav-item.active::before {
+      content:''; position:absolute; top:0; left:50%;
+      transform:translateX(-50%);
+      width:28px; height:2px;
+      background:var(--pk); border-radius:0 0 3px 3px;
+      box-shadow:0 0 10px rgba(230,57,70,0.35);
+    }
+    .pk-nav-icon { font-size:18px; }
+    .dropdown {
+      display:none; position:fixed;
+      right:10px; top:58px; z-index:600;
+      background:rgba(13,13,18,0.98);
+      backdrop-filter:blur(20px);
+      border:1px solid var(--border2);
+      border-radius:14px; overflow:hidden;
+      min-width:166px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.7);
+      animation:dropIn 0.16s ease;
+    }
+    @keyframes dropIn { from{opacity:0;transform:translateY(-8px) scale(.96)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .dropdown p {
+      padding:12px 16px; cursor:pointer; font-size:13px; font-weight:600;
+      color:var(--text); margin:0; border-bottom:1px solid var(--border);
+      transition:all 0.12s;
+    }
+    .dropdown p:last-child { border-bottom:none; }
+    .dropdown p:hover { background:rgba(255,255,255,0.04); padding-left:20px; }
   </style>
 </head>
-<body class="has-bottom-nav">
-<header class="header">
-  <button onclick="history.back()" style="background:var(--bg-card);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;-webkit-tap-highlight-color:transparent;">←</button>
-  <div id="hTitle" style="flex:1;font-family:'Bangers',cursive;font-size:17px;letter-spacing:1px;color:#a78bfa;padding-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Detail Anime</div>
-  <div class="header-right">
-    <button onclick="toggleDarkMode()">🌙</button>
-    <button onclick="toggleMenu()">👤</button>
-  </div>
+<body>
+
+<header class="pk-header">
+  <button class="pk-back" onclick="history.back()">←</button>
+  <div id="hTitle">Detail Anime</div>
+  <div class="pk-icon-btn" onclick="toggleDarkMode()">🌙</div>
+  <div class="pk-icon-btn" onclick="toggleMenu()">👤</div>
 </header>
 <div id="menuDropdown" class="dropdown"></div>
 <div class="d-toast" id="dToast"></div>
+
 <div id="dContent">
-  <div style="height:230px;background:var(--bg-surface);"></div>
-  <div style="padding:12px 14px;display:flex;gap:8px;">
-    <div class="skel" style="height:46px;flex:1;"></div>
-    <div class="skel" style="height:46px;flex:1;"></div>
-    <div class="skel" style="height:46px;width:46px;flex:none;"></div>
+  <!-- Skeleton -->
+  <div style="height:280px;background:var(--bg3);"></div>
+  <div style="padding:14px 14px;display:flex;gap:8px;">
+    <div class="skel" style="height:44px;flex:1;"></div>
+    <div class="skel" style="height:44px;flex:1;"></div>
+    <div class="skel" style="height:44px;width:44px;flex:none;"></div>
   </div>
   <div style="padding:0 14px;">
-    <div class="skel" style="height:13px;margin-bottom:8px;"></div>
-    <div class="skel" style="height:13px;width:65%;margin-bottom:20px;"></div>
-    <div class="skel" style="height:96px;border-radius:12px;margin-bottom:16px;"></div>
+    <div class="skel" style="height:12px;margin-bottom:8px;"></div>
+    <div class="skel" style="height:12px;width:60%;margin-bottom:18px;"></div>
+    <div class="skel" style="height:92px;border-radius:12px;margin-bottom:14px;"></div>
   </div>
-  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
-  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
-  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
-  <div class="skel" style="height:54px;border-radius:10px;margin:0 14px 6px;"></div>
+  <div class="skel" style="height:52px;border-radius:11px;margin:0 14px 6px;"></div>
+  <div class="skel" style="height:52px;border-radius:11px;margin:0 14px 6px;"></div>
+  <div class="skel" style="height:52px;border-radius:11px;margin:0 14px 6px;"></div>
 </div>
-<nav class="bottom-nav">
-  <button class="nav-item" onclick="location.href='/'"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
-  <button class="nav-item" onclick="location.href='/'"><span class="nav-icon">📚</span><span class="nav-label">Komik</span></button>
-  <button class="nav-item active"><span class="nav-icon">⚡</span><span class="nav-label">Anime</span></button>
-  <button class="nav-item" onclick="location.href='/novel/'"><span class="nav-icon">📖</span><span class="nav-label">Novel</span></button>
-  <button class="nav-item" onclick="location.href='/profil'"><span class="nav-icon">👤</span><span class="nav-label">Profil</span></button>
+
+<nav class="pk-bottom-nav">
+  <button class="pk-nav-item" onclick="location.href='/'"><span class="pk-nav-icon">🏠</span>Home</button>
+  <button class="pk-nav-item" onclick="location.href='/'"><span class="pk-nav-icon">📚</span>Komik</button>
+  <button class="pk-nav-item active"><span class="pk-nav-icon">⚡</span>Anime</button>
+  <button class="pk-nav-item" onclick="location.href='/novel/'"><span class="pk-nav-icon">📖</span>Novel</button>
+  <button class="pk-nav-item" onclick="location.href='/profil'"><span class="pk-nav-icon">👤</span>Profil</button>
 </nav>
+
 <script type="module">
 import { initAuthHeader } from "/auth-header.js";
 initAuthHeader();
@@ -137,9 +508,7 @@ window._watchURL = animeWatchURL;
 window._genreURL = animeGenreURL;
 window._animeURL = animeURL;
 
-function esc(s) {
-  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 function getSlug() {
   const q = new URLSearchParams(window.location.search);
@@ -156,244 +525,253 @@ function getSlug() {
 }
 
 function showToast(msg, ms=2400) {
-  const t=document.getElementById("dToast");
-  if(!t) return;
-  t.textContent=msg; t.classList.add("show");
-  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("show"),ms);
+  const t = document.getElementById("dToast");
+  if (!t) return;
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), ms);
 }
 
 function bmSVG(filled) {
-  const f=filled?"#f5a623":"none", s=filled?"#f5a623":"currentColor";
+  const f = filled ? "var(--gold)" : "none", s = filled ? "var(--gold)" : "currentColor";
   return `<svg viewBox="0 0 24 24" fill="${f}" stroke="${s}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
-}
-
-function showErr(msg, detail) {
-  document.getElementById("dContent").innerHTML = `<div class="d-err"><div class="d-err-ico">😕</div><p style="font-size:14px;font-weight:700;margin-bottom:6px;">${esc(msg)}</p>${detail?`<p style="font-size:11px;color:#555;">${esc(detail)}</p>`:""}<button class="d-err-btn" onclick="location.reload()">🔄 Coba Lagi</button></div>`;
 }
 
 const slug = getSlug();
 let user=null, data=null, bmKat=null;
 
 async function load() {
-  if (!slug) { showErr("Anime tidak ditemukan.","Slug tidak ada di URL."); return; }
+  if (!slug) { showErr("Anime tidak ditemukan."); return; }
   try {
     const [res, u] = await Promise.all([
       fetch(`${API}/anime/anime/${slug}`),
-      getCurrentUser().catch(()=>null)
+      getCurrentUser().catch(() => null)
     ]);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    if (!json.data) throw new Error(json.message||"Data kosong dari API");
-    user=u; data=json.data;
+    if (!json.data) throw new Error(json.message || "Data kosong");
+    user = u; data = json.data;
     if (user) {
       checkBookmark(user.id, `anime:${slug}`)
-        .then(r=>{ bmKat=r?.kategori||null; })
-        .catch(()=>{})
-        .finally(()=>{
-          const btn=document.getElementById("bmBtn");
-          if (btn && bmKat) { btn.classList.add("saved"); btn.innerHTML=bmSVG(true); }
+        .then(r => { bmKat = r?.kategori || null; })
+        .catch(() => {})
+        .finally(() => {
+          const btn = document.getElementById("bmBtn");
+          if (btn && bmKat) { btn.classList.add("saved"); btn.innerHTML = bmSVG(true); }
         });
-      /* Ambil last watch dari DB */
       getLastAnimeWatch(user.id, slug).then(lw => {
         if (!lw?.episode_id) return;
         const n = lw.episode_number;
-        const label = n ? `▶ Ep ${n}` : "▶ Lanjut Nonton";
-        const btn = document.getElementById("lastWatchBtn");
+        const label = n ? `▶ Lanjut Ep ${n}` : "▶ Lanjut Nonton";
+        const btn = document.getElementById("continueBtn");
         if (btn) { btn.textContent = label; btn.style.display = "flex"; btn.onclick = () => goEp(lw.episode_id); }
-      }).catch(()=>{});
+      }).catch(() => {});
     }
     render();
   } catch(e) {
-    console.error("[anime-detail] load error:",e);
-    showErr("Gagal memuat detail anime.", e.message||String(e));
+    showErr("Gagal memuat detail anime.", e.message || String(e));
   }
 }
 
+function showErr(msg, detail) {
+  document.getElementById("dContent").innerHTML = `<div class="d-err">
+    <div style="font-size:48px;margin-bottom:14px;">😕</div>
+    <p style="font-size:14px;font-weight:700;margin-bottom:6px;color:var(--text)">${esc(msg)}</p>
+    ${detail ? `<p style="font-size:11px;color:var(--text3)">${esc(detail)}</p>` : ""}
+    <button class="d-err-btn" onclick="location.reload()">🔄 Coba Lagi</button>
+  </div>`;
+}
+
 function render() {
-  const d=data;
-  const title=d.title||slug.replace(/-/g," ").replace(/./g,c=>c.toUpperCase());
-  const poster=d.poster||"", jp=d.japanese||"", score=d.score||"";
-  const type=d.type||"", status=d.status||"", eps=d.episodes||"";
-  const dur=d.duration||"", aired=d.aired||"", studios=d.studios||"";
-  const prod=d.producers||"", batch=d.batch||null;
-  const genres=d.genreList||[], epList=d.episodeList||[];
-  const recs=d.recommendedAnimeList||[];
-  const syn=(d.synopsis?.paragraphs||[]).join(" ");
-  const ep1=epList.length?epList[epList.length-1]:null;
-  const epNew=epList.length?epList[0]:null;
-  const hasNew=ep1&&epNew&&ep1.episodeId!==epNew.episodeId;
-  const stCls=status.toLowerCase()==="ongoing"?"chip-orange":"chip-green";
-  /* lastWatchBtn diisi via DB setelah render — lihat load() */
+  const d = data;
+  const title  = d.title || slug.replace(/-/g," ");
+  const poster = d.poster || "", jp = d.japanese || "", score = d.score || "";
+  const type   = d.type || "", status = d.status || "", eps = d.episodes || "";
+  const dur    = d.duration || "", aired = d.aired || "", studios = d.studios || "";
+  const prod   = d.producers || "", batch = d.batch || null;
+  const genres = d.genreList || [], epList = d.episodeList || [];
+  const recs   = d.recommendedAnimeList || [];
+  const syn    = (d.synopsis?.paragraphs || []).join(" ");
+  const ep1    = epList.length ? epList[epList.length - 1] : null;
+  const epNew  = epList.length ? epList[0] : null;
+  const hasNew = ep1 && epNew && ep1.episodeId !== epNew.episodeId;
+  const isOngoing = status.toLowerCase() === "ongoing";
 
-  document.title=`${title} — Pankomik`;
-  document.getElementById("hTitle").textContent=title;
+  document.title = `${title} — Pankomik`;
+  document.getElementById("hTitle").textContent = title;
 
-  const posterHTML=poster
-    ?`<img class="d-poster" id="dPoster" src="${esc(poster)}" alt="${esc(title)}">`
-    :`<div class="d-poster-ph">⚡</div>`;
+  const posterHTML = poster
+    ? `<div class="d-poster-wrap">
+        <img class="d-poster" id="dPoster" src="${esc(poster)}" alt="${esc(title)}">
+        ${score ? `<div class="d-score-badge">⭐ ${esc(score)}</div>` : ""}
+       </div>`
+    : `<div class="d-poster-ph">⚡</div>`;
 
-  document.getElementById("dContent").innerHTML=`
+  document.getElementById("dContent").innerHTML = `
     <div class="d-hero">
-      ${poster?`<div class="d-hero-bg" id="dHeroBg"></div>`:`<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(108,99,255,0.2),rgba(0,0,0,0.65));"></div>`}
-      <div class="d-hero-grad"></div>
+      ${poster ? `<div class="d-hero-bg" id="dHeroBg"></div>` :
+        `<div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(230,57,70,0.1),rgba(0,0,0,0.8));"></div>`}
+      <div class="d-hero-vignette"></div>
       <div class="d-hero-body">
         ${posterHTML}
         <div class="d-info">
           <div class="d-title">${esc(title)}</div>
-          ${jp?`<div class="d-jp">${esc(jp)}</div>`:""}
+          ${jp ? `<div class="d-jp">${esc(jp)}</div>` : ""}
           <div class="d-chips">
-            ${type?`<span class="d-chip chip-purple">${esc(type)}</span>`:""}
-            ${status?`<span class="d-chip ${stCls}">${esc(status)}</span>`:""}
-            ${eps?`<span class="d-chip">${esc(String(eps))} Ep</span>`:""}
+            ${type   ? `<span class="d-chip chip-type">${esc(type)}</span>` : ""}
+            ${status ? `<span class="d-chip ${isOngoing ? "chip-ongoing" : "chip-ended"}">${esc(status)}</span>` : ""}
+            ${eps    ? `<span class="d-chip chip-eps">${esc(String(eps))} Ep</span>` : ""}
           </div>
-          ${score?`<div class="d-score">⭐ ${esc(score)}</div>`:""}
         </div>
       </div>
     </div>
 
     <div class="d-actions">
-      ${ep1?`<button class="d-btn d-btn-ep1" onclick="goEp('${esc(ep1.episodeId)}')">▶ Ep 1</button>`:""}
-      ${hasNew?`<button class="d-btn d-btn-new" onclick="goEp('${esc(epNew.episodeId)}')">⚡ Terbaru</button>`:""}
-      <button class="d-btn" id="lastWatchBtn" style="display:none;background:rgba(39,174,96,0.12);border:1.5px solid rgba(39,174,96,0.35);color:#27ae60;">▶ Lanjut</button>
+      ${ep1 ? `<button class="d-btn d-btn-primary" onclick="goEp('${esc(ep1.episodeId)}')">▶ Ep 1</button>` : ""}
+      ${hasNew ? `<button class="d-btn d-btn-secondary" onclick="goEp('${esc(epNew.episodeId)}')">⚡ Terbaru</button>` : ""}
+      <button class="d-btn d-btn-continue" id="continueBtn">▶ Lanjut</button>
       <button class="d-btn-bm" id="bmBtn" onclick="openBm()">${bmSVG(false)}</button>
     </div>
 
-    ${batch?`<a href="${esc(batch.otakudesuUrl||"#")}" target="_blank" rel="noopener" class="d-batch">📦 Download Batch Tersedia</a>`:""}
+    ${batch ? `<a href="${esc(batch.otakudesuUrl || "#")}" target="_blank" rel="noopener" class="d-batch">📦 Download Batch Tersedia →</a>` : ""}
 
-    ${genres.length?`<div class="d-genres">${genres.map(g=>`<span class="d-genre" onclick="goGenre('${esc(g.genreId)}')">${esc(g.title)}</span>`).join("")}</div>`:""}
+    ${genres.length ? `<div class="d-genres">${genres.map(g =>
+      `<span class="d-genre" onclick="goGenre('${esc(g.genreId)}')">${esc(g.title)}</span>`
+    ).join("")}</div>` : ""}
 
-    ${syn?`<div class="d-syn-box"><div class="sec-h">📖 Sinopsis</div><p class="d-syn-text" id="synP">${esc(syn)}</p><button class="d-syn-more" onclick="toggleSyn()">Baca Selengkapnya ▼</button></div><div class="d-divider"></div>`:""}
+    ${syn ? `
+      <div class="d-syn-box">
+        <div class="d-syn-label">Sinopsis</div>
+        <p class="d-syn-text" id="synP">${esc(syn)}</p>
+        <button class="d-syn-more" onclick="toggleSyn()">Baca Selengkapnya ▼</button>
+      </div>
+      <div class="d-divider"></div>` : ""}
 
-    <div class="d-table">
-      ${aired?`<div class="d-row"><span class="d-lbl">Tayang</span><span class="d-val">${esc(aired)}</span></div>`:""}
-      ${studios?`<div class="d-row"><span class="d-lbl">Studio</span><span class="d-val">${esc(studios)}</span></div>`:""}
-      ${prod?`<div class="d-row"><span class="d-lbl">Produser</span><span class="d-val">${esc(prod)}</span></div>`:""}
-      ${dur?`<div class="d-row"><span class="d-lbl">Durasi</span><span class="d-val">${esc(dur)}</span></div>`:""}
-      ${type?`<div class="d-row"><span class="d-lbl">Tipe</span><span class="d-val">${esc(type)}</span></div>`:""}
-      ${eps?`<div class="d-row"><span class="d-lbl">Total Ep</span><span class="d-val">${esc(String(eps))}</span></div>`:""}
+    <div class="d-info-card">
+      ${aired   ? `<div class="d-info-row"><span class="d-info-lbl">Tayang</span><span class="d-info-val">${esc(aired)}</span></div>` : ""}
+      ${studios ? `<div class="d-info-row"><span class="d-info-lbl">Studio</span><span class="d-info-val">${esc(studios)}</span></div>` : ""}
+      ${prod    ? `<div class="d-info-row"><span class="d-info-lbl">Produser</span><span class="d-info-val">${esc(prod)}</span></div>` : ""}
+      ${dur     ? `<div class="d-info-row"><span class="d-info-lbl">Durasi</span><span class="d-info-val">${esc(dur)}</span></div>` : ""}
+      ${type    ? `<div class="d-info-row"><span class="d-info-lbl">Tipe</span><span class="d-info-val">${esc(type)}</span></div>` : ""}
+      ${eps     ? `<div class="d-info-row"><span class="d-info-lbl">Total Ep</span><span class="d-info-val">${esc(String(eps))}</span></div>` : ""}
     </div>
 
     <div class="d-ep-sec">
       <div class="d-ep-head">
-        <div class="sec-h" style="margin-bottom:0;">📺 Daftar Episode</div>
-        <span class="d-ep-badge">${epList.length} ep</span>
+        <span class="d-sec-label">Daftar Episode</span>
+        <span class="d-ep-count">${epList.length} ep</span>
       </div>
-      <div style="margin-top:10px;">
-        ${epList.length===0
-          ?`<div style="text-align:center;padding:24px;color:var(--text-muted);"><div style="font-size:32px;margin-bottom:8px;">📡</div><p style="font-size:13px;">Belum ada episode tersedia.</p></div>`
-          :epList.map(ep=>`
+      ${epList.length === 0
+        ? `<div style="text-align:center;padding:28px;color:var(--text3);">
+            <div style="font-size:36px;margin-bottom:10px;">📡</div>
+            <p style="font-size:13px;">Belum ada episode tersedia</p>
+           </div>`
+        : epList.map(ep => `
             <div class="d-ep" onclick="goEp('${esc(ep.episodeId)}')">
-              <div class="d-ep-num">${ep.eps||""}</div>
+              <div class="d-ep-num">${ep.eps || "—"}</div>
               <div class="d-ep-info">
-                <div class="d-ep-ttl">${esc(ep.title||`Episode ${ep.eps}`)}</div>
-                ${ep.date?`<div class="d-ep-date">📅 ${esc(ep.date)}</div>`:""}
+                <div class="d-ep-ttl">${esc(ep.title || `Episode ${ep.eps}`)}</div>
+                ${ep.date ? `<div class="d-ep-date">📅 ${esc(ep.date)}</div>` : ""}
               </div>
               <div class="d-ep-play">▶</div>
             </div>`).join("")}
-      </div>
     </div>
 
-    ${recs.length?`
+    ${recs.length ? `
       <div class="d-divider"></div>
       <div class="d-rec-sec">
-        <div class="sec-h">🔥 Rekomendasi</div>
+        <div class="d-sec-label" style="margin-bottom:12px;">Rekomendasi</div>
         <div class="d-rec-row">
-          ${recs.map(a=>`<div class="d-rec-card" onclick="location.href=window._animeURL('${esc(a.animeId)}')">
-            <img src="${esc(a.poster||"")}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'">
-            <div class="d-rec-ttl">${esc(a.title)}</div>
-          </div>`).join("")}
+          ${recs.map(a => `
+            <div class="d-rec-card" onclick="location.href=window._animeURL('${esc(a.animeId)}')">
+              <img src="${esc(a.poster || "")}" alt="${esc(a.title)}" loading="lazy" onerror="this.style.display='none'">
+              <div class="d-rec-ttl">${esc(a.title)}</div>
+            </div>`).join("")}
         </div>
-      </div>`:""}
+      </div>` : ""}
 
-    <div style="height:24px;"></div>`;
+    <div style="height:20px;"></div>`;
 
   if (poster) {
-    const bg=document.getElementById("dHeroBg");
-    if (bg) bg.style.backgroundImage=`url(${poster})`;
-    const img=document.getElementById("dPoster");
-    if (img) img.onerror=function(){ this.outerHTML=`<div class="d-poster-ph">⚡</div>`; };
+    const bg = document.getElementById("dHeroBg");
+    if (bg) bg.style.backgroundImage = `url(${poster})`;
+    const img = document.getElementById("dPoster");
+    if (img) img.onerror = function() { this.outerHTML = `<div class="d-poster-ph">⚡</div>`; };
   }
 }
 
-const BM_OPTS=[
-  {k:"favorit",     ico:"❤️",lbl:"Favorit",      desc:"Anime favoritmu"},
-  {k:"lagi_dibaca", ico:"▶️",lbl:"Lagi Ditonton", desc:"Sedang ditonton"},
-  {k:"tamat",       ico:"✅",lbl:"Selesai",        desc:"Sudah selesai ditonton"},
+const BM_OPTS = [
+  { k:"favorit",     ico:"❤️", lbl:"Favorit",       desc:"Anime favoritmu" },
+  { k:"lagi_dibaca", ico:"▶️", lbl:"Lagi Ditonton",  desc:"Sedang ditonton" },
+  { k:"tamat",       ico:"✅", lbl:"Selesai",         desc:"Sudah selesai ditonton" },
 ];
 
-window.openBm=function(){
-  if (!user){ showToast("🔑 Login dulu untuk bookmark anime"); setTimeout(()=>location.href="/masuk",1600); return; }
+window.openBm = function() {
+  if (!user) { showToast("🔑 Login dulu untuk bookmark"); setTimeout(() => location.href = "/masuk", 1600); return; }
   document.getElementById("bmOvl")?.remove();
-  const ovl=document.createElement("div");
-  ovl.id="bmOvl"; ovl.className="bm-overlay";
-  ovl.onclick=e=>{ if(e.target===ovl) ovl.remove(); };
-  ovl.innerHTML=`
+  const ovl = document.createElement("div");
+  ovl.id = "bmOvl"; ovl.className = "bm-overlay";
+  ovl.onclick = e => { if (e.target === ovl) ovl.remove(); };
+  ovl.innerHTML = `
     <div class="bm-sheet">
       <div class="bm-handle"></div>
-      <div class="bm-ttl">Simpan ke <span>Bookmark</span></div>
-      ${BM_OPTS.map(o=>`
-        <div class="bm-opt ${bmKat===o.k?"active":""}" onclick="saveBm('${o.k}')">
+      <div class="bm-ttl">Simpan ke <span>Daftar Tonton</span></div>
+      ${BM_OPTS.map(o => `
+        <div class="bm-opt ${bmKat === o.k ? "active" : ""}" onclick="saveBm('${o.k}')">
           <span class="bm-opt-ico">${o.ico}</span>
           <div><div class="bm-opt-lbl">${o.lbl}</div><div class="bm-opt-desc">${o.desc}</div></div>
-          ${bmKat===o.k?`<span class="bm-check">✓</span>`:""}
+          ${bmKat === o.k ? `<span class="bm-check">✓</span>` : ""}
         </div>`).join("")}
-      ${bmKat?`<button class="bm-btn bm-del" onclick="delBm()">Hapus Bookmark</button>`:""}
+      ${bmKat ? `<button class="bm-btn bm-del" onclick="delBm()">Hapus dari Daftar</button>` : ""}
       <button class="bm-btn bm-cls" onclick="document.getElementById('bmOvl').remove()">Batal</button>
     </div>`;
   document.body.appendChild(ovl);
 };
 
-window.saveBm=async function(kat){
+window.saveBm = async function(kat) {
   document.getElementById("bmOvl")?.remove();
-  if (!user||!data) return;
-  const {error}=await addBookmark(user.id,{slug:`anime:${slug}`,title:data.title||slug,cover:data.poster||"",kategori:kat});
-  if (!error){
-    bmKat=kat;
-    const btn=document.getElementById("bmBtn");
-    if (btn){btn.classList.add("saved");btn.innerHTML=bmSVG(true);}
-    showToast(`✅ Disimpan ke ${BM_OPTS.find(o=>o.k===kat)?.lbl}`);
-  } else { showToast("❌ Gagal menyimpan bookmark"); }
+  if (!user || !data) return;
+  const { error } = await addBookmark(user.id, { slug: `anime:${slug}`, title: data.title || slug, cover: data.poster || "", kategori: kat });
+  if (!error) {
+    bmKat = kat;
+    const btn = document.getElementById("bmBtn");
+    if (btn) { btn.classList.add("saved"); btn.innerHTML = bmSVG(true); }
+    showToast(`✅ Disimpan ke ${BM_OPTS.find(o => o.k === kat)?.lbl}`);
+  } else { showToast("❌ Gagal menyimpan"); }
 };
 
-window.delBm=async function(){
+window.delBm = async function() {
   document.getElementById("bmOvl")?.remove();
   if (!user) return;
-  const {error}=await removeBookmark(user.id,`anime:${slug}`);
-  if (!error){
-    bmKat=null;
-    const btn=document.getElementById("bmBtn");
-    if (btn){btn.classList.remove("saved");btn.innerHTML=bmSVG(false);}
-    showToast("🗑️ Bookmark dihapus");
-  } else { showToast("❌ Gagal menghapus bookmark"); }
+  const { error } = await removeBookmark(user.id, `anime:${slug}`);
+  if (!error) {
+    bmKat = null;
+    const btn = document.getElementById("bmBtn");
+    if (btn) { btn.classList.remove("saved"); btn.innerHTML = bmSVG(false); }
+    showToast("🗑️ Dihapus dari daftar");
+  } else { showToast("❌ Gagal menghapus"); }
 };
 
-window.goEp    =id=>{ if(id) location.href=window._watchURL(id); };
-window.goGenre =id=>{ if(id) location.href=window._genreURL(id); };
-window.toggleSyn=function(){
-  const p=document.getElementById("synP"),b=document.querySelector(".d-syn-more");
-  if(!p) return;
+window.goEp     = id => { if (id) location.href = window._watchURL(id); };
+window.goGenre  = id => { if (id) location.href = window._genreURL(id); };
+window.toggleSyn = function() {
+  const p = document.getElementById("synP"), b = document.querySelector(".d-syn-more");
+  if (!p) return;
   p.classList.toggle("open");
-  b.textContent=p.classList.contains("open")?"Sembunyikan ▲":"Baca Selengkapnya ▼";
+  b.textContent = p.classList.contains("open") ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
 };
 
-window.toggleDarkMode=()=>{
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme",document.body.classList.contains("light")?"light":"dark");
-};
-window.toggleMenu=()=>{
-  const m=document.getElementById("menuDropdown");
-  if(m) m.style.display=m.style.display==="block"?"none":"block";
-};
-document.addEventListener("click",e=>{
-  const m=document.getElementById("menuDropdown"),b=document.querySelector('button[onclick="toggleMenu()"]');
-  if(m&&m.style.display==="block"&&!m.contains(e.target)&&!b?.contains(e.target)) m.style.display="none";
+window.toggleDarkMode = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark"); };
+window.toggleMenu = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display === "block" ? "none" : "block"; };
+document.addEventListener("click", e => {
+  const m = document.getElementById("menuDropdown"), b = document.querySelector('[onclick="toggleMenu()"]');
+  if (m && m.style.display === "block" && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
 });
 
-if(localStorage.getItem("theme")==="light") document.body.classList.add("light");
+if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
 load();
 </script>
-  <div id="commentSection"></div>
-  <script type="module" src="/global-chat.js"></script>
-  <script type="module" src="/tracker.js"></script>
+<div id="commentSection"></div>
+<script type="module" src="/global-chat.js"></script>
+<script type="module" src="/tracker.js"></script>
 </body>
 </html>
