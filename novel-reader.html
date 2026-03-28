@@ -135,11 +135,30 @@
     }
     .header-back:hover { background: var(--gold-dim); border-color: var(--border-gold); color: var(--gold); }
 
-    .header-title {
-      flex: 1; font-family: 'Cormorant Garamond', serif;
-      font-size: 13px; font-weight: 500; font-style: italic;
-      color: var(--muted); text-align: center;
+    /* ── HEADER TITLE — dua baris kecil ─────────────────── */
+    .header-title-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .header-novel-name {
+      font-family: 'Cinzel', serif;
+      font-size: 9px; font-weight: 600; letter-spacing: 1.5px;
+      color: var(--gold); opacity: 0.7;
+      text-transform: uppercase;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 100%;
+    }
+    .header-chapter-label {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; font-weight: 500; font-style: italic;
+      color: var(--muted);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 100%;
     }
 
     .header-btns { display: flex; gap: 5px; flex-shrink: 0; }
@@ -181,7 +200,6 @@
       text-transform: uppercase; letter-spacing: 0.8px; margin: 14px 0 7px;
     }
 
-    /* Font size row */
     .fs-row { display: flex; align-items: center; gap: 8px; }
     .fs-btn {
       width: 30px; height: 30px; border-radius: 7px;
@@ -193,7 +211,6 @@
     .fs-btn:hover { background: rgba(201,168,76,0.25); }
     .fs-num { flex: 1; text-align: center; font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600; color: var(--text); }
 
-    /* Font btns */
     .ff-btns { display: flex; gap: 5px; }
     .ff-btn {
       flex: 1; padding: 7px 4px; border-radius: 7px;
@@ -206,7 +223,6 @@
     .ff-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
     .ff-btn:hover:not(.active) { border-color: var(--border-gold); color: var(--text2); }
 
-    /* Theme btns */
     .theme-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
     .theme-btn {
       padding: 8px 6px; border-radius: 7px;
@@ -221,7 +237,6 @@
     .theme-btn.t-nightblue   { background: #070c1a; color: #c8d8f0; }
     .theme-btn.active { border-color: var(--gold) !important; }
 
-    /* Line height slider */
     .lh-slider {
       width: 100%; height: 4px;
       -webkit-appearance: none; appearance: none;
@@ -300,7 +315,6 @@
       padding-top: var(--header-h);
     }
 
-    /* Chapter head */
     .chapter-head {
       padding: 32px 20px 24px;
       border-bottom: 1px solid var(--border-gold);
@@ -333,7 +347,6 @@
       display: block; margin-top: 16px;
     }
 
-    /* Nav pills */
     .nav-pills {
       display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
     }
@@ -367,7 +380,6 @@
       text-align: justify;
       hyphens: auto;
     }
-    /* First paragraph drop cap */
     #novelContent > p:first-of-type::first-letter {
       font-family: 'Cinzel', serif;
       font-size: calc(var(--reader-fs) * 3.2);
@@ -381,9 +393,6 @@
     }
     #novelContent p:empty { margin-bottom: 0.4em; }
 
-    /* ═══════════════════════════════════════════════════════
-       RESPONSIVE IMAGES — Novel Illustrations
-    ═══════════════════════════════════════════════════════ */
     #novelContent img {
       max-width: 100%;
       height: auto;
@@ -393,29 +402,17 @@
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    
     #novelContent img:hover {
       transform: scale(1.02);
       box-shadow: 0 8px 30px rgba(201,168,76,0.2);
     }
-    
-    /* Image caption styling */
-    #novelContent figure {
-      margin: 24px auto;
-      max-width: 100%;
-    }
-    
+    #novelContent figure { margin: 24px auto; max-width: 100%; }
     #novelContent figcaption {
       text-align: center;
       font-family: 'Cormorant Garamond', serif;
-      font-size: 13px;
-      font-style: italic;
-      color: var(--muted);
-      margin-top: 8px;
-      opacity: 0.8;
+      font-size: 13px; font-style: italic;
+      color: var(--muted); margin-top: 8px; opacity: 0.8;
     }
-    
-    /* Full-width images on mobile */
     @media (max-width: 480px) {
       #novelContent img {
         margin: 16px -22px;
@@ -423,31 +420,12 @@
         border-radius: 0;
       }
     }
-    
-    /* Center-aligned images with max-width constraint */
-    #novelContent .img-center {
-      text-align: center;
-    }
-    
-    #novelContent .img-center img {
-      display: inline-block;
-      max-width: 100%;
-    }
 
     #novelContent b, #novelContent strong { font-weight: 700; }
     #novelContent i, #novelContent em { font-style: italic; }
     #novelContent hr {
       border: none; border-top: 1px solid var(--border-gold);
       margin: 28px auto; width: 60%;
-    }
-
-    /* Chapter ornament between paragraphs */
-    .chapter-break {
-      text-align: center;
-      padding: 8px 0;
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 12px; letter-spacing: 6px;
-      color: var(--gold); opacity: 0.3;
     }
 
     /* ── BOTTOM NAV ───────────────────────────────────────── */
@@ -535,10 +513,15 @@
 <!-- Progress bar -->
 <div id="progressBar"></div>
 
-<!-- Header -->
+<!-- Header — dua baris: nama novel + chapter -->
 <div class="reader-header" id="readerHeader">
   <button class="header-back" onclick="goBack()">←</button>
-  <span class="header-title" id="headerTitle">Memuat...</span>
+
+  <div class="header-title-wrap">
+    <span class="header-novel-name" id="headerNovelName">Novel</span>
+    <span class="header-chapter-label" id="headerChapterLabel">Memuat...</span>
+  </div>
+
   <div class="header-btns">
     <button class="hbtn" onclick="toggleChPanel()" title="Daftar Chapter">📚</button>
     <button class="hbtn" onclick="toggleSettings()" title="Pengaturan">⚙️</button>
@@ -624,7 +607,8 @@
 <script>
 /* ============================================================
    NOVEL READER — Premium redesign
-   API: GET /novel/sakuranovel/read/{chapter-slug}
+   FIX: Header menampilkan "Judul Novel — Ch.X" (singkat)
+        via extractNovelName() + extractChapterLabel()
    ============================================================ */
 
 const BASE = "https://www.sankavollerei.com/novel/sakuranovel/read";
@@ -661,6 +645,62 @@ window.addEventListener("DOMContentLoaded", async () => {
   await loadChapter(currentSlug);
 });
 
+/* ══════════════════════════════════════════════════════
+   TITLE HELPERS
+   ══════════════════════════════════════════════════════ */
+
+/**
+ * Ekstrak nama novel dari judul chapter lengkap.
+ * Contoh input : "Solo Leveling Volume 2 Chapter 15 Bahasa Indonesia"
+ * Output       : "Solo Leveling"
+ */
+function extractNovelName(fullTitle) {
+  if (!fullTitle) return "Novel";
+  return fullTitle
+    .replace(/\s*(volume\s*\d+[\s.]*)?chapter\s*[\d.]+.*$/i, "")
+    .replace(/\s*(short story|afterword|prologue|epilogue|bahasa indonesia)\s*/gi, "")
+    .trim() || fullTitle.trim();
+}
+
+/**
+ * Ekstrak label chapter singkat dari judul chapter lengkap.
+ * Contoh input : "Solo Leveling Volume 2 Chapter 15 Bahasa Indonesia"
+ * Output       : "Ch.15"
+ * Kalau tidak ketemu angka chapter, pakai "Baca" saja.
+ */
+function extractChapterLabel(fullTitle) {
+  if (!fullTitle) return "";
+  /* Cari pola "Chapter N" atau "Ch N" atau "Bab N" */
+  const m = fullTitle.match(/(?:chapter|ch\.?|bab)\s*([\d.]+)/i);
+  if (m) return `Ch.${m[1]}`;
+  /* Cari pola "Prologue", "Epilogue", "Afterword" */
+  const special = fullTitle.match(/\b(prologue|epilogue|afterword|short story)\b/i);
+  if (special) return special[1].charAt(0).toUpperCase() + special[1].slice(1).toLowerCase();
+  return "";
+}
+
+/**
+ * Update dua baris header:
+ *   Baris atas   : nama novel (Cinzel kecil emas)
+ *   Baris bawah  : "Ch.X" atau italic singkat
+ */
+function updateHeaderTitle(fullTitle) {
+  const novelName    = extractNovelName(fullTitle);
+  const chapterLabel = extractChapterLabel(fullTitle);
+
+  const elNovel   = document.getElementById("headerNovelName");
+  const elChapter = document.getElementById("headerChapterLabel");
+
+  /* Potong nama novel kalau terlalu panjang untuk header */
+  const maxNovelLen = 30;
+  const shortNovel  = novelName.length > maxNovelLen
+    ? novelName.slice(0, maxNovelLen - 1) + "…"
+    : novelName;
+
+  if (elNovel)   elNovel.textContent   = shortNovel;
+  if (elChapter) elChapter.textContent = chapterLabel || "—";
+}
+
 /* ── FETCH & RENDER ──────────────────────────────── */
 async function loadChapter(slug) {
   document.getElementById("readerWrap").innerHTML = `
@@ -686,11 +726,11 @@ async function loadChapter(slug) {
     if (window.trackNow) window.trackNow();
 
     document.title = (d.title || "Baca Novel") + " — Pankomik";
-    document.getElementById("headerTitle").textContent = d.title || "Novel";
+
+    /* ── Update header dua baris ── */
+    updateHeaderTitle(d.title || "");
 
     renderChapter(d);
-
-    /* Update chapter panel active state */
     renderChPanelActive();
 
     /* Init comments */
@@ -700,7 +740,7 @@ async function loadChapter(slug) {
     if (currentUser && !historySaved && window._novelAuth) {
       historySaved = true;
       const novelSlug  = parentSlug || chapterSlug;
-      const novelTitle = extractNovelTitle(d.title || "");
+      const novelTitle = extractNovelName(d.title || "");
       const chTitle    = d.title || chapterSlug;
 
       window._novelAuth.saveNovelHistory(currentUser.id, {
@@ -829,11 +869,20 @@ function renderChPanel() {
   listEl.innerHTML = _chList.map((ch, i) => {
     const isActive = ch.slug === currentSlug;
     const title = ch.title || `Chapter ${i + 1}`;
-    const short = title.length > 42 ? title.slice(0, 39) + "…" : title;
+    /* Singkat judul chapter di panel — pakai label "Ch.X" kalau ada */
+    const chLabel  = extractChapterLabel(title);
+    const shortTitle = chLabel
+      ? (() => {
+          const novel = extractNovelName(title);
+          const short = novel.length > 22 ? novel.slice(0, 20) + "…" : novel;
+          return short ? `${short} — ${chLabel}` : chLabel;
+        })()
+      : (title.length > 38 ? title.slice(0, 36) + "…" : title);
+
     return `
       <div class="ch-panel-item${isActive ? " active" : ""}"
            onclick="goChFromPanel('${ch.slug}')">
-        <span class="ch-panel-item-title">${esc(short)}</span>
+        <span class="ch-panel-item-title">${esc(shortTitle)}</span>
         ${ch.date ? `<span class="ch-panel-date">${ch.date}</span>` : ""}
         ${isActive ? `<span class="ch-panel-item-badge">📖</span>` : ""}
       </div>`;
@@ -880,16 +929,13 @@ function applySettings(save = true) {
   const lhSlider = document.getElementById("lhSlider");
   if (lhSlider) lhSlider.value = lineHeight;
 
-  /* Font buttons */
   document.querySelectorAll(".ff-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("ff-" + fontFamily.toLowerCase())?.classList.add("active");
 
-  /* Theme */
   document.body.className = theme;
   document.querySelectorAll(".theme-btn").forEach(b => b.classList.remove("active"));
   document.getElementById("t-" + theme)?.classList.add("active");
 
-  /* Adjust header for parchment */
   const header = document.querySelector(".reader-header");
   if (header) {
     header.style.borderBottomColor =
@@ -922,12 +968,9 @@ function initProgressBar() {
     if (d > 0 && bar) {
       const pct = Math.min((window.scrollY / d) * 100, 100);
       bar.style.width = pct + "%";
-      /* Darken near end */
-      if (pct >= 95) {
-        bar.style.background = "linear-gradient(90deg, #1a5c2e, #27ae60)";
-      } else {
-        bar.style.background = "linear-gradient(90deg, var(--crimson), var(--gold), var(--gold-light))";
-      }
+      bar.style.background = pct >= 95
+        ? "linear-gradient(90deg, #1a5c2e, #27ae60)"
+        : "linear-gradient(90deg, var(--crimson), var(--gold), var(--gold-light))";
     }
   }, { passive: true });
 }
@@ -965,13 +1008,6 @@ document.addEventListener("click", e => {
 });
 
 /* ── HELPERS ──────────────────────────────────────── */
-function extractNovelTitle(t) {
-  return t.replace(/\s*(volume\s*\d+)?\s*chapter\s*[\d.]+.*$/i, "")
-           .replace(/\s*(short story|afterword|prologue|epilogue).*$/i, "")
-           .replace(/\s*bahasa indonesia\s*/i, "")
-           .trim() || t;
-}
-
 function esc(s) {
   return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
                       .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
