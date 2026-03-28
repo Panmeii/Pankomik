@@ -380,6 +380,60 @@
       text-shadow: 0 0 20px rgba(201,168,76,0.3);
     }
     #novelContent p:empty { margin-bottom: 0.4em; }
+
+    /* ═══════════════════════════════════════════════════════
+       RESPONSIVE IMAGES — Novel Illustrations
+    ═══════════════════════════════════════════════════════ */
+    #novelContent img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 24px auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    #novelContent img:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 30px rgba(201,168,76,0.2);
+    }
+    
+    /* Image caption styling */
+    #novelContent figure {
+      margin: 24px auto;
+      max-width: 100%;
+    }
+    
+    #novelContent figcaption {
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px;
+      font-style: italic;
+      color: var(--muted);
+      margin-top: 8px;
+      opacity: 0.8;
+    }
+    
+    /* Full-width images on mobile */
+    @media (max-width: 480px) {
+      #novelContent img {
+        margin: 16px -22px;
+        max-width: calc(100% + 44px);
+        border-radius: 0;
+      }
+    }
+    
+    /* Center-aligned images with max-width constraint */
+    #novelContent .img-center {
+      text-align: center;
+    }
+    
+    #novelContent .img-center img {
+      display: inline-block;
+      max-width: 100%;
+    }
+
     #novelContent b, #novelContent strong { font-weight: 700; }
     #novelContent i, #novelContent em { font-style: italic; }
     #novelContent hr {
