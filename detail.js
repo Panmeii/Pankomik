@@ -47,9 +47,13 @@ const SOURCE_PRIORITY = ["komikindo", "komikstation", "mangakita", "bacakomik"];
 /* ── IMAGE PROXY ────────────────────────────────────────── */
 function proxyImg(url, w = 300) {
   if (!url) return "";
-  if (url.startsWith("data:") || url.includes("weserv.nl") || url.includes("wsrv.nl")) return url;
+  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
   const clean = url.split("?")[0];
-  return `https://images.weserv.nl/?url=${encodeURIComponent(clean.replace(/^https?:\/\//, ""))}&w=${w}&output=webp&q=82`;
+  /* Fix #8: konsisten pakai wsrv.nl (lebih stabil, tidak butuh strip https://) */
+  if (clean.includes("komikstation")) {
+    return "https://proxy.sankavolereii.my.id/" + clean;
+  }
+  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=82&n=-1`;
 }
 
 function escHtml(str) {
@@ -225,7 +229,8 @@ function normalizeFromMangakita(det) {
      slug berisi URL penuh misal "https:/mangakita.me/one-piece-chapter-1176..."
      Ekstrak slug chapter dari URL */
   const chapters = (det.chapters || []).map(ch => {
-    const urlSlug = (ch.slug || "").replace(/^https?:\/?\/?[^/]+\//, "").replace(/\/$/, "");
+    /* Fix #10: regex sebelumnya \/?\/ tidak cocok untuk "https://" — perbaiki menjadi \\/\/ */
+    const urlSlug = (ch.slug || "").replace(/^https?:\/\/[^/]+\//, "").replace(/\/$/, "");
     return {
       title:       ch.title || "",
       slug:        urlSlug  || ch.slug || "",
@@ -410,8 +415,12 @@ async function getDetail() {
     ── */
     candidates.sort((a, b) => b.count - a.count);
 
+    /* Fix #11: "westmanga" bukan salah satu API detail → normalize ke "komikindo"
+       (konten westmanga bisa dibuka dari komikindo API) */
+    const normalizedHint = srcHint === "westmanga" ? "komikindo" : srcHint;
+
     /* Cari kandidat sesuai hint */
-    const hinted = srcHint ? candidates.find(c => c.source === srcHint) : null;
+    const hinted = normalizedHint ? candidates.find(c => c.source === normalizedHint) : null;
 
     /* Kalau tidak ada hint → cek apakah KomikStation tersedia */
     const ksCandidate = candidates.find(c => c.source === "komikstation");
@@ -421,7 +430,7 @@ async function getDetail() {
     const source = best.source;
 
     console.log(
-      `[Detail] hint=${srcHint||"none"} ks=${ksCandidate?.count??"-"} → best=${source} (${best.count}ch) | all:`,
+      `[Detail] hint=${srcHint||"none"} (normalized: ${normalizedHint||"-"}) ks=${ksCandidate?.count??"-"} → best=${source} (${best.count}ch) | all:`,
       candidates.map(c => `${c.source}=${c.count}`).join(", ")
     );
 
@@ -440,7 +449,7 @@ async function getDetail() {
     ── */
     let mergedChapters;
 
-    if (srcHint && hinted) {
+    if (normalizedHint && hinted) {
       /* ═══ MODE SINGLE SOURCE ══════════════════════════════
          User klik dari index → source sudah ditentukan
          Jangan merge → slug chapter dijamin kompatibel dengan reader
@@ -663,6 +672,7 @@ async function tampilkanDetail(d) {
       } else if (cTried === 2) {
         coverImg.src = origCover.split("?")[0];
       } else {
+        coverImg.onerror = null; /* Fix #9: stop fallback loop */
         coverImg.style.display = "none";
       }
     };
