@@ -435,18 +435,18 @@ window.loadMorePop = async function() {
 
   const shown = container.querySelectorAll(".pop-card").length;
 
-  /* Kalau page 1 ada di cache tapi baru tampil 10 — render sisanya dulu */
+  /* Fix #2: Kalau page 1 sudah di cache tapi belum semua ditampilkan → tampilkan sisa dulu
+     tanpa increment _popPage. _popPage hanya diincrement kalau perlu fetch halaman baru. */
   if (_popCache[1] && shown < _popCache[1].length) {
     _renderPopGrid(_popCache[1].slice(shown), container, true);
-    /* Kalau page 1 sudah habis semua, cek apakah ada page berikutnya */
-    if (!_popHasMore) {
-      const btn = document.getElementById("popLoadMoreBtn");
-      if (btn) btn.style.display = "none";
-    }
+    /* Setelah semua sisa page 1 tampil, sembunyikan tombol kalau tidak ada halaman lagi */
+    const remainAfter = _popCache[1].length - (shown + (_popCache[1].length - shown));
+    const btn = document.getElementById("popLoadMoreBtn");
+    if (btn && !_popHasMore) btn.style.display = "none";
     return;
   }
 
-  /* Fetch halaman berikutnya */
+  /* Fetch halaman berikutnya — increment hanya di sini */
   _popPage++;
   await getTopKomik(_popPage, true);
 };
@@ -571,12 +571,15 @@ function _renderPopGrid(list, container, append) {
     if (src && orig) { const img = card.querySelector("img"); if (img) imgFallback(img, orig); }
     else if (!src) { const ph = card.querySelector(".pop-img-gen"); if (ph) ph.replaceWith(makeGeneratedCover(k.title, k.type||"manga", 155)); }
 
-    card.onclick = async () => {
+    card.onclick = () => {
       card.style.opacity = "0.65";
       card.style.pointerEvents = "none";
-      const s = await resolveSource(k.slug, "westmanga");
-      sessionStorage.setItem("komikSrcHint", s);
+      /* Fix #3: jangan await resolveSource — langsung navigasi dengan hint default.
+         resolveSource di-kick di background, hasilnya tersimpan di _ksCheckCache
+         untuk pemakaian berikutnya (mis. user back & klik lagi). */
+      sessionStorage.setItem("komikSrcHint", "westmanga");
       sessionStorage.setItem("komikSrcSlug", k.slug);
+      resolveSource(k.slug, "westmanga"); /* background cache warming */
       window.location.href = komikURL(k.slug);
     };
 
@@ -590,6 +593,8 @@ function fmtTimeAgo(val) {
   const ts = typeof val === "number" ? val * 1000 : Date.parse(val);
   if (!ts || isNaN(ts)) return String(val||"");
   const sec = (Date.now() - ts) / 1000;
+  /* Fix #4: guard untuk < 60 detik agar tidak tampil "0 mnt lalu" */
+  if (sec < 60)    return "Baru saja";
   if (sec < 3600)  return Math.floor(sec/60) + " mnt lalu";
   if (sec < 86400) return Math.floor(sec/3600) + " jam lalu";
   const d = Math.floor(sec/86400);
@@ -716,14 +721,12 @@ async function patchKSCovers(entries, container) {
       /* Cari kartu di DOM berdasarkan slug — kartu menyimpan slug di onclick atau data attr */
       const allCards = container.querySelectorAll(".grid-card");
       allCards.forEach(card => {
-        /* Cek apakah kartu ini untuk slug yang tepat */
-        const onclickStr = card.getAttribute("onclick") || card.querySelector("[data-slug]")?.dataset?.slug || "";
-        /* Cara lebih reliable: cek title di card-info */
+        /* Fix #6: card.getAttribute("onclick") tidak bekerja untuk event handler yang di-set via .onclick = fn
+           Gunakan card.dataset.slug yang sudah di-set saat renderLatest() */
+        if (card.dataset.slug !== slug) return;
+
         const titleEl = card.querySelector(".title");
         if (!titleEl) return;
-
-        /* Cari berdasarkan dataset slug yang kita set saat render */
-        if (card.dataset.slug !== slug) return;
 
         /* Temukan img atau generated cover di kartu ini */
         const existingImg = card.querySelector("img");
@@ -801,20 +804,16 @@ function renderLatest(list, container) {
       }
     }
 
-    card.onclick = async () => {
-      /* Tampilkan mini loading di kartu agar user tahu sedang diproses */
+    card.onclick = () => {
       card.style.opacity = "0.7";
       card.style.pointerEvents = "none";
-
-      /* Cek KomikStation on-demand:
-         - Kalau ada di KS → pakai source KS (chapter lebih lengkap)
-         - Kalau tidak ada → pakai source asli dari merge result
-         Hasil di-cache agar tidak re-fetch kalau kartu diklik ulang */
+      /* Fix #3: langsung navigasi tanpa await resolveSource (menghindari delay 4 detik).
+         Set hint ke source asli dari merge, lalu warm cache di background.
+         Detail page akan fallback ke KomikStation kalau source asli tidak punya data. */
       const originalSrc = komik._src || "komikindo";
-      const resolvedSrc = await resolveSource(komik.slug, originalSrc);
-
-      sessionStorage.setItem("komikSrcHint", resolvedSrc);
+      sessionStorage.setItem("komikSrcHint", originalSrc);
       sessionStorage.setItem("komikSrcSlug", komik.slug);
+      resolveSource(komik.slug, originalSrc); /* background cache warming */
       window.location.href = komikURL(komik.slug);
     };
     container.appendChild(card);
@@ -958,12 +957,13 @@ function renderRekomen(list) {
       }
     }
 
-    card.onclick = async () => {
+    card.onclick = () => {
       card.style.opacity = "0.7";
       card.style.pointerEvents = "none";
-      const resolvedSrc = await resolveSource(komik.slug, "bacakomik");
-      sessionStorage.setItem("komikSrcHint", resolvedSrc);
+      /* Fix #3: langsung navigasi, resolveSource jalan di background */
+      sessionStorage.setItem("komikSrcHint", "bacakomik");
       sessionStorage.setItem("komikSrcSlug", komik.slug);
+      resolveSource(komik.slug, "bacakomik"); /* background cache warming */
       window.location.href = komikURL(komik.slug);
     };
     container.appendChild(card);
@@ -1103,12 +1103,25 @@ function renderSearch(list, query) {
   resultBox.style.display = "block";
 }
 
-/** Highlight teks yang cocok dengan query */
+/** Highlight teks yang cocok dengan query
+ * Fix #7: escape regex dari query mentah dulu, baru cari di teks yang sudah di-HTML-escape.
+ * Urutan sebelumnya: escHtml(query) dulu → regex pada HTML entity → highlight salah.
+ */
 function highlightText(text, query) {
   if (!query) return escHtml(text);
-  const safe   = escHtml(text);
-  const safeQ  = escHtml(query).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return safe.replace(new RegExp(`(${safeQ})`, "gi"), `<mark style="background:rgba(232,82,42,0.25);color:var(--text);border-radius:2px;padding:0 2px;">$1</mark>`);
+  const safe  = escHtml(text);
+  /* Escape karakter regex dari query MENTAH (sebelum escHtml) */
+  const reQ   = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  /* Buat regex case-insensitive dari query mentah yang sudah di-escape */
+  try {
+    return safe.replace(
+      new RegExp(`(${reQ})`, "gi"),
+      `<mark style="background:rgba(232,82,42,0.25);color:var(--text);border-radius:2px;padding:0 2px;">$1</mark>`
+    );
+  } catch {
+    /* Kalau regex tetap gagal (edge case), return teks aman tanpa highlight */
+    return safe;
+  }
 }
 
 /* Tutup search result saat klik di luar */
@@ -1217,6 +1230,9 @@ document.addEventListener("DOMContentLoaded", () => {
   /* Terapkan tema */
   if (localStorage.getItem("theme") === "light") {
     document.body.classList.add("light");
+    /* Fix #5: update icon tombol dark mode sesuai tema yang sudah tersimpan */
+    const darkBtn = document.querySelector('button[onclick="toggleDarkMode()"]');
+    if (darkBtn) darkBtn.textContent = "☀️";
   }
 
   /* Fetch semua konten */
