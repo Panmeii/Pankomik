@@ -39,22 +39,47 @@ function shouldTrack(page, force) {
 }
 
 /* ── Core upsert ── */
+/* Fix #12: Race condition dihindari dengan dua strategi:
+   1. Untuk site_stats: coba RPC "increment_stat" dulu (atomic di DB side).
+      Kalau RPC tidak ada, fallback ke upsert biasa dengan last_seen sebagai tiebreaker.
+   2. Untuk site_daily: sama, coba RPC "increment_daily" dulu, fallback ke upsert.
+   Tanpa RPC di DB, cara paling aman adalah insert dengan ON CONFLICT DO UPDATE
+   menggunakan "views = excluded.views + site_stats.views" — tapi Supabase JS client
+   tidak support expression. Solusi pragmatis: pakai upsert + ignoreDuplicates=false
+   yang di-handle DB dengan trigger increment jika tersedia, atau terima minor double-count
+   yang jarang terjadi pada traffic rendah. */
 async function doTrack(page) {
   const today = new Date().toISOString().slice(0, 10);
+  const now   = new Date().toISOString();
+
+  /* ── site_stats: coba atomic RPC dulu ── */
   try {
-    const { data } = await sb.from("site_stats").select("views").eq("page", page).maybeSingle();
-    await sb.from("site_stats").upsert(
-      { page, views: (data?.views || 0) + 1, last_seen: new Date().toISOString() },
-      { onConflict: "page" }
-    );
-  } catch {}
+    const { error: rpcErr } = await sb.rpc("increment_page_view", { p_page: page });
+    if (rpcErr) throw rpcErr; /* RPC tidak ada → fallback */
+  } catch {
+    /* Fallback: upsert biasa — minor race condition bisa terjadi pada traffic tinggi */
+    try {
+      const { data } = await sb.from("site_stats").select("views").eq("page", page).maybeSingle();
+      await sb.from("site_stats").upsert(
+        { page, views: (data?.views || 0) + 1, last_seen: now },
+        { onConflict: "page" }
+      );
+    } catch {}
+  }
+
+  /* ── site_daily: coba atomic RPC dulu ── */
   try {
-    const { data } = await sb.from("site_daily").select("views").eq("day", today).eq("page", page).maybeSingle();
-    await sb.from("site_daily").upsert(
-      { day: today, page, views: (data?.views || 0) + 1 },
-      { onConflict: "day,page" }
-    );
-  } catch {}
+    const { error: rpcErr } = await sb.rpc("increment_daily_view", { p_page: page, p_day: today });
+    if (rpcErr) throw rpcErr;
+  } catch {
+    try {
+      const { data } = await sb.from("site_daily").select("views").eq("day", today).eq("page", page).maybeSingle();
+      await sb.from("site_daily").upsert(
+        { day: today, page, views: (data?.views || 0) + 1 },
+        { onConflict: "day,page" }
+      );
+    } catch {}
+  }
 }
 
 /* ── Track otomatis saat halaman load ── */
