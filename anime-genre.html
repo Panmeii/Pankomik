@@ -162,9 +162,13 @@ let totalItems = 0;
 function getGenreSlug() { return getAnimeGenreId(); }
 
 function pImg(url, w=300) {
-  return url || "";
+  if (!url) return "";
+  if (url.startsWith("data:") || url.includes("wsrv.nl") || url.includes("weserv.nl")) return url;
+  const clean = url.split("?")[0];
+  return `https://wsrv.nl/?url=${encodeURIComponent(clean)}&w=${w}&output=webp&q=85&n=-1`;
 }
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+/* Fix: escape single quote juga agar aman dipakai dalam atribut onclick='...' */
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
 
 function renderCard(a) {
   const img = pImg(a.poster || "", 200);
@@ -173,7 +177,7 @@ function renderCard(a) {
     <div class="anime-card" onclick="window.location.href=window._animeURL('${esc(id)}')">
       ${img
         ? `<img src="${esc(img)}" alt="${esc(a.title)}" loading="lazy"
-            onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\'width:100%;aspect-ratio:3/4;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px\'>⚡</div>')">`
+            onerror="this.onerror=null;this.style.display='none';this.insertAdjacentHTML('afterend','<div style=\'width:100%;aspect-ratio:3/4;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px\'>⚡</div>')">`
         : `<div style="width:100%;aspect-ratio:3/4;background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:32px;">⚡</div>`}
       ${a.episodes ? `<span class="anime-card-eps">Ep ${a.episodes}</span>` : ""}
       <div class="anime-card-info">
