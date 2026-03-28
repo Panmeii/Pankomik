@@ -5,559 +5,748 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anime — Pankomik</title>
   <link rel="stylesheet" href="/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Bangers&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --anime-accent: #6c63ff;
-      --anime-accent2: #a78bfa;
-      --anime-glow: rgba(108,99,255,0.3);
-      --anime-surface: rgba(108,99,255,0.08);
+      --pk: #e63946;
+      --pk2: #ff6b6b;
+      --pk-glow: rgba(230,57,70,0.35);
+      --pk-dim: rgba(230,57,70,0.1);
+      --gold: #f5a623;
+      --cyan: #00d4ff;
+      --bg: #060608;
+      --bg2: #0d0d12;
+      --bg3: #13131a;
+      --card: #0f0f16;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.1);
+      --text: #f0f0f5;
+      --text2: #9090a8;
+      --text3: #5a5a72;
+      --radius: 12px;
+      --font: 'Outfit', sans-serif;
+      --mono: 'Space Mono', monospace;
     }
 
-    /* ── Anime Hero Banner ─────────────────────────────────── */
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 80px;
+    }
+
+    /* ═══ SCROLLBAR ═══ */
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--pk); border-radius: 99px; }
+
+    /* ═══ NOISE TEXTURE overlay ═══ */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 9999; opacity: 0.4;
+    }
+
+    /* ═══ HEADER ═══ */
+    .pk-header {
+      position: sticky; top: 0; z-index: 500;
+      display: flex; align-items: center; gap: 10px;
+      padding: 0 14px;
+      height: 54px;
+      background: rgba(6,6,8,0.85);
+      backdrop-filter: blur(24px) saturate(1.8);
+      border-bottom: 1px solid var(--border);
+    }
+    .pk-logo {
+      font-family: var(--mono);
+      font-size: 13px; font-weight: 700;
+      color: var(--pk);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .pk-logo span { color: var(--text); }
+    .pk-header-spacer { flex: 1; }
+    .pk-icon-btn {
+      width: 34px; height: 34px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border2);
+      border-radius: 9px; cursor: pointer;
+      font-size: 15px;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pk-icon-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.18); }
+
+    /* ═══ HERO SECTION ═══ */
     .anime-hero {
       position: relative;
+      padding: 28px 14px 22px;
       overflow: hidden;
-      padding: 20px 14px 16px;
-      background: linear-gradient(135deg,
-        rgba(108,99,255,0.15) 0%,
-        rgba(167,139,250,0.08) 50%,
-        transparent 100%);
-      border-bottom: 1px solid rgba(108,99,255,0.15);
     }
     .anime-hero::before {
       content: '';
-      position: absolute; inset: 0; pointer-events: none;
-      background: radial-gradient(ellipse 80% 60% at 10% 50%,
-        rgba(108,99,255,0.12) 0%, transparent 70%);
-    }
-    .anime-hero-title {
-      font-family: 'Bangers', cursive;
-      font-size: 32px;
-      letter-spacing: 3px;
-      color: var(--anime-accent2);
-      text-shadow: 0 0 30px rgba(108,99,255,0.5);
-      position: relative;
-      z-index: 1;
-      margin-bottom: 4px;
-    }
-    .anime-hero-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      position: relative; z-index: 1;
-    }
-
-    /* ── Search Anime ──────────────────────────────────────── */
-    .anime-search-wrap {
-      padding: 12px 14px 0;
-      position: relative;
-      z-index: 1900; /* pastikan di atas konten lain */
-    }
-    .anime-search {
-      width: 100%;
-      padding: 10px 14px 10px 38px;
-      background: var(--bg-card);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      box-sizing: border-box;
-    }
-    .anime-search:focus {
-      border-color: var(--anime-accent);
-      box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
-    }
-    .anime-search.has-results {
-      border-bottom-left-radius: 0;
-      border-bottom-right-radius: 0;
-      border-color: var(--anime-accent);
-    }
-    .anime-search-icon {
-      position: absolute;
-      left: 26px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 16px;
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 100% 80% at 0% 50%, rgba(230,57,70,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 60% at 100% 0%, rgba(0,212,255,0.06) 0%, transparent 50%);
       pointer-events: none;
     }
-    /* Tombol clear (×) */
-    .anime-search-clear {
-      position: absolute;
-      right: 26px; top: 50%;
-      transform: translateY(-50%);
-      font-size: 15px; cursor: pointer;
-      color: var(--text-muted); display: none;
-      padding: 4px; border-radius: 50%;
-      transition: color 0.15s, background 0.15s;
-      line-height: 1;
+    .anime-hero-eyebrow {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 8px;
     }
-    .anime-search-clear:hover { color: var(--text); background: var(--bg-surface); }
-    .anime-search-clear.visible { display: block; }
-    #animeSearchResult {
-      position: absolute;        /* absolute dalam .anime-search-wrap */
-      top: calc(100% - 1px);    /* tepat di bawah input */
-      left: 14px; right: 14px;
-      background: var(--bg-elevated, var(--bg-surface));
-      border: 1.5px solid var(--anime-accent);
-      border-top: none;
-      border-radius: 0 0 12px 12px;
-      max-height: 360px;
-      overflow-y: auto;
-      display: none;
-      z-index: 2100;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.55);
-      animation: searchDrop 0.15s ease;
+    .anime-hero-dot {
+      width: 6px; height: 6px;
+      background: var(--pk);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--pk);
+      animation: blink 1.8s ease infinite;
     }
-    @keyframes searchDrop {
-      from { opacity: 0; transform: translateY(-6px); }
-      to   { opacity: 1; transform: translateY(0); }
+    @keyframes blink {
+      0%,100% { opacity:1; } 50% { opacity:0.3; }
     }
-    .anime-search-item {
-      display: flex; gap: 10px; padding: 10px 12px;
-      cursor: pointer; border-bottom: 1px solid var(--border);
-      transition: background 0.15s; align-items: center;
+    .anime-hero-eyebrow span {
+      font-size: 10px; font-weight: 700;
+      color: var(--pk);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: var(--mono);
     }
-    .anime-search-item:last-child { border-bottom: none; }
-    .anime-search-item:hover { background: var(--bg-card); }
-    .anime-search-item img {
-      width: 38px; height: 54px; object-fit: cover;
-      border-radius: 5px; flex-shrink: 0;
-    }
-    .anime-search-item .asi-info p:first-child {
-      font-size: 13px; font-weight: 700; color: var(--text);
-    }
-    .anime-search-item .asi-info p:last-child {
-      font-size: 11px; color: var(--anime-accent2); margin-top: 2px;
-    }
-
-    /* ── Tab Pills ─────────────────────────────────────────── */
-    .anime-tabs {
-      display: flex;
-      gap: 8px;
-      padding: 14px 14px 0;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .anime-tabs::-webkit-scrollbar { display: none; }
-    .anime-tab {
-      flex-shrink: 0;
-      padding: 7px 16px;
-      border-radius: 99px;
-      border: 1.5px solid var(--border);
-      background: transparent;
-      color: var(--text-muted);
-      font-family: 'Nunito', sans-serif;
-      font-size: 12px; font-weight: 800;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-    .anime-tab.active {
-      background: var(--anime-accent);
-      border-color: var(--anime-accent);
-      color: #fff;
-      box-shadow: 0 4px 14px var(--anime-glow);
-    }
-    .anime-tab:not(.active):hover {
-      border-color: var(--anime-accent);
-      color: var(--anime-accent2);
-    }
-
-    /* ── Tab Content ───────────────────────────────────────── */
-    .anime-tab-content { display: none; }
-    .anime-tab-content.active { display: block; }
-
-    /* ── Section Title Anime ───────────────────────────────── */
-    .anime-section-title {
-      font-family: 'Bangers', cursive;
-      font-size: 18px;
-      letter-spacing: 1px;
-      padding: 14px 14px 8px;
+    .anime-hero-title {
+      font-size: 36px; font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -1px;
       color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      position: relative;
     }
-    .anime-section-title::after {
+    .anime-hero-title em {
+      font-style: normal;
+      color: var(--pk);
+      position: relative;
+    }
+    .anime-hero-title em::after {
       content: '';
-      flex: 1;
-      height: 1px;
-      background: linear-gradient(90deg, var(--anime-accent), transparent);
-      opacity: 0.3;
-      margin-left: 4px;
+      position: absolute;
+      bottom: 2px; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--pk), transparent);
+      border-radius: 99px;
+    }
+    .anime-hero-sub {
+      margin-top: 8px;
+      font-size: 13px; font-weight: 500;
+      color: var(--text2);
+      line-height: 1.5;
     }
 
-    /* ── Anime Grid ────────────────────────────────────────── */
-    .anime-grid {
+    /* ═══ SEARCH ═══ */
+    .pk-search-wrap {
+      padding: 0 14px 4px;
+      position: relative;
+      z-index: 400;
+    }
+    .pk-search-inner {
+      position: relative;
+      display: flex; align-items: center;
+    }
+    .pk-search-input {
+      width: 100%;
+      height: 44px;
+      padding: 0 40px 0 44px;
+      background: var(--bg3);
+      border: 1.5px solid var(--border2);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 13px; font-weight: 600;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .pk-search-input::placeholder { color: var(--text3); }
+    .pk-search-input:focus {
+      border-color: var(--pk);
+      box-shadow: 0 0 0 3px rgba(230,57,70,0.12);
+      background: var(--bg2);
+    }
+    .pk-search-input.has-results {
+      border-bottom-color: transparent;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    .pk-search-icon {
+      position: absolute; left: 14px;
+      font-size: 16px; pointer-events: none;
+      color: var(--text3);
+    }
+    .pk-search-clear {
+      position: absolute; right: 12px;
+      width: 22px; height: 22px;
+      display: none; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%; cursor: pointer;
+      font-size: 11px; color: var(--text2);
+      transition: all 0.15s;
+    }
+    .pk-search-clear.visible { display: flex; }
+    .pk-search-clear:hover { background: rgba(255,255,255,0.15); color: #fff; }
+    #animeSearchResult {
+      position: absolute;
+      top: calc(100% - 1px); left: 14px; right: 14px;
+      background: var(--bg3);
+      border: 1.5px solid var(--pk);
+      border-top: none;
+      border-radius: 0 0 14px 14px;
+      max-height: 380px; overflow-y: auto;
+      display: none; z-index: 600;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      scrollbar-width: thin;
+      scrollbar-color: var(--pk) transparent;
+    }
+    .search-result-item {
+      display: flex; gap: 11px;
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+      align-items: center;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: rgba(255,255,255,0.03); }
+    .search-result-item img {
+      width: 38px; height: 54px;
+      object-fit: cover; border-radius: 7px;
+      flex-shrink: 0;
+    }
+    .sri-title {
+      font-size: 12px; font-weight: 700;
+      color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sri-meta {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 4px;
+    }
+    .sri-badge {
+      font-size: 10px; font-weight: 700;
+      padding: 1px 7px; border-radius: 4px;
+    }
+    .sri-ongoing { background: rgba(245,166,35,0.15); color: var(--gold); }
+    .sri-complete { background: rgba(39,174,96,0.15); color: #4ade80; }
+    .sri-score { font-size: 10px; color: var(--gold); font-weight: 700; }
+
+    /* ═══ TABS ═══ */
+    .pk-tabs {
+      display: flex; gap: 6px;
+      padding: 14px 14px 0;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .pk-tabs::-webkit-scrollbar { display: none; }
+    .pk-tab {
+      flex-shrink: 0;
+      height: 34px; padding: 0 16px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border2);
+      background: transparent;
+      color: var(--text2);
+      font-family: var(--font);
+      font-size: 12px; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s;
+      white-space: nowrap;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .pk-tab:hover { border-color: var(--pk); color: var(--pk2); }
+    .pk-tab.active {
+      background: var(--pk);
+      border-color: var(--pk);
+      color: #fff;
+      box-shadow: 0 4px 18px var(--pk-glow);
+    }
+
+    /* ═══ TAB CONTENT ═══ */
+    .pk-tab-pane { display: none; }
+    .pk-tab-pane.active { display: block; }
+
+    /* ═══ SECTION HEADER ═══ */
+    .pk-section-head {
+      display: flex; align-items: center;
+      padding: 18px 14px 10px;
+      gap: 10px;
+    }
+    .pk-section-label {
+      font-size: 11px; font-weight: 700;
+      color: var(--pk);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-family: var(--mono);
+    }
+    .pk-section-line {
+      flex: 1; height: 1px;
+      background: linear-gradient(90deg, rgba(230,57,70,0.3), transparent);
+    }
+    .pk-section-count {
+      font-size: 10px; font-weight: 700;
+      color: var(--text3);
+      font-family: var(--mono);
+    }
+
+    /* ═══ ANIME GRID ═══ */
+    .pk-anime-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      padding: 0 14px 14px;
-    }
-    @media (min-width: 400px) {
-      .anime-grid { grid-template-columns: repeat(3, 1fr); }
+      padding: 0 14px 6px;
     }
 
-    .anime-card {
-      background: var(--bg-card);
-      border-radius: 10px;
+    /* ═══ ANIME CARD ═══ */
+    .pk-card {
+      background: var(--card);
+      border-radius: var(--radius);
       overflow: hidden;
       border: 1px solid var(--border);
       cursor: pointer;
-      transition: transform 0.18s, border-color 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
       position: relative;
+      -webkit-tap-highlight-color: transparent;
     }
-    .anime-card:hover {
-      transform: translateY(-3px);
-      border-color: var(--anime-accent);
-      box-shadow: 0 8px 24px rgba(108,99,255,0.2);
+    .pk-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      border-color: rgba(230,57,70,0.4);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(230,57,70,0.15);
     }
-    .anime-card:active { transform: scale(0.97); }
+    .pk-card:active { transform: scale(0.97); }
 
-    .anime-card-img {
-      width: 100%;
-      aspect-ratio: 3/4;
-      object-fit: cover;
-      display: block;
-      background: var(--bg-surface);
-    }
-
-    .anime-card-eps {
-      position: absolute;
-      top: 6px; left: 6px;
-      background: rgba(108,99,255,0.9);
-      backdrop-filter: blur(6px);
-      color: #fff;
-      font-size: 9px; font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 5px;
+    .pk-card-thumb {
+      width: 100%; aspect-ratio: 3/4;
+      object-fit: cover; display: block;
+      background: var(--bg3);
     }
 
-    .anime-card-day {
-      position: absolute;
-      top: 6px; right: 6px;
-      background: rgba(0,0,0,0.75);
-      color: var(--anime-accent2);
-      font-size: 9px; font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 5px;
+    /* Gradient overlay on poster */
+    .pk-card-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 60%;
+      background: linear-gradient(to top, rgba(6,6,8,0.95) 0%, transparent 100%);
+      pointer-events: none;
     }
 
-    .anime-card-info {
-      padding: 7px 8px 8px;
-    }
-    .anime-card-title {
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1.4;
+    /* Episode badge */
+    .pk-card-badge {
+      position: absolute; top: 7px; left: 7px;
+      background: rgba(6,6,8,0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.1);
       color: var(--text);
+      font-size: 9px; font-weight: 700;
+      padding: 2px 6px; border-radius: 5px;
+      font-family: var(--mono);
+    }
+    .pk-card-badge.red {
+      background: rgba(230,57,70,0.85);
+      border-color: var(--pk);
+      color: #fff;
+    }
+
+    /* Status dot */
+    .pk-card-status {
+      position: absolute; top: 7px; right: 7px;
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 8px rgba(74,222,128,0.7);
+      animation: blink 2s ease infinite;
+    }
+    .pk-card-status.ended { background: var(--text3); box-shadow: none; animation: none; }
+
+    .pk-card-body {
+      padding: 7px 8px 9px;
+      position: relative; z-index: 1;
+    }
+    .pk-card-title {
+      font-size: 11px; font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-      margin-bottom: 3px;
+      margin-bottom: 4px;
     }
-    .anime-card-meta {
+    .pk-card-meta {
+      display: flex; align-items: center; gap: 4px;
       font-size: 10px;
-      color: var(--text-muted);
     }
-    .anime-card-score {
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      color: #f5a623;
-      font-weight: 700;
-      font-size: 10px;
+    .pk-card-score { color: var(--gold); font-weight: 700; }
+    .pk-card-dot { color: var(--text3); }
+    .pk-card-type { color: var(--text3); font-weight: 600; }
+
+    /* ═══ SKELETON ═══ */
+    .pk-skel {
+      background: linear-gradient(110deg, var(--card) 30%, var(--bg3) 50%, var(--card) 70%);
+      background-size: 300% 100%;
+      animation: skelAnim 1.5s ease infinite;
+      border-radius: var(--radius);
+    }
+    .pk-skel-card { aspect-ratio: 3/4; }
+    @keyframes skelAnim {
+      0% { background-position: 200% 0 }
+      100% { background-position: -200% 0 }
     }
 
-    /* ── Ongoing Slider ────────────────────────────────────── */
-    .anime-ongoing-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      padding: 0 14px 14px;
-    }
-
-    /* ── Schedule Section ──────────────────────────────────── */
-    .schedule-day-wrap {
-      margin-bottom: 6px;
-    }
-    .schedule-day-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 14px;
-      cursor: pointer;
-      user-select: none;
-    }
-    .schedule-day-name {
-      font-family: 'Bangers', cursive;
-      font-size: 16px;
-      letter-spacing: 1px;
-      color: var(--anime-accent2);
-    }
-    .schedule-day-count {
-      font-size: 10px;
-      font-weight: 800;
-      background: var(--anime-surface);
-      color: var(--anime-accent2);
-      padding: 2px 7px;
-      border-radius: 99px;
-      border: 1px solid rgba(108,99,255,0.2);
-    }
-    .schedule-day-arrow {
-      margin-left: auto;
-      font-size: 12px;
-      color: var(--text-muted);
-      transition: transform 0.2s;
-    }
-    .schedule-day-wrap.open .schedule-day-arrow { transform: rotate(180deg); }
-    .schedule-day-list {
+    /* ═══ LOAD MORE ═══ */
+    .pk-load-more {
+      padding: 6px 14px 18px;
       display: none;
-      padding: 0 14px 8px;
     }
-    .schedule-day-wrap.open .schedule-day-list { display: block; }
-    .schedule-item {
-      display: flex;
-      gap: 10px;
-      padding: 9px 0;
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      align-items: center;
-      transition: background 0.15s;
-    }
-    .schedule-item:last-child { border-bottom: none; }
-    .schedule-item img {
-      width: 40px; height: 56px;
-      object-fit: cover; border-radius: 6px;
-      flex-shrink: 0; background: var(--bg-surface);
-    }
-    .schedule-item-info { flex: 1; min-width: 0; }
-    .schedule-item-title {
+    .pk-load-more-btn {
+      width: 100%; height: 44px;
+      background: var(--bg3);
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius);
+      color: var(--text2);
+      font-family: var(--font);
       font-size: 13px; font-weight: 700;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
-    .schedule-item-meta {
-      font-size: 11px; color: var(--text-muted); margin-top: 2px;
-    }
-    .schedule-item-btn {
-      flex-shrink: 0;
-      padding: 5px 11px;
-      background: var(--anime-accent);
-      color: #fff;
-      border: none; border-radius: 7px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 11px; font-weight: 800;
-      cursor: pointer;
-      transition: filter 0.2s;
-    }
-    .schedule-item-btn:hover { filter: brightness(1.15); }
-
-    /* ── Genre Chips ───────────────────────────────────────── */
-    .genre-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      padding: 0 14px 14px;
-    }
-    .genre-chip-anime {
-      padding: 9px 10px;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-size: 12px; font-weight: 700;
-      color: var(--text);
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.18s;
-    }
-    .genre-chip-anime:hover {
-      background: var(--anime-surface);
-      border-color: var(--anime-accent);
-      color: var(--anime-accent2);
-      transform: translateY(-1px);
-    }
-    .genre-chip-anime:active { transform: scale(0.97); }
-
-    /* ── Load More ─────────────────────────────────────────── */
-    .load-more-wrap {
-      padding: 4px 14px 20px;
-      display: none;
-    }
-    .load-more-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--bg-card);
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px; font-weight: 800;
       cursor: pointer;
       transition: all 0.2s;
       display: flex; align-items: center; justify-content: center; gap: 6px;
     }
-    .load-more-btn:hover {
-      background: var(--anime-accent);
-      border-color: var(--anime-accent);
-      color: #fff;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 14px var(--anime-glow);
+    .pk-load-more-btn:hover {
+      border-color: var(--pk);
+      color: var(--pk2);
+      background: var(--pk-dim);
     }
-    .load-more-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .pk-load-more-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* ── Skeleton ──────────────────────────────────────────── */
-    .skel-anime {
-      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-surface) 50%, var(--bg-card) 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
+    /* ═══ SCHEDULE ═══ */
+    .sched-day {
+      margin-bottom: 2px;
+    }
+    .sched-day-hd {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px 10px;
+      cursor: pointer; user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sched-day-name {
+      font-size: 14px; font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.5px;
+    }
+    .sched-today-badge {
+      font-size: 9px; font-weight: 800;
+      background: var(--pk);
+      color: #fff; padding: 2px 7px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-family: var(--mono);
+    }
+    .sched-count {
+      font-size: 10px; font-weight: 700;
+      color: var(--text3); font-family: var(--mono);
+      margin-left: auto;
+    }
+    .sched-arrow {
+      font-size: 11px; color: var(--text3);
+      transition: transform 0.2s;
+    }
+    .sched-day.open .sched-arrow { transform: rotate(180deg); }
+    .sched-list {
+      display: none;
+      padding: 0 14px 10px;
+    }
+    .sched-day.open .sched-list { display: block; }
+    .sched-item {
+      display: flex; gap: 12px; padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; align-items: center;
+      transition: opacity 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .sched-item:last-child { border-bottom: none; }
+    .sched-item:active { opacity: 0.7; }
+    .sched-thumb {
+      width: 42px; height: 58px;
+      object-fit: cover; border-radius: 8px;
+      flex-shrink: 0; background: var(--bg3);
+    }
+    .sched-info { flex: 1; min-width: 0; }
+    .sched-title {
+      font-size: 13px; font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      color: var(--text); margin-bottom: 4px;
+    }
+    .sched-sub { font-size: 11px; color: var(--text2); }
+    .sched-watch-btn {
+      flex-shrink: 0;
+      height: 30px; padding: 0 12px;
+      background: var(--pk);
+      color: #fff; border: none;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 11px; font-weight: 800;
+      cursor: pointer;
+      transition: filter 0.15s, transform 0.1s;
+    }
+    .sched-watch-btn:hover { filter: brightness(1.15); }
+    .sched-watch-btn:active { transform: scale(0.93); }
+
+    /* ═══ GENRE GRID ═══ */
+    .pk-genre-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 0 14px 20px;
+    }
+    .pk-genre-chip {
+      height: 40px;
+      background: var(--card);
+      border: 1px solid var(--border2);
       border-radius: 10px;
-    }
-    .skel-anime-card {
-      aspect-ratio: 3/4;
-    }
-
-    /* ── Empty state ───────────────────────────────────────── */
-    .anime-empty {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--text-muted);
-    }
-    .anime-empty .ico { font-size: 40px; margin-bottom: 10px; }
-
-    /* Pastikan card image tidak blank saat loading */
-    .anime-card-img {
-      background-color: var(--bg-surface);
-      min-height: 120px;
-    }
-
-    /* ── Spinner ───────────────────────────────────────────── */
-    .anime-spinner {
       display: flex; align-items: center; justify-content: center;
-      padding: 40px; gap: 12px; color: var(--text-muted); font-size: 13px;
+      font-size: 12px; font-weight: 700;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.18s;
+      -webkit-tap-highlight-color: transparent;
     }
-    .spin-ring {
-      width: 24px; height: 24px;
-      border: 3px solid rgba(108,99,255,0.2);
-      border-top-color: var(--anime-accent);
+    .pk-genre-chip:hover {
+      background: var(--pk-dim);
+      border-color: rgba(230,57,70,0.4);
+      color: var(--pk2);
+      transform: translateY(-2px);
+    }
+    .pk-genre-chip:active { transform: scale(0.96); }
+
+    /* ═══ SPINNER ═══ */
+    .pk-spinner {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; padding: 44px; color: var(--text3); font-size: 13px;
+    }
+    .pk-spin-ring {
+      width: 22px; height: 22px;
+      border: 2.5px solid rgba(230,57,70,0.2);
+      border-top-color: var(--pk);
       border-radius: 50%;
-      animation: spin 0.7s linear infinite;
+      animation: spin 0.65s linear infinite;
+      flex-shrink: 0;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ═══ EMPTY ═══ */
+    .pk-empty {
+      text-align: center; padding: 48px 20px; color: var(--text3);
+    }
+    .pk-empty-icon { font-size: 44px; margin-bottom: 12px; }
+    .pk-empty p { font-size: 13px; margin-bottom: 16px; }
+    .pk-empty-btn {
+      padding: 10px 24px;
+      background: var(--pk); color: #fff;
+      border: none; border-radius: 10px;
+      font-family: var(--font); font-size: 13px; font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 16px var(--pk-glow);
+    }
+
+    /* ═══ BOTTOM NAV ═══ */
+    .pk-bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+      height: 60px;
+      background: rgba(6,6,8,0.95);
+      backdrop-filter: blur(24px);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: stretch;
+    }
+    .pk-nav-item {
+      flex: 1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 3px; cursor: pointer;
+      background: none; border: none;
+      color: var(--text3);
+      font-family: var(--font);
+      font-size: 10px; font-weight: 700;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+    .pk-nav-item.active { color: var(--pk); }
+    .pk-nav-item.active::before {
+      content: '';
+      position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 28px; height: 2px;
+      background: var(--pk);
+      border-radius: 0 0 3px 3px;
+      box-shadow: 0 0 10px var(--pk-glow);
+    }
+    .pk-nav-icon { font-size: 18px; line-height: 1; }
+
+    /* ═══ DROPDOWN ═══ */
+    .dropdown {
+      display: none; position: fixed;
+      right: 10px; top: 58px; z-index: 600;
+      background: rgba(13,13,18,0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border2);
+      border-radius: 14px; overflow: hidden;
+      min-width: 166px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+      animation: dropIn 0.16s ease;
+    }
+    @keyframes dropIn {
+      from { opacity:0; transform:translateY(-8px) scale(.96) }
+      to   { opacity:1; transform:translateY(0) scale(1) }
+    }
+    .dropdown p {
+      padding: 12px 16px; cursor: pointer;
+      font-size: 13px; font-weight: 600;
+      color: var(--text); margin: 0;
+      border-bottom: 1px solid var(--border);
+      transition: all 0.12s;
+    }
+    .dropdown p:last-child { border-bottom: none; }
+    .dropdown p:hover { background: rgba(255,255,255,0.04); padding-left: 20px; }
+
+    /* ═══ CARD HOVER SHIMMER ═══ */
+    .pk-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.03) 50%, transparent 60%);
+      opacity: 0; transition: opacity 0.3s;
+      pointer-events: none;
+      border-radius: var(--radius);
+    }
+    .pk-card:hover::after { opacity: 1; }
   </style>
 </head>
-<body class="has-bottom-nav">
+<body>
 
-<!-- Header -->
-<header class="header">
-  <div class="logo" onclick="window.location.href='/'">Pankomik</div>
-  <div style="flex:1"></div>
-  <div class="header-right">
-    <button onclick="toggleDarkMode()">🌙</button>
-    <button onclick="toggleMenu()">👤</button>
-  </div>
+<!-- HEADER -->
+<header class="pk-header">
+  <div class="pk-logo" onclick="location.href='/'">PAN<span>KOMIK</span></div>
+  <div class="pk-header-spacer"></div>
+  <div class="pk-icon-btn" onclick="toggleDarkMode()">🌙</div>
+  <div class="pk-icon-btn" onclick="toggleMenu()">👤</div>
 </header>
 <div id="menuDropdown" class="dropdown"></div>
 
-<!-- Hero -->
+<!-- HERO -->
 <div class="anime-hero">
-  <div class="anime-hero-title">⚡ ANIME</div>
-  <div class="anime-hero-sub">Streaming anime sub Indo terlengkap</div>
+  <div class="anime-hero-eyebrow">
+    <div class="anime-hero-dot"></div>
+    <span>Streaming Anime</span>
+  </div>
+  <div class="anime-hero-title">
+    Nonton <em>Anime</em><br>Sub Indonesia
+  </div>
+  <div class="anime-hero-sub">HD · Gratis · Tanpa iklan mengganggu</div>
 </div>
 
-<!-- Search -->
-<div class="anime-search-wrap">
-  <span class="anime-search-icon">🔍</span>
-  <input class="anime-search" id="animeSearchInput"
-    placeholder="Cari anime..." autocomplete="off"
-    oninput="searchAnime(this.value)">
-  <span class="anime-search-clear" id="animeSearchClear" onclick="clearAnimeSearch()">✕</span>
+<!-- SEARCH -->
+<div class="pk-search-wrap">
+  <div class="pk-search-inner">
+    <span class="pk-search-icon">🔍</span>
+    <input class="pk-search-input" id="animeSearchInput"
+      placeholder="Cari judul anime..." autocomplete="off"
+      oninput="searchAnime(this.value)">
+    <div class="pk-search-clear" id="animeSearchClear" onclick="clearSearch()">✕</div>
+  </div>
   <div id="animeSearchResult"></div>
 </div>
 
-<!-- Tabs -->
-<div class="anime-tabs">
-  <button class="anime-tab active" onclick="switchTab('ongoing',this)">🔴 Ongoing</button>
-  <button class="anime-tab" onclick="switchTab('complete',this)">✅ Tamat</button>
-  <button class="anime-tab" onclick="switchTab('schedule',this)">📅 Jadwal</button>
-  <button class="anime-tab" onclick="switchTab('genre',this)">🏷️ Genre</button>
+<!-- TABS -->
+<div class="pk-tabs">
+  <button class="pk-tab active" onclick="switchTab('ongoing',this)">🔴 Ongoing</button>
+  <button class="pk-tab" onclick="switchTab('complete',this)">✅ Tamat</button>
+  <button class="pk-tab" onclick="switchTab('schedule',this)">📅 Jadwal</button>
+  <button class="pk-tab" onclick="switchTab('genre',this)">🏷️ Genre</button>
 </div>
 
-<!-- TAB: Ongoing -->
-<div class="anime-tab-content active" id="tab-ongoing">
-  <div class="anime-section-title">🔴 Sedang Tayang</div>
-  <div class="anime-grid" id="ongoingGrid">
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
+<!-- TAB: ONGOING -->
+<div class="pk-tab-pane active" id="tab-ongoing">
+  <div class="pk-section-head">
+    <span class="pk-section-label">Sedang Tayang</span>
+    <div class="pk-section-line"></div>
   </div>
-  <div class="load-more-wrap" id="ongoingMore">
-    <button class="load-more-btn" onclick="loadMoreOngoing()">Muat Lebih Banyak ↓</button>
+  <div class="pk-anime-grid" id="ongoingGrid">
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
   </div>
-</div>
-
-<!-- TAB: Complete -->
-<div class="anime-tab-content" id="tab-complete">
-  <div class="anime-section-title">✅ Anime Tamat</div>
-  <div class="anime-grid" id="completeGrid">
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-    <div class="skel-anime skel-anime-card"></div>
-  </div>
-  <div class="load-more-wrap" id="completeMore">
-    <button class="load-more-btn" onclick="loadMoreComplete()">Muat Lebih Banyak ↓</button>
+  <div class="pk-load-more" id="ongoingMore">
+    <button class="pk-load-more-btn" onclick="loadMoreOngoing()">Muat Lebih Banyak ↓</button>
   </div>
 </div>
 
-<!-- TAB: Schedule -->
-<div class="anime-tab-content" id="tab-schedule">
-  <div class="anime-section-title">📅 Jadwal Rilis</div>
+<!-- TAB: COMPLETE -->
+<div class="pk-tab-pane" id="tab-complete">
+  <div class="pk-section-head">
+    <span class="pk-section-label">Anime Tamat</span>
+    <div class="pk-section-line"></div>
+  </div>
+  <div class="pk-anime-grid" id="completeGrid">
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+    <div class="pk-skel pk-skel-card"></div>
+  </div>
+  <div class="pk-load-more" id="completeMore">
+    <button class="pk-load-more-btn" onclick="loadMoreComplete()">Muat Lebih Banyak ↓</button>
+  </div>
+</div>
+
+<!-- TAB: SCHEDULE -->
+<div class="pk-tab-pane" id="tab-schedule">
+  <div class="pk-section-head">
+    <span class="pk-section-label">Jadwal Rilis</span>
+    <div class="pk-section-line"></div>
+  </div>
   <div id="scheduleContent">
-    <div class="anime-spinner"><div class="spin-ring"></div>Memuat jadwal...</div>
+    <div class="pk-spinner"><div class="pk-spin-ring"></div>Memuat jadwal...</div>
   </div>
 </div>
 
-<!-- TAB: Genre -->
-<div class="anime-tab-content" id="tab-genre">
-  <div class="anime-section-title">🏷️ Semua Genre</div>
-  <div class="genre-grid" id="genreGrid">
-    <div class="anime-spinner" style="grid-column:1/-1">
-      <div class="spin-ring"></div>Memuat genre...
+<!-- TAB: GENRE -->
+<div class="pk-tab-pane" id="tab-genre">
+  <div class="pk-section-head">
+    <span class="pk-section-label">Semua Genre</span>
+    <div class="pk-section-line"></div>
+  </div>
+  <div class="pk-genre-grid" id="genreGrid">
+    <div class="pk-spinner" style="grid-column:1/-1">
+      <div class="pk-spin-ring"></div>Memuat...
     </div>
   </div>
 </div>
 
-<!-- Bottom Nav -->
-<nav class="bottom-nav">
-  <button class="nav-item" onclick="window.location.href='/'">
-    <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+<!-- BOTTOM NAV -->
+<nav class="pk-bottom-nav">
+  <button class="pk-nav-item" onclick="location.href='/'">
+    <span class="pk-nav-icon">🏠</span>Home
   </button>
-  <button class="nav-item" onclick="window.location.href='/'">
-    <span class="nav-icon">📚</span><span class="nav-label">Komik</span>
+  <button class="pk-nav-item" onclick="location.href='/'">
+    <span class="pk-nav-icon">📚</span>Komik
   </button>
-  <button class="nav-item active">
-    <span class="nav-icon">⚡</span><span class="nav-label">Anime</span>
+  <button class="pk-nav-item active">
+    <span class="pk-nav-icon">⚡</span>Anime
   </button>
-  <button class="nav-item" onclick="window.location.href='/novel/'">
-    <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
+  <button class="pk-nav-item" onclick="location.href='/novel/'">
+    <span class="pk-nav-icon">📖</span>Novel
   </button>
-  <button class="nav-item" onclick="window.location.href='/profil'">
-    <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
+  <button class="pk-nav-item" onclick="location.href='/profil'">
+    <span class="pk-nav-icon">👤</span>Profil
   </button>
 </nav>
 
@@ -569,7 +758,6 @@
 <script type="module">
 import { animeURL, animeGenreURL, animeWatchURL } from "/router.js";
 
-/* Expose ke window agar bisa dipakai di onclick template string */
 window._animeURL      = animeURL;
 window._animeGenreURL = animeGenreURL;
 window._animeWatchURL = animeWatchURL;
@@ -579,142 +767,107 @@ let ongoingPage = 1, completePage = 1;
 let ongoingDone = false, completeDone = false;
 let scheduleLoaded = false, genreLoaded = false;
 
-/* ── Init ─────────────────────────────────────────────────── */
 window.addEventListener("load", () => {
   if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
   loadOngoing();
 });
 
-/* ── Tab switch ───────────────────────────────────────────── */
 window.switchTab = function(tab, btn) {
-  document.querySelectorAll(".anime-tab").forEach(b => b.classList.remove("active"));
-  document.querySelectorAll(".anime-tab-content").forEach(c => c.classList.remove("active"));
+  document.querySelectorAll(".pk-tab").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".pk-tab-pane").forEach(c => c.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById(`tab-${tab}`).classList.add("active");
-
-  if (tab === "complete"  && !completeDone)   loadComplete(true);
+  if (tab === "complete"  && completePage === 1 && !completeDone) loadComplete(true);
   if (tab === "schedule"  && !scheduleLoaded) loadSchedule();
   if (tab === "genre"     && !genreLoaded)    loadGenres();
 };
 
-/* ── Proxy img ────────────────────────────────────────────── */
-function pImg(url, w=300) {
-  return url || "";
-}
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+window.gotoAnime = id => { if(id) window.location.href = animeURL(id); };
 
-/* ── Navigate ─────────────────────────────────────────────── */
-window.gotoAnime = function(id) { window.location.href = animeURL(id); };
-
-/* ── Render card ──────────────────────────────────────────── */
-function renderCard(a, badge="") {
-  const img   = pImg(a.poster || a.img, 200);
-  const title = esc(a.title);
+function renderCard(a) {
   const id    = a.animeId || a.slug || a.id || "";
-  const eps   = a.episodes ? `Ep ${a.episodes}` : "";
+  const img   = a.poster || a.img || "";
+  const title = esc(a.title || "");
+  const eps   = a.episodes ? `${a.episodes} EP` : "";
   const score = a.score && a.score !== "null" ? a.score : "";
-  const day   = a.releaseDay ? a.releaseDay.slice(0,3) : "";
+  const type  = a.type || "";
+  const isOngoing = (a.status||"").toLowerCase() === "ongoing";
+
   return `
-    <div class="anime-card" onclick="gotoAnime('${esc(id)}')">
+    <div class="pk-card" onclick="gotoAnime('${esc(id)}')" style="animation:cardIn 0.4s ease both">
       ${img
-        ? `<img class="anime-card-img" src="${esc(img)}" alt="${title}" loading="lazy"
-            onerror="this.style.display='none';this.insertAdjacentHTML('afterend','<div class=\'anime-card-img\' style=\'display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-surface)\'>⚡</div>')">`
-        : `<div class="anime-card-img" style="display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg-surface);">⚡</div>`}
-      ${eps ? `<span class="anime-card-eps">${eps}</span>` : ""}
-      ${day ? `<span class="anime-card-day">${day}</span>` : ""}
-      ${badge ? `<span class="anime-card-eps" style="background:rgba(232,82,42,0.9);left:auto;right:6px;top:auto;bottom:6px;">${badge}</span>` : ""}
-      <div class="anime-card-info">
-        <div class="anime-card-title">${title}</div>
-        ${score ? `<div class="anime-card-score">⭐ ${esc(score)}</div>` :
-                   `<div class="anime-card-meta">${esc(a.season||a.latestReleaseDate||"")}</div>`}
+        ? `<img class="pk-card-thumb" src="${esc(img)}" alt="${title}" loading="lazy"
+            onerror="this.style.background='var(--bg3)';this.removeAttribute('src')">`
+        : `<div class="pk-card-thumb" style="display:flex;align-items:center;justify-content:center;font-size:28px;">⚡</div>`}
+      <div class="pk-card-overlay"></div>
+      ${eps ? `<div class="pk-card-badge">${eps}</div>` : ""}
+      <div class="pk-card-status ${isOngoing ? "" : "ended"}"></div>
+      <div class="pk-card-body">
+        <div class="pk-card-title">${title}</div>
+        <div class="pk-card-meta">
+          ${score ? `<span class="pk-card-score">⭐ ${esc(score)}</span>` : ""}
+          ${score && type ? `<span class="pk-card-dot">·</span>` : ""}
+          ${type ? `<span class="pk-card-type">${esc(type)}</span>` : ""}
+        </div>
       </div>
     </div>`;
 }
 
-/* ── ONGOING ──────────────────────────────────────────────── */
 async function loadOngoing(append=false) {
   const grid = document.getElementById("ongoingGrid");
-  if (!append) grid.innerHTML = Array(9).fill('<div class="skel-anime skel-anime-card"></div>').join('');
+  if (!append) {
+    grid.innerHTML = Array(6).fill('<div class="pk-skel pk-skel-card"></div>').join('');
+  }
   try {
     const res  = await fetch(`${API}/anime/ongoing-anime?page=${ongoingPage}`);
     const json = await res.json();
     const list = json.data?.animeList || [];
     if (!append) grid.innerHTML = "";
     if (!list.length && !append) {
-      grid.innerHTML = `<div class="anime-empty" style="grid-column:1/-1">
-        <div class="ico">📭</div>
-        <p>Tidak ada data anime.</p>
-        <button onclick="retryOngoing()" style="margin-top:12px;padding:9px 22px;
-          background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
-          cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;font-size:13px;">
-          🔄 Refresh
-        </button>
-      </div>`;
-      return;
+      grid.innerHTML = `<div class="pk-empty" style="grid-column:1/-1">
+        <div class="pk-empty-icon">📭</div>
+        <p>Tidak ada data anime</p>
+        <button class="pk-empty-btn" onclick="location.reload()">🔄 Refresh</button>
+      </div>`; return;
     }
-    list.forEach(a => { grid.insertAdjacentHTML("beforeend", renderCard(a)); });
+    list.forEach(a => grid.insertAdjacentHTML("beforeend", renderCard(a)));
     const more = document.getElementById("ongoingMore");
-    if (json.pagination?.hasNextPage) {
-      more.style.display = "block";
-      ongoingPage++;
-    } else {
-      more.style.display = "none";
-      ongoingDone = true;
-    }
+    if (json.pagination?.hasNextPage) { more.style.display = "block"; ongoingPage++; }
+    else { more.style.display = "none"; ongoingDone = true; }
   } catch(e) {
-    console.error(e);
-    if (!append) grid.innerHTML = `<div class="anime-empty" style="grid-column:1/-1">
-        <div class="ico">😕</div>
-        <p>Gagal memuat anime.</p>
-        <p style="font-size:11px;margin-top:4px;color:#555;">Periksa koneksi lalu coba lagi.</p>
-        <button onclick="retryOngoing()" style="margin-top:12px;padding:9px 22px;
-          background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
-          cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;font-size:13px;">
-          🔄 Coba Lagi
-        </button>
-      </div>`;
+    if (!append) grid.innerHTML = `<div class="pk-empty" style="grid-column:1/-1">
+      <div class="pk-empty-icon">😕</div>
+      <p>Gagal memuat anime</p>
+      <button class="pk-empty-btn" onclick="location.reload()">🔄 Coba Lagi</button>
+    </div>`;
   }
 }
-window.loadMoreOngoing  = () => loadOngoing(true);
-window.retryOngoing = () => {
-  ongoingPage = 1; ongoingDone = false;
-  loadOngoing(false);
-};
+window.loadMoreOngoing = () => loadOngoing(true);
 
-/* ── COMPLETE ─────────────────────────────────────────────── */
 async function loadComplete(reset=false) {
   if (reset) { completePage = 1; completeDone = false; }
   const grid = document.getElementById("completeGrid");
-  if (completePage === 1) grid.innerHTML = Array(9).fill('<div class="skel-anime skel-anime-card"></div>').join('');
+  if (completePage === 1) grid.innerHTML = Array(6).fill('<div class="pk-skel pk-skel-card"></div>').join('');
   try {
     const res  = await fetch(`${API}/anime/complete-anime?page=${completePage}`);
     const json = await res.json();
     const list = json.data?.animeList || [];
     if (completePage === 1) grid.innerHTML = "";
-    list.forEach(a => { grid.insertAdjacentHTML("beforeend", renderCard(a)); });
+    list.forEach(a => grid.insertAdjacentHTML("beforeend", renderCard(a)));
     const more = document.getElementById("completeMore");
-    if (json.pagination?.hasNextPage) {
-      more.style.display = "block"; completePage++;
-    } else {
-      more.style.display = "none"; completeDone = true;
-    }
+    if (json.pagination?.hasNextPage) { more.style.display = "block"; completePage++; }
+    else { more.style.display = "none"; completeDone = true; }
   } catch(e) {
-    if (completePage === 1) grid.innerHTML = `<div class="anime-empty" style="grid-column:1/-1">
-        <div class="ico">😕</div>
-        <p>Gagal memuat anime tamat.</p>
-        <p style="font-size:11px;margin-top:4px;color:#555;">Periksa koneksi lalu coba lagi.</p>
-        <button onclick="retryComplete()" style="margin-top:12px;padding:9px 22px;
-          background:var(--anime-accent);color:#fff;border:none;border-radius:9px;
-          cursor:pointer;font-weight:800;font-family:'Nunito',sans-serif;font-size:13px;">
-          🔄 Coba Lagi
-        </button>
-      </div>`;
+    if (completePage === 1) grid.innerHTML = `<div class="pk-empty" style="grid-column:1/-1">
+      <div class="pk-empty-icon">😕</div>
+      <p>Gagal memuat</p>
+      <button class="pk-empty-btn" onclick="loadComplete(true)">🔄 Coba Lagi</button>
+    </div>`;
   }
 }
 window.loadMoreComplete = () => loadComplete(false);
-window.retryComplete = () => loadComplete(true);
 
-/* ── SCHEDULE ─────────────────────────────────────────────── */
 async function loadSchedule() {
   scheduleLoaded = true;
   const el = document.getElementById("scheduleContent");
@@ -722,213 +875,148 @@ async function loadSchedule() {
     const res  = await fetch(`${API}/anime/schedule`);
     const json = await res.json();
     const days = json.data || [];
-
-    const TODAY_IDX = new Date().getDay(); // 0=Sun..6=Sat
+    const TODAY_IDX = new Date().getDay();
     const dayMap = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
     const todayName = dayMap[TODAY_IDX];
 
     el.innerHTML = days.map(d => {
       const isToday = d.day === todayName;
       const items = (d.anime_list || []).map(a => `
-        <div class="schedule-item" onclick="gotoAnime('${esc(a.slug)}')">
-          ${a.poster ? `<img src="${esc(pImg(a.poster,80))}" alt="${esc(a.title)}" loading="lazy"
-            onerror="this.outerHTML='<div style=\'width:40px;height:56px;background:var(--bg-surface);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center\'>⚡</div>'" >` :
-            `<div style="width:40px;height:56px;background:var(--bg-surface);border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;">⚡</div>`}
-          <div class="schedule-item-info">
-            <div class="schedule-item-title">${esc(a.title)}</div>
-            <div class="schedule-item-meta">Tayang ${esc(d.day)}</div>
+        <div class="sched-item" onclick="gotoAnime('${esc(a.slug)}')">
+          ${a.poster
+            ? `<img class="sched-thumb" src="${esc(a.poster)}" loading="lazy"
+                onerror="this.style.background='var(--bg3)';this.removeAttribute('src')">`
+            : `<div class="sched-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;">⚡</div>`}
+          <div class="sched-info">
+            <div class="sched-title">${esc(a.title)}</div>
+            <div class="sched-sub">Tayang ${esc(d.day)}</div>
           </div>
-          <button class="schedule-item-btn">Tonton</button>
+          <button class="sched-watch-btn">Tonton</button>
         </div>`).join('');
 
       return `
-        <div class="schedule-day-wrap ${isToday ? 'open' : ''}">
-          <div class="schedule-day-header" onclick="toggleScheduleDay(this.parentElement)">
-            <span class="schedule-day-name">${esc(d.day)}${isToday ? ' 🔴' : ''}</span>
-            <span class="schedule-day-count">${d.anime_list?.length||0} anime</span>
-            <span class="schedule-day-arrow">▼</span>
+        <div class="sched-day ${isToday ? 'open' : ''}">
+          <div class="sched-day-hd" onclick="this.parentElement.classList.toggle('open')">
+            <span class="sched-day-name">${esc(d.day)}</span>
+            ${isToday ? `<span class="sched-today-badge">Hari Ini</span>` : ""}
+            <span class="sched-count">${d.anime_list?.length||0}</span>
+            <span class="sched-arrow">▼</span>
           </div>
-          <div class="schedule-day-list">${items}</div>
+          <div class="sched-list">${items}</div>
         </div>`;
     }).join('');
   } catch(e) {
-    el.innerHTML = '<div class="anime-empty"><div class="ico">😕</div><p>Gagal memuat jadwal.</p></div>';
+    el.innerHTML = '<div class="pk-empty"><div class="pk-empty-icon">😕</div><p>Gagal memuat jadwal</p></div>';
   }
 }
-window.toggleScheduleDay = function(wrap) {
-  wrap.classList.toggle("open");
-};
 
-/* ── GENRE ────────────────────────────────────────────────── */
 async function loadGenres() {
   const el = document.getElementById("genreGrid");
-  /* Jangan set genreLoaded = true dulu — set setelah berhasil */
-  el.innerHTML = `<div class="anime-spinner" style="grid-column:1/-1">
-    <div class="spin-ring"></div>Memuat genre...
-  </div>`;
+  el.innerHTML = `<div class="pk-spinner" style="grid-column:1/-1"><div class="pk-spin-ring"></div>Memuat...</div>`;
   try {
     const res  = await fetch(`${API}/anime/genre`);
     const json = await res.json();
     const list = json.data?.genreList || [];
-    if (!list.length) throw new Error("Empty genre list");
-    
-    genreLoaded = true; /* Set true hanya jika berhasil */
-    
+    if (!list.length) throw new Error("empty");
+    genreLoaded = true;
     el.innerHTML = list.map(g =>
-      `<div class="genre-chip-anime"
-        onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')"
-      >${esc(g.title)}</div>`
+      `<div class="pk-genre-chip" onclick="location.href=window._animeGenreURL('${esc(g.genreId)}')">${esc(g.title)}</div>`
     ).join('');
   } catch(e) {
-    genreLoaded = false; /* Reset agar bisa retry */
-    el.innerHTML = `
-      <div class="anime-empty" style="grid-column:1/-1">
-        <div class="ico">😕</div>
-        <p>Gagal memuat genre.</p>
-        <button onclick="loadGenres()" style="
-          margin-top:10px;padding:7px 18px;background:var(--anime-accent);
-          color:#fff;border:none;border-radius:8px;cursor:pointer;
-          font-family:'Nunito',sans-serif;font-weight:800;font-size:12px;">
-          🔄 Coba Lagi
-        </button>
-      </div>`;
+    genreLoaded = false;
+    el.innerHTML = `<div class="pk-empty" style="grid-column:1/-1">
+      <div class="pk-empty-icon">😕</div>
+      <p>Gagal memuat genre</p>
+      <button class="pk-empty-btn" onclick="loadGenres()">🔄 Coba Lagi</button>
+    </div>`;
   }
 }
+window.loadGenres = loadGenres;
 
-/* ── SEARCH  (GET /anime/search/:keyword) ─────────────────── */
-let searchTimer = null;
-let lastQuery   = "";
+/* ── SEARCH ── */
+let searchTimer = null, lastQuery = "";
 
 window.searchAnime = function(q) {
   clearTimeout(searchTimer);
-  const result = document.getElementById("animeSearchResult");
+  const result  = document.getElementById("animeSearchResult");
+  const input   = document.getElementById("animeSearchInput");
+  const clrBtn  = document.getElementById("animeSearchClear");
   const trimmed = q.trim();
 
-  const input = document.getElementById("animeSearchInput");
-  const clearBtn = document.getElementById("animeSearchClear");
-
-  /* Sembunyikan jika kosong */
   if (!trimmed || trimmed.length < 2) {
     result.style.display = "none";
-    lastQuery = "";
-    if (input) input.classList.remove("has-results");
-    if (clearBtn) clearBtn.classList.remove("visible");
-    return;
+    input.classList.remove("has-results");
+    clrBtn.classList.remove("visible");
+    lastQuery = ""; return;
   }
-
-  /* Tampilkan tombol clear */
-  if (clearBtn) clearBtn.classList.add("visible");
-
-  /* Tampilkan skeleton sementara menunggu debounce */
+  clrBtn.classList.add("visible");
   result.style.display = "block";
-  if (input) input.classList.add("has-results");
-  result.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;color:var(--text-muted);font-size:13px;">
-      <div class="spin-ring" style="width:18px;height:18px;border-width:2px;"></div>
-      Mencari "<strong style="color:var(--anime-accent2);">${esc(trimmed)}</strong>"...
-    </div>`;
+  input.classList.add("has-results");
+  result.innerHTML = `<div class="pk-spinner"><div class="pk-spin-ring" style="width:16px;height:16px;border-width:2px"></div>Mencari "${esc(trimmed)}"...</div>`;
 
   searchTimer = setTimeout(async () => {
-    if (trimmed === lastQuery) return; /* Tidak perlu fetch ulang */
+    if (trimmed === lastQuery) return;
     lastQuery = trimmed;
-
     try {
       const res  = await fetch(`${API}/anime/search/${encodeURIComponent(trimmed)}`);
       const json = await res.json();
-
-      if (!json.ok) throw new Error(json.message || "API error");
-
+      if (!json.ok) throw new Error("api error");
       const list = json.data?.animeList || [];
-
       if (!list.length) {
-        result.innerHTML = `
-          <div style="padding:18px 14px;text-align:center;color:var(--text-muted);font-size:13px;">
-            <div style="font-size:28px;margin-bottom:6px;">🔍</div>
-            Tidak ada hasil untuk "<strong>${esc(trimmed)}</strong>"
-          </div>`;
+        result.innerHTML = `<div style="padding:20px;text-align:center;font-size:13px;color:var(--text3);">Tidak ada hasil untuk "<strong style="color:var(--text2)">${esc(trimmed)}</strong>"</div>`;
         return;
       }
-
-      result.innerHTML = list.slice(0, 8).map(a => {
-        const id     = a.animeId || "";
-        const genres = (a.genreList || []).slice(0, 3).map(g => esc(g.title)).join(", ");
-        const status = a.status || "";
-        const statusColor = status.toLowerCase() === "ongoing" ? "#f5a623" : "#27ae60";
+      result.innerHTML = list.slice(0,8).map(a => {
+        const st = (a.status||"").toLowerCase();
+        const stBadge = st === "ongoing"
+          ? `<span class="sri-badge sri-ongoing">Ongoing</span>`
+          : st ? `<span class="sri-badge sri-complete">${esc(a.status)}</span>` : "";
         return `
-          <div class="anime-search-item" onclick="gotoAnime('${esc(id)}')">
-            ${a.poster
-              ? `<img src="${esc(a.poster)}" alt="${esc(a.title)}" loading="lazy"
-                  onerror="this.style.display='none'">`
-              : `<div style="width:38px;height:54px;background:var(--bg-surface);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;">⚡</div>`}
-            <div class="asi-info" style="flex:1;min-width:0;">
-              <p style="font-size:12px;font-weight:800;color:var(--text);
-                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                ${esc(a.title)}
-              </p>
-              <p style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap;">
-                ${a.score
-                  ? `<span style="color:#f5a623;font-size:10px;font-weight:700;">⭐ ${esc(a.score)}</span>`
-                  : ""}
-                ${status
-                  ? `<span style="font-size:10px;font-weight:700;color:${statusColor};">${esc(status)}</span>`
-                  : ""}
-              </p>
-              ${genres
-                ? `<p style="font-size:10px;color:var(--text-muted);margin-top:2px;
-                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${genres}</p>`
-                : ""}
+          <div class="search-result-item" onclick="gotoAnime('${esc(a.animeId||"")}')">
+            ${a.poster ? `<img src="${esc(a.poster)}" loading="lazy" onerror="this.style.display='none'">` :
+              `<div style="width:38px;height:54px;background:var(--bg3);border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center">⚡</div>`}
+            <div style="flex:1;min-width:0;">
+              <div class="sri-title">${esc(a.title)}</div>
+              <div class="sri-meta">
+                ${a.score ? `<span class="sri-score">⭐ ${esc(a.score)}</span>` : ""}
+                ${stBadge}
+              </div>
             </div>
           </div>`;
-      }).join("") +
-      /* Footer jumlah hasil */
-      `<div style="padding:8px 14px;text-align:center;font-size:11px;
-        color:var(--text-muted);border-top:1px solid var(--border);">
-        ${list.length > 8 ? `Menampilkan 8 dari ${list.length} hasil` : `${list.length} hasil ditemukan`}
+      }).join('') +
+      `<div style="padding:8px 14px;text-align:center;font-size:10px;color:var(--text3);border-top:1px solid var(--border);font-family:var(--mono)">
+        ${list.length > 8 ? `8 / ${list.length} hasil` : `${list.length} hasil`}
       </div>`;
-
     } catch(e) {
-      console.error("[Search]", e);
-      result.innerHTML = `
-        <div style="padding:14px;text-align:center;color:var(--text-muted);font-size:13px;">
-          <div style="font-size:24px;margin-bottom:6px;">😕</div>
-          Gagal mencari. Coba lagi.
-        </div>`;
+      result.innerHTML = `<div style="padding:16px;text-align:center;font-size:13px;color:var(--text3);">Gagal mencari. Coba lagi.</div>`;
     }
-  }, 400);
+  }, 380);
 };
 
-/* ── Clear search ── */
-window.clearAnimeSearch = function() {
-  const inp     = document.getElementById("animeSearchInput");
-  const res     = document.getElementById("animeSearchResult");
-  const clrBtn  = document.getElementById("animeSearchClear");
+window.clearSearch = function() {
+  const inp    = document.getElementById("animeSearchInput");
+  const res    = document.getElementById("animeSearchResult");
+  const clrBtn = document.getElementById("animeSearchClear");
   if (inp)    { inp.value = ""; inp.classList.remove("has-results"); inp.focus(); }
-  if (res)    { res.style.display = "none"; }
-  if (clrBtn) { clrBtn.classList.remove("visible"); }
+  if (res)    res.style.display = "none";
+  if (clrBtn) clrBtn.classList.remove("visible");
   lastQuery = "";
 };
 
-/* Tutup search result kalau klik di luar / tekan Escape */
 document.addEventListener("click", e => {
-  const wrap = document.querySelector(".anime-search-wrap");
-  const res  = document.getElementById("animeSearchResult");
-  const inp  = document.getElementById("animeSearchInput");
-  /* Klik di luar seluruh search-wrap → tutup */
+  const wrap  = document.querySelector(".pk-search-wrap");
+  const res   = document.getElementById("animeSearchResult");
+  const inp   = document.getElementById("animeSearchInput");
   if (res && wrap && !wrap.contains(e.target)) {
     res.style.display = "none";
-    if (inp) inp.classList.remove("has-results");
+    inp?.classList.remove("has-results");
   }
+  const m = document.getElementById("menuDropdown");
+  const b = document.querySelector('[onclick="toggleMenu()"]');
+  if (m && m.style.display === "block" && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
 });
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape") {
-    const inp    = document.getElementById("animeSearchInput");
-    const res    = document.getElementById("animeSearchResult");
-    const clrBtn = document.getElementById("animeSearchClear");
-    if (inp) { inp.value = ""; inp.blur(); inp.classList.remove("has-results"); }
-    if (clrBtn) clrBtn.classList.remove("visible");
-    if (res) res.style.display = "none";
-    lastQuery = "";
-  }
+  if (e.key === "Escape") window.clearSearch();
 });
 
 window.toggleDarkMode = () => {
@@ -939,15 +1027,15 @@ window.toggleMenu = () => {
   const m = document.getElementById("menuDropdown");
   if (m) m.style.display = m.style.display === "block" ? "none" : "block";
 };
-document.addEventListener("click", e => {
-  const m = document.getElementById("menuDropdown");
-  const b = document.querySelector('button[onclick="toggleMenu()"]');
-  if (m && m.style.display === "block" && !m.contains(e.target) && !b?.contains(e.target)) {
-    m.style.display = "none";
-  }
-});
-
 </script>
-  <script type="module" src="/tracker.js"></script>
+
+<style>
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+</style>
+
+<script type="module" src="/tracker.js"></script>
 </body>
 </html>
