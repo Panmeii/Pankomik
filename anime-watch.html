@@ -5,136 +5,199 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nonton Anime — Pankomik</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --anime-accent: #6c63ff;
-      --anime-accent2: #a78bfa;
-      --anime-glow: rgba(108,99,255,0.3);
-      --anime-surface: rgba(108,99,255,0.08);
+      --pk:#e63946;--pk2:#ff6b6b;--pk-glow:rgba(230,57,70,0.35);--pk-dim:rgba(230,57,70,0.1);
+      --gold:#f5a623;--bg:#060608;--bg2:#0d0d12;--bg3:#13131a;--card:#0f0f16;
+      --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+      --text:#f0f0f5;--text2:#9090a8;--text3:#5a5a72;
+      --font:'Outfit',sans-serif;--mono:'Space Mono',monospace;
     }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;}
+    ::-webkit-scrollbar{width:3px;}
+    ::-webkit-scrollbar-thumb{background:var(--pk);border-radius:99px;}
 
-    body { background: #08080f; }
-    body.light { background: #0e0e16; }
+    .watch-header{
+      display:flex;align-items:center;gap:10px;
+      padding:0 12px;height:50px;
+      background:rgba(6,6,8,0.95);
+      backdrop-filter:blur(24px);
+      border-bottom:1px solid var(--border);
+      position:sticky;top:0;z-index:200;
+    }
+    .watch-back{
+      width:34px;height:34px;
+      background:rgba(255,255,255,0.04);
+      border:1px solid var(--border2);border-radius:10px;
+      color:var(--text2);font-size:16px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+    }
+    .watch-back:hover{background:rgba(255,255,255,0.09);color:var(--text);}
+    .watch-title{
+      flex:1;font-size:12px;font-weight:800;
+      color:var(--text2);white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);
+    }
+    .watch-share{
+      width:34px;height:34px;background:transparent;border:none;
+      color:var(--text3);font-size:16px;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;transition:all 0.15s;border-radius:9px;
+    }
+    .watch-share:hover{color:var(--text);background:rgba(255,255,255,0.05);}
 
-    .player-wrap { position:relative; width:100%; background:#000; overflow:hidden; }
-    .player-ratio { position:relative; width:100%; padding-bottom:56.25%; }
-    #playerFrame { position:absolute; inset:0; width:100%; height:100%; border:none; }
-    .player-loading {
-      position:absolute; inset:0;
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      background:#050508; gap:14px;
-      z-index:5; transition:opacity 0.3s;
-    }
-    .player-loading.hidden { opacity:0; pointer-events:none; }
-    .player-spin {
-      width:48px; height:48px;
-      border:4px solid rgba(108,99,255,0.15);
-      border-top-color:var(--anime-accent);
-      border-radius:50%; animation:spin 0.7s linear infinite;
-    }
-    .player-loading p { font-size:13px; color:rgba(108,99,255,0.6); font-weight:700; }
-    @keyframes spin { to { transform:rotate(360deg); } }
+    .player-wrap{position:relative;width:100%;background:#000;}
+    .player-ratio{position:relative;width:100%;padding-bottom:56.25%;}
+    #playerFrame{position:absolute;inset:0;width:100%;height:100%;border:none;}
 
-    .watch-header {
-      display:flex; align-items:center;
-      padding:10px 14px; gap:10px;
-      background:rgba(8,8,15,0.95);
-      border-bottom:1px solid rgba(108,99,255,0.1);
-      position:sticky; top:0; z-index:100;
+    .player-loading{
+      position:absolute;inset:0;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      background:#000;gap:16px;z-index:5;transition:opacity 0.35s;
     }
-    .watch-back {
-      width:32px; height:32px;
-      background:rgba(108,99,255,0.12);
-      border:1px solid rgba(108,99,255,0.2);
-      border-radius:8px; color:var(--anime-accent2);
-      font-size:18px; cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      flex-shrink:0; transition:background 0.2s;
+    .player-loading.hidden{opacity:0;pointer-events:none;}
+    .player-spin-wrap{position:relative;width:54px;height:54px;}
+    .player-spin-outer{
+      position:absolute;inset:0;
+      border:2px solid rgba(230,57,70,0.12);
+      border-top-color:var(--pk);border-radius:50%;
+      animation:spin 0.9s linear infinite;
     }
-    .watch-back:hover { background:rgba(108,99,255,0.25); }
-    .watch-title {
-      flex:1; min-width:0;
-      font-size:13px; font-weight:800;
-      color:#eaeaf0;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    .player-spin-inner{
+      position:absolute;inset:9px;
+      border:2px solid rgba(230,57,70,0.06);
+      border-bottom-color:rgba(230,57,70,0.45);border-radius:50%;
+      animation:spin 0.6s linear infinite reverse;
     }
-    .watch-share { width:32px; height:32px; background:transparent; border:none; color:var(--text-muted); font-size:16px; cursor:pointer; flex-shrink:0; }
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .player-loading-text{font-size:10px;font-weight:700;color:rgba(230,57,70,0.45);text-transform:uppercase;letter-spacing:2.5px;font-family:var(--mono);}
 
-    .ep-info-bar { padding:10px 14px; background:rgba(108,99,255,0.05); border-bottom:1px solid rgba(108,99,255,0.1); }
-    .ep-info-bar h2 { font-size:14px; font-weight:800; color:#eaeaf0; margin-bottom:4px; }
-    .ep-info-bar p { font-size:11px; color:#666; }
-
-    .ep-nav { display:flex; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(108,99,255,0.08); }
-    .ep-nav-btn {
-      flex:1; padding:9px 0;
-      background:rgba(108,99,255,0.08);
-      border:1px solid rgba(108,99,255,0.15);
-      border-radius:9px; color:var(--anime-accent2);
-      font-family:'Nunito',sans-serif; font-size:13px; font-weight:800;
-      cursor:pointer; transition:all 0.2s;
-      display:flex; align-items:center; justify-content:center; gap:5px;
+    .player-error{
+      position:absolute;inset:0;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      background:#000;gap:12px;color:var(--text3);text-align:center;padding:20px;
     }
-    .ep-nav-btn:hover { background:var(--anime-accent); border-color:var(--anime-accent); color:#fff; }
-    .ep-nav-btn:disabled { opacity:0.3; cursor:not-allowed; pointer-events:none; }
+    .player-error .err-icon{font-size:44px;}
+    .err-msg{font-size:13px;color:var(--text2);}
+    .err-id{font-size:10px;color:var(--text3);font-family:var(--mono);}
+    .err-det{font-size:10px;color:var(--text3);max-width:280px;word-break:break-all;}
+    .btn-retry{padding:10px 22px;background:var(--pk);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:13px;font-family:var(--font);cursor:pointer;box-shadow:0 4px 16px var(--pk-glow);}
 
-    .server-section { padding:12px 14px 8px; }
-    .server-section-title { font-size:11px; font-weight:800; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
-    .quality-group { margin-bottom:10px; }
-    .quality-label { font-size:10px; font-weight:800; color:var(--anime-accent2); margin-bottom:6px; display:flex; align-items:center; gap:6px; }
-    .quality-label::after { content:''; flex:1; height:1px; background:rgba(108,99,255,0.15); }
-    .server-chips { display:flex; flex-wrap:wrap; gap:6px; }
-    .server-chip {
+    .ep-info-bar{padding:12px 14px;background:var(--bg2);border-bottom:1px solid var(--border);}
+    .ep-info-title{font-size:14px;font-weight:800;color:var(--text);margin-bottom:3px;line-height:1.35;}
+    .ep-info-meta{font-size:11px;color:var(--text3);font-family:var(--mono);}
+
+    .ep-nav{display:flex;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);}
+    .ep-nav-btn{
+      flex:1;height:38px;
+      background:var(--bg3);border:1.5px solid var(--border2);
+      border-radius:10px;color:var(--text2);
+      font-family:var(--font);font-size:12px;font-weight:800;
+      cursor:pointer;transition:all 0.18s;
+      display:flex;align-items:center;justify-content:center;gap:5px;
+      -webkit-tap-highlight-color:transparent;
+    }
+    .ep-nav-btn:hover{background:var(--pk-dim);border-color:rgba(230,57,70,0.4);color:var(--pk2);}
+    .ep-nav-btn:active{transform:scale(0.96);}
+    .ep-nav-btn:disabled{opacity:0.25;cursor:not-allowed;pointer-events:none;}
+
+    .server-section{padding:14px 14px 10px;}
+    .section-label{
+      font-size:10px;font-weight:700;color:var(--text3);
+      text-transform:uppercase;letter-spacing:2px;font-family:var(--mono);
+      margin-bottom:10px;display:flex;align-items:center;gap:8px;
+    }
+    .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
+    .quality-group{margin-bottom:12px;}
+    .quality-label{
+      font-size:10px;font-weight:700;color:var(--pk2);
+      margin-bottom:7px;font-family:var(--mono);
+      display:flex;align-items:center;gap:6px;
+    }
+    .quality-label::after{content:'';flex:1;height:1px;background:rgba(230,57,70,0.1);}
+    .server-chips{display:flex;flex-wrap:wrap;gap:6px;}
+    .server-chip{
+      padding:6px 13px;
+      background:var(--bg3);border:1.5px solid var(--border2);
+      border-radius:8px;color:var(--text2);
+      font-family:var(--font);font-size:11px;font-weight:700;
+      cursor:pointer;transition:all 0.15s;-webkit-tap-highlight-color:transparent;
+    }
+    .server-chip:hover{border-color:rgba(230,57,70,0.4);color:var(--pk2);background:var(--pk-dim);}
+    .server-chip.active{background:var(--pk);border-color:var(--pk);color:#fff;box-shadow:0 4px 14px var(--pk-glow);}
+    .server-chip.loading{opacity:0.5;pointer-events:none;}
+    .quality-empty{font-size:11px;color:var(--text3);padding:3px 0;font-style:italic;}
+
+    .download-section{padding:10px 14px 14px;border-top:1px solid var(--border);}
+    .dl-quality-group{margin-bottom:10px;}
+    .dl-quality-label{font-size:10px;font-weight:700;color:#4ade80;margin-bottom:6px;font-family:var(--mono);}
+    .dl-links{display:flex;flex-wrap:wrap;gap:5px;}
+    .dl-link{
       padding:6px 12px;
-      background:rgba(108,99,255,0.08);
-      border:1px solid rgba(108,99,255,0.15);
-      border-radius:7px; color:var(--anime-accent2);
-      font-family:'Nunito',sans-serif; font-size:11px; font-weight:800;
-      cursor:pointer; transition:all 0.18s;
+      background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);
+      border-radius:8px;color:#4ade80;font-size:11px;font-weight:700;
+      text-decoration:none;cursor:pointer;transition:all 0.15s;display:inline-block;
     }
-    .server-chip:hover { background:rgba(108,99,255,0.2); border-color:var(--anime-accent); }
-    .server-chip.active { background:var(--anime-accent); border-color:var(--anime-accent); color:#fff; box-shadow:0 3px 10px var(--anime-glow); }
-    .server-chip.loading { opacity:0.6; pointer-events:none; }
-    .quality-empty { font-size:11px; color:#444; padding:4px 0; font-style:italic; }
+    .dl-link:hover{background:#4ade80;color:#000;}
 
-    .download-section { padding:8px 14px 12px; border-top:1px solid rgba(108,99,255,0.08); }
-    .download-title { font-size:11px; font-weight:800; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
-    .dl-quality-group { margin-bottom:8px; }
-    .dl-quality-label { font-size:10px; font-weight:800; color:#27ae60; margin-bottom:5px; }
-    .dl-links { display:flex; flex-wrap:wrap; gap:5px; }
-    .dl-link { padding:5px 10px; background:rgba(39,174,96,0.1); border:1px solid rgba(39,174,96,0.2); border-radius:6px; color:#27ae60; font-size:11px; font-weight:700; cursor:pointer; text-decoration:none; transition:all 0.18s; }
-    .dl-link:hover { background:#27ae60; color:#fff; }
+    .ep-list-wrap{padding:10px 14px 14px;border-top:1px solid var(--border);}
+    .ep-list-scroll{
+      display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;
+      scrollbar-width:thin;scrollbar-color:var(--pk) transparent;
+    }
+    .ep-chip{
+      flex-shrink:0;padding:6px 13px;
+      background:var(--bg3);border:1.5px solid var(--border2);
+      border-radius:8px;cursor:pointer;font-size:11px;font-weight:700;
+      color:var(--text2);transition:all 0.15s;font-family:var(--mono);
+      -webkit-tap-highlight-color:transparent;
+    }
+    .ep-chip:hover{border-color:rgba(230,57,70,0.4);color:var(--pk2);}
+    .ep-chip.current{background:var(--pk);border-color:var(--pk);color:#fff;box-shadow:0 3px 10px var(--pk-glow);}
 
-    .ep-list-wrap { padding:8px 14px 14px; border-top:1px solid rgba(108,99,255,0.08); }
-    .ep-list-title { font-size:11px; font-weight:800; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; }
-    .ep-list-scroll { display:flex; gap:6px; overflow-x:auto; padding-bottom:4px; scrollbar-width:none; }
-    .ep-list-scroll::-webkit-scrollbar { display:none; }
-    .ep-chip { flex-shrink:0; padding:6px 12px; background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.15); border-radius:7px; cursor:pointer; font-size:11px; font-weight:800; color:var(--anime-accent2); transition:all 0.18s; }
-    .ep-chip:hover { background:rgba(108,99,255,0.2); }
-    .ep-chip.current { background:var(--anime-accent); border-color:var(--anime-accent); color:#fff; }
+    .anime-info-bar{
+      display:flex;align-items:center;gap:12px;padding:12px 14px;
+      background:var(--bg2);border-top:1px solid var(--border);
+      cursor:pointer;transition:background 0.2s;-webkit-tap-highlight-color:transparent;
+    }
+    .anime-info-bar:hover{background:var(--bg3);}
+    .anime-info-icon{
+      width:36px;height:36px;
+      background:var(--pk-dim);border:1px solid rgba(230,57,70,0.25);
+      border-radius:10px;display:flex;align-items:center;justify-content:center;
+      font-size:16px;flex-shrink:0;
+    }
+    .anime-info-text{flex:1;min-width:0;}
+    .anime-info-back-title{font-size:12px;font-weight:800;color:var(--text);}
+    .anime-info-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+    .anime-info-arrow{color:var(--text3);font-size:14px;}
 
-    .anime-info-bar { padding:10px 14px; background:rgba(108,99,255,0.04); border-top:1px solid rgba(108,99,255,0.08); display:flex; align-items:center; gap:10px; cursor:pointer; transition:background 0.2s; }
-    .anime-info-bar:hover { background:rgba(108,99,255,0.1); }
-    .anime-info-back-title { font-size:12px; font-weight:800; color:var(--anime-accent2); flex:1; }
-    .anime-info-sub { font-size:10px; color:#555; }
+    .ep-genre-wrap{display:flex;flex-wrap:wrap;gap:5px;padding:10px 14px;}
+    .ep-genre-chip{
+      padding:3px 10px;
+      background:var(--bg3);border:1px solid var(--border2);
+      border-radius:999px;font-size:10px;font-weight:700;
+      color:var(--text2);cursor:pointer;transition:all 0.15s;
+    }
+    .ep-genre-chip:hover{border-color:rgba(230,57,70,0.4);color:var(--pk2);background:var(--pk-dim);}
 
-    .player-error { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#050508; gap:12px; color:#666; text-align:center; padding:20px; }
-    .player-error .err-icon { font-size:40px; }
-    .player-error p { font-size:13px; }
-    .btn-retry { padding:9px 20px; background:var(--anime-accent); color:#fff; border:none; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer; font-family:'Nunito',sans-serif; }
-    .err-msg { font-size:13px; color:#aaa; }
-    .err-id  { font-size:11px; color:#666; margin-top:4px; }
-    .err-det { font-size:10px; color:#555; margin-top:2px; max-width:280px; word-break:break-all; }
-
-    .ep-genre-wrap { display:flex; flex-wrap:wrap; gap:5px; padding:0 14px 10px; }
-    .ep-genre-chip { padding:3px 8px; background:rgba(108,99,255,0.08); border:1px solid rgba(108,99,255,0.15); border-radius:99px; font-size:10px; font-weight:700; color:var(--anime-accent2); cursor:pointer; transition:all 0.18s; }
-    .ep-genre-chip:hover { background:var(--anime-accent); color:#fff; }
+    #menuDropdown{
+      display:none;position:fixed;right:10px;top:58px;z-index:600;
+      background:rgba(13,13,18,0.98);backdrop-filter:blur(20px);
+      border:1px solid var(--border2);border-radius:14px;overflow:hidden;
+      min-width:166px;box-shadow:0 20px 60px rgba(0,0,0,0.7);
+    }
   </style>
 </head>
 <body>
 
 <div class="watch-header">
-  <div class="watch-back" onclick="history.back()">←</div>
+  <button class="watch-back" onclick="history.back()">←</button>
   <div class="watch-title" id="watchTitle">Memuat...</div>
   <button class="watch-share" onclick="shareEp()">🔗</button>
 </div>
@@ -142,16 +205,19 @@
 <div class="player-wrap">
   <div class="player-ratio">
     <div class="player-loading" id="playerLoading">
-      <div class="player-spin"></div>
-      <p>Memuat stream...</p>
+      <div class="player-spin-wrap">
+        <div class="player-spin-outer"></div>
+        <div class="player-spin-inner"></div>
+      </div>
+      <div class="player-loading-text">Memuat Stream</div>
     </div>
     <iframe id="playerFrame" allowfullscreen allow="autoplay; fullscreen" scrolling="no" frameborder="0"></iframe>
   </div>
 </div>
 
 <div class="ep-info-bar">
-  <h2 id="epTitle">Memuat...</h2>
-  <p id="epMeta">—</p>
+  <div class="ep-info-title" id="epTitle">Memuat...</div>
+  <div class="ep-info-meta" id="epMeta">—</div>
 </div>
 
 <div class="ep-nav">
@@ -160,32 +226,32 @@
 </div>
 
 <div class="server-section" id="serverSection">
-  <div class="server-section-title">🖥 Pilih Server</div>
-  <div id="serverList"><div style="color:#555;font-size:13px;text-align:center;padding:10px;">Memuat server...</div></div>
+  <div class="section-label">Pilih Server</div>
+  <div id="serverList"><div style="color:var(--text3);font-size:13px;text-align:center;padding:14px;">Memuat server...</div></div>
 </div>
 
 <div class="ep-genre-wrap" id="epGenreWrap" style="display:none"></div>
 
 <div class="anime-info-bar" id="animeInfoBar" style="display:none" onclick="goToAnimeDetail()">
-  <span style="font-size:20px;">⚡</span>
-  <div>
+  <div class="anime-info-icon">⚡</div>
+  <div class="anime-info-text">
     <div class="anime-info-back-title" id="animeInfoTitle">Lihat Detail Anime</div>
     <div class="anime-info-sub">Tap untuk ke halaman detail</div>
   </div>
-  <span style="color:#555;font-size:14px;">→</span>
+  <span class="anime-info-arrow">→</span>
 </div>
 
 <div class="ep-list-wrap" id="epListWrap" style="display:none">
-  <div class="ep-list-title">📺 Episode Lainnya</div>
+  <div class="section-label" style="margin-bottom:8px;">Episode Lainnya</div>
   <div class="ep-list-scroll" id="epListScroll"></div>
 </div>
 
 <div class="download-section" id="downloadSection" style="display:none">
-  <div class="download-title">⬇ Unduh Episode</div>
+  <div class="section-label" style="margin-bottom:10px;">Unduh Episode</div>
   <div id="downloadLinks"></div>
 </div>
 
-<div id="menuDropdown" class="dropdown" style="display:none;position:fixed;right:10px;top:58px;z-index:2000;background:rgba(20,20,28,0.96);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.10);border-radius:12px;overflow:hidden;min-width:160px;box-shadow:0 8px 32px rgba(0,0,0,0.5);"></div>
+<div id="menuDropdown"></div>
 
 <script type="module">
   import { initAuthHeader } from "/auth-header.js";
@@ -200,57 +266,46 @@ window._animeWatchURL = animeWatchURL;
 window._animeURL      = animeURL;
 window._animeGenreURL = animeGenreURL;
 
-// ===== SAFELINKU CONFIG =====
 const SAFELINKU_TOKEN = "ebe6859e5ffd04c913428f06f43cc1b54bf39836";
-
 function toSafelinku(url) {
   if (!url) return "#";
-  // Handle mega.nz — ganti # dengan %23 sesuai instruksi Safelinku
-  let cleanUrl = url.includes("mega.nz")
-    ? url.replace(/#/g, "%23")
-    : url;
+  let cleanUrl = url.includes("mega.nz") ? url.replace(/#/g, "%23") : url;
   return `https://sfl.gl/st/?api=${SAFELINKU_TOKEN}&url=${encodeURIComponent(cleanUrl)}`;
 }
-// ============================
 
 let currentUser = null;
 getCurrentUser().then(u => { currentUser = u; }).catch(() => {});
-
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-let episodeData    = null;
-let currentAnimeId = null;
+let episodeData = null, currentAnimeId = null;
 
 async function loadEpisode() {
   const epId = getAnimeEpisodeId();
   if (!epId) { window.location.href = "/anime/"; return; }
-
-  document.getElementById("epTitle").textContent   = "Memuat...";
-  document.getElementById("epMeta").textContent    = "";
+  document.getElementById("epTitle").textContent    = "Memuat...";
+  document.getElementById("epMeta").textContent     = "";
   document.getElementById("watchTitle").textContent = "Memuat...";
-  document.getElementById("serverList").innerHTML  = '<div style="color:#555;font-size:13px;text-align:center;padding:10px;">Memuat server...</div>';
-  document.getElementById("prevEpBtn").disabled    = true;
-  document.getElementById("nextEpBtn").disabled    = true;
-  document.getElementById("animeInfoBar").style.display   = "none";
-  document.getElementById("epListWrap").style.display     = "none";
+  document.getElementById("serverList").innerHTML   = `<div style="color:var(--text3);font-size:13px;text-align:center;padding:14px;">Memuat server...</div>`;
+  document.getElementById("prevEpBtn").disabled     = true;
+  document.getElementById("nextEpBtn").disabled     = true;
+  document.getElementById("animeInfoBar").style.display    = "none";
+  document.getElementById("epListWrap").style.display      = "none";
   document.getElementById("downloadSection").style.display = "none";
-  document.getElementById("epGenreWrap").style.display    = "none";
+  document.getElementById("epGenreWrap").style.display     = "none";
 
   try {
     const res  = await fetch(`${API}/anime/episode/${epId}`);
     const json = await res.json();
-    if (!json.ok || !json.data) throw new Error(json.message || "Data episode tidak ditemukan: " + epId);
-
+    if (!json.ok || !json.data) throw new Error(json.message || "Data tidak ditemukan: " + epId);
     episodeData = json.data;
-    const d     = episodeData;
+    const d = episodeData;
     const rawTitle   = d.title || "";
-    const shortTitle = rawTitle.replace(/\s*subtitle\s*indonesia/i,"").trim();
+    const shortTitle = rawTitle.replace(/\s*subtitle\s*indonesia/i, "").trim();
 
     document.title = `${shortTitle || epId} — Pankomik`;
     document.getElementById("watchTitle").textContent = shortTitle || epId;
     document.getElementById("epTitle").textContent   = rawTitle || shortTitle;
     document.getElementById("epMeta").textContent    = d.releaseTime ? `📅 ${d.releaseTime}` : "";
-
     document.getElementById("prevEpBtn").disabled = !(d.hasPrevEpisode && d.prevEpisode?.episodeId);
     document.getElementById("nextEpBtn").disabled = !(d.hasNextEpisode && d.nextEpisode?.episodeId);
 
@@ -265,30 +320,20 @@ async function loadEpisode() {
       const ordered = [...(d.server?.qualities||[])].sort((a,b)=>{ const o={"720p":0,"480p":1,"360p":2}; return (o[a.title]??9)-(o[b.title]??9); });
       const firstServer = ordered.find(q=>q.serverList?.length)?.serverList?.[0];
       if (firstServer) { await selectServer(firstServer.serverId); }
-      else { showPlayerError("Tidak ada server streaming tersedia untuk episode ini."); }
+      else { showPlayerError("Tidak ada server streaming tersedia."); }
     }
 
     currentAnimeId = d.animeId || null;
     if (currentAnimeId) {
-      const bar = document.getElementById("animeInfoBar");
-      document.getElementById("animeInfoTitle").textContent = `Detail Anime: ${currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim()}`;
-      bar.style.display = "flex";
-
+      document.getElementById("animeInfoTitle").textContent = `Detail: ${currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim()}`;
+      document.getElementById("animeInfoBar").style.display = "flex";
       const saveUser = currentUser || await getCurrentUser().catch(() => null);
       if (saveUser) {
         currentUser = saveUser;
         const epNum  = d.eps || (rawTitle.match(/episode\s*(\d+)/i)?.[1] || "");
         const aTitle = d.info?.title || currentAnimeId.replace(/-/g," ").replace(/\b./g,c=>c.toUpperCase()).replace(/sub indo/i,"").trim();
         const aCover = d.info?.poster || d.poster || "";
-        saveAnimeHistory(saveUser.id, {
-          id:    currentAnimeId,
-          title: aTitle,
-          cover: aCover
-        }, {
-          id:     epId,
-          title:  rawTitle || shortTitle,
-          number: epNum
-        }).catch(e => console.warn("[AnimeWatch] saveAnimeHistory error:", e));
+        saveAnimeHistory(saveUser.id, { id:currentAnimeId, title:aTitle, cover:aCover }, { id:epId, title:rawTitle||shortTitle, number:epNum }).catch(e => console.warn("[AnimeWatch]", e));
       }
     }
 
@@ -296,38 +341,31 @@ async function loadEpisode() {
     if (genreList.length) {
       const wrap = document.getElementById("epGenreWrap");
       wrap.style.display = "flex";
-      wrap.innerHTML = genreList.map(g=>`<span class="ep-genre-chip" onclick="window.location.href=window._animeGenreURL('${esc(g.genreId)}')">${esc(g.title)}</span>`).join("");
+      wrap.innerHTML = genreList.map(g=>`<span class="ep-genre-chip" onclick="location.href=window._animeGenreURL('${esc(g.genreId)}')">${esc(g.title)}</span>`).join("");
     }
-
     renderEpList(d.info?.episodeList || [], epId);
     renderDownloads(d.downloadUrl?.qualities || []);
-
   } catch(e) {
-    console.error("[Watch] loadEpisode error:", e);
-    showPlayerError("Gagal memuat episode.", epId, String(e.message||e));
+    console.error("[Watch]", e);
+    showPlayerError("Gagal memuat episode.", epId, String(e.message || e));
     document.getElementById("epTitle").textContent = "Episode tidak ditemukan";
-    document.getElementById("serverList").innerHTML = `<div style="text-align:center;padding:16px;color:#555;font-size:12px;">Gagal memuat data untuk:<br><strong style="color:#a78bfa;">${esc(epId)}</strong></div>`;
+    document.getElementById("serverList").innerHTML = `<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">Gagal memuat:<br><strong style="color:var(--pk2);">${esc(epId)}</strong></div>`;
   }
 }
 
 function renderServers(qualities) {
   const el = document.getElementById("serverList");
-  const hasServers = qualities.some(q=>q.serverList?.length);
-  if (!hasServers) { el.innerHTML = '<div style="color:#555;font-size:13px;text-align:center;padding:10px;">Tidak ada server tersedia</div>'; return; }
+  const hasServers = qualities.some(q => q.serverList?.length);
+  if (!hasServers) { el.innerHTML = `<div style="color:var(--text3);font-size:13px;text-align:center;padding:12px;">Tidak ada server tersedia</div>`; return; }
   el.innerHTML = qualities.map(q => {
-    if (!q.serverList?.length) return `<div class="quality-group"><div class="quality-label">${esc(q.title)}</div><div class="quality-empty">Tidak ada server untuk kualitas ini</div></div>`;
-    return `<div class="quality-group">
-      <div class="quality-label">${esc(q.title)}</div>
-      <div class="server-chips">
-        ${q.serverList.map(s=>`<div class="server-chip" data-sid="${esc(s.serverId)}" onclick="selectServer('${esc(s.serverId)}',this)">${esc(s.title.trim())}</div>`).join("")}
-      </div>
-    </div>`;
+    if (!q.serverList?.length) return `<div class="quality-group"><div class="quality-label">${esc(q.title)}</div><div class="quality-empty">Tidak ada server</div></div>`;
+    return `<div class="quality-group"><div class="quality-label">${esc(q.title)}</div><div class="server-chips">${q.serverList.map(s=>`<div class="server-chip" data-sid="${esc(s.serverId)}" onclick="selectServer('${esc(s.serverId)}',this)">${esc(s.title.trim())}</div>`).join("")}</div></div>`;
   }).join("");
 }
 
 window.selectServer = async function(serverId, chipEl) {
   if (!serverId) return;
-  document.querySelectorAll(".server-chip").forEach(c=>c.classList.remove("active","loading"));
+  document.querySelectorAll(".server-chip").forEach(c => c.classList.remove("active","loading"));
   const chip = chipEl || document.querySelector(`[data-sid="${serverId}"]`);
   if (chip) chip.classList.add("active","loading");
   document.getElementById("playerLoading").classList.remove("hidden");
@@ -337,16 +375,10 @@ window.selectServer = async function(serverId, chipEl) {
     if (!json.ok) throw new Error(json.message || "Server error");
     const url = json.data?.url || json.data?.embedUrl || json.data?.embed_url || json.data?.streamUrl;
     if (url) { loadStream(url); } else { throw new Error("URL stream tidak ditemukan"); }
-  } catch(e) {
-    console.error("[Watch] selectServer error:", e);
-    showPlayerError("Gagal memuat server ini. Coba server lain.");
-  } finally {
-    const c = document.querySelector(`[data-sid="${serverId}"]`);
-    if (c) c.classList.remove("loading");
-  }
+  } catch(e) { showPlayerError("Gagal memuat server ini. Coba server lain."); }
+  finally { const c = document.querySelector(`[data-sid="${serverId}"]`); if (c) c.classList.remove("loading"); }
 };
 
-// ===== RENDER DOWNLOADS DENGAN SAFELINKU =====
 function renderDownloads(qualities) {
   const section = document.getElementById("downloadSection");
   const el      = document.getElementById("downloadLinks");
@@ -356,26 +388,17 @@ function renderDownloads(qualities) {
   el.innerHTML = qualities.filter(q => q.urls?.length).map(q => `
     <div class="dl-quality-group">
       <div class="dl-quality-label">${esc(q.title)}${q.size ? ` · ${esc(q.size)}` : ""}</div>
-      <div class="dl-links">
-        ${q.urls.map(u => `
-          <a class="dl-link"
-             href="${esc(toSafelinku(u.url))}"
-             target="_blank"
-             rel="noopener">
-            ${esc(u.title)}
-          </a>`).join("")}
-      </div>
+      <div class="dl-links">${q.urls.map(u=>`<a class="dl-link" href="${esc(toSafelinku(u.url))}" target="_blank" rel="noopener">${esc(u.title)}</a>`).join("")}</div>
     </div>`).join("");
 }
-// =============================================
 
 function renderEpList(epList, currentId) {
   const wrap   = document.getElementById("epListWrap");
   const scroll = document.getElementById("epListScroll");
-  if (!epList.length) { wrap.style.display="none"; return; }
+  if (!epList.length) { wrap.style.display = "none"; return; }
   wrap.style.display = "block";
   scroll.innerHTML = epList.map(ep=>`<div class="ep-chip ${ep.episodeId===currentId?"current":""}" onclick="navigateEpisode('${esc(ep.episodeId)}')">${esc(ep.title||`Ep ${ep.eps}`)}</div>`).join("");
-  setTimeout(()=>{ const a=scroll.querySelector(".current"); if(a) a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"}); },300);
+  setTimeout(() => { const a=scroll.querySelector(".current"); if(a) a.scrollIntoView({block:"nearest",inline:"center",behavior:"smooth"}); }, 300);
 }
 
 function loadStream(url) {
@@ -385,7 +408,7 @@ function loadStream(url) {
   if (errEl) errEl.remove();
   loading.classList.remove("hidden");
   frame.src = url;
-  frame.onload  = () => { setTimeout(()=>loading.classList.add("hidden"),600); };
+  frame.onload  = () => { setTimeout(() => loading.classList.add("hidden"), 700); };
   frame.onerror = () => { showPlayerError("Gagal memuat stream."); };
 }
 
@@ -406,34 +429,44 @@ function navigateEpisode(episodeId) {
   if (window.trackNow) window.trackNow();
   const frame   = document.getElementById("playerFrame");
   const loading = document.getElementById("playerLoading");
-  frame.src = "";
-  loading.classList.remove("hidden");
+  frame.src = ""; loading.classList.remove("hidden");
   const err = frame.parentElement.querySelector(".player-error");
   if (err) err.remove();
-  episodeData = null;
-  loadEpisode();
+  episodeData = null; loadEpisode();
   window.scrollTo({ top:0, behavior:"smooth" });
 }
 window.navigateEpisode = navigateEpisode;
-
 window.goPrev = function() { const ep=episodeData?.prevEpisode?.episodeId; if(ep) navigateEpisode(ep); };
 window.goNext = function() { const ep=episodeData?.nextEpisode?.episodeId; if(ep) navigateEpisode(ep); };
 window.goToAnimeDetail = function() { if(currentAnimeId) window.location.href=window._animeURL(currentAnimeId); };
+
 window.shareEp = async function() {
   const title = document.getElementById("epTitle").textContent;
   const url   = window.location.href;
   if (navigator.share) { try { await navigator.share({title,url}); return; } catch {} }
   try { await navigator.clipboard.writeText(url); } catch {}
-  alert("Link disalin!");
+  showMiniToast("🔗 Link disalin!");
 };
 
-document.addEventListener("keydown",e=>{ if(e.key==="ArrowLeft") window.goPrev(); if(e.key==="ArrowRight") window.goNext(); });
+function showMiniToast(msg) {
+  let t = document.getElementById("_miniToast");
+  if (!t) {
+    t = document.createElement("div"); t.id = "_miniToast";
+    t.style.cssText = `position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(14px);background:rgba(10,10,16,0.97);backdrop-filter:blur(16px);color:#fff;padding:10px 22px;border-radius:999px;font-size:13px;font-weight:700;z-index:9999;white-space:nowrap;border:1px solid rgba(255,255,255,0.1);opacity:0;transition:all 0.25s ease;pointer-events:none;font-family:'Outfit',sans-serif;`;
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.style.opacity = "1"; t.style.transform = "translateX(-50%) translateY(0)";
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateX(-50%) translateY(14px)"; }, 2200);
+}
 
-window.addEventListener("load",()=>{ document.body.classList.remove("light"); loadEpisode(); });
-window.toggleDarkMode = ()=>{};
-window.toggleMenu = ()=>{ const m=document.getElementById("menuDropdown"); if(m) m.style.display=m.style.display==="block"?"none":"block"; };
-document.addEventListener("click",e=>{ const m=document.getElementById("menuDropdown"); const b=document.querySelector('.watch-share'); if(m&&m.style.display==="block"&&!m.contains(e.target)&&!b?.contains(e.target)) m.style.display="none"; });
+document.addEventListener("keydown", e => { if(e.key==="ArrowLeft") window.goPrev(); if(e.key==="ArrowRight") window.goNext(); });
+window.addEventListener("load", () => { document.body.classList.remove("light"); loadEpisode(); });
+window.toggleDarkMode = () => {};
+window.toggleMenu = () => { const m=document.getElementById("menuDropdown"); if(m) m.style.display=m.style.display==="block"?"none":"block"; };
+document.addEventListener("click", e => { const m=document.getElementById("menuDropdown"), b=document.querySelector('.watch-share'); if(m&&m.style.display==="block"&&!m.contains(e.target)&&!b?.contains(e.target)) m.style.display="none"; });
 </script>
-  <script type="module" src="/tracker.js"></script>
+<script type="module" src="/tracker.js"></script>
 </body>
 </html>
