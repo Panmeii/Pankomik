@@ -1066,7 +1066,7 @@ async function loadProfile() {
     <!-- Riwayat Novel -->
     <div class="tab-content" id="content-novel-history">
       <div style="display:flex;justify-content:flex-end;padding:8px 14px 0;">
-        <button onclick="window._novelHistoryAll=null;window._novelHistoryPage=1;window._novelHistoryFiltered=null;loadNovelHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
+        <button onclick="_novelHistoryLoaded=false;window._novelHistoryAll=null;window._novelHistoryPage=1;window._novelHistoryFiltered=null;loadNovelHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
       </div>
       <div id="novelHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
@@ -1074,7 +1074,7 @@ async function loadProfile() {
     <!-- Riwayat Anime -->
     <div class="tab-content" id="content-anime-history">
       <div style="display:flex;justify-content:flex-end;padding:8px 14px 0;">
-        <button onclick="window._animeHistoryAll=null;window._animeHistoryPage=1;loadAnimeHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
+        <button onclick="_animeHistoryLoaded=false;window._animeHistoryAll=null;window._animeHistoryPage=1;window._animeHistoryFiltered=null;loadAnimeHistory()" style="background:none;border:none;color:var(--acc);font-size:12px;font-weight:800;cursor:pointer;font-family:'Nunito',sans-serif;padding:4px 8px;">🔄 Refresh</button>
       </div>
       <div id="animeHistoryList"><div class="empty-state"><p>⏳</p><p>Memuat...</p></div></div>
     </div>
@@ -1529,6 +1529,8 @@ async function loadHistory() {
 
 /* ── PROGRESS ─────────────────────────────────────────── */
 let _progressLoaded = false;
+let _novelHistoryLoaded = false;
+let _animeHistoryLoaded = false;
 async function loadProgressTab() {
   if (_progressLoaded && document.getElementById("progressItems")) return;
   const el = document.getElementById("progressList");
@@ -1934,10 +1936,15 @@ window.hapusNovelBookmark = async function (slug, btn) {
   await loadNovelBookmarks();
 };
 
-/* ── NOVEL HISTORY ────────────────────────────────────── */
-/* ── RIWAYAT ANIME ────────────────────────────────────── */
+  /* ── RIWAYAT ANIME (FIXED) ──────────────────────────────────────── */
 async function loadAnimeHistory() {
-  if (window._animeHistoryAll && document.getElementById("animeHistoryItems")) return;
+  /* FIX: Gunakan flag _animeHistoryLoaded, bukan cek DOM element.
+     Guard lama (window._animeHistoryAll && getElementById) gagal karena
+     tab cuma di-hide via CSS — elemen DOM tetap ada sehingga guard
+     selalu true dan fungsi return tanpa render apa-apa. */
+  if (_animeHistoryLoaded) return;
+  _animeHistoryLoaded = true;
+
   const el = document.getElementById("animeHistoryList");
   el.innerHTML = `<div class="empty-state"><p>⏳</p><p>Memuat...</p></div>`;
 
@@ -1954,7 +1961,6 @@ async function loadAnimeHistory() {
     const wrap = document.createElement("div");
     wrap.className = "komik-list-item";
 
-    /* Cover — URL langsung dari sankavollerei */
     const coverWrap = document.createElement("div");
     coverWrap.style.cssText = "width:52px;height:70px;flex-shrink:0;border-radius:8px;overflow:hidden;background:rgba(108,99,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;border:1.5px solid rgba(108,99,255,0.25);";
     coverWrap.onclick = () => gotoAnimeDetail(h.anime_id);
@@ -1966,7 +1972,6 @@ async function loadAnimeHistory() {
     }
     wrap.appendChild(coverWrap);
 
-    /* Info */
     const info = document.createElement("div");
     info.className = "komik-list-info";
     info.style.cursor = "pointer";
@@ -1978,7 +1983,6 @@ async function loadAnimeHistory() {
       <p>🕒 ${new Date(h.watched_at).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"})}</p>`;
     wrap.appendChild(info);
 
-    /* Actions */
     const acts = document.createElement("div");
     acts.className = "komik-list-actions";
     acts.innerHTML = `
@@ -2029,9 +2033,15 @@ async function loadAnimeHistory() {
   el.appendChild(itemsWrap);
   window.renderAnimeHistoryPage();
 }
-
+/* ── RIWAYAT NOVEL (FIXED) ──────────────────────────────────────── */
 async function loadNovelHistory() {
-  if (window._novelHistoryAll && document.getElementById("novelHistoryItems")) return;
+  /* FIX: Gunakan flag _novelHistoryLoaded, bukan cek DOM element.
+     Guard lama (window._novelHistoryAll && getElementById) gagal karena
+     tab cuma di-hide via CSS — elemen DOM tetap ada sehingga guard
+     selalu true dan fungsi return tanpa render apa-apa. */
+  if (_novelHistoryLoaded) return;
+  _novelHistoryLoaded = true;
+
   const { history } = await getNovelHistory(currentUser.id);
   const el = document.getElementById("novelHistoryList");
   if (!history?.length) {
@@ -2039,6 +2049,7 @@ async function loadNovelHistory() {
     return;
   }
 
+  /* Dedup: 1 entry per novel_slug — ambil yang paling baru */
   const seen = new Map();
   for (const h of history) {
     if (!h.novel_slug) continue;
