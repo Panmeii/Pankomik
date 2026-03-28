@@ -96,7 +96,6 @@
       position: absolute; inset: 0;
       background: linear-gradient(180deg, transparent 30%, var(--ink) 100%);
     }
-    /* Gold light sweep */
     .hero-blur-bg::before {
       content: '';
       position: absolute; inset: 0;
@@ -228,7 +227,7 @@
     .kbtn:hover  { border-color: var(--gold); color: var(--gold-light); }
 
     /* ── LAST READ BAR ───────────────────────────────────── */
-    #lastReadBar { padding: 0 16px 8px; }
+    #lastReadBar { padding: 0 16px 8px; display: none; }
     .last-read-card {
       display: flex; align-items: center; gap: 10px;
       padding: 11px 14px;
@@ -370,11 +369,19 @@
     .chapter-item:last-child { border-bottom: none; }
     .chapter-item:hover { background: rgba(201,168,76,0.04); }
     .chapter-item:hover .ch-title { color: var(--gold-light); }
+
+    /* ── LAST READ HIGHLIGHT ─────────────────────────────── */
     .chapter-item.last-read {
       background: rgba(201,168,76,0.06);
-      border-left: 3px solid rgba(201,168,76,0.4);
+      border-left: 3px solid rgba(201,168,76,0.5);
       padding-left: 11px;
     }
+    .chapter-item.last-read .ch-title { color: var(--gold-light); }
+    .chapter-item.last-read .ch-num {
+      background: rgba(201,168,76,0.15);
+      border-color: rgba(201,168,76,0.5);
+    }
+
     .ch-num {
       width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
       background: rgba(201,168,76,0.07);
@@ -408,6 +415,18 @@
       transition: all 0.15s;
     }
     .ch-sort-btn:hover { border-color: var(--border-gold); color: var(--gold); }
+
+    /* ── BADGE "Terakhir" ─────────────────────────────────── */
+    .ch-last-badge {
+      font-size: 8.5px; font-weight: 800;
+      background: rgba(201,168,76,0.12);
+      color: var(--gold);
+      padding: 1px 6px; border-radius: 3px;
+      margin-left: 5px;
+      vertical-align: middle;
+      border: 1px solid rgba(201,168,76,0.25);
+      white-space: nowrap;
+    }
 
     /* ── BOTTOM NAV ───────────────────────────────────────── */
     .bottom-nav {
@@ -535,7 +554,8 @@
 <script>
 /* ============================================================
    NOVEL DETAIL — Premium redesign
-   API: GET /novel/sakuranovel/detail/{slug}
+   FIX: Last read fetched BEFORE renderDetail so _lastReadSlug
+        is set when chapter list renders — no double render needed.
    ============================================================ */
 
 const BASE = "https://www.sankavollerei.com/novel/sakuranovel";
@@ -554,7 +574,7 @@ let currentUser = null;
 let isBookmarked = false;
 let currentKategori = "favorit";
 let novelCache = null;
-let _lastReadSlug = "";
+let _lastReadSlug = ""; /* global — set sebelum renderChapterList pertama kali */
 
 /* ── INIT ─────────────────────────────────────────── */
 window.onload = async function() {
@@ -578,25 +598,45 @@ function proxyImg(url) {
 /* ── FETCH DETAIL ─────────────────────────────────── */
 async function loadDetail() {
   try {
+    /* ── 1. Fetch detail novel ── */
     const res  = await fetch(`${BASE}/detail/${slug}`);
     const json = await res.json();
     if (!json.data) throw new Error("No data");
     novelCache = json.data;
-    renderDetail(json.data);
+
+    /* ── 2. Fetch last read SEBELUM render ──
+       Sehingga _lastReadSlug sudah benar saat renderChapterList dipanggil.
+       Jalankan parallel dengan bookmark check untuk efisiensi. */
+    let lastReadData  = null;
+    let bookmarkData  = null;
 
     if (currentUser && window._supabase) {
-      try {
-        const bm = await window._supabase.checkNovelBookmark(currentUser.id, slug);
-        isBookmarked = bm.isBookmarked;
-        currentKategori = bm.kategori || "favorit";
-        updateBookmarkUI();
-      } catch(e) { console.warn(e); }
-
-      try {
-        const lastRead = await window._supabase.getLastNovelRead(currentUser.id, slug);
-        if (lastRead?.chapter_slug) updateLastReadUI(lastRead);
-      } catch(e) { console.info("No history:", e?.message); }
+      [lastReadData, bookmarkData] = await Promise.allSettled([
+        window._supabase.getLastNovelRead(currentUser.id, slug),
+        window._supabase.checkNovelBookmark(currentUser.id, slug),
+      ]);
+      lastReadData  = lastReadData.status  === "fulfilled" ? lastReadData.value  : null;
+      bookmarkData  = bookmarkData.status  === "fulfilled" ? bookmarkData.value  : null;
     }
+
+    /* ── 3. Set _lastReadSlug SEBELUM renderDetail ── */
+    _lastReadSlug = lastReadData?.chapter_slug || "";
+
+    /* ── 4. Render (chapter list sudah pakai _lastReadSlug yang benar) ── */
+    renderDetail(json.data);
+
+    /* ── 5. Update UI bookmark ── */
+    if (bookmarkData) {
+      isBookmarked    = bookmarkData.isBookmarked;
+      currentKategori = bookmarkData.kategori || "favorit";
+      updateBookmarkUI();
+    }
+
+    /* ── 6. Update last read bar & tombol utama ── */
+    if (lastReadData?.chapter_slug) {
+      updateLastReadUI(lastReadData);
+    }
+
   } catch (err) {
     console.error(err);
     document.getElementById("detailContent").innerHTML = `
@@ -686,7 +726,7 @@ function renderDetail(d) {
       <button class="kbtn" id="kbtn-tamat"       onclick="setKategori('tamat',this)">✅ Tamat</button>
     </div>
 
-    <!-- LAST READ -->
+    <!-- LAST READ BAR — diisi oleh updateLastReadUI() -->
     <div id="lastReadBar"></div>
 
     <!-- INFO TABLE -->
@@ -748,6 +788,7 @@ function renderDetail(d) {
     if (bg) bg.style.backgroundImage = `url(${posterSrc})`;
   }
 
+  /* Render chapter list — _lastReadSlug sudah benar karena di-set sebelum renderDetail() */
   if (allChapters.length > 0) renderChapterList();
 }
 
@@ -770,16 +811,17 @@ function renderChapterList(filterQ) {
     const title = ch.title || `Chapter ${num}`;
     const date  = ch.date  || "";
     const cSlug = ch.slug  || "";
+    /* ── Highlight chapter terakhir ── */
     const isLR  = _lastReadSlug && cSlug === _lastReadSlug;
     const short = title.length > 52 ? title.slice(0, 49) + "…" : title;
 
     return `
       <div class="chapter-item${isLR ? " last-read" : ""}" onclick="readChapter('${esc(cSlug)}')">
-        <div class="ch-num"${isLR ? ' style="background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.5);"' : ""}>${num}</div>
+        <div class="ch-num">${num}</div>
         <div class="ch-info">
-          <div class="ch-title"${isLR ? ' style="color:var(--gold-light);"' : ""}>
+          <div class="ch-title">
             ${esc(short)}
-            ${isLR ? `<span style="font-size:8.5px;background:rgba(201,168,76,0.12);color:var(--gold);padding:1px 6px;border-radius:3px;margin-left:5px;font-weight:800;vertical-align:middle;border:1px solid rgba(201,168,76,0.2);">▶ Terakhir</span>` : ""}
+            ${isLR ? `<span class="ch-last-badge">▶ Terakhir</span>` : ""}
           </div>
           ${date ? `<div class="ch-date">📅 ${esc(date)}</div>` : ""}
         </div>
@@ -787,9 +829,10 @@ function renderChapterList(filterQ) {
       </div>`;
   }).join("");
 
+  /* Scroll ke chapter terakhir kalau tidak ada filter aktif */
   if (_lastReadSlug && !q) {
     setTimeout(() => {
-      list.querySelector(".last-read")?.scrollIntoView({ behavior:"smooth", block:"center" });
+      list.querySelector(".last-read")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 300);
   }
 }
@@ -816,7 +859,9 @@ window.readChapter = (chSlug) => {
 };
 
 window.readMain = function() {
+  /* Kalau ada last read, lanjut dari sana */
   if (_lastReadSlug) { window.location.href = "/baca-novel/" + _lastReadSlug; return; }
+  /* Mulai dari chapter pertama (index terakhir di array = chapter terlama) */
   if (allChapters.length > 0) readChapter(allChapters[allChapters.length - 1].slug);
 };
 
@@ -837,13 +882,16 @@ function updateBookmarkUI() {
   }
 }
 
+/* ── LAST READ BAR ────────────────────────────────── */
 function updateLastReadUI(lastRead) {
   const bar = document.getElementById("lastReadBar");
   if (!bar || !lastRead?.chapter_slug) return;
+
   const title   = lastRead.chapter_title || lastRead.chapter_slug;
   const short   = title.length > 44 ? title.slice(0, 41) + "…" : title;
   const dateStr = lastRead.read_at
-    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", { day:"numeric",month:"short",year:"numeric" }) : "";
+    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" })
+    : "";
 
   bar.innerHTML = `
     <div class="last-read-card" onclick="readChapter('${esc(lastRead.chapter_slug)}')">
@@ -856,12 +904,14 @@ function updateLastReadUI(lastRead) {
       </button>
     </div>`;
   bar.style.display = "block";
-  _lastReadSlug = lastRead.chapter_slug;
 
+  /* Update tombol utama */
   const btnMain = document.getElementById("btnRead");
-  if (btnMain) { btnMain.innerHTML = "▶ Lanjut Baca"; }
+  if (btnMain) btnMain.innerHTML = "▶ Lanjut Baca";
 
-  if (allChapters.length > 0) renderChapterList();
+  /* _lastReadSlug sudah di-set sebelum render, tapi set lagi untuk keamanan */
+  _lastReadSlug = lastRead.chapter_slug;
+  /* TIDAK perlu renderChapterList() lagi — sudah di-render dengan slug yang benar */
 }
 
 window.toggleBookmark = async function() {
