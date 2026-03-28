@@ -4,315 +4,491 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Detail Novel — Pankomik</title>
-  <link rel="stylesheet" href="/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Cinzel:wght@400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root { --purple: #8e44ad; --purple-light: rgba(142,68,173,0.12); }
+    /* ═══════════════════════════════════════════════════════
+       NOVEL DETAIL — PREMIUM THEME
+    ═══════════════════════════════════════════════════════ */
+    :root {
+      --ink:         #0d0b14;
+      --ink2:        #13101e;
+      --ink3:        #1a1728;
+      --ink4:        #221f32;
+      --gold:        #c9a84c;
+      --gold-light:  #e8c96a;
+      --gold-dim:    rgba(201,168,76,0.16);
+      --gold-glow:   rgba(201,168,76,0.08);
+      --crimson:     #8b1a1a;
+      --crimson-bg:  rgba(139,26,26,0.15);
+      --green:       #1a5c2e;
+      --green-bg:    rgba(26,92,46,0.2);
+      --text:        #ede8f5;
+      --text2:       #c4bdd6;
+      --muted:       #6e6480;
+      --border:      rgba(255,255,255,0.06);
+      --border-gold: rgba(201,168,76,0.18);
+      --r:           12px;
+      --header-h:    54px;
+    }
 
-    /* ── Hero poster blur background ─────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--ink);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* ── HEADER ─────────────────────────────────────────── */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 999;
+      height: var(--header-h);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px;
+      background: rgba(13,11,20,0.94);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-gold);
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .back-btn {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      color: var(--muted); font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .back-btn:hover { background: var(--gold-dim); border-color: var(--border-gold); color: var(--gold); }
+    .header-logo {
+      font-family: 'Cinzel', serif; font-size: 14px; font-weight: 600;
+      letter-spacing: 2px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; cursor: pointer;
+    }
+    .header-right { display: flex; gap: 6px; }
+    .hbtn {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      color: var(--muted); font-size: 15px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .hbtn:hover { background: var(--gold-dim); border-color: var(--border-gold); color: var(--gold); }
+
+    /* ── HERO BG ─────────────────────────────────────────── */
     .novel-hero-bg {
-      position: relative;
-      overflow: hidden;
-      min-height: 200px;
+      position: relative; overflow: hidden;
+      margin-top: var(--header-h);
     }
-    .novel-hero-blur {
-      position: absolute; inset: 0;
+    .hero-blur-bg {
+      position: absolute; inset: 0; z-index: 0;
       background-size: cover; background-position: center;
-      filter: blur(22px) brightness(0.35);
-      transform: scale(1.1);
+      filter: blur(28px) brightness(0.25) saturate(0.7);
+      transform: scale(1.15);
     }
-    .novel-hero-content {
+    .hero-blur-bg::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 30%, var(--ink) 100%);
+    }
+    /* Gold light sweep */
+    .hero-blur-bg::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 70%);
+    }
+    .hero-content {
       position: relative; z-index: 1;
-      display: flex; gap: 14px;
-      padding: 20px 16px 16px;
+      display: flex; gap: 16px;
+      padding: 24px 16px 20px;
       align-items: flex-end;
     }
-    .novel-poster {
-      width: 110px; height: 156px;
-      object-fit: cover; border-radius: 10px; flex-shrink: 0;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-      border: 2px solid rgba(255,255,255,0.12);
-    }
-    .novel-hero-info { flex: 1; min-width: 0; padding-bottom: 4px; }
-    .novel-hero-info h1 {
-      font-size: 17px; font-weight: 800; line-height: 1.3;
-      color: #fff; margin-bottom: 4px;
-    }
-    .novel-hero-info .alt-title {
-      font-size: 11px; color: rgba(255,255,255,0.55);
-      font-style: italic; margin-bottom: 8px;
-      display: -webkit-box; -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical; overflow: hidden;
-    }
-    .novel-hero-meta {
-      display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px;
-    }
-    .meta-chip {
-      padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
-      border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.85);
-      background: rgba(255,255,255,0.08);
-    }
-    .meta-chip.purple { background: var(--purple); border-color: var(--purple); }
-    .meta-chip.green  { background: #27ae60; border-color: #27ae60; }
-    .meta-chip.orange { background: var(--accent); border-color: var(--accent); }
 
-    .rating-row {
+    /* ── POSTER ──────────────────────────────────────────── */
+    .novel-poster-wrap {
+      flex-shrink: 0; position: relative;
+      width: 108px;
+    }
+    .novel-poster {
+      width: 108px; height: 154px;
+      object-fit: cover;
+      border-radius: 8px;
+      display: block;
+      border: 2px solid rgba(201,168,76,0.3);
+      box-shadow:
+        0 8px 32px rgba(0,0,0,0.7),
+        0 0 0 1px rgba(201,168,76,0.1) inset;
+    }
+    .poster-fallback {
+      width: 108px; height: 154px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--ink3), rgba(201,168,76,0.15));
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 8px; border: 2px solid var(--border-gold);
+    }
+    .poster-fallback-initials {
+      font-family: 'Cinzel', serif; font-size: 28px; font-weight: 700;
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    /* ── HERO INFO ───────────────────────────────────────── */
+    .hero-info { flex: 1; min-width: 0; padding-bottom: 4px; }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 18px; font-weight: 700; line-height: 1.3;
+      color: #fff; margin-bottom: 5px;
+    }
+    .hero-alt-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px; font-style: italic; color: rgba(255,255,255,0.45);
+      margin-bottom: 10px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+    .meta-chip {
+      padding: 3px 9px; border-radius: 4px;
+      font-size: 9.5px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.8px;
+      border: 1px solid;
+    }
+    .meta-chip.type    { background: linear-gradient(135deg, var(--crimson), #a52020); border-color: transparent; color: #fff; }
+    .meta-chip.ongoing { background: rgba(139,90,0,0.2); border-color: rgba(201,168,76,0.3); color: var(--gold-light); }
+    .meta-chip.done    { background: var(--green-bg); border-color: rgba(26,92,46,0.4); color: #5dd88a; }
+    .meta-chip.country { background: rgba(255,255,255,0.05); border-color: var(--border); color: var(--text2); }
+    .hero-rating {
       display: flex; align-items: center; gap: 6px;
     }
-    .stars { color: #f5a623; font-size: 13px; letter-spacing: 1px; }
-    .rating-num { font-size: 13px; font-weight: 800; color: #f5a623; }
+    .stars { color: var(--gold); font-size: 13px; letter-spacing: 1.5px; }
+    .rating-num {
+      font-family: 'Cinzel', serif; font-size: 14px; font-weight: 600;
+      color: var(--gold-light);
+    }
 
-    /* ── Action buttons ───────────────────────────────────── */
+    /* ── ORNAMENT ─────────────────────────────────────────── */
+    .ornament {
+      text-align: center; padding: 4px 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 10px; letter-spacing: 8px;
+      color: rgba(201,168,76,0.2);
+    }
+
+    /* ── ACTION BAR ──────────────────────────────────────── */
     .action-bar {
       display: flex; gap: 8px; padding: 12px 16px 4px;
     }
     .btn-read {
-      flex: 1; padding: 12px 0; border-radius: 10px;
-      background: var(--purple); border: none; color: #fff;
-      font-family: 'Nunito', sans-serif; font-size: 14px; font-weight: 800;
-      cursor: pointer; transition: background 0.2s, transform 0.1s;
+      flex: 1; padding: 13px 0;
+      border-radius: 8px; border: none;
+      background: linear-gradient(135deg, #8b1a1a, #c9291c, #8b1a1a);
+      background-size: 200% 100%; background-position: 0% 0%;
+      color: #fff;
+      font-family: 'Cinzel', serif;
+      font-size: 13px; font-weight: 600; letter-spacing: 1.5px;
+      cursor: pointer; transition: all 0.3s;
+      box-shadow: 0 4px 20px rgba(139,26,26,0.4);
       display: flex; align-items: center; justify-content: center; gap: 6px;
     }
-    .btn-read:hover  { background: #7d3c98; }
+    .btn-read:hover {
+      background-position: 100% 0%;
+      box-shadow: 0 6px 28px rgba(139,26,26,0.5);
+      transform: translateY(-2px);
+    }
     .btn-read:active { transform: scale(0.97); }
-    .btn-share {
-      padding: 12px 16px; border-radius: 10px;
-      background: var(--bg-surface); border: 1.5px solid var(--border);
-      color: var(--text); font-family: 'Nunito', sans-serif;
-      font-size: 14px; cursor: pointer;
-      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    .btn-icon {
+      width: 44px; height: 44px; border-radius: 8px;
+      border: 1px solid var(--border-gold);
+      background: rgba(201,168,76,0.05);
+      color: var(--gold); font-size: 17px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
     }
-    .btn-share:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-light); }
+    .btn-icon:hover { background: var(--gold-dim); }
+    .btn-icon.saved { background: var(--gold-dim); border-color: var(--gold); }
 
-    /* ── Info table ───────────────────────────────────────── */
-    .info-section {
-      padding: 4px 16px 0;
+    /* ── KATEGORI PICKER ─────────────────────────────────── */
+    #kategoriPicker {
+      display: none; gap: 6px; padding: 4px 16px 8px; flex-wrap: wrap;
     }
+    #kategoriPicker.show { display: flex; }
+    .kbtn {
+      padding: 5px 13px; border-radius: 99px; cursor: pointer;
+      border: 1px solid var(--border-gold);
+      background: transparent;
+      color: var(--muted); font-size: 11px; font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+      transition: all 0.15s;
+    }
+    .kbtn.active { background: var(--gold-dim); color: var(--gold-light); }
+    .kbtn:hover  { border-color: var(--gold); color: var(--gold-light); }
+
+    /* ── LAST READ BAR ───────────────────────────────────── */
+    #lastReadBar { padding: 0 16px 8px; }
+    .last-read-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border-gold);
+      background: linear-gradient(135deg, rgba(201,168,76,0.05), rgba(139,26,26,0.05));
+      cursor: pointer;
+    }
+    .last-read-card:hover { border-color: rgba(201,168,76,0.35); }
+    .last-read-label {
+      font-size: 9.5px; font-weight: 800; color: var(--gold);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      margin-bottom: 2px;
+    }
+    .last-read-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .btn-continue {
+      flex-shrink: 0; padding: 8px 14px; border-radius: 7px;
+      background: var(--gold-dim); border: 1px solid var(--border-gold);
+      color: var(--gold-light); font-size: 12px; font-weight: 800;
+      font-family: 'Nunito', sans-serif; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .btn-continue:hover { background: rgba(201,168,76,0.25); }
+
+    /* ── INFO TABLE ──────────────────────────────────────── */
+    .section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 16px 10px;
+    }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: 11.5px; font-weight: 600; letter-spacing: 2px;
+      color: var(--gold); text-transform: uppercase;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .section-title::before {
+      content: ''; width: 3px; height: 14px;
+      background: linear-gradient(180deg, var(--gold), var(--crimson));
+      border-radius: 2px;
+    }
+    .section-extra { font-size: 11px; color: var(--muted); font-weight: 600; }
+
     .info-table {
-      background: var(--bg-card); border: 1px solid var(--border);
-      border-radius: 12px; overflow: hidden;
+      margin: 0 16px;
+      border-radius: var(--r); overflow: hidden;
+      border: 1px solid var(--border-gold);
+      background: var(--ink2);
     }
     .info-row {
-      display: flex; align-items: flex-start; gap: 10px;
-      padding: 9px 14px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 14px; border-bottom: 1px solid var(--border);
     }
     .info-row:last-child { border-bottom: none; }
     .info-label {
-      font-size: 11px; font-weight: 800; color: var(--text-muted);
-      min-width: 88px; flex-shrink: 0; padding-top: 1px;
-      text-transform: uppercase; letter-spacing: 0.4px;
+      font-size: 10px; font-weight: 800; color: var(--muted);
+      min-width: 90px; flex-shrink: 0; padding-top: 1px;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
     .info-value {
-      font-size: 12px; color: var(--text); font-weight: 600; line-height: 1.5;
-      flex: 1;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; color: var(--text2); font-weight: 500; line-height: 1.5; flex: 1;
     }
 
-    /* ── Section title ────────────────────────────────────── */
-    .section-head {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 16px 8px;
-    }
-    .section-head h3 {
-      font-size: 14px; font-weight: 800; color: var(--text);
-    }
-    .section-head span { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-
-    /* ── Synopsis ─────────────────────────────────────────── */
-    .synopsis-box {
-      padding: 0 16px 4px;
-    }
+    /* ── SYNOPSIS ─────────────────────────────────────────── */
+    .synopsis-wrap { padding: 0 16px 4px; }
     .synopsis-text {
-      font-size: 13px; color: var(--text-muted); line-height: 1.75;
-      max-height: 80px; overflow: hidden;
-      transition: max-height 0.4s ease;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 14px; color: var(--text2); line-height: 1.85;
+      max-height: 84px; overflow: hidden;
+      transition: max-height 0.45s ease;
       white-space: pre-line;
     }
-    .synopsis-text.expanded { max-height: 2000px; }
+    .synopsis-text.expanded { max-height: 3000px; }
     .synopsis-toggle {
-      margin-top: 6px; padding: 5px 14px;
-      background: var(--bg-surface); border: 1px solid var(--border);
-      border-radius: 6px; cursor: pointer; font-size: 12px;
-      font-family: 'Nunito', sans-serif; color: var(--text);
-      transition: background 0.2s;
+      margin-top: 8px; padding: 6px 16px;
+      border-radius: 6px; border: 1px solid var(--border-gold);
+      background: rgba(201,168,76,0.04);
+      color: var(--gold); font-size: 11.5px; font-weight: 700;
+      font-family: 'Nunito', sans-serif; cursor: pointer;
+      transition: all 0.2s;
     }
-    .synopsis-toggle:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .synopsis-toggle:hover { background: var(--gold-dim); }
 
-    /* ── Genre & tag chips ────────────────────────────────── */
+    /* ── CHIPS ROW ───────────────────────────────────────── */
     .chips-row {
       display: flex; flex-wrap: wrap; gap: 6px;
-      padding: 0 16px 4px;
+      padding: 0 16px 8px;
+    }
+    .chip-genre, .chip-tag {
+      padding: 5px 12px; border-radius: 99px;
+      font-size: 11px; font-weight: 700;
+      cursor: pointer; transition: all 0.15s;
+      font-family: 'Nunito', sans-serif;
     }
     .chip-genre {
-      padding: 4px 11px; border-radius: 99px; font-size: 11px; font-weight: 700;
-      border: 1px solid var(--border); background: var(--bg-surface);
-      color: var(--text-muted); cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-      text-decoration: none; display: inline-block;
+      border: 1px solid var(--border-gold);
+      background: rgba(201,168,76,0.04);
+      color: var(--gold);
     }
-    .chip-genre:hover { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .chip-genre:hover { background: var(--gold-dim); }
     .chip-tag {
-      padding: 3px 9px; border-radius: 99px; font-size: 10px; font-weight: 700;
-      border: 1px solid rgba(142,68,173,0.3); background: var(--purple-light);
-      color: var(--purple); cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+      border: 1px solid rgba(139,26,26,0.3);
+      background: var(--crimson-bg);
+      color: #e07070;
     }
-    .chip-tag:hover { background: var(--purple); color: #fff; }
+    .chip-tag:hover { background: rgba(139,26,26,0.25); }
 
-    /* ── Chapter list ─────────────────────────────────────── */
-    .novel-chapter-list {
-      margin: 0 16px; border-radius: 12px; overflow: hidden;
-      border: 1px solid var(--border); background: var(--bg-card);
+    /* ── CHAPTER LIST ─────────────────────────────────────── */
+    .chapter-search-wrap { padding: 0 16px 8px; }
+    .chapter-search {
+      width: 100%; padding: 9px 14px; border-radius: 99px;
+      border: 1px solid var(--border-gold);
+      background: rgba(201,168,76,0.04);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif; font-size: 15px;
+      outline: none; box-sizing: border-box; transition: all 0.2s;
+    }
+    .chapter-search:focus { border-color: rgba(201,168,76,0.4); background: rgba(201,168,76,0.06); }
+    .chapter-search::placeholder { color: var(--muted); font-style: italic; }
+
+    .chapter-list {
+      margin: 0 16px; border-radius: var(--r); overflow: hidden;
+      border: 1px solid var(--border-gold);
       max-height: 420px; overflow-y: auto;
+      background: var(--ink2);
     }
-    .novel-chapter-item {
-      display: flex; align-items: center;
+    .chapter-list::-webkit-scrollbar { width: 3px; }
+    .chapter-list::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 99px; }
+
+    .chapter-item {
+      display: flex; align-items: center; gap: 10px;
       padding: 11px 14px; border-bottom: 1px solid var(--border);
-      cursor: pointer; text-decoration: none;
-      transition: background 0.15s;
-      gap: 10px;
+      cursor: pointer; transition: background 0.15s; text-decoration: none;
     }
-    .novel-chapter-item:last-child { border-bottom: none; }
-    .novel-chapter-item:hover { background: var(--bg-surface); }
-    .novel-chapter-item:hover .ch-title { color: var(--purple); }
+    .chapter-item:last-child { border-bottom: none; }
+    .chapter-item:hover { background: rgba(201,168,76,0.04); }
+    .chapter-item:hover .ch-title { color: var(--gold-light); }
+    .chapter-item.last-read {
+      background: rgba(201,168,76,0.06);
+      border-left: 3px solid rgba(201,168,76,0.4);
+      padding-left: 11px;
+    }
     .ch-num {
-      width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
-      background: var(--purple-light); display: flex; align-items: center;
-      justify-content: center; font-size: 10px; font-weight: 800;
-      color: var(--purple);
+      width: 30px; height: 30px; border-radius: 6px; flex-shrink: 0;
+      background: rgba(201,168,76,0.07);
+      border: 1px solid var(--border-gold);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif; font-size: 9.5px; font-weight: 600;
+      color: var(--gold);
     }
     .ch-info { flex: 1; min-width: 0; }
     .ch-title {
-      font-size: 12px; font-weight: 700; color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; font-weight: 600; color: var(--text);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
       transition: color 0.15s;
     }
-    .ch-date { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .ch-date { font-size: 10px; color: var(--muted); margin-top: 2px; }
     .ch-read-btn {
-      padding: 4px 10px; border-radius: 6px; border: none;
-      background: var(--purple); color: #fff; font-size: 10px;
-      font-weight: 800; font-family: 'Nunito', sans-serif;
-      cursor: pointer; flex-shrink: 0; white-space: nowrap;
-      transition: background 0.15s;
+      flex-shrink: 0; padding: 5px 10px; border-radius: 5px;
+      border: 1px solid var(--border-gold);
+      background: rgba(201,168,76,0.06);
+      color: var(--gold); font-size: 10px; font-weight: 700;
+      font-family: 'Nunito', sans-serif; cursor: pointer;
+      transition: all 0.15s; white-space: nowrap;
     }
-    .ch-read-btn:hover { background: #7d3c98; }
-
-    /* Sort toggle */
+    .ch-read-btn:hover { background: var(--gold-dim); }
     .ch-sort-btn {
       padding: 4px 10px; border-radius: 6px;
-      border: 1px solid var(--border); background: var(--bg-surface);
-      color: var(--text-muted); font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 11px; font-weight: 700;
       cursor: pointer; font-family: 'Nunito', sans-serif;
-      transition: border-color 0.15s, color 0.15s;
+      transition: all 0.15s;
     }
-    .ch-sort-btn:hover { border-color: var(--purple); color: var(--purple); }
+    .ch-sort-btn:hover { border-color: var(--border-gold); color: var(--gold); }
 
-    /* ── Last-read chapter highlight ─────────────────────── */
-    .novel-chapter-item.chapter-last-read {
-      background: rgba(124,58,237,0.08);
-      border-left: 3px solid rgba(124,58,237,0.45);
-      padding-left: 11px;
+    /* ── BOTTOM NAV ───────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 990;
+      height: 60px;
+      display: flex; align-items: center;
+      background: rgba(13,11,20,0.95);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-gold);
+      padding: 0 8px;
     }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; transition: color 0.2s; padding: 6px 0;
+    }
+    .nav-item.active, .nav-item:hover { color: var(--gold); }
+    .nav-icon { font-size: 18px; line-height: 1; }
+    .nav-label { font-size: 9px; font-weight: 700; }
 
-    /* ── Chapter search input ─────────────────────────────── */
-    .chapter-search-wrap { padding: 0 16px 8px; }
-    .chapter-search-input {
-      width: 100%; padding: 9px 14px;
-      border-radius: 99px;
-      border: 1px solid rgba(124,58,237,0.25);
-      background: rgba(124,58,237,0.08);
-      color: var(--text); font-family: 'Nunito', sans-serif; font-size: 13px;
-      outline: none; box-sizing: border-box; transition: border-color 0.2s, background 0.2s;
-    }
-    .chapter-search-input:focus {
-      border-color: rgba(124,58,237,0.5);
-      background: rgba(124,58,237,0.12);
-    }
-    .chapter-search-input::placeholder { color: var(--muted, #7a6e8a); }
-
-    /* ── Loading skeleton ─────────────────────────────────── */
+    /* ── SKELETON ─────────────────────────────────────────── */
     .skel {
-      background: linear-gradient(90deg,var(--bg-surface) 0%,var(--bg-card) 50%,var(--bg-surface) 100%);
-      background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 8px;
+      background: linear-gradient(90deg, var(--ink2) 0%, var(--ink3) 50%, var(--ink2) 100%);
+      background-size: 200% 100%; animation: shimmer 1.7s ease-in-out infinite;
+      border-radius: 10px;
     }
     @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
-    /* ── Bookmark button ─────────────────────────────────── */
-    .btn-bookmark-novel {
-      padding: 12px 14px; border-radius: 10px;
-      background: var(--bg-surface); border: 1.5px solid var(--border);
-      font-size: 16px; cursor: pointer;
-      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    /* ── TOAST ────────────────────────────────────────────── */
+    #toastWrap {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      z-index: 3000; pointer-events: none; white-space: nowrap;
     }
-    .btn-bookmark-novel:hover     { border-color: var(--purple); background: var(--purple-light); }
-    .btn-bookmark-novel.saved     { background: var(--purple-light); border-color: var(--purple); }
-    .btn-bookmark-novel:active    { transform: scale(0.93); }
 
-    /* Kategori buttons */
-    .kbtn-novel {
-      padding: 5px 12px; border-radius: 99px;
-      border: 1px solid var(--border); background: var(--bg-surface);
-      color: var(--text-muted); font-family: 'Nunito', sans-serif;
-      font-size: 12px; font-weight: 700; cursor: pointer;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    /* ── DROPDOWN ─────────────────────────────────────────── */
+    .dropdown {
+      display: none; position: fixed; top: 54px; right: 12px; z-index: 999;
+      min-width: 160px; padding: 8px;
+      background: rgba(20,17,30,0.97); backdrop-filter: blur(16px);
+      border: 1px solid var(--border-gold); border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
-    .kbtn-novel.active { background: var(--purple); border-color: var(--purple); color: #fff; }
-
-    /* Lanjut baca bar */
-    .last-read-bar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 14px; border-radius: 10px;
-      background: var(--purple-light); border: 1px solid rgba(142,68,173,0.25);
-      gap: 10px;
-    }
-    .last-read-bar p { font-size: 12px; color: var(--text-muted); margin: 0; flex: 1; }
-    .last-read-bar p strong { color: var(--text); }
-    .btn-lanjut-novel {
-      padding: 7px 14px; border-radius: 8px; border: none;
-      background: var(--purple); color: #fff; font-family: 'Nunito', sans-serif;
-      font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap;
-      transition: background 0.15s;
-    }
-    .btn-lanjut-novel:hover { background: #7d3c98; }
-
-    /* ── Bottom padding for nav ───────────────────────────── */
-    .page-bottom { height: 24px; }
   </style>
 </head>
-<body class="has-bottom-nav">
+<body>
 
 <header class="header">
-  <button onclick="history.back()" style="background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:0 4px 0 0;">←</button>
-  <div class="logo" onclick="window.location.href='/novel/'" style="font-size:18px;">Novel</div>
+  <div class="header-left">
+    <button class="back-btn" onclick="history.back()">←</button>
+    <div class="header-logo" onclick="window.location.href='/novel/'">NOVEL</div>
+  </div>
   <div class="header-right">
-    <button onclick="toggleDarkMode()">🌙</button>
-    <button onclick="toggleMenu()">👤</button>
+    <button class="hbtn" onclick="toggleDarkMode()">🌙</button>
+    <button class="hbtn" onclick="toggleMenu()">👤</button>
   </div>
 </header>
 <div id="menuDropdown" class="dropdown"></div>
 
-<!-- Konten detail diisi JS -->
+<!-- Detail content -->
 <div id="detailContent">
-  <!-- Skeleton loading -->
-  <div style="padding:16px;">
-    <div style="display:flex;gap:14px;margin-bottom:16px;">
-      <div class="skel" style="width:110px;height:156px;border-radius:10px;flex-shrink:0;"></div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:8px;padding-top:8px;">
-        <div class="skel" style="height:18px;border-radius:6px;"></div>
-        <div class="skel" style="height:12px;width:80%;border-radius:6px;"></div>
-        <div class="skel" style="height:12px;width:60%;border-radius:6px;"></div>
-        <div class="skel" style="height:24px;width:50%;border-radius:99px;"></div>
+  <div style="margin-top:54px;padding:20px;">
+    <div style="display:flex;gap:14px;margin-bottom:18px;">
+      <div class="skel" style="width:108px;height:154px;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:10px;padding-top:8px;">
+        <div class="skel" style="height:20px;"></div>
+        <div class="skel" style="height:13px;width:75%;"></div>
+        <div class="skel" style="height:13px;width:55%;"></div>
+        <div class="skel" style="height:26px;width:50%;border-radius:99px;"></div>
       </div>
     </div>
-    <div class="skel" style="height:46px;border-radius:10px;margin-bottom:12px;"></div>
-    <div class="skel" style="height:120px;border-radius:12px;margin-bottom:12px;"></div>
-    <div class="skel" style="height:200px;border-radius:12px;"></div>
+    <div class="skel" style="height:48px;border-radius:10px;margin-bottom:12px;"></div>
+    <div class="skel" style="height:110px;border-radius:12px;margin-bottom:12px;"></div>
+    <div class="skel" style="height:220px;border-radius:12px;"></div>
   </div>
 </div>
 
-<!-- ── Komentar Novel Detail ────────────────────────────── -->
 <div id="novelDetailCommentSection"></div>
 
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="window.location.href='/'">
+  <button class="nav-item" onclick="window.location.href='/'">
     <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
   </button>
   <button class="nav-item" onclick="window.location.href='/'">
@@ -321,13 +497,15 @@
   <button class="nav-item" onclick="window.location.href='/anime/'">
     <span class="nav-icon">⚡</span><span class="nav-label">Anime</span>
   </button>
-  <button class="nav-item" onclick="window.location.href='/novel/'">
+  <button class="nav-item active" onclick="window.location.href='/novel/'">
     <span class="nav-icon">📖</span><span class="nav-label">Novel</span>
   </button>
   <button class="nav-item" onclick="window.location.href='/profil'">
     <span class="nav-icon">👤</span><span class="nav-label">Profil</span>
   </button>
 </nav>
+
+<div id="toastWrap"></div>
 
 <script type="module">
   import { initAuthHeader } from "/auth-header.js";
@@ -339,21 +517,16 @@
   import { initComments } from "/comment-system.js";
 
   initAuthHeader();
-
-  /* Simpan ke window agar script biasa bisa akses */
   window._supabase = {
-    getCurrentUser,
-    checkNovelBookmark, addNovelBookmark, removeNovelBookmark,
+    getCurrentUser, checkNovelBookmark, addNovelBookmark, removeNovelBookmark,
     getLastNovelRead, saveNovelHistory
   };
-
-  /* Init komentar setelah detail dimuat — dipanggil oleh loadDetail() via event */
   window._initNovelComments = async function(novelSlug) {
     const user = await getCurrentUser();
     await initComments({
-      containerId : "novelDetailCommentSection",
-      contentSlug : `novel:${novelSlug}`,
-      accentColor : "#8e44ad",
+      containerId: "novelDetailCommentSection",
+      contentSlug: `novel:${novelSlug}`,
+      accentColor: "#c9a84c",
       user,
     });
   };
@@ -361,110 +534,38 @@
 
 <script>
 /* ============================================================
-   novel-detail.html
+   NOVEL DETAIL — Premium redesign
    API: GET /novel/sakuranovel/detail/{slug}
    ============================================================ */
 
-const BASE   = "https://www.sankavollerei.com/novel/sakuranovel";
+const BASE = "https://www.sankavollerei.com/novel/sakuranovel";
 
-/* Baca slug dari pretty URL (/novel/slug) atau query param (?slug=) */
-function getNovelSlug() {
-  const pathMatch = window.location.pathname.match(/^\/novel\/([^/]+)\/?$/);
-  if (pathMatch) return pathMatch[1];
+function getSlug() {
+  const m = window.location.pathname.match(/^\/novel\/([^/]+)\/?$/);
+  if (m) return m[1];
   return new URLSearchParams(window.location.search).get("slug");
 }
-const slug = getNovelSlug();
+const slug = getSlug();
 if (!slug) window.location.href = "/novel/";
 
-let chaptersAsc    = false;
-let allChapters    = [];
-let currentUser    = null;
-let isBookmarked   = false;
+let chaptersAsc = false;
+let allChapters = [];
+let currentUser = null;
+let isBookmarked = false;
 let currentKategori = "favorit";
-let novelDataCache = null;  /* simpan data novel untuk bookmark */
+let novelCache = null;
+let _lastReadSlug = "";
 
-/* ── INIT ─────────────────────────────────────────────────── */
-window.onload = async function () {
-  if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
-
-  /* Tunggu supabase module siap */
+/* ── INIT ─────────────────────────────────────────── */
+window.onload = async function() {
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light-mode");
   await new Promise(r => setTimeout(r, 80));
   if (window._supabase) currentUser = await window._supabase.getCurrentUser();
-
   await loadDetail();
-
-  /* Init komentar setelah detail selesai dimuat */
-  if (typeof window._initNovelComments === "function") {
-    window._initNovelComments(slug);
-  }
+  if (typeof window._initNovelComments === "function") window._initNovelComments(slug);
 };
 
-/* ── FETCH DETAIL ─────────────────────────────────────────── */
-async function loadDetail() {
-  try {
-    const res  = await fetch(`${BASE}/detail/${slug}`);
-    const json = await res.json();
-
-    if (!json.data) throw new Error("No data");
-    novelDataCache = json.data;
-    renderDetail(json.data);
-
-    /* Setelah render, cek bookmark & last read secara terpisah.
-       getLastNovelRead pakai .single() yg throw error kalau tidak ada data —
-       pisahkan agar error-nya tidak merusak flow utama */
-    if (currentUser && window._supabase) {
-      /* Bookmark */
-      try {
-        const bmStatus  = await window._supabase.checkNovelBookmark(currentUser.id, slug);
-        isBookmarked    = bmStatus.isBookmarked;
-        currentKategori = bmStatus.kategori || "favorit";
-        updateBookmarkUI();
-      } catch(e) { console.warn("[Detail] bookmark check error:", e); }
-
-      /* Last read */
-      try {
-        const lastRead = await window._supabase.getLastNovelRead(currentUser.id, slug);
-        if (lastRead && lastRead.chapter_slug) {
-          updateLastReadUI(lastRead);
-        }
-      } catch(e) {
-        /* Normal jika user belum pernah baca novel ini */
-        console.info("[Detail] Belum ada riwayat baca:", e?.message || e);
-      }
-    }
-  } catch (err) {
-    console.error("Gagal load detail:", err);
-    document.getElementById("detailContent").innerHTML = `
-      <div style="padding:40px 20px;text-align:center;color:var(--text-muted);">
-        <p style="font-size:40px;margin-bottom:10px;">😕</p>
-        <p style="margin-bottom:16px;">Gagal memuat detail novel.</p>
-        <button onclick="loadDetail()" style="padding:9px 20px;background:#8e44ad;color:#fff;
-          border:none;border-radius:8px;cursor:pointer;font-weight:700;font-family:'Nunito',sans-serif;">
-          Coba Lagi
-        </button>
-      </div>`;
-  }
-}
-
-
-/* ── Placeholder saat gambar tidak muncul ─────────────── */
-function posterFallback(el, title) {
-  /* Proxy gagal → langsung placeholder */
-  el.onerror = null;
-  var initials = (title || "N").slice(0, 2).toUpperCase();
-  el.outerHTML = '<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;' +
-    'background:linear-gradient(135deg,#2d1b4e,#7c3aed);display:flex;flex-direction:column;' +
-    'align-items:center;justify-content:center;gap:4px;">' +
-    '<span style="font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;letter-spacing:2px;">' + initials + '</span>' +
-    '<span style="font-size:9px;color:rgba(255,255,255,0.5);text-transform:uppercase;">Novel</span>' +
-    '</div>';
-}
-
-/* ============================================================
-   IMAGE PROXY — proxy.sankavolereii.my.id
-   Format: https://proxy.sankavolereii.my.id/{url_asli_lengkap}
-   JANGAN encode URL — append langsung setelah slash
-   ============================================================ */
+/* ── IMAGE PROXY ─────────────────────────────────── */
 function proxyImg(url) {
   if (!url) return "";
   if (url.startsWith("data:")) return url;
@@ -474,388 +575,357 @@ function proxyImg(url) {
   return "https://proxy.sankavolereii.my.id/" + url;
 }
 
-function createProxiedImg(originalUrl, altText, cssText) {
-  var img = document.createElement("img");
-  img.alt = altText || "";
-  if (cssText) img.style.cssText = cssText;
-  if (!originalUrl) return img;
+/* ── FETCH DETAIL ─────────────────────────────────── */
+async function loadDetail() {
+  try {
+    const res  = await fetch(`${BASE}/detail/${slug}`);
+    const json = await res.json();
+    if (!json.data) throw new Error("No data");
+    novelCache = json.data;
+    renderDetail(json.data);
 
-  img.onerror = function() {
-    img.onerror = null;
-    img.style.display = "none";
-    var sib = img.nextElementSibling;
-    if (sib) sib.style.display = "flex";
-  };
-  img.src = proxyImg(originalUrl);
-  return img;
+    if (currentUser && window._supabase) {
+      try {
+        const bm = await window._supabase.checkNovelBookmark(currentUser.id, slug);
+        isBookmarked = bm.isBookmarked;
+        currentKategori = bm.kategori || "favorit";
+        updateBookmarkUI();
+      } catch(e) { console.warn(e); }
+
+      try {
+        const lastRead = await window._supabase.getLastNovelRead(currentUser.id, slug);
+        if (lastRead?.chapter_slug) updateLastReadUI(lastRead);
+      } catch(e) { console.info("No history:", e?.message); }
+    }
+  } catch (err) {
+    console.error(err);
+    document.getElementById("detailContent").innerHTML = `
+      <div style="padding:60px 20px;text-align:center;color:var(--muted);margin-top:54px;">
+        <p style="font-family:'Cormorant Garamond',serif;font-size:40px;opacity:0.3;margin-bottom:12px;">📖</p>
+        <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;margin-bottom:20px;">Gagal memuat detail novel.</p>
+        <button onclick="loadDetail()" style="padding:10px 24px;background:linear-gradient(135deg,#8b1a1a,#c9291c);
+          color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;
+          font-size:12px;letter-spacing:1.5px;">Coba Lagi</button>
+      </div>`;
+  }
 }
 
-/* ── RENDER ───────────────────────────────────────────────── */
+/* ── RENDER ───────────────────────────────────────── */
 function renderDetail(d) {
-  document.title = `${d.title} — Pankomik`;
-  allChapters    = d.chapters || [];
-  const info     = d.info || {};
-  const poster   = proxyImg(d.poster || "");
+  document.title = d.title + " — Pankomik";
+  allChapters = d.chapters || [];
+  const info  = d.info    || {};
 
-  /* Status chip color */
-  const statusClass = (d.status || "").toLowerCase() === "completed"
-    ? "green" : (d.status || "").toLowerCase() === "ongoing" ? "orange" : "";
+  /* Status class */
+  const sl = (d.status || "").toLowerCase();
+  const statusClass = sl === "completed" ? "done" : sl === "ongoing" ? "ongoing" : "country";
 
-  /* Stars dari rating */
+  /* Stars */
   const ratingNum = parseFloat(d.rating) || 0;
-  const stars = renderStars(ratingNum);
+  const starsHtml = renderStars(ratingNum);
 
   /* Genre chips */
   const genreHtml = (d.genres || []).map(g =>
-    `<span class="chip-genre" onclick="goToGenre('${g.slug}','${escHtml(g.name)}')">${escHtml(g.name)}</span>`
+    `<span class="chip-genre" onclick="goToGenre('${g.slug}','${esc(g.name)}')">${esc(g.name)}</span>`
   ).join("");
 
   /* Tag chips */
-  const tagStr  = info.tags || "";
-  const tagHtml = tagStr
-    ? tagStr.split(",").map(t => t.trim()).filter(Boolean).map(t => {
-        const tagSlug = t.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-        return `<span class="chip-tag" onclick="goToTag('${tagSlug}','${escHtml(t)}')">${escHtml(t)}</span>`;
-      }).join("")
-    : "";
+  const tagStr = info.tags || "";
+  const tagHtml = tagStr ? tagStr.split(",").map(t => t.trim()).filter(Boolean).map(t => {
+    const ts = t.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
+    return `<span class="chip-tag" onclick="goToTag('${ts}','${esc(t)}')">${esc(t)}</span>`;
+  }).join("") : "";
+
+  const posterSrc = proxyImg(d.poster || "");
+  const initials  = (d.title || "N").slice(0, 2).toUpperCase();
 
   document.getElementById("detailContent").innerHTML = `
-
-    <!-- ── Hero poster bg ── -->
+    <!-- HERO -->
     <div class="novel-hero-bg">
-      <div class="novel-hero-blur" id="heroBg"></div>
-      <div class="novel-hero-content">
-        ${d.poster
-          ? `<img class="novel-poster" src="${proxyImg(d.poster)}" alt="${escHtml(d.title)}"
-               onerror="posterFallback(this, '${escHtml(d.title)}')">`
-          : `<div style="width:110px;height:156px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,#2d1b4e,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;font-family:Bangers,cursive;">
-              ${(d.title||"N").slice(0,2).toUpperCase()}
-             </div>`
-        }
-        <div class="novel-hero-info">
-          <h1>${escHtml(d.title)}</h1>
-          ${d.alt_title ? `<p class="alt-title">${escHtml(d.alt_title)}</p>` : ""}
-          <div class="novel-hero-meta">
-            <span class="meta-chip purple">${escHtml(d.type || "Novel")}</span>
-            ${d.status ? `<span class="meta-chip ${statusClass}">${escHtml(d.status)}</span>` : ""}
-            ${info.country ? `<span class="meta-chip">🌏 ${escHtml(info.country)}</span>` : ""}
+      <div class="hero-blur-bg" id="heroBg"></div>
+      <div class="hero-content">
+        <div class="novel-poster-wrap">
+          ${d.poster
+            ? `<img class="novel-poster" src="${posterSrc}" alt="${esc(d.title)}"
+                 onerror="this.outerHTML='<div class=\\'poster-fallback\\'><span class=\\'poster-fallback-initials\\'>${initials}</span></div>'">`
+            : `<div class="poster-fallback"><span class="poster-fallback-initials">${initials}</span></div>`
+          }
+        </div>
+        <div class="hero-info">
+          <h1 class="hero-title">${esc(d.title)}</h1>
+          ${d.alt_title ? `<p class="hero-alt-title">${esc(d.alt_title)}</p>` : ""}
+          <div class="hero-meta">
+            <span class="meta-chip type">${esc(d.type || "Novel")}</span>
+            ${d.status ? `<span class="meta-chip ${statusClass}">${esc(d.status)}</span>` : ""}
+            ${info.country ? `<span class="meta-chip country">🌏 ${esc(info.country)}</span>` : ""}
           </div>
           ${ratingNum > 0 ? `
-            <div class="rating-row">
-              <span class="stars">${stars}</span>
+            <div class="hero-rating">
+              <span class="stars">${starsHtml}</span>
               <span class="rating-num">${d.rating}</span>
-            </div>` : ""
-          }
+            </div>` : ""}
         </div>
       </div>
     </div>
 
-    <!-- ── Action buttons ── -->
+    <div class="ornament">— ✦ —</div>
+
+    <!-- ACTION BAR -->
     <div class="action-bar">
-      <button class="btn-read" id="btnReadMain" onclick="readMain()">
+      <button class="btn-read" id="btnRead" onclick="readMain()">
         📖 ${allChapters.length > 0 ? "Mulai Baca" : "Belum Ada Chapter"}
       </button>
-      <button class="btn-bookmark-novel" id="btnBookmark" onclick="toggleNovelBookmark()" title="Bookmark">
-        🔖
-      </button>
-      <button class="btn-share" onclick="shareNovel()" title="Bagikan">🔗</button>
+      <button class="btn-icon" id="btnBookmark" onclick="toggleBookmark()" title="Bookmark">🔖</button>
+      <button class="btn-icon" onclick="shareNovel()" title="Bagikan">🔗</button>
     </div>
 
-    <!-- Kategori bookmark (muncul kalau sudah dibookmark) -->
-    <div class="kategori-picker" id="kategoriPicker" style="display:none;padding:0 16px 4px;gap:6px;flex-wrap:wrap;">
-      <button class="kbtn-novel" id="kbtn-favorit"     onclick="setNovelKategori('favorit',this)">❤️ Favorit</button>
-      <button class="kbtn-novel" id="kbtn-lagi_dibaca" onclick="setNovelKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
-      <button class="kbtn-novel" id="kbtn-tamat"       onclick="setNovelKategori('tamat',this)">✅ Tamat</button>
+    <!-- KATEGORI -->
+    <div id="kategoriPicker">
+      <button class="kbtn" id="kbtn-favorit"     onclick="setKategori('favorit',this)">❤️ Favorit</button>
+      <button class="kbtn" id="kbtn-lagi_dibaca" onclick="setKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
+      <button class="kbtn" id="kbtn-tamat"       onclick="setKategori('tamat',this)">✅ Tamat</button>
     </div>
 
-    <!-- Lanjut baca (muncul kalau ada progress) -->
-    <div id="lastReadBar" style="display:none;padding:0 16px 4px;"></div>
+    <!-- LAST READ -->
+    <div id="lastReadBar"></div>
 
-    <!-- ── Info table ── -->
-    <div class="info-section">
-      <div class="info-table">
-        ${info.author    ? infoRow("✍️ Penulis",    escHtml(info.author))    : ""}
-        ${info.published ? infoRow("📅 Terbit",     escHtml(info.published)) : ""}
-        ${info.country   ? infoRow("🌏 Negara",     escHtml(info.country))   : ""}
-        ${info.volume    ? infoRow("📦 Volume",     escHtml(info.volume))    : ""}
-        ${info.total_chapter ? infoRow("📖 Total Chapter", escHtml(info.total_chapter)) : ""}
-        ${infoRow("⭐ Rating", ratingNum > 0 ? `${d.rating} / 5` : "–")}
-      </div>
+    <!-- INFO TABLE -->
+    <div class="section-head">
+      <span class="section-title">Informasi</span>
+    </div>
+    <div class="info-table">
+      ${info.author       ? infoRow("✍️ Penulis",  esc(info.author))        : ""}
+      ${info.published    ? infoRow("📅 Terbit",    esc(info.published))     : ""}
+      ${info.country      ? infoRow("🌏 Negara",    esc(info.country))       : ""}
+      ${info.total_chapter? infoRow("📖 Total",     esc(info.total_chapter)) : ""}
+      ${infoRow("⭐ Rating", ratingNum > 0 ? `${d.rating} / 5.0` : "—")}
     </div>
 
-    <!-- ── Synopsis ── -->
-    <div class="section-head"><h3>📝 Sinopsis</h3></div>
-    <div class="synopsis-box">
-      <p class="synopsis-text" id="synopsisText">${escHtml(d.synopsis || "Tidak ada sinopsis.")}</p>
+    <!-- SYNOPSIS -->
+    <div class="section-head">
+      <span class="section-title">Sinopsis</span>
+    </div>
+    <div class="synopsis-wrap">
+      <p class="synopsis-text" id="synopsisText">${esc(d.synopsis || "Tidak ada sinopsis.")}</p>
       <button class="synopsis-toggle" id="synopsisBtn" onclick="toggleSynopsis()">Baca Selengkapnya ▼</button>
     </div>
 
-    <!-- ── Genre ── -->
+    <!-- GENRE -->
     ${genreHtml ? `
-      <div class="section-head"><h3>🏷️ Genre</h3></div>
-      <div class="chips-row">${genreHtml}</div>` : ""
-    }
+      <div class="section-head"><span class="section-title">Genre</span></div>
+      <div class="chips-row">${genreHtml}</div>` : ""}
 
-    <!-- ── Tags ── -->
+    <!-- TAGS -->
     ${tagHtml ? `
-      <div class="section-head"><h3>🔖 Tags</h3></div>
-      <div class="chips-row">${tagHtml}</div>` : ""
-    }
+      <div class="section-head"><span class="section-title">Label</span></div>
+      <div class="chips-row">${tagHtml}</div>` : ""}
 
-    <!-- ── Chapter list ── -->
+    <!-- CHAPTERS -->
     <div class="section-head">
-      <h3>📚 Daftar Chapter
-        <span style="font-size:12px;font-weight:400;color:var(--text-muted);margin-left:4px;">(${allChapters.length})</span>
-      </h3>
+      <span class="section-title">
+        Daftar Chapter
+        <span style="font-family:'Nunito',sans-serif;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;margin-left:4px;">(${allChapters.length})</span>
+      </span>
       ${allChapters.length > 1
-        ? `<button class="ch-sort-btn" id="sortBtn" onclick="toggleSort()">↑↓ Terlama dulu</button>`
-        : ""
-      }
+        ? `<button class="ch-sort-btn" id="sortBtn" onclick="toggleSort()">↑↓ Terlama</button>`
+        : ""}
     </div>
     ${allChapters.length > 8
       ? `<div class="chapter-search-wrap">
-           <input type="text" class="chapter-search-input"
-             placeholder="🔍 Cari chapter..."
-             oninput="filterChapterList(this.value)">
+           <input type="text" class="chapter-search" placeholder="🔍 Cari chapter..." oninput="filterChapters(this.value)">
          </div>`
-      : ""
-    }
+      : ""}
     ${allChapters.length > 0
-      ? `<div class="novel-chapter-list" id="chapterList"></div>`
-      : `<p style="padding:0 16px 12px;font-size:13px;color:var(--text-muted);">Belum ada chapter tersedia.</p>`
-    }
+      ? `<div class="chapter-list" id="chapterList"></div>`
+      : `<p style="padding:0 16px 16px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--muted);">Belum ada chapter tersedia.</p>`}
 
-    <div class="page-bottom"></div>
+    <div style="height:20px;"></div>
   `;
 
-  /* Set blur background */
+  /* Set blur bg */
   if (d.poster) {
     const bg = document.getElementById("heroBg");
-    if (bg) bg.style.backgroundImage = `url(${proxyImg(d.poster)})`;
+    if (bg) bg.style.backgroundImage = `url(${posterSrc})`;
   }
 
-  /* Render chapter list */
   if (allChapters.length > 0) renderChapterList();
 }
 
-/* ── RENDER CHAPTER LIST ──────────────────────────────────── */
+/* ── CHAPTER LIST ─────────────────────────────────── */
 function renderChapterList(filterQ) {
   const list = document.getElementById("chapterList");
   if (!list) return;
-
   const ordered  = chaptersAsc ? [...allChapters].reverse() : [...allChapters];
   const q        = (filterQ || "").toLowerCase();
-  const filtered = q ? ordered.filter(ch => (ch.title || "").toLowerCase().includes(q)) : ordered;
+  const filtered = q ? ordered.filter(ch => (ch.title||"").toLowerCase().includes(q)) : ordered;
 
   if (!filtered.length) {
-    list.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-muted,#7a6e8a);font-size:13px;">Tidak ada chapter yang cocok.</div>`;
+    list.innerHTML = `<div style="padding:20px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);font-size:14px;">Tidak ada chapter yang cocok.</div>`;
     return;
   }
 
   list.innerHTML = filtered.map((ch) => {
-    const idx      = ordered.indexOf(ch);
-    const num      = chaptersAsc ? idx + 1 : allChapters.length - idx;
-    const title    = ch.title || `Chapter ${num}`;
-    const date     = ch.date  || "";
-    const cSlug    = ch.slug  || "";
-    const isLR     = _lastReadSlug && cSlug === _lastReadSlug;
-    const short    = title.length > 55 ? title.slice(0, 52) + "…" : title;
+    const idx   = ordered.indexOf(ch);
+    const num   = chaptersAsc ? idx + 1 : allChapters.length - idx;
+    const title = ch.title || `Chapter ${num}`;
+    const date  = ch.date  || "";
+    const cSlug = ch.slug  || "";
+    const isLR  = _lastReadSlug && cSlug === _lastReadSlug;
+    const short = title.length > 52 ? title.slice(0, 49) + "…" : title;
 
     return `
-      <div class="novel-chapter-item${isLR ? " chapter-last-read" : ""}"
-           onclick="readChapter('${escHtml(cSlug)}')">
-        <div class="ch-num"${isLR ? ' style="background:rgba(124,58,237,0.25);color:#c4a0ff;"' : ""}>${num}</div>
+      <div class="chapter-item${isLR ? " last-read" : ""}" onclick="readChapter('${esc(cSlug)}')">
+        <div class="ch-num"${isLR ? ' style="background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.5);"' : ""}>${num}</div>
         <div class="ch-info">
-          <div class="ch-title"${isLR ? ' style="color:#c4a0ff;"' : ""}>
-            ${escHtml(short)}
-            ${isLR ? `<span style="font-size:9px;background:rgba(124,58,237,0.2);color:#c4a0ff;
-              padding:1px 6px;border-radius:4px;margin-left:5px;font-weight:800;vertical-align:middle;">▶ Terakhir</span>` : ""}
+          <div class="ch-title"${isLR ? ' style="color:var(--gold-light);"' : ""}>
+            ${esc(short)}
+            ${isLR ? `<span style="font-size:8.5px;background:rgba(201,168,76,0.12);color:var(--gold);padding:1px 6px;border-radius:3px;margin-left:5px;font-weight:800;vertical-align:middle;border:1px solid rgba(201,168,76,0.2);">▶ Terakhir</span>` : ""}
           </div>
-          ${date ? `<div class="ch-date">📅 ${escHtml(date)}</div>` : ""}
+          ${date ? `<div class="ch-date">📅 ${esc(date)}</div>` : ""}
         </div>
-        <button class="ch-read-btn" onclick="event.stopPropagation();readChapter('${escHtml(cSlug)}')">Baca</button>
+        <button class="ch-read-btn" onclick="event.stopPropagation();readChapter('${esc(cSlug)}')">Baca</button>
       </div>`;
   }).join("");
 
-  /* Auto-scroll ke chapter terakhir dibaca */
   if (_lastReadSlug && !q) {
     setTimeout(() => {
-      list.querySelector(".chapter-last-read")?.scrollIntoView({ behavior:"smooth", block:"center" });
+      list.querySelector(".last-read")?.scrollIntoView({ behavior:"smooth", block:"center" });
     }, 300);
   }
 }
 
-window.filterChapterList = function(val) { renderChapterList(val); };
+window.filterChapters = (val) => renderChapterList(val);
 
-/* ── TOGGLE SORT ─────────────────────────────────────────── */
-window.toggleSort = function () {
+window.toggleSort = function() {
   chaptersAsc = !chaptersAsc;
-  const btn   = document.getElementById("sortBtn");
-  if (btn) btn.textContent = chaptersAsc ? "↑↓ Terbaru dulu" : "↑↓ Terlama dulu";
+  const btn = document.getElementById("sortBtn");
+  if (btn) btn.textContent = chaptersAsc ? "↑↓ Terbaru" : "↑↓ Terlama";
   renderChapterList();
 };
 
-/* ── TOGGLE SYNOPSIS ─────────────────────────────────────── */
-window.toggleSynopsis = function () {
+window.toggleSynopsis = function() {
   const text = document.getElementById("synopsisText");
   const btn  = document.getElementById("synopsisBtn");
   const open = text.classList.toggle("expanded");
   if (btn) btn.textContent = open ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
 };
 
-/* ── READ CHAPTER ─────────────────────────────────────────── */
-window.readChapter = function (chapterSlug) {
-  if (!chapterSlug) return;
-  window.location.href = "/baca-novel/"+chapterSlug;
+window.readChapter = (chSlug) => {
+  if (!chSlug) return;
+  window.location.href = "/baca-novel/" + chSlug;
 };
 
-/* ── BOOKMARK FUNCTIONS ────────────────────────────────────── */
+window.readMain = function() {
+  if (_lastReadSlug) { window.location.href = "/baca-novel/" + _lastReadSlug; return; }
+  if (allChapters.length > 0) readChapter(allChapters[allChapters.length - 1].slug);
+};
+
+/* ── BOOKMARK ─────────────────────────────────────── */
 function updateBookmarkUI() {
-  const btn = document.getElementById("btnBookmark");
+  const btn    = document.getElementById("btnBookmark");
   const picker = document.getElementById("kategoriPicker");
   if (!btn) return;
   if (isBookmarked) {
     btn.classList.add("saved");
-    btn.title = "Hapus Bookmark";
-    if (picker) picker.style.display = "flex";
-    /* Highlight kategori aktif */
-    document.querySelectorAll(".kbtn-novel").forEach(b => {
+    if (picker) picker.classList.add("show");
+    document.querySelectorAll(".kbtn").forEach(b => {
       b.classList.toggle("active", b.id === "kbtn-" + currentKategori);
     });
   } else {
     btn.classList.remove("saved");
-    btn.title = "Tambah Bookmark";
-    if (picker) picker.style.display = "none";
+    if (picker) picker.classList.remove("show");
   }
 }
 
-let _lastReadSlug = "";
-
 function updateLastReadUI(lastRead) {
   const bar = document.getElementById("lastReadBar");
-  if (!bar || !lastRead || !lastRead.chapter_slug) return;
-
-  const title    = lastRead.chapter_title || lastRead.chapter_slug || "Chapter";
-  const short    = title.length > 48 ? title.slice(0, 45) + "…" : title;
-  const readDate = lastRead.read_at
-    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", {day:"numeric", month:"short", year:"numeric"})
-    : "";
+  if (!bar || !lastRead?.chapter_slug) return;
+  const title   = lastRead.chapter_title || lastRead.chapter_slug;
+  const short   = title.length > 44 ? title.slice(0, 41) + "…" : title;
+  const dateStr = lastRead.read_at
+    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", { day:"numeric",month:"short",year:"numeric" }) : "";
 
   bar.innerHTML = `
-    <div class="last-read-bar" style="cursor:pointer;" onclick="readChapter('${escHtml(lastRead.chapter_slug)}')">
+    <div class="last-read-card" onclick="readChapter('${esc(lastRead.chapter_slug)}')">
       <div style="flex:1;min-width:0;">
-        <p style="font-size:10px;color:var(--muted,#7a6e8a);font-weight:700;margin:0 0 2px;
-           text-transform:uppercase;letter-spacing:0.5px;">
-          📍 Terakhir Dibaca${readDate ? " · " + readDate : ""}
-        </p>
-        <p style="font-size:13px;font-weight:700;color:var(--text,#ede8f5);margin:0;
-           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          ${escHtml(short)}
-        </p>
+        <div class="last-read-label">📍 Terakhir Dibaca${dateStr ? " · " + dateStr : ""}</div>
+        <div class="last-read-title">${esc(short)}</div>
       </div>
-      <button class="btn-lanjut-novel"
-        onclick="event.stopPropagation();readChapter('${escHtml(lastRead.chapter_slug)}')">
+      <button class="btn-continue" onclick="event.stopPropagation();readChapter('${esc(lastRead.chapter_slug)}')">
         ▶ Lanjut
       </button>
     </div>`;
   bar.style.display = "block";
-
-  /* Set slug untuk highlight di chapter list */
   _lastReadSlug = lastRead.chapter_slug;
 
-  /* Update tombol utama */
-  const btnMain = document.getElementById("btnReadMain");
-  if (btnMain) {
-    btnMain.innerHTML = "▶ Lanjut Baca";
-    btnMain.title = "Lanjut dari: " + title;
-  }
+  const btnMain = document.getElementById("btnRead");
+  if (btnMain) { btnMain.innerHTML = "▶ Lanjut Baca"; }
 
-  /* Re-render chapter list agar highlight langsung muncul */
   if (allChapters.length > 0) renderChapterList();
 }
 
-window.toggleNovelBookmark = async function () {
+window.toggleBookmark = async function() {
   if (!currentUser) { window.location.href = "/masuk"; return; }
-  if (!window._supabase) return;
-
   const btn = document.getElementById("btnBookmark");
   btn.disabled = true;
-
   if (isBookmarked) {
     await window._supabase.removeNovelBookmark(currentUser.id, slug);
     isBookmarked = false;
-    showToast("Bookmark dihapus", "info");
+    toast("Bookmark dihapus", "info");
   } else {
-    const d = novelDataCache;
     await window._supabase.addNovelBookmark(currentUser.id, {
-      slug,
-      title:    d?.title   || slug,
-      cover:    d?.poster  || "",
-      kategori: currentKategori
+      slug, title: novelCache?.title || slug,
+      cover: novelCache?.poster || "", kategori: currentKategori
     });
     isBookmarked = true;
-    showToast("📚 Disimpan ke bookmark!", "success");
+    toast("📚 Disimpan ke bookmark!", "success");
   }
   btn.disabled = false;
   updateBookmarkUI();
 };
 
-window.setNovelKategori = async function (kategori, btnEl) {
-  if (!currentUser || !isBookmarked || !window._supabase) return;
-  currentKategori = kategori;
-  const d = novelDataCache;
+window.setKategori = async function(kat, btn) {
+  if (!currentUser || !isBookmarked) return;
+  currentKategori = kat;
   await window._supabase.addNovelBookmark(currentUser.id, {
-    slug, title: d?.title || slug, cover: d?.poster || "", kategori
+    slug, title: novelCache?.title || slug,
+    cover: novelCache?.poster || "", kategori: kat
   });
-  document.querySelectorAll(".kbtn-novel").forEach(b => b.classList.remove("active"));
-  btnEl.classList.add("active");
+  document.querySelectorAll(".kbtn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
 };
 
-/* readMain: cek apakah ada lastRead, kalau ada lanjut dari sana, kalau tidak mulai dari awal */
-window.readMain = function () {
-  const lastReadBar = document.getElementById("lastReadBar");
-  const lanjutBtn   = lastReadBar?.querySelector(".btn-lanjut-novel");
-  if (lanjutBtn) { lanjutBtn.click(); return; }
-  if (allChapters.length > 0) {
-    readChapter(allChapters[allChapters.length - 1].slug);
-  }
-};
-
-/* ── SHARE ────────────────────────────────────────────────── */
-window.shareNovel = async function () {
-  const url   = window.location.href;
-  const title = document.title;
+window.shareNovel = async function() {
+  const url = window.location.href;
   if (navigator.share) {
-    try { await navigator.share({ title, url }); return; }
-    catch (e) { if (e.name === "AbortError") return; }
+    try { await navigator.share({ title: document.title, url }); return; } catch(e) { if (e.name==="AbortError") return; }
   }
   try {
     await navigator.clipboard.writeText(url);
-    showToast("🔗 Link disalin!", "success");
-  } catch (_) {
+    toast("🔗 Link disalin!", "success");
+  } catch {
     const ta = document.createElement("textarea");
     ta.value = url; ta.style.cssText = "position:fixed;left:-9999px;";
     document.body.appendChild(ta); ta.select();
     document.execCommand("copy"); ta.remove();
-    showToast("🔗 Link disalin!", "success");
+    toast("🔗 Link disalin!", "success");
   }
 };
 
-/* ── NAVIGATE TO GENRE/TAG di novel.html ─────────────────── */
-window.goToGenre = function (slug, name) {
+window.goToGenre = function(sl, name) {
   sessionStorage.setItem("novelFilterType", "genre");
-  sessionStorage.setItem("novelFilterSlug", slug);
+  sessionStorage.setItem("novelFilterSlug", sl);
   sessionStorage.setItem("novelFilterName", name);
   window.location.href = "/novel/";
 };
-window.goToTag = function (slug, name) {
+window.goToTag = function(sl, name) {
   sessionStorage.setItem("novelFilterType", "tag");
-  sessionStorage.setItem("novelFilterSlug", slug);
+  sessionStorage.setItem("novelFilterSlug", sl);
   sessionStorage.setItem("novelFilterName", name);
   window.location.href = "/novel/";
 };
 
-/* ── HELPERS ──────────────────────────────────────────────── */
+/* ── HELPERS ──────────────────────────────────────── */
 function infoRow(label, value) {
   return `<div class="info-row">
     <span class="info-label">${label}</span>
@@ -863,51 +933,49 @@ function infoRow(label, value) {
   </div>`;
 }
 
-function renderStars(rating) {
-  const full  = Math.floor(rating);
-  const half  = rating - full >= 0.5 ? 1 : 0;
-  const empty = 5 - full - half;
+function renderStars(r) {
+  const full = Math.floor(r), half = r - full >= 0.5 ? 1 : 0, empty = 5 - full - half;
   return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(empty);
 }
 
-function escHtml(str) {
-  if (typeof str !== "string") return "";
-  return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-            .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+function esc(str) {
+  return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                        .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 }
 
-function showToast(msg, type = "info") {
+function toast(msg, type = "info") {
   let wrap = document.getElementById("toastWrap");
-  if (!wrap) {
-    wrap = document.createElement("div");
-    wrap.id = "toastWrap";
-    wrap.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:3000;pointer-events:none;";
-    document.body.appendChild(wrap);
-  }
-  const t = document.createElement("div");
-  const bg = type === "success" ? "#27ae60" : type === "error" ? "#e8522a" : "#333";
-  t.style.cssText = `padding:10px 20px;border-radius:99px;font-size:13px;font-weight:700;color:#fff;
-    white-space:nowrap;background:${bg};box-shadow:0 4px 20px rgba(0,0,0,0.4);`;
+  const t  = document.createElement("div");
+  const bg = type === "success" ? "linear-gradient(135deg,#1a5c2e,#27ae60)" :
+             type === "error"   ? "linear-gradient(135deg,#8b1a1a,#c9291c)" :
+             "rgba(30,26,44,0.95)";
+  t.style.cssText = `
+    padding:10px 20px;border-radius:99px;font-size:12px;font-weight:700;color:#fff;
+    background:${bg};box-shadow:0 4px 20px rgba(0,0,0,0.5);margin-top:6px;
+    border:1px solid rgba(255,255,255,0.1);
+    animation:toastIn 0.2s ease;font-family:'Nunito',sans-serif;`;
   t.textContent = msg;
   wrap.appendChild(t);
-  setTimeout(() => t.remove(), 2800);
+  setTimeout(() => t.style.opacity = "0", 2400);
+  setTimeout(() => t.remove(), 2700);
 }
 
-function toggleDarkMode() {
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
-}
+function toggleDarkMode() { document.body.classList.toggle("light-mode"); }
 function toggleMenu() {
   const m = document.getElementById("menuDropdown");
   if (m) m.style.display = m.style.display === "block" ? "none" : "block";
 }
 document.addEventListener("click", e => {
-  const m   = document.getElementById("menuDropdown");
-  const btn = document.querySelector('button[onclick="toggleMenu()"]');
-  if (m && !m.contains(e.target) && !btn?.contains(e.target)) m.style.display = "none";
+  const m = document.getElementById("menuDropdown");
+  const b = document.querySelector('.hbtn[onclick="toggleMenu()"]');
+  if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
 });
+
+const styleEl = document.createElement("style");
+styleEl.textContent = `@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`;
+document.head.appendChild(styleEl);
 </script>
-  <script type="module" src="/global-chat.js"></script>
+<script type="module" src="/global-chat.js"></script>
 <script type="module" src="/tracker.js"></script>
 </body>
 </html>
