@@ -4,300 +4,489 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Baca Novel — Pankomik</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,600&family=Cinzel:wght@400;500;600;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Nunito:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap');
+    /* ═══════════════════════════════════════════════════════
+       PANKOMIK NOVEL READER — PREMIUM READING EXPERIENCE
+       Themes: Dark Ink / Warm Candlelight / Parchment
+    ═══════════════════════════════════════════════════════ */
 
-    /* ── CSS Variables ────────────────────────────────────── */
+    /* ── Theme: Dark (default) ── */
     :root {
-      --bg: #0e0e12; --surface: #18181f; --surface2: #1f1f28;
-      --text: #e8e8f0; --muted: #888899; --border: #2a2a36;
-      --accent: #8e44ad; --accent2: rgba(142,68,173,0.12);
-      --radius: 10px; --header-h: 54px;
-    }
-    body.light {
-      --bg: #f7f5f0; --surface: #ffffff; --surface2: #eeede8;
-      --text: #1a1a1a; --muted: #666; --border: #ddd;
-    }
-    body.sepia {
-      --bg: #f4ece0; --surface: #fdf6ec; --surface2: #ede5d4;
-      --text: #3b2a1a; --muted: #8a6a4a; --border: #d4c4a8;
+      --bg:         #0d0b14;
+      --surface:    #13101e;
+      --surface2:   #1a1728;
+      --text:       #ddd8ee;
+      --text2:      #c4bdd6;
+      --muted:      #6e6480;
+      --border:     rgba(255,255,255,0.06);
+      --border-gold:rgba(201,168,76,0.18);
+      --gold:       #c9a84c;
+      --gold-light: #e8c96a;
+      --gold-dim:   rgba(201,168,76,0.12);
+      --crimson:    #8b1a1a;
+      --accent:     #c9a84c;
+      --header-h:   52px;
+      /* Reader vars */
+      --reader-fs:  17px;
+      --reader-lh:  2.0;
+      --reader-ff:  'Lora', serif;
+      --reader-bg:  #0d0b14;
+      --reader-text:#ddd8ee;
+      --reader-max: 680px;
     }
 
-    * { margin:0; padding:0; box-sizing:border-box; }
+    /* ── Theme: Candlelight ── */
+    body.candlelight {
+      --bg:         #1a1208;
+      --surface:    #221808;
+      --surface2:   #2d2010;
+      --text:       #f0e4c0;
+      --text2:      #d4c090;
+      --muted:      #8a7a55;
+      --border:     rgba(255,230,150,0.1);
+      --border-gold:rgba(201,168,76,0.25);
+      --reader-bg:  #1a1208;
+      --reader-text:#f0e4c0;
+    }
+
+    /* ── Theme: Parchment ── */
+    body.parchment {
+      --bg:         #f5eedc;
+      --surface:    #fdf6e3;
+      --surface2:   #ede5cc;
+      --text:       #2c1f0e;
+      --text2:      #5c4020;
+      --muted:      #9a7a50;
+      --border:     rgba(100,70,30,0.12);
+      --border-gold:rgba(139,104,34,0.3);
+      --gold:       #8b6822;
+      --gold-light: #a07828;
+      --gold-dim:   rgba(139,104,34,0.1);
+      --reader-bg:  #f5eedc;
+      --reader-text:#2c1f0e;
+    }
+
+    /* ── Theme: Night Blue ── */
+    body.nightblue {
+      --bg:         #070c1a;
+      --surface:    #0d1424;
+      --surface2:   #121c30;
+      --text:       #c8d8f0;
+      --text2:      #90a8cc;
+      --muted:      #4a5a7a;
+      --border:     rgba(100,150,255,0.08);
+      --border-gold:rgba(100,150,255,0.15);
+      --gold:       #6090d0;
+      --gold-light: #80aae0;
+      --gold-dim:   rgba(100,150,255,0.1);
+      --reader-bg:  #070c1a;
+      --reader-text:#c8d8f0;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
     html { scroll-behavior: smooth; }
 
     body {
-      background: var(--bg); color: var(--text);
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Nunito', sans-serif;
-      transition: background 0.3s, color 0.3s;
+      transition: background 0.4s, color 0.4s;
       overscroll-behavior: none;
     }
 
-    /* ── Progress bar ─────────────────────────────────────── */
-    #readingProgressBar {
-      position: fixed; top: 0; left: 0; height: 3px; width: 0%;
-      background: linear-gradient(90deg, #8e44ad, #d4a0ff);
-      z-index: 1100; transition: width 0.15s linear;
+    /* ── READING PROGRESS BAR ─────────────────────────────── */
+    #progressBar {
+      position: fixed; top: 0; left: 0; height: 2px; width: 0%;
+      background: linear-gradient(90deg, var(--crimson), var(--gold), var(--gold-light));
+      z-index: 1100; transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(201,168,76,0.4);
     }
 
-    /* ── Header ───────────────────────────────────────────── */
+    /* ── HEADER ───────────────────────────────────────────── */
     .reader-header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 999;
       height: var(--header-h);
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 14px; gap: 8px;
-      background: rgba(14,14,18,0.92);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(255,255,255,0.07);
+      padding: 0 12px; gap: 8px;
+      background: rgba(13,11,20,0.94);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-gold);
       transition: transform 0.3s ease, opacity 0.3s ease;
     }
-    body.light .reader-header {
-      background: rgba(247,245,240,0.92);
-      border-bottom-color: var(--border);
+    body.parchment .reader-header {
+      background: rgba(245,238,220,0.94);
     }
-    body.sepia .reader-header {
-      background: rgba(244,236,224,0.92);
-      border-bottom-color: var(--border);
+    body.candlelight .reader-header {
+      background: rgba(26,18,8,0.94);
+    }
+    body.nightblue .reader-header {
+      background: rgba(7,12,26,0.94);
     }
     .reader-header.hide { transform: translateY(-100%); opacity: 0; pointer-events: none; }
 
     .header-back {
-      background: none; border: none; color: var(--text);
-      font-size: 20px; cursor: pointer; padding: 4px; line-height: 1;
-      flex-shrink: 0;
+      width: 34px; height: 34px; border-radius: 7px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      color: var(--muted); font-size: 16px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0;
     }
+    .header-back:hover { background: var(--gold-dim); border-color: var(--border-gold); color: var(--gold); }
+
     .header-title {
-      flex: 1; font-size: 12px; font-weight: 700; color: var(--muted);
+      flex: 1; font-family: 'Cormorant Garamond', serif;
+      font-size: 13px; font-weight: 500; font-style: italic;
+      color: var(--muted); text-align: center;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      text-align: center;
     }
-    .header-btns { display: flex; gap: 4px; flex-shrink: 0; }
+
+    .header-btns { display: flex; gap: 5px; flex-shrink: 0; }
     .hbtn {
-      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
-      color: var(--text); padding: 6px 9px; border-radius: 8px; cursor: pointer;
-      font-size: 14px; font-family: 'Nunito', sans-serif;
-      transition: background 0.15s, transform 0.1s;
+      width: 34px; height: 34px; border-radius: 7px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      color: var(--muted); font-size: 14px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
     }
-    .hbtn:hover  { background: rgba(255,255,255,0.15); }
-    .hbtn:active { transform: scale(0.9); }
+    .hbtn:hover { background: var(--gold-dim); border-color: var(--border-gold); color: var(--gold); }
 
-    /* ── Settings Panel ───────────────────────────────────── */
+    /* ── SETTINGS PANEL ───────────────────────────────────── */
     .settings-panel {
-      position: fixed; right: 10px; top: 62px; z-index: 1000;
-      width: 230px; padding: 16px;
-      background: rgba(20,20,28,0.97); backdrop-filter: blur(16px);
-      border: 1px solid rgba(255,255,255,0.1); border-radius: 14px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      display: none; animation: popIn 0.15s ease;
+      position: fixed; right: 10px; top: 60px; z-index: 1000;
+      width: 240px; padding: 18px;
+      background: rgba(13,11,20,0.97);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border-gold);
+      border-radius: 14px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.05) inset;
+      display: none;
+      animation: panelIn 0.18s ease;
     }
-    body.light .settings-panel { background: rgba(255,255,255,0.97); border-color: var(--border); }
-    body.sepia .settings-panel { background: rgba(253,246,236,0.97); border-color: var(--border); }
+    body.parchment .settings-panel { background: rgba(245,238,220,0.97); }
     .settings-panel.open { display: block; }
-    @keyframes popIn { from{opacity:0;transform:scale(0.94) translateY(-6px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    @keyframes panelIn {
+      from { opacity:0; transform: scale(0.95) translateY(-6px); }
+      to   { opacity:1; transform: scale(1) translateY(0); }
+    }
+    .settings-heading {
+      font-family: 'Cinzel', serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 2px;
+      color: var(--gold); text-transform: uppercase; margin-bottom: 16px;
+      padding-bottom: 10px; border-bottom: 1px solid var(--border-gold);
+    }
+    .settings-label {
+      font-size: 9.5px; font-weight: 800; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px; margin: 14px 0 7px;
+    }
 
-    .settings-title { font-size: 13px; font-weight: 800; color: var(--accent); margin-bottom: 14px; }
-    .settings-label { font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 6px; }
-
-    /* Font size control */
-    .font-size-row { display: flex; align-items: center; gap: 8px; }
-    .font-size-row button {
-      width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--surface2); color: var(--text); font-size: 16px;
+    /* Font size row */
+    .fs-row { display: flex; align-items: center; gap: 8px; }
+    .fs-btn {
+      width: 30px; height: 30px; border-radius: 7px;
+      border: 1px solid var(--border-gold);
+      background: var(--gold-dim); color: var(--gold); font-size: 16px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      transition: background 0.15s;
+      transition: all 0.15s; flex-shrink: 0;
     }
-    .font-size-row button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .font-size-num { flex: 1; text-align: center; font-size: 14px; font-weight: 800; }
+    .fs-btn:hover { background: rgba(201,168,76,0.25); }
+    .fs-num { flex: 1; text-align: center; font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600; color: var(--text); }
 
-    /* Font family toggle */
-    .font-btns { display: flex; gap: 6px; }
-    .font-btn {
-      flex: 1; padding: 7px; border-radius: 8px; border: 1px solid var(--border);
-      background: var(--surface2); color: var(--muted);
-      font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
-      cursor: pointer; text-align: center; transition: all 0.15s;
-    }
-    .font-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-    /* Theme buttons */
-    .theme-btns { display: flex; gap: 6px; }
-    .theme-btn {
-      flex: 1; padding: 7px; border-radius: 8px; border: 2px solid var(--border);
-      font-size: 11px; font-weight: 800; cursor: pointer; text-align: center;
-      transition: border-color 0.15s;
-    }
-    .theme-btn.dark   { background: #0e0e12; color: #eaeaf0; }
-    .theme-btn.light  { background: #f7f5f0; color: #1a1a1a; }
-    .theme-btn.sepia  { background: #f4ece0; color: #3b2a1a; }
-    .theme-btn.active { border-color: var(--accent); }
-
-    /* Line height */
-    .lh-slider { width: 100%; accent-color: var(--accent); }
-
-    /* ── Reader content area ──────────────────────────────── */
-    #readerWrap {
-      margin-top: var(--header-h);
-      min-height: calc(100vh - var(--header-h));
-      padding-bottom: 80px;
-    }
-
-    .chapter-head {
-      padding: 24px 20px 16px;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .chapter-head .novel-label {
-      font-size: 11px; font-weight: 800; color: var(--accent);
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;
-    }
-    .chapter-head h2 {
-      font-size: 16px; font-weight: 800; line-height: 1.4; color: var(--text);
-      margin-bottom: 8px;
-    }
-    .chapter-head .nav-pills {
-      display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px;
-    }
-    .nav-pill {
-      padding: 5px 12px; border-radius: 99px; border: 1px solid var(--border);
-      background: var(--surface2); color: var(--muted);
-      font-size: 11px; font-weight: 700; cursor: pointer; text-decoration: none;
-      display: inline-block;
-      transition: background 0.15s, color 0.15s, border-color 0.15s;
-    }
-    .nav-pill:hover, .nav-pill.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
-
-    /* ── Novel text content ───────────────────────────────── */
-    #novelContent {
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 24px 20px 32px;
-    }
-
-    #novelContent p {
-      margin-bottom: 1em;
-      color: var(--text);
-      line-height: var(--lh, 1.9);
-      font-size: var(--fs, 16px);
-      font-family: var(--ff, 'Nunito', sans-serif);
-      transition: font-size 0.2s, line-height 0.2s;
-    }
-
-    #novelContent p:empty { margin-bottom: 0.4em; }
-
-    #novelContent b, #novelContent strong { font-weight: 800; }
-    #novelContent i, #novelContent em     { font-style: italic; }
-
-    /* ── Bottom navigation bar (prev/next chapter) ────────── */
-    .chapter-nav-bar {
-      display: flex; gap: 8px; padding: 12px 16px;
-      border-top: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .cnav-btn {
-      flex: 1; padding: 12px; border-radius: 10px; border: 1.5px solid var(--border);
-      background: var(--surface2); color: var(--text);
-      font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 800;
-      cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
-    }
-    .cnav-btn:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); color: #fff; }
-    .cnav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .cnav-btn.primary  { background: var(--accent); border-color: var(--accent); color: #fff; flex: 2; }
-    .cnav-btn.primary:hover { background: #7d3c98; }
-
-    /* ── Loading & Error states ───────────────────────────── */
-    .reader-loading {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 60vh; gap: 16px; color: var(--muted);
-    }
-    .reader-spinner {
-      width: 40px; height: 40px;
-      border: 3px solid rgba(142,68,173,0.2);
-      border-top-color: var(--accent);
-      border-radius: 50%; animation: spin 0.8s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .reader-error {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 60vh; gap: 12px;
-      color: var(--muted); text-align: center; padding: 20px;
-    }
-
-    /* ── Toast ────────────────────────────────────────────── */
-    #toastWrap {
-      position: fixed; bottom: 24px; left: 50%;
-      transform: translateX(-50%); z-index: 3000;
-      pointer-events: none;
-    }
-    .toast-item {
-      padding: 10px 20px; border-radius: 99px; font-size: 13px;
-      font-weight: 700; color: #fff; white-space: nowrap;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-      animation: toastIn 0.25s ease; margin-top: 6px;
+    /* Font btns */
+    .ff-btns { display: flex; gap: 5px; }
+    .ff-btn {
+      flex: 1; padding: 7px 4px; border-radius: 7px;
+      border: 1px solid var(--border-gold);
+      background: transparent; color: var(--muted);
+      font-size: 11px; font-weight: 700; cursor: pointer;
+      text-align: center; transition: all 0.15s;
       font-family: 'Nunito', sans-serif;
     }
-    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    .ff-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold-light); }
+    .ff-btn:hover:not(.active) { border-color: var(--border-gold); color: var(--text2); }
 
-    /* ── Chapter List Panel ──────────────────────────────── */
-    .ch-panel-overlay {
+    /* Theme btns */
+    .theme-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+    .theme-btn {
+      padding: 8px 6px; border-radius: 7px;
+      border: 2px solid var(--border);
+      font-size: 10px; font-weight: 800; cursor: pointer;
+      text-align: center; transition: border-color 0.15s;
+      font-family: 'Nunito', sans-serif;
+    }
+    .theme-btn.t-dark        { background: #0d0b14; color: #ddd8ee; }
+    .theme-btn.t-candlelight { background: #1a1208; color: #f0e4c0; }
+    .theme-btn.t-parchment   { background: #f5eedc; color: #2c1f0e; }
+    .theme-btn.t-nightblue   { background: #070c1a; color: #c8d8f0; }
+    .theme-btn.active { border-color: var(--gold) !important; }
+
+    /* Line height slider */
+    .lh-slider {
+      width: 100%; height: 4px;
+      -webkit-appearance: none; appearance: none;
+      background: var(--border-gold);
+      border-radius: 99px; outline: none; cursor: pointer;
+    }
+    .lh-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--gold); cursor: pointer;
+      box-shadow: 0 0 8px rgba(201,168,76,0.4);
+    }
+
+    /* ── CHAPTER PANEL ────────────────────────────────────── */
+    .ch-overlay {
       display: none; position: fixed; inset: 0;
-      z-index: 1499; background: rgba(0,0,0,0.55);
+      z-index: 1499; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(2px);
     }
-    .ch-panel-overlay.open { display: block; }
-
+    .ch-overlay.open { display: block; }
     .ch-panel {
-      position: fixed; top: 0; left: -320px; width: 300px; height: 100vh;
+      position: fixed; top: 0; left: -310px; width: 290px; height: 100vh;
       z-index: 1500; display: flex; flex-direction: column;
-      background: rgba(14,14,20,0.98); backdrop-filter: blur(16px);
-      border-right: 1px solid rgba(255,255,255,0.08);
-      box-shadow: 4px 0 28px rgba(0,0,0,0.6);
-      transition: left 0.3s ease;
+      background: rgba(13,11,20,0.99);
+      border-right: 1px solid var(--border-gold);
+      box-shadow: 4px 0 32px rgba(0,0,0,0.7);
+      transition: left 0.32s cubic-bezier(.25,.46,.45,.94);
     }
+    body.parchment .ch-panel { background: rgba(245,238,220,0.99); }
     .ch-panel.open { left: 0; }
-    body.light .ch-panel { background: rgba(248,248,252,0.98); }
 
     .ch-panel-head {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 16px; flex-shrink: 0;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      background: rgba(142,68,173,0.12);
+      padding: 16px;
+      border-bottom: 1px solid var(--border-gold);
+      flex-shrink: 0;
     }
-    .ch-panel-head h3 { font-size: 14px; font-weight: 800; color: #8e44ad; margin: 0; }
+    .ch-panel-head-title {
+      font-family: 'Cinzel', serif;
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 2px; color: var(--gold); text-transform: uppercase;
+    }
     .ch-panel-close {
-      width: 28px; height: 28px; border-radius: 8px;
-      background: rgba(255,255,255,0.08); border: none;
-      color: var(--text, #eaeaf0); font-size: 14px; cursor: pointer;
+      width: 28px; height: 28px; border-radius: 7px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 13px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
     }
+    .ch-panel-close:hover { border-color: var(--border-gold); color: var(--gold); }
 
-    .ch-panel-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+    .ch-panel-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+    .ch-panel-list::-webkit-scrollbar { width: 3px; }
+    .ch-panel-list::-webkit-scrollbar-thumb { background: var(--border-gold); }
 
     .ch-panel-item {
       display: flex; justify-content: space-between; align-items: center;
-      padding: 10px 16px; cursor: pointer; font-size: 13px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
+      padding: 11px 16px; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
       transition: background 0.15s;
     }
-    .ch-panel-item:hover  { background: rgba(255,255,255,0.05); }
-    .ch-panel-item.active { background: rgba(142,68,173,0.18); color: #8e44ad; font-weight: 700; }
-    .ch-panel-item-title  { flex: 1; font-weight: 600; color: var(--text, #eaeaf0); }
-    .ch-panel-item.active .ch-panel-item-title { color: #8e44ad; }
-    .ch-panel-item-date   { font-size: 11px; color: #666; flex-shrink: 0; margin-left: 8px; }
-    .ch-panel-badge       { font-size: 12px; flex-shrink: 0; margin-left: 4px; }
+    .ch-panel-item:hover { background: rgba(201,168,76,0.04); }
+    .ch-panel-item.active { background: rgba(201,168,76,0.07); }
+    .ch-panel-item-title {
+      flex: 1; font-family: 'Cormorant Garamond', serif;
+      font-size: 13.5px; font-weight: 500; color: var(--text2);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .ch-panel-item.active .ch-panel-item-title { color: var(--gold-light); font-weight: 600; }
+    .ch-panel-item-badge { font-size: 12px; flex-shrink: 0; margin-left: 8px; }
+    .ch-panel-date { font-size: 10px; color: var(--muted); margin-left: 8px; flex-shrink: 0; }
+
+    /* ── MAIN READER ──────────────────────────────────────── */
+    #readerWrap {
+      min-height: 100vh;
+      padding-top: var(--header-h);
+    }
+
+    /* Chapter head */
+    .chapter-head {
+      padding: 32px 20px 24px;
+      border-bottom: 1px solid var(--border-gold);
+      background: var(--surface);
+      text-align: center; position: relative;
+    }
+    .chapter-head::before {
+      content: '— ✦ —';
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px; letter-spacing: 6px;
+      color: var(--gold); opacity: 0.4;
+      display: block; margin-bottom: 16px;
+    }
+    .chapter-novel-label {
+      font-family: 'Cinzel', serif;
+      font-size: 10px; font-weight: 600; letter-spacing: 3px;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 10px; display: block; opacity: 0.7;
+    }
+    .chapter-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 20px; font-weight: 700; line-height: 1.3;
+      color: var(--text); margin-bottom: 16px;
+    }
+    .chapter-head::after {
+      content: '— ✦ —';
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 11px; letter-spacing: 6px;
+      color: var(--gold); opacity: 0.4;
+      display: block; margin-top: 16px;
+    }
+
+    /* Nav pills */
+    .nav-pills {
+      display: flex; gap: 6px; flex-wrap: wrap; justify-content: center;
+    }
+    .nav-pill {
+      padding: 6px 14px; border-radius: 99px;
+      border: 1px solid var(--border-gold);
+      background: var(--gold-dim); color: var(--gold);
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px; font-weight: 700; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      transition: all 0.2s;
+    }
+    .nav-pill:hover, .nav-pill.primary {
+      background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(139,26,26,0.15));
+      border-color: rgba(201,168,76,0.4);
+    }
+
+    /* ── NOVEL TEXT ───────────────────────────────────────── */
+    #novelContent {
+      max-width: var(--reader-max);
+      margin: 0 auto;
+      padding: 36px 22px 40px;
+    }
+    #novelContent p {
+      margin-bottom: 1.1em;
+      color: var(--reader-text);
+      line-height: var(--reader-lh);
+      font-size: var(--reader-fs);
+      font-family: var(--reader-ff);
+      transition: font-size 0.2s, line-height 0.2s, font-family 0.2s;
+      text-align: justify;
+      hyphens: auto;
+    }
+    /* First paragraph drop cap */
+    #novelContent > p:first-of-type::first-letter {
+      font-family: 'Cinzel', serif;
+      font-size: calc(var(--reader-fs) * 3.2);
+      font-weight: 700;
+      float: left;
+      line-height: 0.8;
+      margin-right: 6px;
+      margin-top: 4px;
+      color: var(--gold);
+      text-shadow: 0 0 20px rgba(201,168,76,0.3);
+    }
+    #novelContent p:empty { margin-bottom: 0.4em; }
+    #novelContent b, #novelContent strong { font-weight: 700; }
+    #novelContent i, #novelContent em { font-style: italic; }
+    #novelContent hr {
+      border: none; border-top: 1px solid var(--border-gold);
+      margin: 28px auto; width: 60%;
+    }
+
+    /* Chapter ornament between paragraphs */
+    .chapter-break {
+      text-align: center;
+      padding: 8px 0;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 12px; letter-spacing: 6px;
+      color: var(--gold); opacity: 0.3;
+    }
+
+    /* ── BOTTOM NAV ───────────────────────────────────────── */
+    .chapter-nav {
+      display: flex; gap: 8px; padding: 14px 16px 30px;
+      border-top: 1px solid var(--border-gold);
+      background: var(--surface);
+    }
+    .cnav-btn {
+      flex: 1; padding: 13px; border-radius: 8px;
+      border: 1px solid var(--border-gold);
+      background: var(--gold-dim); color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+      cursor: pointer; transition: all 0.25s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .cnav-btn:hover:not(:disabled) {
+      background: rgba(201,168,76,0.22);
+      box-shadow: 0 0 20px rgba(201,168,76,0.1);
+    }
+    .cnav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .cnav-btn.primary {
+      flex: 2;
+      background: linear-gradient(135deg, #8b1a1a, #c9291c);
+      border-color: transparent; color: #fff;
+      box-shadow: 0 4px 16px rgba(139,26,26,0.35);
+    }
+    .cnav-btn.primary:hover:not(:disabled) {
+      box-shadow: 0 6px 24px rgba(139,26,26,0.5);
+      transform: translateY(-1px);
+    }
+
+    /* ── LOADING & ERROR ──────────────────────────────────── */
+    .reader-loading {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 70vh; gap: 20px; color: var(--muted);
+    }
+    .loading-ornament {
+      font-family: 'Cinzel', serif;
+      font-size: 12px; letter-spacing: 4px; color: var(--gold); opacity: 0.5;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:0.7} }
+    .loading-spinner {
+      width: 36px; height: 36px;
+      border: 2px solid rgba(201,168,76,0.15);
+      border-top-color: var(--gold);
+      border-radius: 50%; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── TOAST ────────────────────────────────────────────── */
+    #toastWrap {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%); z-index: 3000;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast-item {
+      padding: 10px 20px; border-radius: 99px;
+      font-size: 12px; font-weight: 700; color: #fff;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      margin-top: 6px; font-family: 'Nunito', sans-serif;
+      border: 1px solid rgba(255,255,255,0.1);
+      animation: toastIn 0.2s ease;
+    }
+    @keyframes toastIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── SCROLLBAR ────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border-gold); border-radius: 99px; }
+
+    /* ── COMMENT SECTION ──────────────────────────────────── */
+    #novelReaderCommentSection {
+      max-width: var(--reader-max);
+      margin: 0 auto;
+      padding: 0 20px 40px;
+    }
   </style>
 </head>
 <body>
 
 <!-- Progress bar -->
-<div id="readingProgressBar"></div>
+<div id="progressBar"></div>
 
 <!-- Header -->
 <div class="reader-header" id="readerHeader">
   <button class="header-back" onclick="goBack()">←</button>
   <span class="header-title" id="headerTitle">Memuat...</span>
   <div class="header-btns">
-    <button class="hbtn" onclick="toggleChapterPanel()" title="Daftar Chapter">📚</button>
+    <button class="hbtn" onclick="toggleChPanel()" title="Daftar Chapter">📚</button>
     <button class="hbtn" onclick="toggleSettings()" title="Pengaturan">⚙️</button>
     <button class="hbtn" onclick="goToDetail()" title="Detail Novel">📋</button>
   </div>
@@ -305,75 +494,74 @@
 
 <!-- Settings Panel -->
 <div class="settings-panel" id="settingsPanel">
-  <div class="settings-title">⚙️ Pengaturan Baca</div>
+  <div class="settings-heading">✦ Pengaturan Baca</div>
 
   <div class="settings-label">Ukuran Teks</div>
-  <div class="font-size-row">
-    <button onclick="changeFontSize(-1)">−</button>
-    <span class="font-size-num" id="fontSizeNum">16px</span>
-    <button onclick="changeFontSize(1)">＋</button>
+  <div class="fs-row">
+    <button class="fs-btn" onclick="changeFontSize(-1)">−</button>
+    <span class="fs-num" id="fsNum">17px</span>
+    <button class="fs-btn" onclick="changeFontSize(1)">＋</button>
   </div>
 
-  <div class="settings-label">Font</div>
-  <div class="font-btns">
-    <button class="font-btn active" id="fb-nunito"     onclick="setFont('Nunito')">Sans</button>
-    <button class="font-btn"        id="fb-merriweather" onclick="setFont('Merriweather')">Serif</button>
+  <div class="settings-label">Tipografi</div>
+  <div class="ff-btns">
+    <button class="ff-btn" id="ff-lora" onclick="setFont('Lora')">Lora</button>
+    <button class="ff-btn" id="ff-cormorant" onclick="setFont('Cormorant')">Crmt</button>
+    <button class="ff-btn" id="ff-nunito" onclick="setFont('Nunito')">Sans</button>
   </div>
 
   <div class="settings-label">Jarak Baris</div>
-  <input class="lh-slider" type="range" id="lhSlider" min="1.4" max="3.0" step="0.1" value="1.9"
+  <input type="range" class="lh-slider" id="lhSlider"
+    min="1.5" max="3.0" step="0.1" value="2.0"
     oninput="setLineHeight(this.value)">
 
   <div class="settings-label">Tema</div>
   <div class="theme-btns">
-    <button class="theme-btn dark  active" id="theme-dark"  onclick="setTheme('dark')">🌙 Gelap</button>
-    <button class="theme-btn light"        id="theme-light" onclick="setTheme('light')">☀️ Terang</button>
-    <button class="theme-btn sepia"        id="theme-sepia" onclick="setTheme('sepia')">📜 Sepia</button>
+    <button class="theme-btn t-dark        active" id="t-dark"        onclick="setTheme('dark')">🌙 Gelap</button>
+    <button class="theme-btn t-candlelight"        id="t-candlelight" onclick="setTheme('candlelight')">🕯️ Lilin</button>
+    <button class="theme-btn t-parchment"          id="t-parchment"   onclick="setTheme('parchment')">📜 Perkamen</button>
+    <button class="theme-btn t-nightblue"          id="t-nightblue"   onclick="setTheme('nightblue')">🔵 Malam</button>
   </div>
 </div>
 
-<!-- Reader wrap -->
+<!-- Chapter panel overlay -->
+<div class="ch-overlay" id="chOverlay" onclick="toggleChPanel()"></div>
 
-<!-- Chapter List Overlay -->
-<div class="ch-panel-overlay" id="chPanelOverlay" onclick="toggleChapterPanel()"></div>
-
-<!-- Chapter List Panel -->
+<!-- Chapter list panel -->
 <div class="ch-panel" id="chPanel">
   <div class="ch-panel-head">
-    <h3>📚 Daftar Chapter</h3>
-    <button class="ch-panel-close" onclick="toggleChapterPanel()">✕</button>
+    <span class="ch-panel-head-title">Daftar Chapter</span>
+    <button class="ch-panel-close" onclick="toggleChPanel()">✕</button>
   </div>
   <div class="ch-panel-list" id="chPanelList">
-    <div style="padding:20px;text-align:center;color:#888;font-size:13px;">Memuat...</div>
+    <div style="padding:20px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);font-size:14px;">Memuat...</div>
   </div>
 </div>
 
+<!-- Reader -->
 <div id="readerWrap">
   <div class="reader-loading">
-    <div class="reader-spinner"></div>
-    <p>Memuat chapter...</p>
+    <div class="loading-ornament">— ✦ —</div>
+    <div class="loading-spinner"></div>
+    <div class="loading-ornament">Membuka halaman...</div>
   </div>
 </div>
 
-<!-- ── Komentar Chapter Novel ────────────────────────────── -->
-<div id="novelReaderCommentSection"
-  style="max-width:780px;margin:0 auto;"></div>
+<!-- Comments -->
+<div id="novelReaderCommentSection"></div>
 
-<!-- Toast container -->
 <div id="toastWrap"></div>
 
 <script type="module">
   import { getCurrentUser, saveNovelHistory, updateNovelProgress } from "/supabase.js";
   import { initComments } from "/comment-system.js";
   window._novelAuth = { getCurrentUser, saveNovelHistory, updateNovelProgress };
-
-  /* Expose initComments untuk dipanggil dari script biasa */
-  window._initNovelChapterComments = async function(chSlug) {
+  window._initChComments = async function(chSlug) {
     const user = await getCurrentUser();
     await initComments({
-      containerId : "novelReaderCommentSection",
-      contentSlug : `novel-chapter:${chSlug}`,
-      accentColor : "#8e44ad",
+      containerId: "novelReaderCommentSection",
+      contentSlug: `novel-chapter:${chSlug}`,
+      accentColor: "#c9a84c",
       user,
     });
   };
@@ -381,34 +569,34 @@
 
 <script>
 /* ============================================================
-   novel-reader.html
+   NOVEL READER — Premium redesign
    API: GET /novel/sakuranovel/read/{chapter-slug}
-   JSON: { data: { title, content (HTML), navigation: { prev_slug, next_slug, parent_slug } } }
    ============================================================ */
 
-const BASE        = "https://www.sankavollerei.com/novel/sakuranovel/read";
+const BASE = "https://www.sankavollerei.com/novel/sakuranovel/read";
+
 function getChapterSlug() {
   const m = window.location.pathname.match(/^\/baca-novel\/([^/]+)\/?$/);
   if (m) return m[1];
   return new URLSearchParams(window.location.search).get("slug");
 }
 const chapterSlug = getChapterSlug();
-if (!chapterSlug) window.location.href = "novel.html";
+if (!chapterSlug) window.location.href = "/novel/";
 
-/* ── State ─────────────────────────────────────────────────── */
-let currentSlug   = chapterSlug;
-let navigation    = {};
-let currentUser   = null;
-let historySaved  = false;
-let parentSlug    = null;
+/* ── State ─────────────────────────────────────────── */
+let currentSlug  = chapterSlug;
+let navigation   = {};
+let currentUser  = null;
+let historySaved = false;
+let parentSlug   = null;
 
-/* ── Settings state ─────────────────────────────────────────── */
-let fontSize   = parseInt(localStorage.getItem("nv_fs")   || "16");
-let fontFamily = localStorage.getItem("nv_ff")             || "Nunito";
-let lineHeight = parseFloat(localStorage.getItem("nv_lh") || "1.9");
-let theme      = localStorage.getItem("nv_theme")          || "dark";
+/* ── Settings ───────────────────────────────────────── */
+let fontSize   = parseInt(localStorage.getItem("nv_fs")  || "17");
+let fontFamily = localStorage.getItem("nv_ff")            || "Lora";
+let lineHeight = parseFloat(localStorage.getItem("nv_lh") || "2.0");
+let theme      = localStorage.getItem("nv_theme")         || "dark";
 
-/* ── INIT ─────────────────────────────────────────────────── */
+/* ── INIT ─────────────────────────────────────────── */
 window.addEventListener("DOMContentLoaded", async () => {
   applySettings(false);
   initProgressBar();
@@ -416,35 +604,31 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   await new Promise(r => setTimeout(r, 80));
   if (window._novelAuth) currentUser = await window._novelAuth.getCurrentUser();
-
   await loadChapter(currentSlug);
 });
 
-/* ── FETCH & RENDER ────────────────────────────────────────── */
-async function loadChapter(slug, append = false) {
-  if (!append) {
-    document.getElementById("readerWrap").innerHTML = `
-      <div class="reader-loading">
-        <div class="reader-spinner"></div>
-        <p>Memuat chapter...</p>
-      </div>`;
-    historySaved = false;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    const bar = document.getElementById("readingProgressBar");
-    if (bar) { bar.style.width = "0%"; bar.style.background = "linear-gradient(90deg,#8e44ad,#d4a0ff)"; }
-  }
+/* ── FETCH & RENDER ──────────────────────────────── */
+async function loadChapter(slug) {
+  document.getElementById("readerWrap").innerHTML = `
+    <div class="reader-loading">
+      <div class="loading-ornament">— ✦ —</div>
+      <div class="loading-spinner"></div>
+      <div class="loading-ornament">Membuka halaman...</div>
+    </div>`;
+  historySaved = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  document.getElementById("progressBar").style.width = "0%";
 
   try {
     const res  = await fetch(`${BASE}/${slug}`);
     const json = await res.json();
     if (!json.data) throw new Error("No data");
 
-    const d  = json.data;
-    navigation  = d.navigation || {};
-    parentSlug  = navigation.parent_slug || null;
+    const d    = json.data;
+    navigation = d.navigation || {};
+    parentSlug = navigation.parent_slug || null;
     currentSlug = slug;
 
-    /* Track chapter baru (SPA — tidak reload) */
     if (window.trackNow) window.trackNow();
 
     document.title = (d.title || "Baca Novel") + " — Pankomik";
@@ -452,83 +636,72 @@ async function loadChapter(slug, append = false) {
 
     renderChapter(d);
 
-    /* Init komentar untuk chapter ini */
-    if (typeof window._initNovelChapterComments === "function") {
-      window._initNovelChapterComments(slug);
-    }
+    /* Update chapter panel active state */
+    renderChPanelActive();
 
-    /* Auto-save riwayat */
+    /* Init comments */
+    if (typeof window._initChComments === "function") window._initChComments(slug);
+
+    /* Save history */
     if (currentUser && !historySaved && window._novelAuth) {
       historySaved = true;
-      const _novelSlug  = parentSlug || chapterSlug;
-      const _novelTitle = extractNovelTitle(d.title || "");
-      const _chTitle    = d.title || chapterSlug;
+      const novelSlug  = parentSlug || chapterSlug;
+      const novelTitle = extractNovelTitle(d.title || "");
+      const chTitle    = d.title || chapterSlug;
 
       window._novelAuth.saveNovelHistory(currentUser.id, {
-        slug:  _novelSlug,
-        title: _novelTitle,
-        cover: d.cover || ""
+        slug: novelSlug, title: novelTitle, cover: d.cover || ""
       }, {
-        slug:  chapterSlug,
-        title: _chTitle
+        slug: chapterSlug, title: chTitle
       }).catch(console.error);
 
-      /* Update progress novel */
-      window._novelAuth.updateNovelProgress(currentUser.id, {
-        slug:             _novelSlug,
-        title:            _novelTitle,
-        cover:            d.cover || "",
-        lastChapterSlug:  chapterSlug
-      }, _chTitle).catch(console.error);
+      window._novelAuth.updateNovelProgress?.(currentUser.id, {
+        slug: novelSlug, title: novelTitle, cover: d.cover || "",
+        lastChapterSlug: chapterSlug
+      }, chTitle).catch(console.error);
     }
-
   } catch (err) {
-    console.error("Gagal load chapter:", err);
+    console.error(err);
     document.getElementById("readerWrap").innerHTML = `
-      <div class="reader-error">
-        <p style="font-size:40px">😕</p>
-        <p>Gagal memuat chapter. Cek koneksimu.</p>
+      <div class="reader-loading">
+        <div class="loading-ornament" style="opacity:1;animation:none;">Gagal memuat chapter</div>
         <button onclick="loadChapter('${slug}')" style="
-          margin-top:12px;padding:9px 22px;background:#8e44ad;
-          color:#fff;border:none;border-radius:9px;cursor:pointer;
-          font-weight:700;font-family:'Nunito',sans-serif;font-size:14px;">
-          🔄 Coba Lagi
+          padding:10px 24px;
+          background:linear-gradient(135deg,#8b1a1a,#c9291c);
+          color:#fff;border:none;border-radius:8px;cursor:pointer;
+          font-family:'Cinzel',serif;font-size:12px;letter-spacing:1.5px;
+          box-shadow:0 4px 16px rgba(139,26,26,0.4);">
+          ✦ Coba Lagi
         </button>
       </div>`;
   }
 }
 
 function renderChapter(d) {
-  const prevSlug = navigation.prev_slug;
-  const nextSlug = navigation.next_slug;
-
-  /* Bersihkan konten HTML dari link eksternal & elemen berbahaya */
-  const cleanContent = sanitizeNovelHtml(d.content || "<p>Tidak ada konten.</p>");
+  const prev = navigation.prev_slug;
+  const next = navigation.next_slug;
+  const clean = sanitizeContent(d.content || "<p>Tidak ada konten.</p>");
 
   document.getElementById("readerWrap").innerHTML = `
-    <!-- Chapter header -->
     <div class="chapter-head">
-      <div class="novel-label">📖 Novel</div>
-      <h2>${escHtml(d.title || "")}</h2>
+      <span class="chapter-novel-label">Novel</span>
+      <h2 class="chapter-title">${esc(d.title || "")}</h2>
       <div class="nav-pills">
         ${parentSlug ? `<a class="nav-pill" href="/novel/${parentSlug}">← Detail Novel</a>` : ""}
-        ${prevSlug   ? `<span class="nav-pill" onclick="goToChapter('${prevSlug}')">⬅ Sebelumnya</span>` : ""}
-        ${nextSlug   ? `<span class="nav-pill accent" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</span>` : ""}
+        ${prev ? `<span class="nav-pill" onclick="goToChapter('${prev}')">⬅ Sebelumnya</span>` : ""}
+        ${next ? `<span class="nav-pill primary" onclick="goToChapter('${next}')">Selanjutnya ➡</span>` : ""}
       </div>
     </div>
 
-    <!-- Content -->
-    <div id="novelContent">${cleanContent}</div>
+    <div id="novelContent">${clean}</div>
 
-    <!-- Bottom chapter nav -->
-    <div class="chapter-nav-bar">
-      <button class="cnav-btn" id="prevChBtn" onclick="goToChapter('${prevSlug}')"
-        ${!prevSlug ? "disabled" : ""}>⬅ Sebelumnya</button>
-      ${nextSlug
-        ? `<button class="cnav-btn primary" onclick="goToChapter('${nextSlug}')">Selanjutnya ➡</button>`
+    <div class="chapter-nav">
+      <button class="cnav-btn" ${!prev ? "disabled" : ""} onclick="goToChapter('${prev}')">⬅ Sebelumnya</button>
+      ${next
+        ? `<button class="cnav-btn primary" onclick="goToChapter('${next}')">Selanjutnya ➡</button>`
         : parentSlug
           ? `<button class="cnav-btn primary" onclick="window.location.href='/novel/${parentSlug}'">📋 Kembali ke Detail</button>`
-          : `<button class="cnav-btn" disabled>✅ Selesai</button>`
+          : `<button class="cnav-btn" disabled>✦ Selesai ✦</button>`
       }
     </div>
   `;
@@ -536,166 +709,140 @@ function renderChapter(d) {
   applySettings(false);
 }
 
-/* Bersihkan HTML konten novel (hapus script, iframe, link eksternal tidak perlu) */
-function sanitizeNovelHtml(html) {
+function sanitizeContent(html) {
   return html
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
     .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "")
     .replace(/href="https?:\/\/(?!pankomik)[^"]*"/gi, 'href="#"')
-    /* Proxy semua gambar inline dalam konten novel */
-    .replace(/src="(https?:\/\/[^"]+)"/gi, (match, url) => {
-      const proxied = "https://wsrv.nl/?url=" + encodeURIComponent(url) + "&w=680&output=webp&q=85";
-      return `src="${proxied}"`;
-    })
-    /* Hapus baris promo dari translator */
+    .replace(/src="(https?:\/\/[^"]+)"/gi, (m, url) =>
+      `src="https://wsrv.nl/?url=${encodeURIComponent(url)}&w=680&output=webp&q=85"`)
     .replace(/<p[^>]*>.*?(Ko-fi|sakuranovel|Baca novel lain).*?<\/p>/gi, "");
 }
 
-/* ── NAVIGASI ────────────────────────────────────────────── */
-window.goToChapter = function (slug) {
+/* ── NAVIGATION ───────────────────────────────────── */
+window.goToChapter = function(slug) {
   if (!slug) return;
   currentSlug  = slug;
   historySaved = false;
-  /* Reset section komentar saat ganti chapter */
   const cs = document.getElementById("novelReaderCommentSection");
   if (cs) cs.innerHTML = "";
   loadChapter(slug);
-  /* Update active state di panel */
-  setTimeout(renderChapterPanel, 600);
 };
 
+window.goBack    = () => { if (parentSlug) window.location.href = `/novel/${parentSlug}`; else history.back(); };
+window.goToDetail = () => { if (parentSlug) window.location.href = `/novel/${parentSlug}`; else history.back(); };
 
-/* ============================================================
-   CHAPTER LIST PANEL
-   ============================================================ */
-let _chapterList = [];
-let _chPanelLoaded = false;
+/* ── CHAPTER PANEL ───────────────────────────────── */
+let _chList = [], _chPanelLoaded = false;
 
-window.toggleChapterPanel = function () {
+window.toggleChPanel = function() {
   const panel   = document.getElementById("chPanel");
-  const overlay = document.getElementById("chPanelOverlay");
+  const overlay = document.getElementById("chOverlay");
   if (!panel) return;
-
-  const isOpen = panel.classList.contains("open");
+  const wasOpen = panel.classList.contains("open");
   panel.classList.toggle("open");
   overlay.classList.toggle("open");
 
-  /* Load chapter list pertama kali dibuka */
-  if (!isOpen && !_chPanelLoaded && parentSlug) {
-    loadChapterList(parentSlug);
-  }
-
-  /* Scroll ke chapter aktif */
-  if (!isOpen) {
+  if (!wasOpen && !_chPanelLoaded && parentSlug) loadChPanelData(parentSlug);
+  if (!wasOpen) {
     setTimeout(() => {
       document.querySelector(".ch-panel-item.active")
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 200);
+        ?.scrollIntoView({ behavior:"smooth", block:"center" });
+    }, 350);
   }
 };
 
-async function loadChapterList(novelSlug) {
-  const listEl = document.getElementById("chPanelList");
-  if (!listEl) return;
-
+async function loadChPanelData(novelSlug) {
   try {
-    const BASE_DETAIL = "https://www.sankavollerei.com/novel/sakuranovel";
-    const res  = await fetch(`${BASE_DETAIL}/detail/${novelSlug}`);
+    const res  = await fetch(`https://www.sankavollerei.com/novel/sakuranovel/detail/${novelSlug}`);
     const json = await res.json();
-
     if (!json.data?.chapters?.length) {
-      listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:13px;">Tidak ada daftar chapter.</div>';
+      document.getElementById("chPanelList").innerHTML =
+        `<div style="padding:20px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);font-size:14px;">Tidak ada chapter.</div>`;
       return;
     }
-
-    _chapterList = json.data.chapters;
+    _chList = json.data.chapters;
     _chPanelLoaded = true;
-    renderChapterPanel();
+    renderChPanel();
   } catch (e) {
-    console.error("Gagal load chapter list:", e);
-    const listEl = document.getElementById("chPanelList");
-    if (listEl) listEl.innerHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:13px;">Gagal memuat. Coba lagi.</div>';
+    console.error(e);
   }
 }
 
-function renderChapterPanel() {
+function renderChPanel() {
   const listEl = document.getElementById("chPanelList");
-  if (!listEl || !_chapterList.length) return;
-
-  listEl.innerHTML = _chapterList.map((ch, i) => {
+  if (!listEl || !_chList.length) return;
+  listEl.innerHTML = _chList.map((ch, i) => {
     const isActive = ch.slug === currentSlug;
-    const title    = ch.title || `Chapter ${i + 1}`;
-    const date     = ch.date  || "";
-    const shortTitle = title.length > 45 ? title.slice(0, 42) + "…" : title;
+    const title = ch.title || `Chapter ${i + 1}`;
+    const short = title.length > 42 ? title.slice(0, 39) + "…" : title;
     return `
-      <div class="ch-panel-item ${isActive ? "active" : ""}"
-           onclick="goToChapterFromPanel('${ch.slug}')">
-        <span class="ch-panel-item-title">${shortTitle}</span>
-        ${date ? `<span class="ch-panel-item-date">${date}</span>` : ""}
-        ${isActive ? `<span class="ch-panel-badge">📖</span>` : ""}
+      <div class="ch-panel-item${isActive ? " active" : ""}"
+           onclick="goChFromPanel('${ch.slug}')">
+        <span class="ch-panel-item-title">${esc(short)}</span>
+        ${ch.date ? `<span class="ch-panel-date">${ch.date}</span>` : ""}
+        ${isActive ? `<span class="ch-panel-item-badge">📖</span>` : ""}
       </div>`;
   }).join("");
 }
 
-window.goToChapterFromPanel = function (slug) {
-  if (slug === currentSlug) { toggleChapterPanel(); return; }
-  toggleChapterPanel();
-  goToChapter(slug);
-  /* Re-render panel setelah chapter baru load untuk update active */
-  setTimeout(renderChapterPanel, 800);
-};
-
-window.goBack = function () {
-  if (parentSlug) {
-    window.location.href = `/novel/${parentSlug}`;
-  } else {
-    history.back();
-  }
-};
-
-window.goToDetail = function () {
-  if (parentSlug) window.location.href = `/novel/${parentSlug}`;
-  else history.back();
-};
-
-/* Ekstrak judul novel dari judul chapter (hapus nama chapter di akhir) */
-function extractNovelTitle(chapterTitle) {
-  return chapterTitle.replace(/\s*(volume\s*\d+)?\s*chapter\s*[\d.]+.*$/i, "")
-                     .replace(/\s*(short story|afterword|prologue|epilogue).*$/i, "")
-                     .replace(/\s*bahasa indonesia\s*/i, "")
-                     .trim() || chapterTitle;
+function renderChPanelActive() {
+  if (!_chPanelLoaded) return;
+  document.querySelectorAll(".ch-panel-item").forEach(el => {
+    const slug = el.getAttribute("onclick")?.match(/'([^']+)'/)?.[1];
+    el.classList.toggle("active", slug === currentSlug);
+  });
 }
 
-/* ── SETTINGS ────────────────────────────────────────────── */
-window.toggleSettings = function () {
+window.goChFromPanel = function(slug) {
+  if (slug === currentSlug) { toggleChPanel(); return; }
+  toggleChPanel();
+  goToChapter(slug);
+  setTimeout(renderChPanelActive, 800);
+};
+
+/* ── SETTINGS ────────────────────────────────────── */
+window.toggleSettings = function() {
   document.getElementById("settingsPanel").classList.toggle("open");
+};
+
+const FF_MAP = {
+  "Lora":       "'Lora', serif",
+  "Cormorant":  "'Cormorant Garamond', serif",
+  "Nunito":     "'Nunito', sans-serif",
 };
 
 function applySettings(save = true) {
   const content = document.getElementById("novelContent");
   if (content) {
-    content.style.setProperty("--fs", fontSize + "px");
-    content.style.setProperty("--lh", lineHeight);
-    content.style.setProperty("--ff",
-      fontFamily === "Merriweather" ? "'Merriweather', serif" : "'Nunito', sans-serif");
+    content.style.setProperty("--reader-fs", fontSize + "px");
+    content.style.setProperty("--reader-lh", lineHeight);
+    content.style.setProperty("--reader-ff", FF_MAP[fontFamily] || "'Lora', serif");
   }
 
-  /* Sync slider & display */
-  const fsNum = document.getElementById("fontSizeNum");
-  const lhSlider = document.getElementById("lhSlider");
+  const fsNum = document.getElementById("fsNum");
   if (fsNum) fsNum.textContent = fontSize + "px";
+
+  const lhSlider = document.getElementById("lhSlider");
   if (lhSlider) lhSlider.value = lineHeight;
 
   /* Font buttons */
-  document.querySelectorAll(".font-btn").forEach(b => b.classList.remove("active"));
-  const ffBtn = document.getElementById("fb-" + fontFamily.toLowerCase());
-  if (ffBtn) ffBtn.classList.add("active");
+  document.querySelectorAll(".ff-btn").forEach(b => b.classList.remove("active"));
+  document.getElementById("ff-" + fontFamily.toLowerCase())?.classList.add("active");
 
   /* Theme */
   document.body.className = theme;
   document.querySelectorAll(".theme-btn").forEach(b => b.classList.remove("active"));
-  const themeBtn = document.getElementById("theme-" + theme);
-  if (themeBtn) themeBtn.classList.add("active");
+  document.getElementById("t-" + theme)?.classList.add("active");
+
+  /* Adjust header for parchment */
+  const header = document.querySelector(".reader-header");
+  if (header) {
+    header.style.borderBottomColor =
+      theme === "parchment" ? "rgba(139,104,34,0.3)" :
+      theme === "nightblue" ? "rgba(100,150,255,0.15)" :
+      "rgba(201,168,76,0.18)";
+  }
 
   if (save) {
     localStorage.setItem("nv_fs", fontSize);
@@ -705,52 +852,56 @@ function applySettings(save = true) {
   }
 }
 
-window.changeFontSize = function (delta) {
-  fontSize = Math.min(24, Math.max(12, fontSize + delta));
+window.changeFontSize = function(d) {
+  fontSize = Math.min(24, Math.max(12, fontSize + d));
   applySettings();
 };
-window.setFont = function (ff) {
-  fontFamily = ff; applySettings();
-};
-window.setLineHeight = function (val) {
-  lineHeight = parseFloat(val); applySettings();
-};
-window.setTheme = function (t) {
-  theme = t; applySettings();
-};
+window.setFont = function(ff) { fontFamily = ff; applySettings(); };
+window.setLineHeight = function(v) { lineHeight = parseFloat(v); applySettings(); };
+window.setTheme = function(t) { theme = t; applySettings(); };
 
-/* ── READING PROGRESS BAR ────────────────────────────────── */
+/* ── PROGRESS BAR ─────────────────────────────────── */
 function initProgressBar() {
-  const bar = document.getElementById("readingProgressBar");
+  const bar = document.getElementById("progressBar");
   window.addEventListener("scroll", () => {
-    const scrollTop = window.scrollY;
-    const docH = document.body.scrollHeight - window.innerHeight;
-    const pct  = docH > 0 ? (scrollTop / docH) * 100 : 0;
-    if (bar) {
-      bar.style.width = Math.min(pct, 100) + "%";
-      if (pct >= 95) bar.style.background = "linear-gradient(90deg,#27ae60,#2ecc71)";
+    const d = document.body.scrollHeight - window.innerHeight;
+    if (d > 0 && bar) {
+      const pct = Math.min((window.scrollY / d) * 100, 100);
+      bar.style.width = pct + "%";
+      /* Darken near end */
+      if (pct >= 95) {
+        bar.style.background = "linear-gradient(90deg, #1a5c2e, #27ae60)";
+      } else {
+        bar.style.background = "linear-gradient(90deg, var(--crimson), var(--gold), var(--gold-light))";
+      }
     }
   }, { passive: true });
 }
 
-/* ── HEADER AUTO-HIDE ────────────────────────────────────── */
+/* ── HEADER AUTO-HIDE ─────────────────────────────── */
 function initHeaderHide() {
   const header = document.getElementById("readerHeader");
   let timer = null;
   window.addEventListener("scroll", () => {
     header?.classList.add("hide");
     clearTimeout(timer);
-    timer = setTimeout(() => header?.classList.remove("hide"), 1800);
+    timer = setTimeout(() => header?.classList.remove("hide"), 2000);
   }, { passive: true });
-
-  /* Tap on content = toggle header */
   document.getElementById("readerWrap")?.addEventListener("click", e => {
     if (e.target.closest("button") || e.target.closest("a")) return;
     header?.classList.toggle("hide");
   });
 }
 
-/* ── CLOSE SETTINGS ON OUTSIDE CLICK ───────────────────────── */
+/* ── KEYBOARD NAV ─────────────────────────────────── */
+document.addEventListener("keydown", e => {
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if ((e.key === "ArrowRight" || e.key === "d") && navigation.next_slug) goToChapter(navigation.next_slug);
+  if ((e.key === "ArrowLeft"  || e.key === "a") && navigation.prev_slug) goToChapter(navigation.prev_slug);
+});
+
+/* ── CLOSE SETTINGS OUTSIDE ────────────────────────── */
 document.addEventListener("click", e => {
   const panel = document.getElementById("settingsPanel");
   const btn   = document.querySelector('.hbtn[onclick="toggleSettings()"]');
@@ -759,27 +910,27 @@ document.addEventListener("click", e => {
   }
 });
 
-/* ── KEYBOARD ─────────────────────────────────────────────── */
-document.addEventListener("keydown", e => {
-  const tag = document.activeElement?.tagName;
-  if (tag === "INPUT" || tag === "TEXTAREA") return;
-  if ((e.key === "ArrowRight" || e.key === "d") && navigation.next_slug) goToChapter(navigation.next_slug);
-  if ((e.key === "ArrowLeft"  || e.key === "a") && navigation.prev_slug) goToChapter(navigation.prev_slug);
-});
+/* ── HELPERS ──────────────────────────────────────── */
+function extractNovelTitle(t) {
+  return t.replace(/\s*(volume\s*\d+)?\s*chapter\s*[\d.]+.*$/i, "")
+           .replace(/\s*(short story|afterword|prologue|epilogue).*$/i, "")
+           .replace(/\s*bahasa indonesia\s*/i, "")
+           .trim() || t;
+}
 
-/* ── HELPERS ─────────────────────────────────────────────── */
-function escHtml(str) {
-  return String(str || "")
-    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+function esc(s) {
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                      .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
 }
 
 function showToast(msg, type = "info") {
   const wrap = document.getElementById("toastWrap");
   if (!wrap) return;
   const t  = document.createElement("div");
-  const bg = type === "success" ? "#27ae60" : type === "error" ? "#e8522a" : "#333";
-  t.className = "toast-item";
+  const bg = type === "success" ? "linear-gradient(135deg,#1a5c2e,#27ae60)"
+           : type === "error"   ? "linear-gradient(135deg,#8b1a1a,#c9291c)"
+           : "rgba(20,17,30,0.95)";
+  t.className  = "toast-item";
   t.style.background = bg;
   t.textContent = msg;
   wrap.appendChild(t);
