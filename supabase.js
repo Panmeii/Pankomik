@@ -219,7 +219,7 @@ export async function checkBookmark(userId, komikSlug) {
     .select("kategori")
     .eq("user_id", userId)
     .eq("komik_slug", komikSlug)
-    .single();
+    .maybeSingle();
   return { isBookmarked: !!data, kategori: data?.kategori || null };
 }
 
@@ -300,10 +300,6 @@ export async function getHistory(userId) {
 /**
  * Ambil chapter terakhir yang dibaca untuk satu komik
  * (dipakai untuk fitur "Lanjut Baca" di detail page)
- *
- * Bug fix: destructure error juga — .single() throw PGRST116 jika
- * tidak ada baris, yang sebelumnya di-silent dan bisa menyebabkan
- * data berisi undefined (bukan null) di beberapa versi Supabase client.
  */
 export async function getLastRead(userId, komikSlug) {
   if (!userId || !komikSlug) return null;
@@ -314,7 +310,7 @@ export async function getLastRead(userId, komikSlug) {
     .eq("komik_slug", komikSlug)
     .order("read_at", { ascending: false })
     .limit(1)
-    .maybeSingle();          /* maybeSingle: tidak error kalau 0 baris */
+    .maybeSingle();
   if (error) {
     console.warn("[getLastRead] Error:", error.message);
     return null;
@@ -486,11 +482,9 @@ async function checkAndAwardBadges(userId, totalChapters) {
 
   /* Kalau tabel badges kosong atau tidak ada, pakai definisi hardcoded */
   if (!dbBadges?.length) {
-    /* Simulasikan dengan badge hardcoded menggunakan string id */
     const eligible = BADGE_DEFINITIONS.filter(b => b.min_chapters <= totalChapters && totalChapters > 0);
     if (!eligible.length) return;
 
-    /* Ambil badge yang sudah dimiliki (pakai badge_name sebagai key) */
     const { data: owned } = await supabase
       .from("user_badges")
       .select("badge_id")
@@ -567,7 +561,6 @@ export async function getNovelLeaderboard(limit = 20) {
  */
 export async function getComments(komikSlug) {
   try {
-    // 1. Ambil komentar utama (tanpa join ke profiles)
     const { data: comments, error: commentsError } = await supabase
       .from("comments")
       .select(`
@@ -581,10 +574,8 @@ export async function getComments(komikSlug) {
     if (commentsError) throw commentsError;
     if (!comments || comments.length === 0) return { comments: [], error: null };
 
-    // 2. Ambil semua user_id unik dari komentar
     const userIds = [...new Set(comments.map(c => c.user_id))];
 
-    // 3. Ambil profiles untuk user-user tersebut (query terpisah)
     let profilesMap = {};
     if (userIds.length > 0) {
       const { data: profiles, error: profilesError } = await supabase
@@ -601,7 +592,6 @@ export async function getComments(komikSlug) {
       }
     }
 
-    // 4. Ambil like counts untuk semua komentar
     const commentIds = comments.map(c => c.id);
     let likeCountMap = {};
 
@@ -618,7 +608,6 @@ export async function getComments(komikSlug) {
       });
     }
 
-    // 5. Ambil replies untuk komentar utama
     const { data: replies, error: repliesError } = await supabase
       .from("comments")
       .select(`
@@ -629,10 +618,8 @@ export async function getComments(komikSlug) {
 
     let enrichedReplies = [];
     if (replies && replies.length > 0) {
-      // Ambil user_ids dari replies
       const replyUserIds = [...new Set(replies.map(r => r.user_id))];
 
-      // Ambil profiles untuk replies (gabung dengan yang sudah ada)
       const allReplyUserIds = replyUserIds.filter(id => !profilesMap[id]);
       if (allReplyUserIds.length > 0) {
         const { data: replyProfiles } = await supabase
@@ -647,7 +634,6 @@ export async function getComments(komikSlug) {
         }
       }
 
-      // Ambil like counts untuk replies
       const replyIds = replies.map(r => r.id);
       const { data: replyLikes } = await supabase
         .from("comment_likes")
@@ -661,7 +647,6 @@ export async function getComments(komikSlug) {
         });
       }
 
-      // Enrich replies dengan profile dan like count
       enrichedReplies = replies.map(r => ({
         ...r,
         profiles: profilesMap[r.user_id] || { username: "User", avatar_url: null, level: 1 },
@@ -669,7 +654,6 @@ export async function getComments(komikSlug) {
       }));
     }
 
-    // 6. Group replies by parent_id
     const repliesByParent = {};
     enrichedReplies.forEach(reply => {
       if (!repliesByParent[reply.parent_id]) {
@@ -678,7 +662,6 @@ export async function getComments(komikSlug) {
       repliesByParent[reply.parent_id].push(reply);
     });
 
-    // 7. Gabungkan komentar dengan profile dan replies
     const enrichedComments = comments.map(c => ({
       ...c,
       profiles: profilesMap[c.user_id] || { username: "User", avatar_url: null, level: 1 },
@@ -710,7 +693,6 @@ export async function addComment(userId, komikSlug, content, parentId = null) {
       return { comment: null, error: { message: "Komentar terlalu panjang (maks 1000 karakter)" } };
     }
 
-    /* Cooldown check */
     const now = Date.now();
     if (now - _lastCommentAt < COMMENT_COOLDOWN_MS) {
       const sisa = Math.ceil((COMMENT_COOLDOWN_MS - (now - _lastCommentAt)) / 1000);
@@ -737,7 +719,6 @@ export async function addComment(userId, komikSlug, content, parentId = null) {
 
     if (error) throw error;
 
-    // Ambil profile user untuk response
     const { data: profile } = await supabase
       .from("profiles")
       .select("username, avatar_url, level")
@@ -765,7 +746,6 @@ export async function addComment(userId, komikSlug, content, parentId = null) {
  */
 export async function deleteComment(commentId, userId) {
   try {
-    // Verifikasi ownership
     const { data: comment, error: fetchError } = await supabase
       .from("comments")
       .select("user_id")
@@ -778,19 +758,16 @@ export async function deleteComment(commentId, userId) {
       throw new Error("Anda tidak memiliki izin untuk menghapus komentar ini");
     }
 
-    // Hapus likes terlebih dahulu
     await supabase
       .from("comment_likes")
       .delete()
       .eq("comment_id", commentId);
 
-    // Hapus replies
     await supabase
       .from("comments")
       .delete()
       .eq("parent_id", commentId);
 
-    // Hapus komentar utama
     const { error } = await supabase
       .from("comments")
       .delete()
@@ -807,33 +784,6 @@ export async function deleteComment(commentId, userId) {
 
 /**
  * Like / Unlike komentar.
- *
- * Coba via RPC "toggle_comment_like" (SECURITY DEFINER, bypass RLS).
- * Jika RPC belum dibuat, fallback ke insert/delete langsung.
- *
- * ── SQL untuk dijalankan di Supabase SQL Editor ──────────────
- * CREATE OR REPLACE FUNCTION toggle_comment_like(
- *   p_user_id uuid, p_comment_id uuid
- * ) RETURNS json LANGUAGE plpgsql SECURITY DEFINER
- * SET search_path = public AS $$
- * DECLARE
- *   v_exist uuid; v_count int; v_liked boolean;
- * BEGIN
- *   SELECT id INTO v_exist FROM comment_likes
- *   WHERE user_id=p_user_id AND comment_id=p_comment_id LIMIT 1;
- *   IF v_exist IS NOT NULL THEN
- *     DELETE FROM comment_likes WHERE id=v_exist;
- *     v_liked := false;
- *   ELSE
- *     INSERT INTO comment_likes(user_id,comment_id)
- *     VALUES(p_user_id,p_comment_id) ON CONFLICT DO NOTHING;
- *     v_liked := true;
- *   END IF;
- *   SELECT COUNT(*) INTO v_count FROM comment_likes WHERE comment_id=p_comment_id;
- *   UPDATE comments SET like_count=v_count WHERE id=p_comment_id;
- *   RETURN json_build_object('liked',v_liked,'like_count',v_count);
- * END; $$;
- * ─────────────────────────────────────────────────────────────
  */
 export async function toggleLike(userId, commentId) {
   const uid = String(userId);
@@ -856,7 +806,6 @@ export async function toggleLike(userId, commentId) {
 
   /* ── 2. Fallback langsung ────────────────────────────────── */
   try {
-    /* Cek sudah like belum */
     const { data: ex, error: exErr } = await supabase
       .from("comment_likes").select("id")
       .eq("user_id", uid).eq("comment_id", cid).maybeSingle();
@@ -864,26 +813,22 @@ export async function toggleLike(userId, commentId) {
 
     let liked;
     if (ex) {
-      /* Unlike */
       const { error: delErr } = await supabase
         .from("comment_likes").delete().eq("id", ex.id);
       if (delErr) throw delErr;
       liked = false;
     } else {
-      /* Like */
       const { error: insErr } = await supabase
         .from("comment_likes").insert({ user_id: uid, comment_id: cid });
       if (insErr && insErr.code !== "23505") throw insErr;
       liked = true;
     }
 
-    /* Hitung ulang */
     const { count } = await supabase
       .from("comment_likes").select("*", { count: "exact", head: true })
       .eq("comment_id", cid);
     const newCount = count ?? (liked ? 1 : 0);
 
-    /* Update like_count — abaikan error RLS */
     supabase.from("comments").update({ like_count: newCount }).eq("id", cid)
       .then(({ error: upErr }) => {
         if (upErr) console.warn("[like] like_count update diblokir RLS:", upErr.message);
@@ -917,8 +862,6 @@ export async function getLikedComments(userId) {
 
 /* ============================================================
    NOVEL — BOOKMARK
-   Tabel: novel_bookmarks (terpisah dari bookmarks komik)
-   Kolom: user_id, novel_slug, novel_title, novel_cover, kategori, created_at
    ============================================================ */
 
 export async function addNovelBookmark(userId, novel) {
@@ -943,9 +886,10 @@ export async function removeNovelBookmark(userId, novelSlug) {
 }
 
 export async function checkNovelBookmark(userId, novelSlug) {
+  /* FIX: Gunakan maybeSingle() agar tidak error saat belum ada bookmark */
   const { data } = await supabase
     .from("novel_bookmarks").select("kategori")
-    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
+    .eq("user_id", userId).eq("novel_slug", novelSlug).maybeSingle();
   return { isBookmarked: !!data, kategori: data?.kategori || null };
 }
 
@@ -962,9 +906,6 @@ export async function getNovelBookmarks(userId) {
 
 /* ============================================================
    NOVEL — READING HISTORY & PROGRESS
-   Tabel: novel_reading_history
-   Kolom: user_id, novel_slug, novel_title, novel_cover,
-          chapter_slug, chapter_title, read_at
    ============================================================ */
 
 export async function saveNovelHistory(userId, novel, chapter) {
@@ -1002,11 +943,28 @@ export async function getNovelHistory(userId) {
   return { history: data || [], error };
 }
 
+/**
+ * Ambil chapter terakhir yang dibaca untuk satu novel.
+ *
+ * FIX: Gunakan maybeSingle() agar tidak throw error PGRST116 saat
+ * user belum pernah baca novel ini. Sebelumnya pakai .single() yang
+ * menyebabkan Promise.allSettled menangkap error dan mengembalikan null
+ * meskipun data sebenarnya ada — membuat "Lanjut Baca" tidak pernah muncul.
+ */
 export async function getLastNovelRead(userId, novelSlug) {
-  const { data } = await supabase
+  if (!userId || !novelSlug) return null;
+  const { data, error } = await supabase
     .from("novel_reading_history")
     .select("chapter_slug, chapter_title, read_at")
-    .eq("user_id", userId).eq("novel_slug", novelSlug).single();
+    .eq("user_id", userId)
+    .eq("novel_slug", novelSlug)
+    .order("read_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();  /* FIX: maybeSingle tidak error jika 0 baris, single() error */
+  if (error) {
+    console.warn("[getLastNovelRead] Error:", error.message);
+    return null;
+  }
   return data || null;
 }
 
@@ -1029,18 +987,8 @@ export async function getTotalNovelChaptersRead(userId) {
 
 /* ============================================================
    KOMENTAR UNIVERSAL — Novel Detail & Reader
-   Menggunakan kolom komik_slug sebagai identifier universal.
-   Format slug:
-     - Komik detail  : "komik-slug"
-     - Novel detail  : "novel:novel-slug"
-     - Komik chapter : "chapter:chapter-slug"
-     - Novel chapter : "novel-chapter:chapter-slug"
    ============================================================ */
 
-/**
- * Ambil komentar untuk slug apapun (komik/novel/chapter)
- * Reusable version dari getComments dengan slug bebas
- */
 export async function getCommentsForSlug(contentSlug, limit = 50) {
   try {
     const { data: comments, error: commentsError } = await supabase
@@ -1054,10 +1002,8 @@ export async function getCommentsForSlug(contentSlug, limit = 50) {
     if (commentsError) throw commentsError;
     if (!comments || comments.length === 0) return { comments: [], error: null };
 
-    // Kumpulkan user_id unik
     const userIds = [...new Set(comments.map(c => c.user_id))];
 
-    // Fetch profiles
     let profilesMap = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
@@ -1067,7 +1013,6 @@ export async function getCommentsForSlug(contentSlug, limit = 50) {
       (profiles || []).forEach(p => { profilesMap[p.id] = p; });
     }
 
-    // Fetch like counts
     const commentIds = comments.map(c => c.id);
     let likeCountMap = {};
     const { data: likeCounts } = await supabase
@@ -1078,7 +1023,6 @@ export async function getCommentsForSlug(contentSlug, limit = 50) {
       likeCountMap[l.comment_id] = (likeCountMap[l.comment_id] || 0) + 1;
     });
 
-    // Fetch replies
     const { data: replies } = await supabase
       .from("comments")
       .select("id, content, created_at, user_id, komik_slug, parent_id, like_count")
@@ -1131,18 +1075,10 @@ export async function getCommentsForSlug(contentSlug, limit = 50) {
   }
 }
 
-/**
- * Tambah komentar universal (support semua tipe konten)
- * Wrapper tipis dari addComment yang sudah ada
- */
 export async function addCommentForSlug(userId, contentSlug, content, parentId = null) {
   return addComment(userId, contentSlug, content, parentId);
 }
 
-/**
- * Ambil komentar terbaru dari seluruh platform (untuk widget home)
- * @param {number} limit
- */
 export async function getLastComments(limit = 6) {
   try {
     const { data: comments, error } = await supabase
@@ -1178,11 +1114,6 @@ export async function getLastComments(limit = 6) {
   }
 }
 
-/**
- * Ambil komentar milik user sendiri (untuk tab profil)
- * @param {string} userId
- * @param {number} limit
- */
 export async function getMyComments(userId, limit = 30) {
   try {
     const { data: comments, error } = await supabase
@@ -1203,34 +1134,8 @@ export async function getMyComments(userId, limit = 30) {
 
 /* ============================================================
    ANIME — WATCH HISTORY
-   Tabel: anime_watch_history
-   Kolom: user_id, anime_id, anime_title, anime_cover,
-          episode_id, episode_title, episode_number, watched_at
-
-   SQL (jalankan di Supabase SQL Editor):
-   ─────────────────────────────────────────────────────────────
-   CREATE TABLE IF NOT EXISTS anime_watch_history (
-     id          uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-     user_id     uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-     anime_id    text NOT NULL,
-     anime_title text NOT NULL DEFAULT '',
-     anime_cover text NOT NULL DEFAULT '',
-     episode_id    text NOT NULL,
-     episode_title text NOT NULL DEFAULT '',
-     episode_number text NOT NULL DEFAULT '',
-     watched_at  timestamptz DEFAULT now(),
-     UNIQUE (user_id, anime_id)
-   );
-   ALTER TABLE anime_watch_history ENABLE ROW LEVEL SECURITY;
-   CREATE POLICY "user_own_anime_history" ON anime_watch_history
-     FOR ALL USING (auth.uid() = user_id);
-   ─────────────────────────────────────────────────────────────
    ============================================================ */
 
-/**
- * Simpan/update riwayat nonton anime.
- * Upsert per anime_id — 1 baris per anime = episode terakhir ditonton.
- */
 export async function saveAnimeHistory(userId, anime, episode) {
   const { data, error } = await supabase
     .from("anime_watch_history")
@@ -1249,10 +1154,6 @@ export async function saveAnimeHistory(userId, anime, episode) {
   return { history: data, error };
 }
 
-/**
- * Ambil episode terakhir yang ditonton untuk satu anime.
- * Dipakai di anime-detail untuk tombol "Lanjut Nonton".
- */
 export async function getLastAnimeWatch(userId, animeId) {
   if (!userId || !animeId) return null;
   const { data, error } = await supabase
@@ -1265,9 +1166,6 @@ export async function getLastAnimeWatch(userId, animeId) {
   return data || null;
 }
 
-/**
- * Ambil semua riwayat nonton anime user (terbaru dulu).
- */
 export async function getAnimeHistory(userId) {
   const { data, error } = await supabase
     .from("anime_watch_history")
