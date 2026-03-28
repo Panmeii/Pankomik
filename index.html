@@ -165,13 +165,21 @@ function resolveLocation(raw) {
   /* ── 3. Chapter komik ─────────────────────────── */
   if (raw.startsWith("chapter:")) {
     const slug = raw.slice("chapter:".length);
-    /* Ambil nama komik: potong "-chapter-N" di akhir */
-    const name = slug
-      .replace(/-chapter-[\d-]+$/i, "")
+    /* Fix #17: ekstrak komik slug dari chapter slug untuk URL yang lebih bersih.
+       Coba potong "-chapter-N" dan variasi lain dari akhir slug. */
+    const komikSlug = slug
+      .replace(/-chapter-[\d]+(?:[.-][\d]+)?.*$/i, "")
+      .replace(/-ch-[\d]+.*$/i, "")
+      .trim();
+    /* Buat URL: kalau berhasil ekstrak komikSlug, pakai pretty URL /komik/... */
+    const chapterUrl = (komikSlug && komikSlug !== slug)
+      ? `/komik/${komikSlug}/${slug}`
+      : `/baca/${slug}`;
+    const name = komikSlug
       .replace(/-/g, " ")
       .replace(/\b./g, c => c.toUpperCase())
       .trim().slice(0, 24) || "Chapter Komik";
-    return { icon: "📚", label: name, url: `/baca/${slug}` };
+    return { icon: "📚", label: name, url: chapterUrl };
   }
 
   /* ── 4. Legacy: slug komik langsung ──────────── */
