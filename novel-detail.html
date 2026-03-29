@@ -526,6 +526,23 @@
 
 <div id="toastWrap"></div>
 
+<!-- ============================================================
+  PERBAIKAN UTAMA:
+  Seluruh logika dipindah ke satu <script type="module"> tunggal.
+  
+  MASALAH SEBELUMNYA (Race Condition):
+  - Kode lama punya DUA blok script: satu <script type="module">
+    yang set window._supabase, dan satu classic <script> yang
+    pakai window._supabase di window.onload.
+  - ES module SELALU defer — jalan setelah HTML parsed. Tapi
+    window.onload dari classic script bisa fire hampir bersamaan,
+    sehingga window._supabase belum ter-set saat dibutuhkan.
+  - Akibat: currentUser = null → lastRead tidak pernah di-fetch
+    → "Lanjut Baca" tidak pernah muncul.
+  
+  SOLUSI: Semua kode digabung ke satu module script.
+  Import langsung, tidak perlu window._supabase sebagai bridge.
+============================================================ -->
 <script type="module">
   import { initAuthHeader } from "/auth-header.js";
   import {
@@ -536,494 +553,504 @@
   import { initComments } from "/comment-system.js";
 
   initAuthHeader();
-  window._supabase = {
-    getCurrentUser, checkNovelBookmark, addNovelBookmark, removeNovelBookmark,
-    getLastNovelRead, saveNovelHistory
-  };
-  window._initNovelComments = async function(novelSlug) {
-    const user = await getCurrentUser();
-    await initComments({
-      containerId: "novelDetailCommentSection",
-      contentSlug: `novel:${novelSlug}`,
-      accentColor: "#c9a84c",
-      user,
-    });
-  };
-</script>
 
-<script>
-/* ============================================================
-   NOVEL DETAIL — Premium redesign
-   FIX: Last read fetched BEFORE renderDetail so _lastReadSlug
-        is set when chapter list renders — no double render needed.
-   ============================================================ */
+  /* ============================================================
+     NOVEL DETAIL — All-in-one module (no window._supabase bridge)
+  ============================================================ */
 
-const BASE = "https://www.sankavollerei.com/novel/sakuranovel";
+  const BASE = "https://www.sankavollerei.com/novel/sakuranovel";
 
-function getSlug() {
-  const m = window.location.pathname.match(/^\/novel\/([^/]+)\/?$/);
-  if (m) return m[1];
-  return new URLSearchParams(window.location.search).get("slug");
-}
-const slug = getSlug();
-if (!slug) window.location.href = "/novel/";
+  function getSlug() {
+    const m = window.location.pathname.match(/^\/novel\/([^/]+)\/?$/);
+    if (m) return m[1];
+    return new URLSearchParams(window.location.search).get("slug");
+  }
+  const slug = getSlug();
+  if (!slug) window.location.href = "/novel/";
 
-let chaptersAsc = false;
-let allChapters = [];
-let currentUser = null;
-let isBookmarked = false;
-let currentKategori = "favorit";
-let novelCache = null;
-let _lastReadSlug = ""; /* global — set sebelum renderChapterList pertama kali */
+  let chaptersAsc   = false;
+  let allChapters   = [];
+  let currentUser   = null;
+  let isBookmarked  = false;
+  let currentKategori = "favorit";
+  let novelCache    = null;
+  let _lastReadSlug = "";
 
-/* ── INIT ─────────────────────────────────────────── */
-window.onload = async function() {
-  if (localStorage.getItem("theme") === "light") document.body.classList.add("light-mode");
-  await new Promise(r => setTimeout(r, 80));
-  if (window._supabase) currentUser = await window._supabase.getCurrentUser();
-  await loadDetail();
-  if (typeof window._initNovelComments === "function") window._initNovelComments(slug);
-};
+  /* ── IMAGE PROXY ─────────────────────────────────────── */
+  function proxyImg(url) {
+    if (!url) return "";
+    if (url.startsWith("data:")) return url;
+    if (url.includes("proxy.sankavolereii.my.id")) return url;
+    if (url.startsWith("/")) url = "https://sakuranovel.id" + url;
+    if (!url.startsWith("http")) url = "https://" + url;
+    return "https://proxy.sankavolereii.my.id/" + url;
+  }
 
-/* ── IMAGE PROXY ─────────────────────────────────── */
-function proxyImg(url) {
-  if (!url) return "";
-  if (url.startsWith("data:")) return url;
-  if (url.includes("proxy.sankavolereii.my.id")) return url;
-  if (url.startsWith("/")) url = "https://sakuranovel.id" + url;
-  if (!url.startsWith("http")) url = "https://" + url;
-  return "https://proxy.sankavolereii.my.id/" + url;
-}
+  /* ── FETCH DETAIL ─────────────────────────────────────── */
+  async function loadDetail() {
+    try {
+      /* 1. Fetch detail novel */
+      const res  = await fetch(`${BASE}/detail/${slug}`);
+      const json = await res.json();
+      if (!json.data) throw new Error("No data");
+      novelCache = json.data;
 
-/* ── FETCH DETAIL ─────────────────────────────────── */
-async function loadDetail() {
-  try {
-    /* ── 1. Fetch detail novel ── */
-    const res  = await fetch(`${BASE}/detail/${slug}`);
-    const json = await res.json();
-    if (!json.data) throw new Error("No data");
-    novelCache = json.data;
+      /* 2. Fetch user session */
+      currentUser = await getCurrentUser();
 
-    /* ── 2. Fetch last read SEBELUM render ──
-       Sehingga _lastReadSlug sudah benar saat renderChapterList dipanggil.
-       Jalankan parallel dengan bookmark check untuk efisiensi. */
-    let lastReadData  = null;
-    let bookmarkData  = null;
+      /* 3. Fetch lastRead + bookmark secara paralel
+            Keduanya bisa null jika user belum login */
+      let lastReadData = null;
+      let bookmarkData = null;
 
-    if (currentUser && window._supabase) {
-      [lastReadData, bookmarkData] = await Promise.allSettled([
-        window._supabase.getLastNovelRead(currentUser.id, slug),
-        window._supabase.checkNovelBookmark(currentUser.id, slug),
-      ]);
-      lastReadData  = lastReadData.status  === "fulfilled" ? lastReadData.value  : null;
-      bookmarkData  = bookmarkData.status  === "fulfilled" ? bookmarkData.value  : null;
+      if (currentUser) {
+        /* Jalankan paralel, tangkap error individual agar salah satu
+           gagal tidak memblokir yang lain */
+        const [lrResult, bmResult] = await Promise.allSettled([
+          getLastNovelRead(currentUser.id, slug),
+          checkNovelBookmark(currentUser.id, slug),
+        ]);
+
+        if (lrResult.status === "fulfilled") {
+          lastReadData = lrResult.value;   /* null jika belum pernah baca */
+        } else {
+          console.warn("[loadDetail] getLastNovelRead error:", lrResult.reason);
+        }
+
+        if (bmResult.status === "fulfilled") {
+          bookmarkData = bmResult.value;
+        } else {
+          console.warn("[loadDetail] checkNovelBookmark error:", bmResult.reason);
+        }
+      }
+
+      /* 4. Set _lastReadSlug SEBELUM renderDetail agar chapter list
+            langsung highlight chapter terakhir saat pertama di-render */
+      _lastReadSlug = lastReadData?.chapter_slug || "";
+
+      /* 5. Render halaman */
+      renderDetail(json.data);
+
+      /* 6. Update UI bookmark */
+      if (bookmarkData?.isBookmarked) {
+        isBookmarked    = true;
+        currentKategori = bookmarkData.kategori || "favorit";
+        updateBookmarkUI();
+      }
+
+      /* 7. Update last read bar + tombol utama */
+      if (lastReadData?.chapter_slug) {
+        updateLastReadUI(lastReadData);
+      }
+
+      /* 8. Inisialisasi komentar */
+      try {
+        await initComments({
+          containerId:  "novelDetailCommentSection",
+          contentSlug:  `novel:${slug}`,
+          accentColor:  "#c9a84c",
+          user:         currentUser,
+        });
+      } catch (e) {
+        console.warn("[loadDetail] initComments error:", e);
+      }
+
+    } catch (err) {
+      console.error("[loadDetail] Error:", err);
+      document.getElementById("detailContent").innerHTML = `
+        <div style="padding:60px 20px;text-align:center;color:var(--muted);margin-top:54px;">
+          <p style="font-family:'Cormorant Garamond',serif;font-size:40px;opacity:0.3;margin-bottom:12px;">📖</p>
+          <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;margin-bottom:20px;">Gagal memuat detail novel.</p>
+          <button onclick="loadDetail()" style="padding:10px 24px;background:linear-gradient(135deg,#8b1a1a,#c9291c);
+            color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;
+            font-size:12px;letter-spacing:1.5px;">Coba Lagi</button>
+        </div>`;
     }
+  }
 
-    /* ── 3. Set _lastReadSlug SEBELUM renderDetail ── */
-    _lastReadSlug = lastReadData?.chapter_slug || "";
+  /* ── RENDER ───────────────────────────────────────────── */
+  function renderDetail(d) {
+    document.title = d.title + " — Pankomik";
+    allChapters = d.chapters || [];
+    const info  = d.info    || {};
 
-    /* ── 4. Render (chapter list sudah pakai _lastReadSlug yang benar) ── */
-    renderDetail(json.data);
+    const sl = (d.status || "").toLowerCase();
+    const statusClass = sl === "completed" ? "done" : sl === "ongoing" ? "ongoing" : "country";
 
-    /* ── 5. Update UI bookmark ── */
-    if (bookmarkData) {
-      isBookmarked    = bookmarkData.isBookmarked;
-      currentKategori = bookmarkData.kategori || "favorit";
-      updateBookmarkUI();
-    }
+    const ratingNum = parseFloat(d.rating) || 0;
+    const starsHtml = renderStars(ratingNum);
 
-    /* ── 6. Update last read bar & tombol utama ── */
-    if (lastReadData?.chapter_slug) {
-      updateLastReadUI(lastReadData);
-    }
+    const genreHtml = (d.genres || []).map(g =>
+      `<span class="chip-genre" onclick="goToGenre('${g.slug}','${esc(g.name)}')">${esc(g.name)}</span>`
+    ).join("");
 
-  } catch (err) {
-    console.error(err);
+    const tagStr = info.tags || "";
+    const tagHtml = tagStr ? tagStr.split(",").map(t => t.trim()).filter(Boolean).map(t => {
+      const ts = t.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
+      return `<span class="chip-tag" onclick="goToTag('${ts}','${esc(t)}')">${esc(t)}</span>`;
+    }).join("") : "";
+
+    const posterSrc = proxyImg(d.poster || "");
+    const initials  = (d.title || "N").slice(0, 2).toUpperCase();
+
+    /* Tentukan label tombol utama — _lastReadSlug sudah di-set sebelum fungsi ini */
+    const readBtnLabel = _lastReadSlug
+      ? "▶ Lanjut Baca"
+      : (allChapters.length > 0 ? "📖 Mulai Baca" : "Belum Ada Chapter");
+
     document.getElementById("detailContent").innerHTML = `
-      <div style="padding:60px 20px;text-align:center;color:var(--muted);margin-top:54px;">
-        <p style="font-family:'Cormorant Garamond',serif;font-size:40px;opacity:0.3;margin-bottom:12px;">📖</p>
-        <p style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;margin-bottom:20px;">Gagal memuat detail novel.</p>
-        <button onclick="loadDetail()" style="padding:10px 24px;background:linear-gradient(135deg,#8b1a1a,#c9291c);
-          color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'Cinzel',serif;
-          font-size:12px;letter-spacing:1.5px;">Coba Lagi</button>
-      </div>`;
-  }
-}
-
-/* ── RENDER ───────────────────────────────────────── */
-function renderDetail(d) {
-  document.title = d.title + " — Pankomik";
-  allChapters = d.chapters || [];
-  const info  = d.info    || {};
-
-  /* Status class */
-  const sl = (d.status || "").toLowerCase();
-  const statusClass = sl === "completed" ? "done" : sl === "ongoing" ? "ongoing" : "country";
-
-  /* Stars */
-  const ratingNum = parseFloat(d.rating) || 0;
-  const starsHtml = renderStars(ratingNum);
-
-  /* Genre chips */
-  const genreHtml = (d.genres || []).map(g =>
-    `<span class="chip-genre" onclick="goToGenre('${g.slug}','${esc(g.name)}')">${esc(g.name)}</span>`
-  ).join("");
-
-  /* Tag chips */
-  const tagStr = info.tags || "";
-  const tagHtml = tagStr ? tagStr.split(",").map(t => t.trim()).filter(Boolean).map(t => {
-    const ts = t.toLowerCase().replace(/\s+/g,"-").replace(/[^a-z0-9-]/g,"");
-    return `<span class="chip-tag" onclick="goToTag('${ts}','${esc(t)}')">${esc(t)}</span>`;
-  }).join("") : "";
-
-  const posterSrc = proxyImg(d.poster || "");
-  const initials  = (d.title || "N").slice(0, 2).toUpperCase();
-
-  document.getElementById("detailContent").innerHTML = `
-    <!-- HERO -->
-    <div class="novel-hero-bg">
-      <div class="hero-blur-bg" id="heroBg"></div>
-      <div class="hero-content">
-        <div class="novel-poster-wrap">
-          ${d.poster
-            ? `<img class="novel-poster" src="${posterSrc}" alt="${esc(d.title)}"
-                 onerror="this.outerHTML='<div class=\\'poster-fallback\\'><span class=\\'poster-fallback-initials\\'>${initials}</span></div>'">`
-            : `<div class="poster-fallback"><span class="poster-fallback-initials">${initials}</span></div>`
-          }
-        </div>
-        <div class="hero-info">
-          <h1 class="hero-title">${esc(d.title)}</h1>
-          ${d.alt_title ? `<p class="hero-alt-title">${esc(d.alt_title)}</p>` : ""}
-          <div class="hero-meta">
-            <span class="meta-chip type">${esc(d.type || "Novel")}</span>
-            ${d.status ? `<span class="meta-chip ${statusClass}">${esc(d.status)}</span>` : ""}
-            ${info.country ? `<span class="meta-chip country">🌏 ${esc(info.country)}</span>` : ""}
+      <!-- HERO -->
+      <div class="novel-hero-bg">
+        <div class="hero-blur-bg" id="heroBg"></div>
+        <div class="hero-content">
+          <div class="novel-poster-wrap">
+            ${d.poster
+              ? `<img class="novel-poster" src="${posterSrc}" alt="${esc(d.title)}"
+                   onerror="this.outerHTML='<div class=\\'poster-fallback\\'><span class=\\'poster-fallback-initials\\'>${initials}</span></div>'">`
+              : `<div class="poster-fallback"><span class="poster-fallback-initials">${initials}</span></div>`
+            }
           </div>
-          ${ratingNum > 0 ? `
-            <div class="hero-rating">
-              <span class="stars">${starsHtml}</span>
-              <span class="rating-num">${d.rating}</span>
-            </div>` : ""}
+          <div class="hero-info">
+            <h1 class="hero-title">${esc(d.title)}</h1>
+            ${d.alt_title ? `<p class="hero-alt-title">${esc(d.alt_title)}</p>` : ""}
+            <div class="hero-meta">
+              <span class="meta-chip type">${esc(d.type || "Novel")}</span>
+              ${d.status ? `<span class="meta-chip ${statusClass}">${esc(d.status)}</span>` : ""}
+              ${info.country ? `<span class="meta-chip country">🌏 ${esc(info.country)}</span>` : ""}
+            </div>
+            ${ratingNum > 0 ? `
+              <div class="hero-rating">
+                <span class="stars">${starsHtml}</span>
+                <span class="rating-num">${d.rating}</span>
+              </div>` : ""}
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="ornament">— ✦ —</div>
+      <div class="ornament">— ✦ —</div>
 
-    <!-- ACTION BAR -->
-    <div class="action-bar">
-      <button class="btn-read" id="btnRead" onclick="readMain()">
-        📖 ${allChapters.length > 0 ? "Mulai Baca" : "Belum Ada Chapter"}
-      </button>
-      <button class="btn-icon" id="btnBookmark" onclick="toggleBookmark()" title="Bookmark">🔖</button>
-      <button class="btn-icon" onclick="shareNovel()" title="Bagikan">🔗</button>
-    </div>
+      <!-- ACTION BAR -->
+      <div class="action-bar">
+        <button class="btn-read" id="btnRead" onclick="readMain()">
+          ${readBtnLabel}
+        </button>
+        <button class="btn-icon" id="btnBookmark" onclick="toggleBookmark()" title="Bookmark">🔖</button>
+        <button class="btn-icon" onclick="shareNovel()" title="Bagikan">🔗</button>
+      </div>
 
-    <!-- KATEGORI -->
-    <div id="kategoriPicker">
-      <button class="kbtn" id="kbtn-favorit"     onclick="setKategori('favorit',this)">❤️ Favorit</button>
-      <button class="kbtn" id="kbtn-lagi_dibaca" onclick="setKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
-      <button class="kbtn" id="kbtn-tamat"       onclick="setKategori('tamat',this)">✅ Tamat</button>
-    </div>
+      <!-- KATEGORI -->
+      <div id="kategoriPicker">
+        <button class="kbtn" id="kbtn-favorit"     onclick="setKategori('favorit',this)">❤️ Favorit</button>
+        <button class="kbtn" id="kbtn-lagi_dibaca" onclick="setKategori('lagi_dibaca',this)">📖 Lagi Dibaca</button>
+        <button class="kbtn" id="kbtn-tamat"       onclick="setKategori('tamat',this)">✅ Tamat</button>
+      </div>
 
-    <!-- LAST READ BAR — diisi oleh updateLastReadUI() -->
-    <div id="lastReadBar"></div>
+      <!-- LAST READ BAR — diisi oleh updateLastReadUI() -->
+      <div id="lastReadBar"></div>
 
-    <!-- INFO TABLE -->
-    <div class="section-head">
-      <span class="section-title">Informasi</span>
-    </div>
-    <div class="info-table">
-      ${info.author       ? infoRow("✍️ Penulis",  esc(info.author))        : ""}
-      ${info.published    ? infoRow("📅 Terbit",    esc(info.published))     : ""}
-      ${info.country      ? infoRow("🌏 Negara",    esc(info.country))       : ""}
-      ${info.total_chapter? infoRow("📖 Total",     esc(info.total_chapter)) : ""}
-      ${infoRow("⭐ Rating", ratingNum > 0 ? `${d.rating} / 5.0` : "—")}
-    </div>
+      <!-- INFO TABLE -->
+      <div class="section-head">
+        <span class="section-title">Informasi</span>
+      </div>
+      <div class="info-table">
+        ${info.author        ? infoRow("✍️ Penulis",  esc(info.author))        : ""}
+        ${info.published     ? infoRow("📅 Terbit",    esc(info.published))     : ""}
+        ${info.country       ? infoRow("🌏 Negara",    esc(info.country))       : ""}
+        ${info.total_chapter ? infoRow("📖 Total",     esc(info.total_chapter)) : ""}
+        ${infoRow("⭐ Rating", ratingNum > 0 ? `${d.rating} / 5.0` : "—")}
+      </div>
 
-    <!-- SYNOPSIS -->
-    <div class="section-head">
-      <span class="section-title">Sinopsis</span>
-    </div>
-    <div class="synopsis-wrap">
-      <p class="synopsis-text" id="synopsisText">${esc(d.synopsis || "Tidak ada sinopsis.")}</p>
-      <button class="synopsis-toggle" id="synopsisBtn" onclick="toggleSynopsis()">Baca Selengkapnya ▼</button>
-    </div>
+      <!-- SYNOPSIS -->
+      <div class="section-head">
+        <span class="section-title">Sinopsis</span>
+      </div>
+      <div class="synopsis-wrap">
+        <p class="synopsis-text" id="synopsisText">${esc(d.synopsis || "Tidak ada sinopsis.")}</p>
+        <button class="synopsis-toggle" id="synopsisBtn" onclick="toggleSynopsis()">Baca Selengkapnya ▼</button>
+      </div>
 
-    <!-- GENRE -->
-    ${genreHtml ? `
-      <div class="section-head"><span class="section-title">Genre</span></div>
-      <div class="chips-row">${genreHtml}</div>` : ""}
+      <!-- GENRE -->
+      ${genreHtml ? `
+        <div class="section-head"><span class="section-title">Genre</span></div>
+        <div class="chips-row">${genreHtml}</div>` : ""}
 
-    <!-- TAGS -->
-    ${tagHtml ? `
-      <div class="section-head"><span class="section-title">Label</span></div>
-      <div class="chips-row">${tagHtml}</div>` : ""}
+      <!-- TAGS -->
+      ${tagHtml ? `
+        <div class="section-head"><span class="section-title">Label</span></div>
+        <div class="chips-row">${tagHtml}</div>` : ""}
 
-    <!-- CHAPTERS -->
-    <div class="section-head">
-      <span class="section-title">
-        Daftar Chapter
-        <span style="font-family:'Nunito',sans-serif;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;margin-left:4px;">(${allChapters.length})</span>
-      </span>
-      ${allChapters.length > 1
-        ? `<button class="ch-sort-btn" id="sortBtn" onclick="toggleSort()">↑↓ Terlama</button>`
+      <!-- CHAPTERS -->
+      <div class="section-head">
+        <span class="section-title">
+          Daftar Chapter
+          <span style="font-family:'Nunito',sans-serif;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:0;margin-left:4px;">(${allChapters.length})</span>
+        </span>
+        ${allChapters.length > 1
+          ? `<button class="ch-sort-btn" id="sortBtn" onclick="toggleSort()">↑↓ Terlama</button>`
+          : ""}
+      </div>
+      ${allChapters.length > 8
+        ? `<div class="chapter-search-wrap">
+             <input type="text" class="chapter-search" placeholder="🔍 Cari chapter..." oninput="filterChapters(this.value)">
+           </div>`
         : ""}
-    </div>
-    ${allChapters.length > 8
-      ? `<div class="chapter-search-wrap">
-           <input type="text" class="chapter-search" placeholder="🔍 Cari chapter..." oninput="filterChapters(this.value)">
-         </div>`
-      : ""}
-    ${allChapters.length > 0
-      ? `<div class="chapter-list" id="chapterList"></div>`
-      : `<p style="padding:0 16px 16px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--muted);">Belum ada chapter tersedia.</p>`}
+      ${allChapters.length > 0
+        ? `<div class="chapter-list" id="chapterList"></div>`
+        : `<p style="padding:0 16px 16px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:var(--muted);">Belum ada chapter tersedia.</p>`}
 
-    <div style="height:20px;"></div>
-  `;
+      <div style="height:20px;"></div>
+    `;
 
-  /* Set blur bg */
-  if (d.poster) {
-    const bg = document.getElementById("heroBg");
-    if (bg) bg.style.backgroundImage = `url(${posterSrc})`;
+    /* Set blur bg */
+    if (d.poster) {
+      const bg = document.getElementById("heroBg");
+      if (bg) bg.style.backgroundImage = `url(${posterSrc})`;
+    }
+
+    /* Render chapter list — _lastReadSlug sudah benar */
+    if (allChapters.length > 0) renderChapterList();
   }
 
-  /* Render chapter list — _lastReadSlug sudah benar karena di-set sebelum renderDetail() */
-  if (allChapters.length > 0) renderChapterList();
-}
+  /* ── CHAPTER LIST ─────────────────────────────────────── */
+  function renderChapterList(filterQ) {
+    const list = document.getElementById("chapterList");
+    if (!list) return;
+    const ordered  = chaptersAsc ? [...allChapters].reverse() : [...allChapters];
+    const q        = (filterQ || "").toLowerCase();
+    const filtered = q ? ordered.filter(ch => (ch.title||"").toLowerCase().includes(q)) : ordered;
 
-/* ── CHAPTER LIST ─────────────────────────────────── */
-function renderChapterList(filterQ) {
-  const list = document.getElementById("chapterList");
-  if (!list) return;
-  const ordered  = chaptersAsc ? [...allChapters].reverse() : [...allChapters];
-  const q        = (filterQ || "").toLowerCase();
-  const filtered = q ? ordered.filter(ch => (ch.title||"").toLowerCase().includes(q)) : ordered;
+    if (!filtered.length) {
+      list.innerHTML = `<div style="padding:20px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);font-size:14px;">Tidak ada chapter yang cocok.</div>`;
+      return;
+    }
 
-  if (!filtered.length) {
-    list.innerHTML = `<div style="padding:20px;text-align:center;font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--muted);font-size:14px;">Tidak ada chapter yang cocok.</div>`;
-    return;
-  }
+    list.innerHTML = filtered.map((ch) => {
+      const idx   = ordered.indexOf(ch);
+      const num   = chaptersAsc ? idx + 1 : allChapters.length - idx;
+      const title = ch.title || `Chapter ${num}`;
+      const date  = ch.date  || "";
+      const cSlug = ch.slug  || "";
+      const isLR  = _lastReadSlug && cSlug === _lastReadSlug;
+      const short = title.length > 52 ? title.slice(0, 49) + "…" : title;
 
-  list.innerHTML = filtered.map((ch) => {
-    const idx   = ordered.indexOf(ch);
-    const num   = chaptersAsc ? idx + 1 : allChapters.length - idx;
-    const title = ch.title || `Chapter ${num}`;
-    const date  = ch.date  || "";
-    const cSlug = ch.slug  || "";
-    /* ── Highlight chapter terakhir ── */
-    const isLR  = _lastReadSlug && cSlug === _lastReadSlug;
-    const short = title.length > 52 ? title.slice(0, 49) + "…" : title;
-
-    return `
-      <div class="chapter-item${isLR ? " last-read" : ""}" onclick="readChapter('${esc(cSlug)}')">
-        <div class="ch-num">${num}</div>
-        <div class="ch-info">
-          <div class="ch-title">
-            ${esc(short)}
-            ${isLR ? `<span class="ch-last-badge">▶ Terakhir</span>` : ""}
+      return `
+        <div class="chapter-item${isLR ? " last-read" : ""}" onclick="readChapter('${esc(cSlug)}')">
+          <div class="ch-num">${num}</div>
+          <div class="ch-info">
+            <div class="ch-title">
+              ${esc(short)}
+              ${isLR ? `<span class="ch-last-badge">▶ Terakhir</span>` : ""}
+            </div>
+            ${date ? `<div class="ch-date">📅 ${esc(date)}</div>` : ""}
           </div>
-          ${date ? `<div class="ch-date">📅 ${esc(date)}</div>` : ""}
+          <button class="ch-read-btn" onclick="event.stopPropagation();readChapter('${esc(cSlug)}')">Baca</button>
+        </div>`;
+    }).join("");
+
+    /* Scroll ke chapter terakhir kalau tidak ada filter aktif */
+    if (_lastReadSlug && !q) {
+      setTimeout(() => {
+        list.querySelector(".last-read")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }
+
+  /* ── LAST READ BAR ────────────────────────────────────── */
+  function updateLastReadUI(lastRead) {
+    if (!lastRead?.chapter_slug) return;
+
+    const bar = document.getElementById("lastReadBar");
+    if (!bar) {
+      console.warn("[updateLastReadUI] #lastReadBar tidak ditemukan di DOM");
+      return;
+    }
+
+    const title   = lastRead.chapter_title || lastRead.chapter_slug;
+    const short   = title.length > 44 ? title.slice(0, 41) + "…" : title;
+    const dateStr = lastRead.read_at
+      ? new Date(lastRead.read_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" })
+      : "";
+
+    bar.innerHTML = `
+      <div class="last-read-card" onclick="readChapter('${esc(lastRead.chapter_slug)}')">
+        <div style="flex:1;min-width:0;">
+          <div class="last-read-label">📍 Terakhir Dibaca${dateStr ? " · " + dateStr : ""}</div>
+          <div class="last-read-title">${esc(short)}</div>
         </div>
-        <button class="ch-read-btn" onclick="event.stopPropagation();readChapter('${esc(cSlug)}')">Baca</button>
+        <button class="btn-continue" onclick="event.stopPropagation();readChapter('${esc(lastRead.chapter_slug)}')">
+          ▶ Lanjut
+        </button>
       </div>`;
-  }).join("");
+    bar.style.display = "block";
 
-  /* Scroll ke chapter terakhir kalau tidak ada filter aktif */
-  if (_lastReadSlug && !q) {
-    setTimeout(() => {
-      list.querySelector(".last-read")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 300);
+    /* Update tombol utama */
+    const btnMain = document.getElementById("btnRead");
+    if (btnMain) btnMain.innerHTML = "▶ Lanjut Baca";
+
+    /* Update _lastReadSlug (sudah di-set sebelumnya, ini untuk keamanan) */
+    _lastReadSlug = lastRead.chapter_slug;
   }
-}
 
-window.filterChapters = (val) => renderChapterList(val);
+  /* ── EXPOSE ke window untuk onclick handler di HTML ────── */
+  window.filterChapters = (val) => renderChapterList(val);
 
-window.toggleSort = function() {
-  chaptersAsc = !chaptersAsc;
-  const btn = document.getElementById("sortBtn");
-  if (btn) btn.textContent = chaptersAsc ? "↑↓ Terbaru" : "↑↓ Terlama";
-  renderChapterList();
-};
+  window.toggleSort = function() {
+    chaptersAsc = !chaptersAsc;
+    const btn = document.getElementById("sortBtn");
+    if (btn) btn.textContent = chaptersAsc ? "↑↓ Terbaru" : "↑↓ Terlama";
+    renderChapterList();
+  };
 
-window.toggleSynopsis = function() {
-  const text = document.getElementById("synopsisText");
-  const btn  = document.getElementById("synopsisBtn");
-  const open = text.classList.toggle("expanded");
-  if (btn) btn.textContent = open ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
-};
+  window.toggleSynopsis = function() {
+    const text = document.getElementById("synopsisText");
+    const btn  = document.getElementById("synopsisBtn");
+    const open = text.classList.toggle("expanded");
+    if (btn) btn.textContent = open ? "Sembunyikan ▲" : "Baca Selengkapnya ▼";
+  };
 
-window.readChapter = (chSlug) => {
-  if (!chSlug) return;
-  window.location.href = "/baca-novel/" + chSlug;
-};
+  window.readChapter = (chSlug) => {
+    if (!chSlug) return;
+    window.location.href = "/baca-novel/" + chSlug;
+  };
 
-window.readMain = function() {
-  /* Kalau ada last read, lanjut dari sana */
-  if (_lastReadSlug) { window.location.href = "/baca-novel/" + _lastReadSlug; return; }
-  /* Mulai dari chapter pertama (index terakhir di array = chapter terlama) */
-  if (allChapters.length > 0) readChapter(allChapters[allChapters.length - 1].slug);
-};
+  window.readMain = function() {
+    /* Kalau ada last read, lanjut dari sana */
+    if (_lastReadSlug) { window.location.href = "/baca-novel/" + _lastReadSlug; return; }
+    /* Mulai dari chapter pertama (index terakhir di array = chapter terlama) */
+    if (allChapters.length > 0) window.readChapter(allChapters[allChapters.length - 1].slug);
+  };
 
-/* ── BOOKMARK ─────────────────────────────────────── */
-function updateBookmarkUI() {
-  const btn    = document.getElementById("btnBookmark");
-  const picker = document.getElementById("kategoriPicker");
-  if (!btn) return;
-  if (isBookmarked) {
-    btn.classList.add("saved");
-    if (picker) picker.classList.add("show");
-    document.querySelectorAll(".kbtn").forEach(b => {
-      b.classList.toggle("active", b.id === "kbtn-" + currentKategori);
-    });
-  } else {
-    btn.classList.remove("saved");
-    if (picker) picker.classList.remove("show");
+  /* ── BOOKMARK ─────────────────────────────────────────── */
+  function updateBookmarkUI() {
+    const btn    = document.getElementById("btnBookmark");
+    const picker = document.getElementById("kategoriPicker");
+    if (!btn) return;
+    if (isBookmarked) {
+      btn.classList.add("saved");
+      if (picker) picker.classList.add("show");
+      document.querySelectorAll(".kbtn").forEach(b => {
+        b.classList.toggle("active", b.id === "kbtn-" + currentKategori);
+      });
+    } else {
+      btn.classList.remove("saved");
+      if (picker) picker.classList.remove("show");
+    }
   }
-}
 
-/* ── LAST READ BAR ────────────────────────────────── */
-function updateLastReadUI(lastRead) {
-  const bar = document.getElementById("lastReadBar");
-  if (!bar || !lastRead?.chapter_slug) return;
+  window.toggleBookmark = async function() {
+    if (!currentUser) { window.location.href = "/masuk"; return; }
+    const btn = document.getElementById("btnBookmark");
+    btn.disabled = true;
+    if (isBookmarked) {
+      await removeNovelBookmark(currentUser.id, slug);
+      isBookmarked = false;
+      toast("Bookmark dihapus", "info");
+    } else {
+      await addNovelBookmark(currentUser.id, {
+        slug, title: novelCache?.title || slug,
+        cover: novelCache?.poster || "", kategori: currentKategori
+      });
+      isBookmarked = true;
+      toast("📚 Disimpan ke bookmark!", "success");
+    }
+    btn.disabled = false;
+    updateBookmarkUI();
+  };
 
-  const title   = lastRead.chapter_title || lastRead.chapter_slug;
-  const short   = title.length > 44 ? title.slice(0, 41) + "…" : title;
-  const dateStr = lastRead.read_at
-    ? new Date(lastRead.read_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" })
-    : "";
-
-  bar.innerHTML = `
-    <div class="last-read-card" onclick="readChapter('${esc(lastRead.chapter_slug)}')">
-      <div style="flex:1;min-width:0;">
-        <div class="last-read-label">📍 Terakhir Dibaca${dateStr ? " · " + dateStr : ""}</div>
-        <div class="last-read-title">${esc(short)}</div>
-      </div>
-      <button class="btn-continue" onclick="event.stopPropagation();readChapter('${esc(lastRead.chapter_slug)}')">
-        ▶ Lanjut
-      </button>
-    </div>`;
-  bar.style.display = "block";
-
-  /* Update tombol utama */
-  const btnMain = document.getElementById("btnRead");
-  if (btnMain) btnMain.innerHTML = "▶ Lanjut Baca";
-
-  /* _lastReadSlug sudah di-set sebelum render, tapi set lagi untuk keamanan */
-  _lastReadSlug = lastRead.chapter_slug;
-  /* TIDAK perlu renderChapterList() lagi — sudah di-render dengan slug yang benar */
-}
-
-window.toggleBookmark = async function() {
-  if (!currentUser) { window.location.href = "/masuk"; return; }
-  const btn = document.getElementById("btnBookmark");
-  btn.disabled = true;
-  if (isBookmarked) {
-    await window._supabase.removeNovelBookmark(currentUser.id, slug);
-    isBookmarked = false;
-    toast("Bookmark dihapus", "info");
-  } else {
-    await window._supabase.addNovelBookmark(currentUser.id, {
+  window.setKategori = async function(kat, btn) {
+    if (!currentUser || !isBookmarked) return;
+    currentKategori = kat;
+    await addNovelBookmark(currentUser.id, {
       slug, title: novelCache?.title || slug,
-      cover: novelCache?.poster || "", kategori: currentKategori
+      cover: novelCache?.poster || "", kategori: kat
     });
-    isBookmarked = true;
-    toast("📚 Disimpan ke bookmark!", "success");
-  }
-  btn.disabled = false;
-  updateBookmarkUI();
-};
+    document.querySelectorAll(".kbtn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  };
 
-window.setKategori = async function(kat, btn) {
-  if (!currentUser || !isBookmarked) return;
-  currentKategori = kat;
-  await window._supabase.addNovelBookmark(currentUser.id, {
-    slug, title: novelCache?.title || slug,
-    cover: novelCache?.poster || "", kategori: kat
+  window.shareNovel = async function() {
+    const url = window.location.href;
+    if (navigator.share) {
+      try { await navigator.share({ title: document.title, url }); return; } catch(e) { if (e.name==="AbortError") return; }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast("🔗 Link disalin!", "success");
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = url; ta.style.cssText = "position:fixed;left:-9999px;";
+      document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove();
+      toast("🔗 Link disalin!", "success");
+    }
+  };
+
+  window.goToGenre = function(sl, name) {
+    sessionStorage.setItem("novelFilterType", "genre");
+    sessionStorage.setItem("novelFilterSlug", sl);
+    sessionStorage.setItem("novelFilterName", name);
+    window.location.href = "/novel/";
+  };
+  window.goToTag = function(sl, name) {
+    sessionStorage.setItem("novelFilterType", "tag");
+    sessionStorage.setItem("novelFilterSlug", sl);
+    sessionStorage.setItem("novelFilterName", name);
+    window.location.href = "/novel/";
+  };
+
+  /* ── HELPERS ──────────────────────────────────────────── */
+  function infoRow(label, value) {
+    return `<div class="info-row">
+      <span class="info-label">${label}</span>
+      <span class="info-value">${value}</span>
+    </div>`;
+  }
+
+  function renderStars(r) {
+    const full = Math.floor(r), half = r - full >= 0.5 ? 1 : 0, empty = 5 - full - half;
+    return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(empty);
+  }
+
+  function esc(str) {
+    return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+                          .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  }
+
+  function toast(msg, type = "info") {
+    const wrap = document.getElementById("toastWrap");
+    const t    = document.createElement("div");
+    const bg   = type === "success" ? "linear-gradient(135deg,#1a5c2e,#27ae60)" :
+                 type === "error"   ? "linear-gradient(135deg,#8b1a1a,#c9291c)" :
+                 "rgba(30,26,44,0.95)";
+    t.style.cssText = `
+      padding:10px 20px;border-radius:99px;font-size:12px;font-weight:700;color:#fff;
+      background:${bg};box-shadow:0 4px 20px rgba(0,0,0,0.5);margin-top:6px;
+      border:1px solid rgba(255,255,255,0.1);
+      animation:toastIn 0.2s ease;font-family:'Nunito',sans-serif;`;
+    t.textContent = msg;
+    wrap.appendChild(t);
+    setTimeout(() => t.style.opacity = "0", 2400);
+    setTimeout(() => t.remove(), 2700);
+  }
+
+  window.toggleDarkMode = () => document.body.classList.toggle("light-mode");
+  window.toggleMenu = () => {
+    const m = document.getElementById("menuDropdown");
+    if (m) m.style.display = m.style.display === "block" ? "none" : "block";
+  };
+  document.addEventListener("click", e => {
+    const m = document.getElementById("menuDropdown");
+    const b = document.querySelector('.hbtn[onclick="toggleMenu()"]');
+    if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
   });
-  document.querySelectorAll(".kbtn").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-};
 
-window.shareNovel = async function() {
-  const url = window.location.href;
-  if (navigator.share) {
-    try { await navigator.share({ title: document.title, url }); return; } catch(e) { if (e.name==="AbortError") return; }
-  }
-  try {
-    await navigator.clipboard.writeText(url);
-    toast("🔗 Link disalin!", "success");
-  } catch {
-    const ta = document.createElement("textarea");
-    ta.value = url; ta.style.cssText = "position:fixed;left:-9999px;";
-    document.body.appendChild(ta); ta.select();
-    document.execCommand("copy"); ta.remove();
-    toast("🔗 Link disalin!", "success");
-  }
-};
+  const styleEl = document.createElement("style");
+  styleEl.textContent = `@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`;
+  document.head.appendChild(styleEl);
 
-window.goToGenre = function(sl, name) {
-  sessionStorage.setItem("novelFilterType", "genre");
-  sessionStorage.setItem("novelFilterSlug", sl);
-  sessionStorage.setItem("novelFilterName", name);
-  window.location.href = "/novel/";
-};
-window.goToTag = function(sl, name) {
-  sessionStorage.setItem("novelFilterType", "tag");
-  sessionStorage.setItem("novelFilterSlug", sl);
-  sessionStorage.setItem("novelFilterName", name);
-  window.location.href = "/novel/";
-};
-
-/* ── HELPERS ──────────────────────────────────────── */
-function infoRow(label, value) {
-  return `<div class="info-row">
-    <span class="info-label">${label}</span>
-    <span class="info-value">${value}</span>
-  </div>`;
-}
-
-function renderStars(r) {
-  const full = Math.floor(r), half = r - full >= 0.5 ? 1 : 0, empty = 5 - full - half;
-  return "★".repeat(full) + (half ? "½" : "") + "☆".repeat(empty);
-}
-
-function esc(str) {
-  return String(str||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
-                        .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
-}
-
-function toast(msg, type = "info") {
-  let wrap = document.getElementById("toastWrap");
-  const t  = document.createElement("div");
-  const bg = type === "success" ? "linear-gradient(135deg,#1a5c2e,#27ae60)" :
-             type === "error"   ? "linear-gradient(135deg,#8b1a1a,#c9291c)" :
-             "rgba(30,26,44,0.95)";
-  t.style.cssText = `
-    padding:10px 20px;border-radius:99px;font-size:12px;font-weight:700;color:#fff;
-    background:${bg};box-shadow:0 4px 20px rgba(0,0,0,0.5);margin-top:6px;
-    border:1px solid rgba(255,255,255,0.1);
-    animation:toastIn 0.2s ease;font-family:'Nunito',sans-serif;`;
-  t.textContent = msg;
-  wrap.appendChild(t);
-  setTimeout(() => t.style.opacity = "0", 2400);
-  setTimeout(() => t.remove(), 2700);
-}
-
-function toggleDarkMode() { document.body.classList.toggle("light-mode"); }
-function toggleMenu() {
-  const m = document.getElementById("menuDropdown");
-  if (m) m.style.display = m.style.display === "block" ? "none" : "block";
-}
-document.addEventListener("click", e => {
-  const m = document.getElementById("menuDropdown");
-  const b = document.querySelector('.hbtn[onclick="toggleMenu()"]');
-  if (m && !m.contains(e.target) && !b?.contains(e.target)) m.style.display = "none";
-});
-
-const styleEl = document.createElement("style");
-styleEl.textContent = `@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`;
-document.head.appendChild(styleEl);
+  /* ── START ────────────────────────────────────────────── */
+  if (localStorage.getItem("theme") === "light") document.body.classList.add("light-mode");
+  loadDetail();
 </script>
 <script type="module" src="/global-chat.js"></script>
 <script type="module" src="/tracker.js"></script>
