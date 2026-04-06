@@ -65,14 +65,6 @@
       "destination": "/fitur.html"
     },
     {
-      "source": "/profil",
-      "destination": "/profile.html"
-    },
-    {
-      "source": "/profil/",
-      "destination": "/profile.html"
-    },
-    {
       "source": "/user",
       "destination": "/user.html"
     },
@@ -80,6 +72,15 @@
       "source": "/user/",
       "destination": "/user.html"
     },
+    {
+      "source": "/profil",
+      "destination": "/profile.html"
+    },
+    {
+      "source": "/profil/",
+      "destination": "/profile.html"
+    },
+    
     {
       "source": "/masuk",
       "destination": "/auth.html"
