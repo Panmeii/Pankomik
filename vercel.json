@@ -65,13 +65,17 @@
       "destination": "/fitur.html"
     },
     {
-      "source": "/user",
-      "destination": "/user.html"
-    },
-    {
-      "source": "/user/",
-      "destination": "/user.html"
-    },
+  "source": "/user/:username",
+  "destination": "/user.html?u=:username"
+},
+{
+  "source": "/user",
+  "destination": "/user.html"
+},
+{
+  "source": "/user/",
+  "destination": "/user.html"
+},
     {
       "source": "/profil",
       "destination": "/profile.html"
