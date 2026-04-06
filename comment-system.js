@@ -165,6 +165,11 @@ function injectCommentCSS(accent = "#e8522a") {
       font-weight: 800; font-size: 13px;
       color: var(--text, #eaeaf0);
     }
+    .pkc-username-link {
+      text-decoration: none;
+      transition: color .15s;
+    }
+    .pkc-username-link:hover { color: var(--pkc-accent, #e8522a); }
     .pkc-level {
       font-size: 10px; font-weight: 700;
       background: var(--pkc-accent, #e8522a);
@@ -388,9 +393,11 @@ function renderItem(c, isReply, user, likedSet) {
   let time = "–";
   try { time = new Date(c.created_at).toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" }); } catch {}
 
+  const userProfileUrl = escHtml(`/user/${profile.username || ""}`);
+
   return `
     <div class="pkc-item ${isReply ? "is-reply" : ""}" id="pkc-comment-${safeId}" data-id="${c.id}">
-      <div class="pkc-avatar">
+      <div class="pkc-avatar" onclick="if(event.target.closest('.pkc-avatar'))window.location.href='${userProfileUrl}'" style="cursor:pointer;" title="Lihat profil ${name}">
         ${avatar
           ? `<img src="${escHtml(avatar)}" alt="${name}" loading="lazy"
                onerror="this.style.display='none';this.parentElement.textContent='${initial}'">`
@@ -398,7 +405,7 @@ function renderItem(c, isReply, user, likedSet) {
       </div>
       <div class="pkc-body">
         <div class="pkc-meta">
-          <span class="pkc-username">${name}</span>
+          <a class="pkc-username pkc-username-link" href="${userProfileUrl}" title="Lihat profil ${name}" onclick="event.stopPropagation()">${name}</a>
           <span class="pkc-level">Lv.${level}</span>
           <span class="pkc-time">${time}</span>
         </div>
