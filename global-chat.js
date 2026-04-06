@@ -327,7 +327,8 @@ style.textContent = `
   .mine .gc-meta { flex-direction: row-reverse; }
   .gc-meta.hidden { display: none; }
 
-  .gc-name { font-weight: 800; color: #6060a0; font-size: 11px; }
+  .gc-name { font-weight: 800; color: #6060a0; font-size: 11px; text-decoration: none; cursor: pointer; }
+  .gc-name:hover { color: #e8522a; }
   .gc-name.adm { color: #e8522a; }
 
   /* Admin badge */
@@ -917,6 +918,9 @@ function buildMsg(m, optimistic = false) {
   /* ── Avatar ── */
   const av = document.createElement("div");
   av.className = "gc-av";
+  av.style.cursor = "pointer";
+  av.title = `Lihat profil ${name}`;
+  av.onclick = (e) => { e.stopPropagation(); window.location.href = `/user/${encodeURIComponent(name)}`; };
 
   const avInner = document.createElement("div");
   avInner.className = "gc-av-inner";
@@ -954,7 +958,7 @@ function buildMsg(m, optimistic = false) {
     const meta = document.createElement("div");
     meta.className = "gc-meta" + (isNewSender ? "" : " hidden");
     meta.innerHTML = `
-      <span class="gc-name${isAdm?" adm":""}">${esc(name)}</span>
+      <a class="gc-name${isAdm?" adm":""}" href="/user/${esc(name)}" onclick="event.stopPropagation()" title="Lihat profil ${esc(name)}">${esc(name)}</a>
       ${buildLevelBadge(level)}
       ${isAdm ? `<span class="gc-adm-badge">Admin</span>` : ""}
       ${m.is_pinned ? `<span style="font-size:10px;margin-left:1px;">📌</span>` : ""}`;
