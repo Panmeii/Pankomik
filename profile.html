@@ -802,7 +802,7 @@ import {
   getNovelHistory, getMyComments,
   getAnimeHistory
 } from "/supabase.js";
-import { initAuthHeader } from "/auth-header.js";
+import { initAuthHeader, applyAccentColor, loadSavedAccent } from "/auth-header.js";
 import { animeWatchURL, animeURL } from "/router.js";
 window._animeWatchURL = animeWatchURL;
 window._animeURL      = animeURL;
@@ -916,6 +916,7 @@ function cleanTitle(t) {
 /* ── INIT ─────────────────────────────────────────────── */
 window.onload = async function () {
   if (localStorage.getItem("theme") === "light") document.body.classList.add("light");
+  loadSavedAccent();
   await initAuthHeader();
   currentUser = await getCurrentUser();
   if (!currentUser) { window.location.href = "/masuk"; return; }
@@ -1154,6 +1155,59 @@ async function loadProfile() {
             <button class="edit-btn" onclick="savePassword()" id="savePasswordBtn">🔒 Ganti Password</button>
             <div id="passwordMsg" class="form-msg"></div>
           `}
+        </div>
+
+        <!-- Warna Aksen -->
+        <div class="edit-section-card">
+          <p class="edit-section-title">🎨 Warna Tema</p>
+          <p style="font-size:12px;color:var(--text-muted,#888);margin-bottom:12px;line-height:1.5;">
+            Pilih warna aksen utama untuk tampilan Pankomik kamu. Warna ini dipakai di seluruh tombol, highlight, dan link.
+          </p>
+          <div class="accent-picker-wrap" id="accentPickerRow">
+            ${[
+              {hex:"#e8522a",label:"Api"},
+              {hex:"#e74c3c",label:"Merah"},
+              {hex:"#e91e63",label:"Pink"},
+              {hex:"#9c27b0",label:"Ungu"},
+              {hex:"#3f51b5",label:"Biru"},
+              {hex:"#2196f3",label:"Langit"},
+              {hex:"#00bcd4",label:"Cyan"},
+              {hex:"#009688",label:"Teal"},
+              {hex:"#4caf50",label:"Hijau"},
+              {hex:"#ff9800",label:"Oranye"},
+              {hex:"#ffd600",label:"Kuning"},
+              {hex:"#607d8b",label:"Slate"},
+            ].map(c => `
+              <div class="accent-swatch ${(localStorage.getItem('pankomik-accent')||'#e8522a')===c.hex?'active':''}"
+                   style="background:${c.hex};"
+                   title="${c.label}"
+                   onclick="setAccent('${c.hex}',this)">
+              </div>`).join("")}
+            <!-- Custom color picker -->
+            <div class="accent-custom-input" title="Warna kustom">
+              🎨
+              <input type="color"
+                value="${localStorage.getItem('pankomik-accent')||'#e8522a'}"
+                onchange="setAccent(this.value,null)">
+            </div>
+          </div>
+          <div id="accentMsg" style="font-size:11px;color:var(--acc);margin-top:8px;font-weight:700;display:none;">✅ Warna disimpan!</div>
+        </div>
+
+        <!-- Profil Publik -->
+        <div class="edit-section-card">
+          <p class="edit-section-title">🔗 Profil Publik</p>
+          <p style="font-size:12px;color:var(--text-muted,#888);margin-bottom:10px;line-height:1.5;">
+            Bagikan halaman profil kamu ke orang lain. Mereka bisa lihat statistik dan komentar kamu.
+          </p>
+          <button class="edit-btn" onclick="copyPublicProfile()"
+            style="background:transparent;border:1.5px solid rgba(232,82,42,0.35);color:var(--acc);box-shadow:none;margin-top:0;">
+            📋 Salin Link Profil
+          </button>
+          <button class="edit-btn" onclick="window.location.href='/user/${esc(displayName)}'"
+            style="background:var(--glass);border:1.5px solid var(--glass-b);color:var(--text);box-shadow:none;margin-top:6px;">
+            👁️ Lihat Profil Publik
+          </button>
         </div>
 
         <!-- Danger Zone -->
@@ -2283,6 +2337,33 @@ window.goHome           = () => window.location.href = "/";
 window.liveSearch       = () => {};
 window.toggleMenu       = () => { const m = document.getElementById("menuDropdown"); if (m) m.style.display = m.style.display==="block"?"none":"block"; };
 window.toggleDarkMode   = () => { document.body.classList.toggle("light"); localStorage.setItem("theme", document.body.classList.contains("light")?"light":"dark"); };
+
+/* ── ACCENT COLOR ─────────────────────────────────────── */
+window.setAccent = function(hex, el) {
+  if (!hex || !/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+  localStorage.setItem("pankomik-accent", hex);
+  applyAccentColor(hex);
+  /* Update active swatch */
+  document.querySelectorAll(".accent-swatch").forEach(s => s.classList.remove("active"));
+  if (el) el.classList.add("active");
+  /* Flash save message */
+  const msg = document.getElementById("accentMsg");
+  if (msg) { msg.style.display = "block"; setTimeout(() => msg.style.display = "none", 1800); }
+};
+
+/* ── COPY PUBLIC PROFILE ─────────────────────────────── */
+window.copyPublicProfile = function() {
+  const username = currentProfile?.username || currentUser?.email?.split("@")[0] || "user";
+  const url = `${window.location.origin}/user/${username}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => {
+      const msg = document.getElementById("accentMsg");
+      if (msg) { msg.textContent = "✅ Link profil disalin!"; msg.style.display = "block"; setTimeout(() => { msg.style.display = "none"; msg.textContent = "✅ Warna disimpan!"; }, 2000); }
+    });
+  } else {
+    prompt("Salin link profil kamu:", url);
+  }
+};
 
 </script>
 
