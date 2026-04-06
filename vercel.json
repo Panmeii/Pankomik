@@ -73,6 +73,14 @@
       "destination": "/profile.html"
     },
     {
+      "source": "/user",
+      "destination": "/user.html"
+    },
+    {
+      "source": "/user/",
+      "destination": "/user.html"
+    },
+    {
       "source": "/masuk",
       "destination": "/auth.html"
     },
